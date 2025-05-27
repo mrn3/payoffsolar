@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { FaSun } from 'react-icons/fa';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from '@/lib/auth';
+
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -40,7 +40,22 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await signIn(data.email, data.password);
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to sign in');
+      }
+
       router.push('/dashboard');
       router.refresh();
     } catch (error: any) {

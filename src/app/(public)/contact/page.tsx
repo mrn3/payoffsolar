@@ -5,8 +5,7 @@ import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createClient } from '@/lib/supabase/client';
-import { Database } from '@/types/database.types';
+
 
 const contactFormSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -46,22 +45,19 @@ export default function ContactPage() {
     setSubmitError(null);
 
     try {
-      const supabase = createClient();
-
-      // Create a new customer record
-      const { error } = await supabase.from('customers').insert({
-        first_name: data.firstName,
-        last_name: data.lastName,
-        email: data.email,
-        phone: data.phone,
-        notes: `Subject: ${data.subject}\n\n${data.message}`,
-        address: '',
-        city: '',
-        state: '',
-        zip: '',
+      // Submit to API route
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit form');
+      }
 
       setSubmitSuccess(true);
       reset();

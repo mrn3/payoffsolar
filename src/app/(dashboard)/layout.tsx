@@ -4,9 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaSun, FaUsers, FaBoxes, FaShoppingCart, FaFileInvoiceDollar, FaWarehouse, FaEdit, FaTachometerAlt, FaSignOutAlt, FaBars, FaTimes, FaUser, FaCalendarAlt } from 'react-icons/fa';
-import { signOut } from '@/lib/auth';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Database } from '@/types/database.types';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardLayout({
   children,
@@ -14,33 +12,25 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null } | null>(null);
 
   useEffect(() => {
-    async function loadUserProfile() {
-      const supabase = createClientComponentClient<Database>();
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('first_name, last_name, email')
-          .eq('id', session.user.id)
-          .single();
-
-        if (data) {
-          setUserProfile(data);
-        }
-      }
-    }
-
-    loadUserProfile();
+    // TODO: Implement client-side profile loading with MySQL auth
+    // For now, we'll handle this server-side
   }, []);
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      const response = await fetch('/api/auth/signout', {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        router.push('/login');
+        router.refresh();
+      }
     } catch (error) {
       console.error('Error signing out:', error);
     }

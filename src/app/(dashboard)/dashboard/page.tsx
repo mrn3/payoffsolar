@@ -1,27 +1,19 @@
 import React from 'react';
 import Link from 'next/link';
 import { FaUsers, FaBoxes, FaShoppingCart, FaFileInvoiceDollar, FaWarehouse, FaEdit, FaArrowUp, FaArrowDown } from 'react-icons/fa';
-import { createClient } from '@/lib/supabase/server';
 import { getUserProfile } from '@/lib/auth';
+import { CustomerModel, ProductModel, OrderModel, InventoryModel } from '@/lib/models';
 import { formatDistanceToNow, format } from 'date-fns';
 
 async function getStats() {
-  const supabase = createClient();
-
   // Get customer count
-  const { count: customerCount } = await supabase
-    .from('customers')
-    .select('*', { count: 'exact', head: true });
+  const customerCount = await CustomerModel.getCount();
 
   // Get product count
-  const { count: productCount } = await supabase
-    .from('products')
-    .select('*', { count: 'exact', head: true });
+  const productCount = await ProductModel.getCount();
 
   // Get order count
-  const { count: orderCount } = await supabase
-    .from('orders')
-    .select('*', { count: 'exact', head: true });
+  const orderCount = await OrderModel.getCount();
 
   return {
     customerCount: customerCount || 0,
@@ -31,48 +23,14 @@ async function getStats() {
 }
 
 async function getRecentActivity() {
-  const supabase = createClient();
-
   // Get recent orders
-  const { data: recentOrders } = await supabase
-    .from('orders')
-    .select(`
-      id,
-      created_at,
-      status,
-      total,
-      customers (
-        first_name,
-        last_name
-      )
-    `)
-    .order('created_at', { ascending: false })
-    .limit(3);
+  const recentOrders = await OrderModel.getRecent(3);
 
   // Get recent customers
-  const { data: recentCustomers } = await supabase
-    .from('customers')
-    .select('id, created_at, first_name, last_name')
-    .order('created_at', { ascending: false })
-    .limit(3);
+  const recentCustomers = await CustomerModel.getAll(3, 0);
 
   // Get low stock inventory
-  const { data: lowStockItems } = await supabase
-    .from('inventory')
-    .select(`
-      id,
-      updated_at,
-      quantity,
-      min_quantity,
-      products (
-        name
-      ),
-      warehouses (
-        name
-      )
-    `)
-    .lt('quantity', 10)
-    .limit(3);
+  const lowStockItems = await InventoryModel.getLowStock(3);
 
   return {
     recentOrders: recentOrders || [],
@@ -93,7 +51,9 @@ export default async function DashboardPage() {
       id: order.id,
       title: `New Order #${order.id.substring(0, 8)}`,
       status: order.status,
-      name: order.customers ? `${order.customers.first_name} ${order.customers.last_name}` : 'Unknown Customer',
+      name: order.customer_first_name && order.customer_last_name
+        ? `${order.customer_first_name} ${order.customer_last_name}`
+        : 'Unknown Customer',
       date: new Date(order.created_at),
       statusColor: order.status === 'completed' ? 'green' : 'blue'
     })),
@@ -111,7 +71,7 @@ export default async function DashboardPage() {
       id: item.id,
       title: 'Inventory Alert',
       status: 'alert',
-      name: `${item.products?.name || 'Unknown Product'} - Low Stock (${item.quantity}/${item.min_quantity})`,
+      name: `${item.product_name || 'Unknown Product'} - Low Stock (${item.quantity}/${item.min_quantity})`,
       date: new Date(item.updated_at),
       statusColor: 'yellow'
     }))

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { FaSun } from 'react-icons/fa';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signUp } from '@/lib/auth';
+
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -53,13 +53,30 @@ export default function RegisterPage() {
     setSuccess(null);
 
     try {
-      await signUp(data.email, data.password, data.firstName, data.lastName);
-      setSuccess('Registration successful! Please check your email to confirm your account.');
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          firstName: data.firstName,
+          lastName: data.lastName,
+        }),
+      });
 
-      // Redirect to login after a short delay
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create account');
+      }
+
+      setSuccess('Registration successful! Redirecting to dashboard...');
+
+      // Redirect to dashboard after a short delay
       setTimeout(() => {
-        router.push('/login');
-      }, 3000);
+        router.push('/dashboard');
+      }, 2000);
     } catch (error: any) {
       console.error('Registration error:', error);
       setError(error.message || 'Failed to register. Please try again.');

@@ -1,16 +1,26 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/auth';
+import jwt from 'jsonwebtoken';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
-  // Create a Supabase client configured to use cookies
-  const supabase = createServerSupabaseClient();
-  
-  // Refresh session if expired - required for Server Components
-  const { data: { session } } = await supabase.auth.getSession();
-  
+
+  // Get auth token from cookies
+  const token = request.cookies.get('auth-token')?.value;
+
+  // Verify token
+  let isAuthenticated = false;
+  if (token) {
+    try {
+      const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+      jwt.verify(token, JWT_SECRET);
+      isAuthenticated = true;
+    } catch (error) {
+      // Token is invalid
+      isAuthenticated = false;
+    }
+  }
+
   // Auth routes - redirect to dashboard if already authenticated
   if (
     pathname === '/login' ||
@@ -18,20 +28,20 @@ export async function middleware(request: NextRequest) {
     pathname === '/forgot-password' ||
     pathname.startsWith('/reset-password')
   ) {
-    if (session) {
+    if (isAuthenticated) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
     return NextResponse.next();
   }
-  
+
   // Protected routes - redirect to login if not authenticated
   if (pathname.startsWith('/dashboard')) {
-    if (!session) {
+    if (!isAuthenticated) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
     return NextResponse.next();
   }
-  
+
   // Public routes - allow access
   return NextResponse.next();
 }
