@@ -20,19 +20,43 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
-/* Make headings darker for better readability */
+/* Make headings darker for better readability on light backgrounds */
 @layer base {
+  /* Default heading styles - dark gray on light backgrounds */
   h1, h2, h3, h4, h5, h6 {
-    @apply text-gray-900 font-semibold;
+    color: #111827; /* text-gray-900 */
+    font-weight: 600; /* font-semibold */
   }
 
-  /* Override any text-gray-* classes on headings */
+  /* Override light gray colors on headings when on light backgrounds */
   h1.text-gray-100, h1.text-gray-200, h1.text-gray-300, h1.text-gray-400, h1.text-gray-500, h1.text-gray-600,
   h2.text-gray-100, h2.text-gray-200, h2.text-gray-300, h2.text-gray-400, h2.text-gray-500, h2.text-gray-600,
   h3.text-gray-100, h3.text-gray-200, h3.text-gray-300, h3.text-gray-400, h3.text-gray-500, h3.text-gray-600,
   h4.text-gray-100, h4.text-gray-200, h4.text-gray-300, h4.text-gray-400, h4.text-gray-500, h4.text-gray-600,
   h5.text-gray-100, h5.text-gray-200, h5.text-gray-300, h5.text-gray-400, h5.text-gray-500, h5.text-gray-600,
   h6.text-gray-100, h6.text-gray-200, h6.text-gray-300, h6.text-gray-400, h6.text-gray-500, h6.text-gray-600 {
-    @apply text-gray-900;
+    color: #111827 !important; /* text-gray-900 */
+  }
+
+  /* Allow headings to be light on dark backgrounds */
+  .bg-gray-900 h1, .bg-gray-800 h1, .bg-gray-700 h1,
+  .bg-gray-900 h2, .bg-gray-800 h2, .bg-gray-700 h2,
+  .bg-gray-900 h3, .bg-gray-800 h3, .bg-gray-700 h3,
+  .bg-gray-900 h4, .bg-gray-800 h4, .bg-gray-700 h4,
+  .bg-gray-900 h5, .bg-gray-800 h5, .bg-gray-700 h5,
+  .bg-gray-900 h6, .bg-gray-800 h6, .bg-gray-700 h6,
+  .bg-green-600 h1, .bg-green-700 h1, .bg-green-800 h1, .bg-green-900 h1,
+  .bg-green-600 h2, .bg-green-700 h2, .bg-green-800 h2, .bg-green-900 h2,
+  .bg-green-600 h3, .bg-green-700 h3, .bg-green-800 h3, .bg-green-900 h3,
+  .bg-green-600 h4, .bg-green-700 h4, .bg-green-800 h4, .bg-green-900 h4,
+  .bg-green-600 h5, .bg-green-700 h5, .bg-green-800 h5, .bg-green-900 h5,
+  .bg-green-600 h6, .bg-green-700 h6, .bg-green-800 h6, .bg-green-900 h6 {
+    color: #ffffff !important; /* text-white */
+  }
+
+  /* Preserve explicit text-white classes on headings */
+  .text-white h1, .text-white h2, .text-white h3, .text-white h4, .text-white h5, .text-white h6,
+  h1.text-white, h2.text-white, h3.text-white, h4.text-white, h5.text-white, h6.text-white {
+    color: #ffffff !important; /* text-white */
   }
 }
