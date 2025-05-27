@@ -57,7 +57,7 @@ export default function LoginPage() {
         <div className="text-center">
           <div className="flex items-center justify-center gap-2">
             <FaSun className="h-8 w-8 text-green-500" />
-            <span className="text-2xl font-bold">Payoff Solar</span>
+            <span className="text-2xl font-bold text-gray-900">Payoff Solar</span>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">Sign in to your account</h2>
           <p className="mt-2 text-sm text-gray-600">

@@ -19,3 +19,20 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Make headings darker for better readability */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-gray-900 font-semibold;
+  }
+
+  /* Override any text-gray-* classes on headings */
+  h1.text-gray-100, h1.text-gray-200, h1.text-gray-300, h1.text-gray-400, h1.text-gray-500, h1.text-gray-600,
+  h2.text-gray-100, h2.text-gray-200, h2.text-gray-300, h2.text-gray-400, h2.text-gray-500, h2.text-gray-600,
+  h3.text-gray-100, h3.text-gray-200, h3.text-gray-300, h3.text-gray-400, h3.text-gray-500, h3.text-gray-600,
+  h4.text-gray-100, h4.text-gray-200, h4.text-gray-300, h4.text-gray-400, h4.text-gray-500, h4.text-gray-600,
+  h5.text-gray-100, h5.text-gray-200, h5.text-gray-300, h5.text-gray-400, h5.text-gray-500, h5.text-gray-600,
+  h6.text-gray-100, h6.text-gray-200, h6.text-gray-300, h6.text-gray-400, h6.text-gray-500, h6.text-gray-600 {
+    @apply text-gray-900;
+  }
+}

@@ -42,7 +42,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Our Solar Solutions</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-gray-700 max-w-2xl mx-auto">
               We offer a complete range of solar products and services to help you transition to clean, renewable energy.
             </p>
           </div>
@@ -52,7 +52,7 @@ export default function HomePage() {
                 <FaSolarPanel className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-xl font-bold mb-2">Solar Panels</h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-700 mb-4">
                 High-efficiency solar panels designed to maximize energy production even in low-light conditions.
               </p>
               <Link href="/products/solar-panels" className="text-green-600 font-medium hover:underline">
@@ -64,7 +64,7 @@ export default function HomePage() {
                 <FaBatteryFull className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-xl font-bold mb-2">Energy Storage</h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-700 mb-4">
                 Store excess energy for use during peak hours or power outages with our advanced battery solutions.
               </p>
               <Link href="/products/batteries" className="text-green-600 font-medium hover:underline">
@@ -76,7 +76,7 @@ export default function HomePage() {
                 <FaLeaf className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-xl font-bold mb-2">Save the Planet</h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-700 mb-4">
                 Reduce your carbon footprint and contribute to a sustainable future with clean, renewable energy.
               </p>
               <Link href="/about" className="text-green-600 font-medium hover:underline">

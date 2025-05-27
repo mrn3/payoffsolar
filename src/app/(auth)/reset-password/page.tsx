@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
     try {
       await updatePassword(data.password);
       setSuccess('Your password has been reset successfully.');
-      
+
       // Redirect to login after a short delay
       setTimeout(() => {
         router.push('/login');
@@ -64,7 +64,7 @@ export default function ResetPasswordPage() {
         <div className="text-center">
           <div className="flex items-center justify-center gap-2">
             <FaSun className="h-8 w-8 text-green-500" />
-            <span className="text-2xl font-bold">Payoff Solar</span>
+            <span className="text-2xl font-bold text-gray-900">Payoff Solar</span>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">Reset your password</h2>
           <p className="mt-2 text-sm text-gray-600">
