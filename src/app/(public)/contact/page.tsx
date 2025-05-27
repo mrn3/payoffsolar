@@ -180,7 +180,7 @@ export default function ContactPage() {
                   <input
                     type="text"
                     id="firstName"
-                    className={`w-full px-4 py-2 border ${errors.firstName ? 'border-red-300' : 'border-gray-300'} rounded-md focus:ring-green-500 focus:border-green-500`}
+                    className={`w-full px-4 py-2 border ${errors.firstName ? 'border-red-300' : 'border-gray-300'} rounded-md text-gray-900 focus:ring-green-500 focus:border-green-500`}
                     {...register('firstName')}
                   />
                   {errors.firstName && (
@@ -194,7 +194,7 @@ export default function ContactPage() {
                   <input
                     type="text"
                     id="lastName"
-                    className={`w-full px-4 py-2 border ${errors.lastName ? 'border-red-300' : 'border-gray-300'} rounded-md focus:ring-green-500 focus:border-green-500`}
+                    className={`w-full px-4 py-2 border ${errors.lastName ? 'border-red-300' : 'border-gray-300'} rounded-md text-gray-900 focus:ring-green-500 focus:border-green-500`}
                     {...register('lastName')}
                   />
                   {errors.lastName && (
@@ -210,7 +210,7 @@ export default function ContactPage() {
                   <input
                     type="email"
                     id="email"
-                    className={`w-full px-4 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md focus:ring-green-500 focus:border-green-500`}
+                    className={`w-full px-4 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md text-gray-900 focus:ring-green-500 focus:border-green-500`}
                     {...register('email')}
                   />
                   {errors.email && (
@@ -224,7 +224,7 @@ export default function ContactPage() {
                   <input
                     type="tel"
                     id="phone"
-                    className={`w-full px-4 py-2 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-md focus:ring-green-500 focus:border-green-500`}
+                    className={`w-full px-4 py-2 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-md text-gray-900 focus:ring-green-500 focus:border-green-500`}
                     {...register('phone')}
                   />
                   {errors.phone && (
@@ -239,7 +239,7 @@ export default function ContactPage() {
                 <input
                   type="text"
                   id="subject"
-                  className={`w-full px-4 py-2 border ${errors.subject ? 'border-red-300' : 'border-gray-300'} rounded-md focus:ring-green-500 focus:border-green-500`}
+                  className={`w-full px-4 py-2 border ${errors.subject ? 'border-red-300' : 'border-gray-300'} rounded-md text-gray-900 focus:ring-green-500 focus:border-green-500`}
                   {...register('subject')}
                 />
                 {errors.subject && (
@@ -253,7 +253,7 @@ export default function ContactPage() {
                 <textarea
                   id="message"
                   rows={6}
-                  className={`w-full px-4 py-2 border ${errors.message ? 'border-red-300' : 'border-gray-300'} rounded-md focus:ring-green-500 focus:border-green-500`}
+                  className={`w-full px-4 py-2 border ${errors.message ? 'border-red-300' : 'border-gray-300'} rounded-md text-gray-900 focus:ring-green-500 focus:border-green-500`}
                   {...register('message')}
                 ></textarea>
                 {errors.message && (
