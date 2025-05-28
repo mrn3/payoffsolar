@@ -36,7 +36,20 @@ export default function ForgotPasswordPage() {
     setSuccess(null);
 
     try {
-      await resetPassword(data.email);
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: data.email }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send reset instructions');
+      }
+
       setSuccess('Password reset instructions have been sent to your email.');
     } catch (error: any) {
       console.error('Password reset error:', error);

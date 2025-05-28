@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { FaSun } from 'react-icons/fa';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -21,9 +21,11 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   const {
     register,
@@ -37,13 +39,43 @@ export default function ResetPasswordPage() {
     },
   });
 
+  useEffect(() => {
+    const tokenParam = searchParams.get('token');
+    if (tokenParam) {
+      setToken(tokenParam);
+    } else {
+      setError('Invalid or missing reset token. Please request a new password reset.');
+    }
+  }, [searchParams]);
+
   const onSubmit = async (data: ResetPasswordFormValues) => {
+    if (!token) {
+      setError('Invalid or missing reset token. Please request a new password reset.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
-      await updatePassword(data.password);
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: token,
+          password: data.password
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to reset password');
+      }
+
       setSuccess('Your password has been reset successfully.');
 
       // Redirect to login after a short delay

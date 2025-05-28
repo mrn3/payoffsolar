@@ -29,6 +29,17 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Create password reset tokens table
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  user_id VARCHAR(36) NOT NULL,
+  token VARCHAR(255) NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  used BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Create user profiles table
 CREATE TABLE IF NOT EXISTS profiles (
   id VARCHAR(36) PRIMARY KEY,
@@ -214,4 +225,6 @@ CREATE INDEX idx_order_items_product ON order_items(product_id);
 CREATE INDEX idx_invoices_order ON invoices(order_id);
 CREATE INDEX idx_content_type ON content(type_id);
 CREATE INDEX idx_content_author ON content(author_id);
+CREATE INDEX idx_password_reset_tokens_token ON password_reset_tokens(token);
+CREATE INDEX idx_password_reset_tokens_user ON password_reset_tokens(user_id);
 CREATE INDEX idx_content_published ON content(published);

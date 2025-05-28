@@ -3,8 +3,8 @@ import { clearAuthCookie } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    clearAuthCookie();
-    
+    await clearAuthCookie();
+
     return NextResponse.json(
       { message: 'Signed out successfully' },
       { status: 200 }

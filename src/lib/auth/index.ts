@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { executeQuery, getOne, executeSingle } from '../mysql/connection';
+import crypto from 'crypto';
 
 export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'customer';
 
@@ -60,8 +61,8 @@ export function verifyToken(token: string): { userId: string } | null {
 }
 
 // Set auth cookie
-export function setAuthCookie(token: string) {
-  const cookieStore = cookies();
+export async function setAuthCookie(token: string) {
+  const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -72,36 +73,36 @@ export function setAuthCookie(token: string) {
 }
 
 // Clear auth cookie
-export function clearAuthCookie() {
-  const cookieStore = cookies();
+export async function clearAuthCookie() {
+  const cookieStore = await cookies();
   cookieStore.delete(COOKIE_NAME);
 }
 
 // Get current session
 export async function getSession(): Promise<AuthSession | null> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
-    
+
     if (!token) {
       return null;
     }
-    
+
     const decoded = verifyToken(token);
     if (!decoded) {
       return null;
     }
-    
+
     // Get user from database
     const user = await getOne<User>(
       'SELECT id, email, email_verified, created_at FROM users WHERE id = ?',
       [decoded.userId]
     );
-    
+
     if (!user) {
       return null;
     }
-    
+
     // Get user profile
     const profile = await getOne<any>(
       `SELECT p.id, p.first_name, p.last_name, p.email, r.name as role_name
@@ -110,11 +111,11 @@ export async function getSession(): Promise<AuthSession | null> {
        WHERE p.id = ?`,
       [user.id]
     );
-    
+
     if (!profile) {
       return null;
     }
-    
+
     return {
       user,
       profile: {
@@ -139,26 +140,38 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
 // Sign in user
 export async function signIn(email: string, password: string): Promise<AuthSession> {
+  console.log('🔐 Sign in attempt for:', email);
+
   // Get user by email
   const user = await getOne<User & { password_hash: string }>(
     'SELECT id, email, email_verified, password_hash, created_at FROM users WHERE email = ?',
     [email]
   );
-  
+
+  console.log('👤 User found:', user ? 'Yes' : 'No');
+
   if (!user) {
+    console.log('❌ User not found');
     throw new Error('Invalid email or password');
   }
-  
+
+  console.log('🔑 Verifying password...');
+  console.log('Password provided:', password);
+  console.log('Stored hash:', user.password_hash);
+
   // Verify password
   const isValidPassword = await verifyPassword(password, user.password_hash);
+  console.log('✅ Password valid:', isValidPassword);
+
   if (!isValidPassword) {
+    console.log('❌ Password verification failed');
     throw new Error('Invalid email or password');
   }
-  
+
   // Generate token and set cookie
   const token = generateToken(user.id);
-  setAuthCookie(token);
-  
+  await setAuthCookie(token);
+
   // Get profile
   const profile = await getOne<any>(
     `SELECT p.id, p.first_name, p.last_name, p.email, r.name as role_name
@@ -167,7 +180,7 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
      WHERE p.id = ?`,
     [user.id]
   );
-  
+
   return {
     user: {
       id: user.id,
@@ -197,51 +210,51 @@ export async function signUp(
     'SELECT id FROM users WHERE email = ?',
     [email]
   );
-  
+
   if (existingUser) {
     throw new Error('User with this email already exists');
   }
-  
+
   // Hash password
   const passwordHash = await hashPassword(password);
-  
+
   // Get customer role ID
   const customerRole = await getOne<{ id: string }>(
     'SELECT id FROM roles WHERE name = ?',
     ['customer']
   );
-  
+
   if (!customerRole) {
     throw new Error('Customer role not found');
   }
-  
+
   try {
     // Create user
     const userResult = await executeSingle(
       'INSERT INTO users (id, email, password_hash, email_verified) VALUES (UUID(), ?, ?, FALSE)',
       [email, passwordHash]
     );
-    
+
     // Get the created user
     const user = await getOne<User>(
       'SELECT id, email, email_verified, created_at FROM users WHERE email = ?',
       [email]
     );
-    
+
     if (!user) {
       throw new Error('Failed to create user');
     }
-    
+
     // Create profile
     await executeSingle(
       'INSERT INTO profiles (id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
       [user.id, firstName, lastName, email, customerRole.id]
     );
-    
+
     // Generate token and set cookie
     const token = generateToken(user.id);
-    setAuthCookie(token);
-    
+    await setAuthCookie(token);
+
     return {
       user,
       profile: {
@@ -260,47 +273,114 @@ export async function signUp(
 
 // Sign out user
 export async function signOut() {
-  clearAuthCookie();
+  await clearAuthCookie();
   redirect('/login');
 }
 
 // Require authentication
 export async function requireAuth(): Promise<AuthSession> {
   const session = await getSession();
-  
+
   if (!session) {
     redirect('/login');
   }
-  
+
   return session;
 }
 
 // Require specific role
 export async function requireRole(allowedRoles: UserRole[]): Promise<AuthSession> {
   const session = await requireAuth();
-  
+
   if (!session.profile.role || !allowedRoles.includes(session.profile.role)) {
     redirect('/dashboard');
   }
-  
+
   return session;
 }
 
-// Reset password (placeholder - would need email service)
+// Generate password reset token
+export async function generateResetToken(email: string): Promise<string | null> {
+  // Check if user exists
+  const user = await getOne<User>(
+    'SELECT id, email FROM users WHERE email = ?',
+    [email]
+  );
+
+  if (!user) {
+    // Don't reveal if user exists or not for security
+    return null;
+  }
+
+  // Generate a secure random token
+  const token = crypto.randomBytes(32).toString('hex');
+
+  // Set expiration to 1 hour from now
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  // Store the token in database
+  await executeSingle(
+    'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+    [user.id, token, expiresAt]
+  );
+
+  return token;
+}
+
+// Verify password reset token
+export async function verifyResetToken(token: string): Promise<string | null> {
+  const resetToken = await getOne<{ user_id: string; expires_at: Date; used: boolean }>(
+    'SELECT user_id, expires_at, used FROM password_reset_tokens WHERE token = ?',
+    [token]
+  );
+
+  if (!resetToken) {
+    return null;
+  }
+
+  if (resetToken.used) {
+    return null;
+  }
+
+  if (new Date() > new Date(resetToken.expires_at)) {
+    return null;
+  }
+
+  // Mark token as used
+  await executeSingle(
+    'UPDATE password_reset_tokens SET used = TRUE WHERE token = ?',
+    [token]
+  );
+
+  return resetToken.user_id;
+}
+
+// Reset password (improved implementation)
 export async function resetPassword(email: string): Promise<boolean> {
-  // TODO: Implement email-based password reset
-  console.log('Password reset requested for:', email);
+  const token = await generateResetToken(email);
+
+  if (!token) {
+    // Still return true to not reveal if user exists
+    console.log('Password reset requested for non-existent email:', email);
+    return true;
+  }
+
+  // TODO: Send email with reset link
+  // For now, just log the token (in production, this should be sent via email)
+  console.log('Password reset token generated for:', email);
+  console.log('Reset link: http://localhost:3000/reset-password?token=' + token);
+
   return true;
 }
 
 // Update password
 export async function updatePassword(userId: string, newPassword: string): Promise<boolean> {
   const passwordHash = await hashPassword(newPassword);
-  
+
   const result = await executeSingle(
     'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
     [passwordHash, userId]
   );
-  
+
   return result.affectedRows > 0;
 }
