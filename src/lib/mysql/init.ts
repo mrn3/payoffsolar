@@ -1,9 +1,19 @@
 import fs from 'fs';
 import path from 'path';
+import { config } from 'dotenv';
 import { executeQuery, testConnection } from './connection';
+
+// Load environment variables from .env.local
+config({ path: path.join(process.cwd(), '.env.local') });
 
 export async function initializeDatabase() {
   console.log('🔄 Initializing MySQL database...');
+  console.log('🔧 Database config:', {
+    host: process.env.MYSQL_HOST,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD ? '***' : 'NOT SET',
+    database: process.env.MYSQL_DATABASE
+  });
   
   // Test connection first
   const isConnected = await testConnection();

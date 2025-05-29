@@ -213,18 +213,18 @@ CREATE TABLE IF NOT EXISTS content (
 );
 
 -- Create indexes for better performance
-CREATE INDEX idx_customers_email ON customers(email);
-CREATE INDEX idx_products_sku ON products(sku);
-CREATE INDEX idx_products_category ON products(category_id);
-CREATE INDEX idx_inventory_product ON inventory(product_id);
-CREATE INDEX idx_inventory_warehouse ON inventory(warehouse_id);
-CREATE INDEX idx_orders_customer ON orders(customer_id);
-CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_order_items_order ON order_items(order_id);
-CREATE INDEX idx_order_items_product ON order_items(product_id);
-CREATE INDEX idx_invoices_order ON invoices(order_id);
-CREATE INDEX idx_content_type ON content(type_id);
-CREATE INDEX idx_content_author ON content(author_id);
-CREATE INDEX idx_password_reset_tokens_token ON password_reset_tokens(token);
-CREATE INDEX idx_password_reset_tokens_user ON password_reset_tokens(user_id);
-CREATE INDEX idx_content_published ON content(published);
+CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
+CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_product ON inventory(product_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_warehouse ON inventory(warehouse_id);
+CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_order ON invoices(order_id);
+CREATE INDEX IF NOT EXISTS idx_content_type ON content(type_id);
+CREATE INDEX IF NOT EXISTS idx_content_author ON content(author_id);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user ON password_reset_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_content_published ON content(published);

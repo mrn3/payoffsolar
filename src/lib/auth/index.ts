@@ -365,10 +365,18 @@ export async function resetPassword(email: string): Promise<boolean> {
     return true;
   }
 
-  // TODO: Send email with reset link
-  // For now, just log the token (in production, this should be sent via email)
-  console.log('Password reset token generated for:', email);
-  console.log('Reset link: http://localhost:3000/reset-password?token=' + token);
+  // Import email service dynamically to avoid circular dependencies
+  const { sendPasswordResetEmail } = await import('@/lib/email');
+
+  // Send password reset email
+  const emailSent = await sendPasswordResetEmail(email, token);
+
+  if (!emailSent) {
+    console.error('Failed to send password reset email to:', email);
+    // Still return true to not reveal if user exists or if email failed
+  } else {
+    console.log('Password reset email sent successfully to:', email);
+  }
 
   return true;
 }

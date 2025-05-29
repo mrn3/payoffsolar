@@ -17,7 +17,7 @@ try {
 
 // Check if we can connect to MySQL
 try {
-  execSync('mysql -u root -e "SELECT 1"', { stdio: 'ignore' });
+  execSync('mysql -u root -ppassword -e "SELECT 1"', { stdio: 'ignore' });
   console.log('✅ MySQL connection successful');
 } catch (error) {
   console.error('❌ Cannot connect to MySQL');
@@ -32,13 +32,17 @@ try {
   
   // Import the schema
   const schemaPath = path.join(__dirname, '..', 'src', 'lib', 'mysql', 'schema.sql');
-  execSync(`mysql -u root < "${schemaPath}"`, { stdio: 'inherit' });
+  execSync(`mysql -u root -ppassword < "${schemaPath}"`, { stdio: 'inherit' });
   
   console.log('✅ Database schema created successfully');
   
   // Run the Node.js initialization script
   console.log('🌱 Seeding database with initial data...');
-  execSync('npx tsx src/lib/mysql/init.ts', { stdio: 'inherit', cwd: path.join(__dirname, '..') });
+  execSync('npx tsx src/lib/mysql/init.ts', {
+    stdio: 'inherit',
+    cwd: path.join(__dirname, '..'),
+    env: { ...process.env, NODE_ENV: 'development' }
+  });
   
   console.log('\n🎉 Database setup complete!');
   console.log('\nNext steps:');

@@ -6,43 +6,92 @@ import { CustomerModel, ProductModel, OrderModel, InventoryModel } from '@/lib/m
 import { formatDistanceToNow, format } from 'date-fns';
 
 async function getStats() {
-  // Get customer count
-  const customerCount = await CustomerModel.getCount();
+  try {
+    console.log('📊 Getting dashboard stats...');
 
-  // Get product count
-  const productCount = await ProductModel.getCount();
+    // Get customer count
+    const customerCount = await CustomerModel.getCount();
+    console.log('👥 Customer count:', customerCount);
 
-  // Get order count
-  const orderCount = await OrderModel.getCount();
+    // Get product count
+    const productCount = await ProductModel.getCount();
+    console.log('📦 Product count:', productCount);
 
-  return {
-    customerCount: customerCount || 0,
-    productCount: productCount || 0,
-    orderCount: orderCount || 0
-  };
+    // Get order count
+    const orderCount = await OrderModel.getCount();
+    console.log('🛒 Order count:', orderCount);
+
+    return {
+      customerCount: customerCount || 0,
+      productCount: productCount || 0,
+      orderCount: orderCount || 0
+    };
+  } catch (error) {
+    console.error('❌ Error getting dashboard stats:', error);
+    return {
+      customerCount: 0,
+      productCount: 0,
+      orderCount: 0
+    };
+  }
 }
 
 async function getRecentActivity() {
-  // Get recent orders
-  const recentOrders = await OrderModel.getRecent(3);
+  try {
+    console.log('📈 Getting recent activity...');
 
-  // Get recent customers
-  const recentCustomers = await CustomerModel.getAll(3, 0);
+    // Get recent orders
+    const recentOrders = await OrderModel.getRecent(3);
+    console.log('🛒 Recent orders:', recentOrders?.length || 0);
 
-  // Get low stock inventory
-  const lowStockItems = await InventoryModel.getLowStock(3);
+    // Get recent customers
+    const recentCustomers = await CustomerModel.getAll(3, 0);
+    console.log('👥 Recent customers:', recentCustomers?.length || 0);
 
-  return {
-    recentOrders: recentOrders || [],
-    recentCustomers: recentCustomers || [],
-    lowStockItems: lowStockItems || []
-  };
+    // Get low stock inventory
+    const lowStockItems = await InventoryModel.getLowStock(3);
+    console.log('📦 Low stock items:', lowStockItems?.length || 0);
+
+    return {
+      recentOrders: recentOrders || [],
+      recentCustomers: recentCustomers || [],
+      lowStockItems: lowStockItems || []
+    };
+  } catch (error) {
+    console.error('❌ Error getting recent activity:', error);
+    return {
+      recentOrders: [],
+      recentCustomers: [],
+      lowStockItems: []
+    };
+  }
 }
 
 export default async function DashboardPage() {
-  const profile = await getUserProfile();
-  const stats = await getStats();
-  const activity = await getRecentActivity();
+  console.log('🏠 Loading dashboard page...');
+
+  let profile, stats, activity;
+
+  try {
+    profile = await getUserProfile();
+    console.log('👤 User profile loaded:', profile ? 'Yes' : 'No');
+
+    stats = await getStats();
+    activity = await getRecentActivity();
+
+    console.log('✅ Dashboard data loaded successfully');
+  } catch (error) {
+    console.error('❌ Error loading dashboard:', error);
+    // Return a simple error page
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Dashboard Error</h1>
+          <p className="text-gray-600">There was an error loading the dashboard. Please check the console for details.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Combine recent activities and sort by date
   const allActivities = [
