@@ -36,6 +36,11 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
   };
 
   const isActive = (path: string) => {
+    // Special case for Dashboard - only active when exactly on /dashboard
+    if (path === '/dashboard') {
+      return pathname === '/dashboard';
+    }
+    // For other routes, check exact match or if it's a sub-route
     return pathname === path || pathname?.startsWith(`${path}/`);
   };
 
