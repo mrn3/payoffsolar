@@ -40,8 +40,56 @@ export const CustomerModel = {
     return customer!.id;
   },
 
+  async update(id: string, data: Partial<Omit<Customer, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.first_name !== undefined) { fields.push('first_name = ?'); values.push(data.first_name); }
+    if (data.last_name !== undefined) { fields.push('last_name = ?'); values.push(data.last_name); }
+    if (data.email !== undefined) { fields.push('email = ?'); values.push(data.email); }
+    if (data.phone !== undefined) { fields.push('phone = ?'); values.push(data.phone); }
+    if (data.address !== undefined) { fields.push('address = ?'); values.push(data.address); }
+    if (data.city !== undefined) { fields.push('city = ?'); values.push(data.city); }
+    if (data.state !== undefined) { fields.push('state = ?'); values.push(data.state); }
+    if (data.zip !== undefined) { fields.push('zip = ?'); values.push(data.zip); }
+    if (data.notes !== undefined) { fields.push('notes = ?'); values.push(data.notes); }
+    if (data.user_id !== undefined) { fields.push('user_id = ?'); values.push(data.user_id); }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE customers SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM customers WHERE id = ?', [id]);
+  },
+
+  async search(query: string, limit = 50, offset = 0): Promise<Customer[]> {
+    const searchTerm = `%${query}%`;
+    return executeQuery<Customer>(
+      `SELECT * FROM customers
+       WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?
+       ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      [searchTerm, searchTerm, searchTerm, searchTerm, limit, offset]
+    );
+  },
+
   async getCount(): Promise<number> {
     const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM customers');
+    return result?.count || 0;
+  },
+
+  async getSearchCount(query: string): Promise<number> {
+    const searchTerm = `%${query}%`;
+    const result = await getOne<{ count: number }>(
+      `SELECT COUNT(*) as count FROM customers
+       WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?`,
+      [searchTerm, searchTerm, searchTerm, searchTerm]
+    );
     return result?.count || 0;
   }
 };
