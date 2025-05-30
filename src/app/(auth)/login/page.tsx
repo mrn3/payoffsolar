@@ -40,6 +40,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
+      console.log('🔐 Starting login process...');
       const response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: {
@@ -51,15 +52,24 @@ export default function LoginPage() {
         }),
       });
 
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response ok:', response.ok);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Login failed:', errorData);
         throw new Error(errorData.error || 'Failed to sign in');
       }
 
-      router.push('/dashboard');
-      router.refresh();
+      const responseData = await response.json();
+      console.log('✅ Login successful:', responseData);
+      console.log('🍪 Cookies after login:', document.cookie);
+
+      console.log('🔄 Redirecting to dashboard...');
+      // Use window.location to ensure cookies are sent with the request
+      window.location.href = '/dashboard';
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       setError(error.message || 'Failed to sign in. Please check your credentials.');
     } finally {
       setIsLoading(false);

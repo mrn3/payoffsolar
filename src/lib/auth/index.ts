@@ -63,13 +63,23 @@ export function verifyToken(token: string): { userId: string } | null {
 // Set auth cookie
 export async function setAuthCookie(token: string) {
   const cookieStore = await cookies();
+  console.log('🍪 Setting auth cookie with token:', token.substring(0, 20) + '...');
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60, // 7 days
     path: '/',
+    domain: undefined, // Let browser set the domain
   });
+  console.log('🍪 Auth cookie set successfully');
+}
+
+// Generate cookie string for API responses
+export function generateCookieString(token: string): string {
+  const maxAge = 7 * 24 * 60 * 60; // 7 days
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  return `${COOKIE_NAME}=${token}; HttpOnly; SameSite=Lax; Max-Age=${maxAge}; Path=/${secure}`;
 }
 
 // Clear auth cookie
@@ -83,8 +93,10 @@ export async function getSession(): Promise<AuthSession | null> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
+    console.log('🔍 Getting session, token found:', token ? 'Yes' : 'No');
 
     if (!token) {
+      console.log('❌ No auth token found in cookies');
       return null;
     }
 
@@ -168,9 +180,9 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
     throw new Error('Invalid email or password');
   }
 
-  // Generate token and set cookie
-  const token = generateToken(user.id);
-  await setAuthCookie(token);
+  // Note: Cookie will be set manually in API route
+  // const token = generateToken(user.id);
+  // await setAuthCookie(token);
 
   // Get profile
   const profile = await getOne<any>(
