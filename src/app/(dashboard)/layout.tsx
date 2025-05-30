@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaUser } from 'react-icons/fa';
+import { FaUser, FaSun } from 'react-icons/fa';
 import { getUserProfile } from '@/lib/auth';
 import DashboardNavigation from '@/components/dashboard/DashboardNavigation';
 
@@ -27,7 +27,13 @@ export default async function DashboardLayout({
             <div className="flex-1 flex justify-between px-4 md:px-0">
               <div className="flex-1 flex md:ml-64">
                 <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-8">
-                  {/* Dashboard title removed to prevent mobile menu overlap */}
+                  {/* Mobile logo - centered horizontally, hidden on desktop */}
+                  <div className="md:hidden flex items-center justify-center h-full">
+                    <div className="flex items-center gap-2">
+                      <FaSun className="h-6 w-6 text-green-500" />
+                      <span className="text-xl font-bold text-gray-900">Payoff Solar</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="ml-4 flex items-center md:ml-6">
