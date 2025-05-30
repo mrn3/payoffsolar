@@ -169,8 +169,8 @@ export default function CustomersPage() {
         </div>
       )}
 
-      {/* Customers table */}
-      <div className="mt-8 flex flex-col">
+      {/* Customers table - Desktop */}
+      <div className="mt-8 hidden sm:flex sm:flex-col">
         <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
@@ -258,6 +258,75 @@ export default function CustomersPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Customers cards - Mobile */}
+      <div className="mt-8 sm:hidden">
+        {loading ? (
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-500">Loading customers...</p>
+          </div>
+        ) : customers.length > 0 ? (
+          <div className="space-y-4">
+            {customers.map((customer) => (
+              <div key={customer.id} className="bg-white shadow rounded-lg border border-gray-200 p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-medium text-gray-900 truncate">
+                      {customer.first_name} {customer.last_name}
+                    </h3>
+                    <div className="mt-2 space-y-1">
+                      {customer.email && (
+                        <p className="text-sm text-gray-600 truncate">
+                          <span className="font-medium">Email:</span> {customer.email}
+                        </p>
+                      )}
+                      {customer.phone && (
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Phone:</span> {customer.phone}
+                        </p>
+                      )}
+                      {(customer.city || customer.state) && (
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Location:</span> {customer.city}, {customer.state}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Created:</span> {format(new Date(customer.created_at), 'MMM d, yyyy')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 ml-4">
+                    <button
+                      type="button"
+                      onClick={() => navigateToEdit(customer)}
+                      className="text-blue-600 hover:text-blue-900 p-2"
+                      title="Edit customer"
+                    >
+                      <FaEdit className="h-5 w-5" />
+                      <span className="sr-only">Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openDeleteModal(customer)}
+                      className="text-red-600 hover:text-red-900 p-2"
+                      title="Delete customer"
+                    >
+                      <FaTrash className="h-5 w-5" />
+                      <span className="sr-only">Delete</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-500">
+              {searchQuery ? 'No customers found matching your search.' : 'No customers found.'}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Pagination */}
