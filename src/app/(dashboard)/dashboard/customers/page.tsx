@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { FaPlus, FaSearch, FaEdit, FaTrash } from 'react-icons/fa';
 import { Customer } from '@/lib/models';
 import CustomerModal from '@/components/customers/CustomerModal';
@@ -18,6 +19,7 @@ interface CustomersResponse {
 }
 
 export default function CustomersPage() {
+  const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,6 @@ export default function CustomersPage() {
 
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
@@ -91,29 +92,7 @@ export default function CustomersPage() {
     }
   };
 
-  const handleEditCustomer = async (customerData: Partial<Customer>) => {
-    if (!selectedCustomer) return;
 
-    try {
-      const response = await fetch(`/api/customers/${selectedCustomer.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(customerData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update customer');
-      }
-
-      await fetchCustomers(currentPage, searchQuery);
-      setIsEditModalOpen(false);
-      setSelectedCustomer(null);
-    } catch (err) {
-      console.error('Error updating customer:', err);
-      throw err;
-    }
-  };
 
   const handleDeleteCustomer = async () => {
     if (!selectedCustomer) return;
@@ -137,9 +116,8 @@ export default function CustomersPage() {
     }
   };
 
-  const openEditModal = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setIsEditModalOpen(true);
+  const navigateToEdit = (customer: Customer) => {
+    router.push(`/dashboard/customers/${customer.id}/edit`);
   };
 
   const openDeleteModal = (customer: Customer) => {
@@ -248,7 +226,7 @@ export default function CustomersPage() {
                           <div className="flex items-center justify-end space-x-3">
                             <button
                               type="button"
-                              onClick={() => openEditModal(customer)}
+                              onClick={() => navigateToEdit(customer)}
                               className="text-blue-600 hover:text-blue-900"
                               title="Edit customer"
                             >
@@ -315,17 +293,6 @@ export default function CustomersPage() {
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleAddCustomer}
         title="Add New Customer"
-      />
-
-      <CustomerModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedCustomer(null);
-        }}
-        onSave={handleEditCustomer}
-        customer={selectedCustomer}
-        title="Edit Customer"
       />
 
       <DeleteCustomerModal

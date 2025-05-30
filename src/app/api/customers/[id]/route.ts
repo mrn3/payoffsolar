@@ -44,8 +44,16 @@ export async function PUT(
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
 
+    // Validate required fields (only first_name and last_name are required for updates)
+    if (data.first_name !== undefined && !data.first_name.trim()) {
+      return NextResponse.json({ error: 'First name cannot be empty' }, { status: 400 });
+    }
+    if (data.last_name !== undefined && !data.last_name.trim()) {
+      return NextResponse.json({ error: 'Last name cannot be empty' }, { status: 400 });
+    }
+
     // Validate email format if provided
-    if (data.email) {
+    if (data.email && data.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(data.email)) {
         return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
