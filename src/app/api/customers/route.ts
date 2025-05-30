@@ -53,22 +53,24 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json();
 
-    // Validate required fields
-    const requiredFields = ['first_name', 'last_name', 'email', 'phone', 'address', 'city', 'state', 'zip'];
-    for (const field of requiredFields) {
-      if (!data[field]) {
-        return NextResponse.json({ error: `${field} is required` }, { status: 400 });
+    // Validate required fields (only first_name and last_name are required)
+    if (!data.first_name || !data.first_name.trim()) {
+      return NextResponse.json({ error: 'First name is required' }, { status: 400 });
+    }
+    if (!data.last_name || !data.last_name.trim()) {
+      return NextResponse.json({ error: 'Last name is required' }, { status: 400 });
+    }
+
+    // Validate email format if provided
+    if (data.email && data.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(data.email)) {
+        return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
       }
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email)) {
-      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
-    }
-
-    // Validate phone format
-    if (!isValidPhoneNumber(data.phone)) {
+    // Validate phone format if provided
+    if (data.phone && data.phone.trim() && !isValidPhoneNumber(data.phone)) {
       return NextResponse.json({ error: 'Phone number must be exactly 10 digits' }, { status: 400 });
     }
 
