@@ -136,14 +136,14 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
         <button
           type="button"
           onClick={() => setMobileMenuOpen(true)}
-          className="fixed top-4 left-4 z-50 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
+          className="fixed top-4 left-4 z-[60] inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
         >
           <span className="sr-only">Open sidebar</span>
           <FaBars className="h-6 w-6" />
         </button>
 
         {/* Mobile menu panel */}
-        <div className={`fixed inset-0 z-40 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+        <div className={`fixed inset-0 z-50 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
           <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setMobileMenuOpen(false)}></div>
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
@@ -157,7 +157,7 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
               </button>
             </div>
             <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-              <div className="flex-shrink-0 flex items-center px-4">
+              <div className="flex-shrink-0 flex items-center px-4 pl-16">
                 <FaSun className="h-6 w-6 text-green-600 mr-2" />
                 <span className="text-xl font-bold text-gray-900">Payoff Solar</span>
               </div>
