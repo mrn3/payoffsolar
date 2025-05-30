@@ -105,12 +105,43 @@ export const OrderModel = {
     );
   },
 
+  async getAllByUser(userId: string, limit = 50, offset = 0): Promise<OrderWithCustomer[]> {
+    return executeQuery<OrderWithCustomer>(
+      `SELECT o.*, c.first_name as customer_first_name, c.last_name as customer_last_name
+       FROM orders o
+       LEFT JOIN customers c ON o.customer_id = c.id
+       WHERE c.user_id = ?
+       ORDER BY o.created_at DESC LIMIT ? OFFSET ?`,
+      [userId, limit, offset]
+    );
+  },
+
   async getById(id: string): Promise<Order | null> {
     return getOne<Order>('SELECT * FROM orders WHERE id = ?', [id]);
   },
 
+  async getByIdForUser(id: string, userId: string): Promise<OrderWithCustomer | null> {
+    return getOne<OrderWithCustomer>(
+      `SELECT o.*, c.first_name as customer_first_name, c.last_name as customer_last_name
+       FROM orders o
+       LEFT JOIN customers c ON o.customer_id = c.id
+       WHERE o.id = ? AND c.user_id = ?`,
+      [id, userId]
+    );
+  },
+
   async getCount(): Promise<number> {
     const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM orders');
+    return result?.count || 0;
+  },
+
+  async getCountByUser(userId: string): Promise<number> {
+    const result = await getOne<{ count: number }>(
+      `SELECT COUNT(*) as count FROM orders o
+       LEFT JOIN customers c ON o.customer_id = c.id
+       WHERE c.user_id = ?`,
+      [userId]
+    );
     return result?.count || 0;
   },
 
@@ -121,6 +152,114 @@ export const OrderModel = {
        LEFT JOIN customers c ON o.customer_id = c.id
        ORDER BY o.created_at DESC LIMIT ?`,
       [limit]
+    );
+  },
+
+  async getRecentByUser(userId: string, limit = 3): Promise<OrderWithCustomer[]> {
+    return executeQuery<OrderWithCustomer>(
+      `SELECT o.*, c.first_name as customer_first_name, c.last_name as customer_last_name
+       FROM orders o
+       LEFT JOIN customers c ON o.customer_id = c.id
+       WHERE c.user_id = ?
+       ORDER BY o.created_at DESC LIMIT ?`,
+      [userId, limit]
+    );
+  }
+};
+
+// Invoice model
+export interface Invoice {
+  id: string;
+  order_id: string;
+  invoice_number: string;
+  amount: number;
+  status: string;
+  due_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceWithCustomer extends Invoice {
+  customer_first_name?: string;
+  customer_last_name?: string;
+  customer_email?: string;
+}
+
+export const InvoiceModel = {
+  async getAll(limit = 50, offset = 0): Promise<InvoiceWithCustomer[]> {
+    return executeQuery<InvoiceWithCustomer>(
+      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email
+       FROM invoices i
+       LEFT JOIN orders o ON i.order_id = o.id
+       LEFT JOIN customers c ON o.customer_id = c.id
+       ORDER BY i.created_at DESC LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+  },
+
+  async getAllByUser(userId: string, limit = 50, offset = 0): Promise<InvoiceWithCustomer[]> {
+    return executeQuery<InvoiceWithCustomer>(
+      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email
+       FROM invoices i
+       LEFT JOIN orders o ON i.order_id = o.id
+       LEFT JOIN customers c ON o.customer_id = c.id
+       WHERE c.user_id = ?
+       ORDER BY i.created_at DESC LIMIT ? OFFSET ?`,
+      [userId, limit, offset]
+    );
+  },
+
+  async getById(id: string): Promise<Invoice | null> {
+    return getOne<Invoice>('SELECT * FROM invoices WHERE id = ?', [id]);
+  },
+
+  async getByIdForUser(id: string, userId: string): Promise<InvoiceWithCustomer | null> {
+    return getOne<InvoiceWithCustomer>(
+      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email
+       FROM invoices i
+       LEFT JOIN orders o ON i.order_id = o.id
+       LEFT JOIN customers c ON o.customer_id = c.id
+       WHERE i.id = ? AND c.user_id = ?`,
+      [id, userId]
+    );
+  },
+
+  async getCount(): Promise<number> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM invoices');
+    return result?.count || 0;
+  },
+
+  async getCountByUser(userId: string): Promise<number> {
+    const result = await getOne<{ count: number }>(
+      `SELECT COUNT(*) as count FROM invoices i
+       LEFT JOIN orders o ON i.order_id = o.id
+       LEFT JOIN customers c ON o.customer_id = c.id
+       WHERE c.user_id = ?`,
+      [userId]
+    );
+    return result?.count || 0;
+  },
+
+  async getRecent(limit = 3): Promise<InvoiceWithCustomer[]> {
+    return executeQuery<InvoiceWithCustomer>(
+      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email
+       FROM invoices i
+       LEFT JOIN orders o ON i.order_id = o.id
+       LEFT JOIN customers c ON o.customer_id = c.id
+       ORDER BY i.created_at DESC LIMIT ?`,
+      [limit]
+    );
+  },
+
+  async getRecentByUser(userId: string, limit = 3): Promise<InvoiceWithCustomer[]> {
+    return executeQuery<InvoiceWithCustomer>(
+      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email
+       FROM invoices i
+       LEFT JOIN orders o ON i.order_id = o.id
+       LEFT JOIN customers c ON o.customer_id = c.id
+       WHERE c.user_id = ?
+       ORDER BY i.created_at DESC LIMIT ?`,
+      [userId, limit]
     );
   }
 };

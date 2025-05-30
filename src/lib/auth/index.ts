@@ -311,6 +311,90 @@ export async function requireRole(allowedRoles: UserRole[]): Promise<AuthSession
   return session;
 }
 
+// Check if user has specific role
+export function hasRole(userRole: UserRole | null, allowedRoles: UserRole[]): boolean {
+  return userRole !== null && allowedRoles.includes(userRole);
+}
+
+// Check if user is admin
+export function isAdmin(userRole: UserRole | null): boolean {
+  return userRole === 'admin';
+}
+
+// Check if user is customer
+export function isCustomer(userRole: UserRole | null): boolean {
+  return userRole === 'customer';
+}
+
+// Create admin user function
+export async function createAdminUser(
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string
+): Promise<AuthSession> {
+  // Check if user already exists
+  const existingUser = await getOne(
+    'SELECT id FROM users WHERE email = ?',
+    [email]
+  );
+
+  if (existingUser) {
+    throw new Error('User with this email already exists');
+  }
+
+  // Hash password
+  const passwordHash = await hashPassword(password);
+
+  // Get admin role ID
+  const adminRole = await getOne<{ id: string }>(
+    'SELECT id FROM roles WHERE name = ?',
+    ['admin']
+  );
+
+  if (!adminRole) {
+    throw new Error('Admin role not found');
+  }
+
+  try {
+    // Create user
+    const userResult = await executeSingle(
+      'INSERT INTO users (id, email, password_hash, email_verified) VALUES (UUID(), ?, ?, TRUE)',
+      [email, passwordHash]
+    );
+
+    // Get the created user
+    const user = await getOne<User>(
+      'SELECT id, email, email_verified, created_at FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (!user) {
+      throw new Error('Failed to create user');
+    }
+
+    // Create profile
+    await executeSingle(
+      'INSERT INTO profiles (id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
+      [user.id, firstName, lastName, email, adminRole.id]
+    );
+
+    return {
+      user,
+      profile: {
+        id: user.id,
+        email: user.email,
+        first_name: firstName,
+        last_name: lastName,
+        role: 'admin',
+      },
+    };
+  } catch (error) {
+    console.error('Error creating admin user:', error);
+    throw new Error('Failed to create admin user account');
+  }
+}
+
 // Generate password reset token
 export async function generateResetToken(email: string): Promise<string | null> {
   // Check if user exists

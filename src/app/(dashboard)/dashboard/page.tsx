@@ -1,68 +1,103 @@
 import React from 'react';
 import Link from 'next/link';
 import { FaUsers, FaBoxes, FaShoppingCart, FaFileInvoiceDollar, FaWarehouse, FaEdit, FaArrowUp, FaArrowDown } from 'react-icons/fa';
-import { getUserProfile } from '@/lib/auth';
-import { CustomerModel, ProductModel, OrderModel, InventoryModel } from '@/lib/models';
+import { getUserProfile, isAdmin, isCustomer } from '@/lib/auth';
+import { CustomerModel, ProductModel, OrderModel, InventoryModel, InvoiceModel } from '@/lib/models';
 import { formatDistanceToNow, format } from 'date-fns';
 
-async function getStats() {
+async function getStats(userId?: string, userRole?: string) {
   try {
     console.log('📊 Getting dashboard stats...');
 
-    // Get customer count
-    const customerCount = await CustomerModel.getCount();
-    console.log('👥 Customer count:', customerCount);
+    if (userRole === 'customer' && userId) {
+      // Customer users only see their own data
+      const orderCount = await OrderModel.getCountByUser(userId);
+      const invoiceCount = await InvoiceModel.getCountByUser(userId);
+      console.log('🛒 User order count:', orderCount);
+      console.log('📄 User invoice count:', invoiceCount);
 
-    // Get product count
-    const productCount = await ProductModel.getCount();
-    console.log('📦 Product count:', productCount);
+      return {
+        orderCount: orderCount || 0,
+        invoiceCount: invoiceCount || 0
+      };
+    } else {
+      // Admin and other roles see all data
+      const customerCount = await CustomerModel.getCount();
+      console.log('👥 Customer count:', customerCount);
 
-    // Get order count
-    const orderCount = await OrderModel.getCount();
-    console.log('🛒 Order count:', orderCount);
+      const productCount = await ProductModel.getCount();
+      console.log('📦 Product count:', productCount);
 
-    return {
-      customerCount: customerCount || 0,
-      productCount: productCount || 0,
-      orderCount: orderCount || 0
-    };
+      const orderCount = await OrderModel.getCount();
+      console.log('🛒 Order count:', orderCount);
+
+      const invoiceCount = await InvoiceModel.getCount();
+      console.log('📄 Invoice count:', invoiceCount);
+
+      return {
+        customerCount: customerCount || 0,
+        productCount: productCount || 0,
+        orderCount: orderCount || 0,
+        invoiceCount: invoiceCount || 0
+      };
+    }
   } catch (error) {
     console.error('❌ Error getting dashboard stats:', error);
     return {
       customerCount: 0,
       productCount: 0,
-      orderCount: 0
+      orderCount: 0,
+      invoiceCount: 0
     };
   }
 }
 
-async function getRecentActivity() {
+async function getRecentActivity(userId?: string, userRole?: string) {
   try {
     console.log('📈 Getting recent activity...');
 
-    // Get recent orders
-    const recentOrders = await OrderModel.getRecent(3);
-    console.log('🛒 Recent orders:', recentOrders?.length || 0);
+    if (userRole === 'customer' && userId) {
+      // Customer users only see their own data
+      const recentOrders = await OrderModel.getRecentByUser(userId, 3);
+      console.log('🛒 User recent orders:', recentOrders?.length || 0);
 
-    // Get recent customers
-    const recentCustomers = await CustomerModel.getAll(3, 0);
-    console.log('👥 Recent customers:', recentCustomers?.length || 0);
+      const recentInvoices = await InvoiceModel.getRecentByUser(userId, 3);
+      console.log('📄 User recent invoices:', recentInvoices?.length || 0);
 
-    // Get low stock inventory
-    const lowStockItems = await InventoryModel.getLowStock(3);
-    console.log('📦 Low stock items:', lowStockItems?.length || 0);
+      return {
+        recentOrders: recentOrders || [],
+        recentInvoices: recentInvoices || [],
+        recentCustomers: [],
+        lowStockItems: []
+      };
+    } else {
+      // Admin and other roles see all data
+      const recentOrders = await OrderModel.getRecent(3);
+      console.log('🛒 Recent orders:', recentOrders?.length || 0);
 
-    return {
-      recentOrders: recentOrders || [],
-      recentCustomers: recentCustomers || [],
-      lowStockItems: lowStockItems || []
-    };
+      const recentCustomers = await CustomerModel.getAll(3, 0);
+      console.log('👥 Recent customers:', recentCustomers?.length || 0);
+
+      const lowStockItems = await InventoryModel.getLowStock(3);
+      console.log('📦 Low stock items:', lowStockItems?.length || 0);
+
+      const recentInvoices = await InvoiceModel.getRecent(3);
+      console.log('📄 Recent invoices:', recentInvoices?.length || 0);
+
+      return {
+        recentOrders: recentOrders || [],
+        recentCustomers: recentCustomers || [],
+        lowStockItems: lowStockItems || [],
+        recentInvoices: recentInvoices || []
+      };
+    }
   } catch (error) {
     console.error('❌ Error getting recent activity:', error);
     return {
       recentOrders: [],
       recentCustomers: [],
-      lowStockItems: []
+      lowStockItems: [],
+      recentInvoices: []
     };
   }
 }
@@ -76,8 +111,8 @@ export default async function DashboardPage() {
     profile = await getUserProfile();
     console.log('👤 User profile loaded:', profile ? 'Yes' : 'No');
 
-    stats = await getStats();
-    activity = await getRecentActivity();
+    stats = await getStats(profile?.id, profile?.role || undefined);
+    activity = await getRecentActivity(profile?.id, profile?.role || undefined);
 
     console.log('✅ Dashboard data loaded successfully');
   } catch (error) {
@@ -98,7 +133,7 @@ export default async function DashboardPage() {
     ...activity.recentOrders.map(order => ({
       type: 'order',
       id: order.id,
-      title: `New Order #${order.id.substring(0, 8)}`,
+      title: `${isCustomer(profile?.role) ? 'Order' : 'New Order'} #${order.id.substring(0, 8)}`,
       status: order.status,
       name: order.customer_first_name && order.customer_last_name
         ? `${order.customer_first_name} ${order.customer_last_name}`
@@ -123,6 +158,17 @@ export default async function DashboardPage() {
       name: `${item.product_name || 'Unknown Product'} - Low Stock (${item.quantity}/${item.min_quantity})`,
       date: new Date(item.updated_at),
       statusColor: 'yellow'
+    })),
+    ...(activity.recentInvoices || []).map(invoice => ({
+      type: 'invoice',
+      id: invoice.id,
+      title: `${isCustomer(profile?.role) ? 'Invoice' : 'New Invoice'} #${invoice.invoice_number}`,
+      status: invoice.status,
+      name: invoice.customer_first_name && invoice.customer_last_name
+        ? `${invoice.customer_first_name} ${invoice.customer_last_name}`
+        : 'Unknown Customer',
+      date: new Date(invoice.created_at),
+      statusColor: invoice.status === 'paid' ? 'green' : invoice.status === 'overdue' ? 'red' : 'yellow'
     }))
   ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
 
@@ -130,64 +176,73 @@ export default async function DashboardPage() {
     <div>
       <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Welcome{profile ? `, ${profile.first_name}` : ''} to your Payoff Solar dashboard. Here's an overview of your business.
+        Welcome{profile ? `, ${profile.first_name}` : ''} to your Payoff Solar dashboard.
+        {isCustomer(profile?.role)
+          ? "Here's an overview of your orders and invoices."
+          : "Here's an overview of your business."
+        }
       </p>
 
       {/* Stats Cards */}
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Customers */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
-                <FaUsers className="h-6 w-6 text-green-600" />
+        {/* Show different stats based on user role */}
+        {!isCustomer(profile?.role) && (
+          <>
+            {/* Customers - Admin/Staff only */}
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
+                    <FaUsers className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Total Customers</dt>
+                      <dd>
+                        <div className="text-lg font-medium text-gray-900">{(stats.customerCount || 0).toLocaleString()}</div>
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Customers</dt>
-                  <dd>
-                    <div className="text-lg font-medium text-gray-900">{stats.customerCount.toLocaleString()}</div>
-                  </dd>
-                </dl>
+              <div className="bg-gray-50 px-4 py-4 sm:px-6">
+                <div className="text-sm">
+                  <Link href="/dashboard/customers" className="font-medium text-green-600 hover:text-green-500">
+                    View all customers
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="bg-gray-50 px-4 py-4 sm:px-6">
-            <div className="text-sm">
-              <Link href="/dashboard/customers" className="font-medium text-green-600 hover:text-green-500">
-                View all customers
-              </Link>
-            </div>
-          </div>
-        </div>
 
-        {/* Products */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                <FaBoxes className="h-6 w-6 text-blue-600" />
+            {/* Products - Admin/Staff only */}
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                    <FaBoxes className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Total Products</dt>
+                      <dd>
+                        <div className="text-lg font-medium text-gray-900">{(stats.productCount || 0).toLocaleString()}</div>
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Products</dt>
-                  <dd>
-                    <div className="text-lg font-medium text-gray-900">{stats.productCount.toLocaleString()}</div>
-                  </dd>
-                </dl>
+              <div className="bg-gray-50 px-4 py-4 sm:px-6">
+                <div className="text-sm">
+                  <Link href="/dashboard/products" className="font-medium text-blue-600 hover:text-blue-500">
+                    View all products
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="bg-gray-50 px-4 py-4 sm:px-6">
-            <div className="text-sm">
-              <Link href="/dashboard/products" className="font-medium text-blue-600 hover:text-blue-500">
-                View all products
-              </Link>
-            </div>
-          </div>
-        </div>
+          </>
+        )}
 
-        {/* Orders */}
+        {/* Orders - All users */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center">
@@ -196,7 +251,9 @@ export default async function DashboardPage() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Orders</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    {isCustomer(profile?.role) ? 'My Orders' : 'Total Orders'}
+                  </dt>
                   <dd>
                     <div className="text-lg font-medium text-gray-900">{stats.orderCount.toLocaleString()}</div>
                   </dd>
@@ -207,7 +264,35 @@ export default async function DashboardPage() {
           <div className="bg-gray-50 px-4 py-4 sm:px-6">
             <div className="text-sm">
               <Link href="/dashboard/orders" className="font-medium text-purple-600 hover:text-purple-500">
-                View all orders
+                {isCustomer(profile?.role) ? 'View my orders' : 'View all orders'}
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Invoices - All users */}
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 bg-orange-100 rounded-md p-3">
+                <FaFileInvoiceDollar className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    {isCustomer(profile?.role) ? 'My Invoices' : 'Total Invoices'}
+                  </dt>
+                  <dd>
+                    <div className="text-lg font-medium text-gray-900">{(stats.invoiceCount || 0).toLocaleString()}</div>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 px-4 py-4 sm:px-6">
+            <div className="text-sm">
+              <Link href="/dashboard/invoices" className="font-medium text-orange-600 hover:text-orange-500">
+                {isCustomer(profile?.role) ? 'View my invoices' : 'View all invoices'}
               </Link>
             </div>
           </div>
