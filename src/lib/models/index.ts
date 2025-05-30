@@ -83,7 +83,7 @@ export interface Order {
   id: string;
   customer_id: string;
   status: string;
-  total: number;
+  total: number | string;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -172,7 +172,7 @@ export interface Invoice {
   id: string;
   order_id: string;
   invoice_number: string;
-  amount: number;
+  amount: number | string;
   status: string;
   due_date: string;
   created_at: string;

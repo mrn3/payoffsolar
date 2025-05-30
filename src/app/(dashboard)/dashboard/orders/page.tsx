@@ -21,6 +21,7 @@ export default async function OrdersPage() {
       // Admin and other roles see all orders
       orders = await OrderModel.getAll(50, 0);
     }
+    console.log('🛒 Orders loaded:', orders.length, 'First order total type:', typeof orders[0]?.total);
   } catch (err) {
     console.error('Error loading orders:', err);
     error = 'Failed to load orders';
@@ -125,7 +126,7 @@ export default async function OrdersPage() {
                           </span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          ${order.total.toFixed(2)}
+                          ${Number(order.total).toFixed(2)}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {format(new Date(order.created_at), 'MMM d, yyyy')}

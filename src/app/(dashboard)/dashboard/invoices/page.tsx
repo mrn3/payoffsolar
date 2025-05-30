@@ -21,6 +21,7 @@ export default async function InvoicesPage() {
       // Admin and other roles see all invoices
       invoices = await InvoiceModel.getAll(50, 0);
     }
+    console.log('📄 Invoices loaded:', invoices.length, 'First invoice amount type:', typeof invoices[0]?.amount);
   } catch (err) {
     console.error('Error loading invoices:', err);
     error = 'Failed to load invoices';
@@ -128,7 +129,7 @@ export default async function InvoicesPage() {
                           </span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          ${invoice.amount.toFixed(2)}
+                          ${Number(invoice.amount).toFixed(2)}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {invoice.due_date ? format(new Date(invoice.due_date), 'MMM d, yyyy') : 'N/A'}
