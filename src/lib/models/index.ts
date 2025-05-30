@@ -94,6 +94,29 @@ export const CustomerModel = {
   }
 };
 
+// Product Category model
+export interface ProductCategory {
+  id: string;
+  name: string;
+  description?: string;
+  slug: string;
+  parent_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const ProductCategoryModel = {
+  async getAll(): Promise<ProductCategory[]> {
+    return executeQuery<ProductCategory>(
+      'SELECT * FROM product_categories ORDER BY name'
+    );
+  },
+
+  async getById(id: string): Promise<ProductCategory | null> {
+    return getOne<ProductCategory>('SELECT * FROM product_categories WHERE id = ?', [id]);
+  }
+};
+
 // Product model
 export interface Product {
   id: string;
@@ -108,11 +131,41 @@ export interface Product {
   updated_at: string;
 }
 
+export interface ProductWithCategory extends Product {
+  category_name?: string;
+}
+
 export const ProductModel = {
-  async getAll(limit = 50, offset = 0): Promise<Product[]> {
-    return executeQuery<Product>(
-      'SELECT * FROM products WHERE is_active = TRUE ORDER BY created_at DESC LIMIT ? OFFSET ?',
+  async getAll(limit = 50, offset = 0): Promise<ProductWithCategory[]> {
+    return executeQuery<ProductWithCategory>(
+      `SELECT p.*, pc.name as category_name
+       FROM products p
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       WHERE p.is_active = TRUE
+       ORDER BY p.created_at DESC LIMIT ? OFFSET ?`,
       [limit, offset]
+    );
+  },
+
+  async getAllIncludingInactive(limit = 50, offset = 0): Promise<ProductWithCategory[]> {
+    return executeQuery<ProductWithCategory>(
+      `SELECT p.*, pc.name as category_name
+       FROM products p
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       ORDER BY p.created_at DESC LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+  },
+
+  async search(query: string, limit = 50, offset = 0): Promise<ProductWithCategory[]> {
+    const searchTerm = `%${query}%`;
+    return executeQuery<ProductWithCategory>(
+      `SELECT p.*, pc.name as category_name
+       FROM products p
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       WHERE p.is_active = TRUE AND (p.name LIKE ? OR p.description LIKE ? OR p.sku LIKE ?)
+       ORDER BY p.created_at DESC LIMIT ? OFFSET ?`,
+      [searchTerm, searchTerm, searchTerm, limit, offset]
     );
   },
 
@@ -120,8 +173,84 @@ export const ProductModel = {
     return getOne<Product>('SELECT * FROM products WHERE id = ?', [id]);
   },
 
+  async getBySku(sku: string): Promise<Product | null> {
+    return getOne<Product>('SELECT * FROM products WHERE sku = ?', [sku]);
+  },
+
+  async create(data: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    const result = await executeSingle(
+      `INSERT INTO products (id, name, description, price, image_url, category_id, sku, is_active)
+       VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?)`,
+      [data.name, data.description, data.price, data.image_url, data.category_id, data.sku, data.is_active]
+    );
+
+    const product = await getOne<{ id: string }>('SELECT id FROM products WHERE sku = ? ORDER BY created_at DESC LIMIT 1', [data.sku]);
+    return product!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.name !== undefined) {
+      fields.push('name = ?');
+      values.push(data.name);
+    }
+    if (data.description !== undefined) {
+      fields.push('description = ?');
+      values.push(data.description);
+    }
+    if (data.price !== undefined) {
+      fields.push('price = ?');
+      values.push(data.price);
+    }
+    if (data.image_url !== undefined) {
+      fields.push('image_url = ?');
+      values.push(data.image_url);
+    }
+    if (data.category_id !== undefined) {
+      fields.push('category_id = ?');
+      values.push(data.category_id);
+    }
+    if (data.sku !== undefined) {
+      fields.push('sku = ?');
+      values.push(data.sku);
+    }
+    if (data.is_active !== undefined) {
+      fields.push('is_active = ?');
+      values.push(data.is_active);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE products SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM products WHERE id = ?', [id]);
+  },
+
   async getCount(): Promise<number> {
     const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM products WHERE is_active = TRUE');
+    return result?.count || 0;
+  },
+
+  async getTotalCount(): Promise<number> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM products');
+    return result?.count || 0;
+  },
+
+  async getSearchCount(query: string): Promise<number> {
+    const searchTerm = `%${query}%`;
+    const result = await getOne<{ count: number }>(
+      `SELECT COUNT(*) as count FROM products
+       WHERE is_active = TRUE AND (name LIKE ? OR description LIKE ? OR sku LIKE ?)`,
+      [searchTerm, searchTerm, searchTerm]
+    );
     return result?.count || 0;
   }
 };

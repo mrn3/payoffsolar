@@ -1,8 +1,113 @@
-import React from 'react';
-import Link from 'next/link';
-import { FaPlus, FaSearch, FaEdit, FaTrash } from 'react-icons/fa';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaImage } from 'react-icons/fa';
+import { ProductWithCategory } from '@/lib/models';
+import DeleteProductModal from '@/components/products/DeleteProductModal';
+import { format } from 'date-fns';
+
+interface ProductsResponse {
+  products: ProductWithCategory[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
 
 export default function ProductsPage() {
+  const router = useRouter();
+  const [products, setProducts] = useState<ProductWithCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ProductWithCategory | null>(null);
+
+  const fetchProducts = async (page: number, search: string = '') => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '12'
+      });
+
+      if (search) {
+        params.append('search', search);
+      }
+
+      const response = await fetch(`/api/products?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+
+      const data: ProductsResponse = await response.json();
+      setProducts(data.products);
+      setCurrentPage(data.pagination.page);
+      setTotalPages(data.pagination.totalPages);
+      setTotal(data.pagination.total);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts(1, searchQuery);
+  }, [searchQuery]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const navigateToAdd = () => {
+    router.push('/dashboard/products/new');
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!selectedProduct) return;
+
+    try {
+      const response = await fetch(`/api/products/${selectedProduct.id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete product');
+      }
+
+      await fetchProducts(currentPage, searchQuery);
+      setIsDeleteModalOpen(false);
+      setSelectedProduct(null);
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      throw err;
+    }
+  };
+
+  const navigateToEdit = (product: ProductWithCategory) => {
+    router.push(`/dashboard/products/${product.id}/edit`);
+  };
+
+  const openDeleteModal = (product: ProductWithCategory) => {
+    setSelectedProduct(product);
+    setIsDeleteModalOpen(true);
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(price);
+  };
+
   return (
     <div>
       <div className="sm:flex sm:items-center sm:justify-between">
@@ -15,6 +120,7 @@ export default function ProductsPage() {
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
           <button
             type="button"
+            onClick={navigateToAdd}
             className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
           >
             <FaPlus className="mr-2 h-4 w-4" />
@@ -31,8 +137,10 @@ export default function ProductsPage() {
           </div>
           <input
             type="text"
+            value={searchQuery}
+            onChange={handleSearch}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
-            placeholder="Search products"
+            placeholder="Search products by name, description, or SKU"
           />
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-4">
@@ -48,121 +156,183 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      {/* Loading state */}
+      {loading && (
+        <div className="mt-8 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          <p className="mt-2 text-sm text-gray-500">Loading products...</p>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && products.length === 0 && (
+        <div className="mt-8 text-center">
+          <FaImage className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {searchQuery ? 'Try adjusting your search terms.' : 'Get started by creating a new product.'}
+          </p>
+          {!searchQuery && (
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={navigateToAdd}
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                <FaPlus className="mr-2 h-4 w-4" />
+                Add product
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Products grid */}
-      <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Sample product cards */}
-        {[1, 2, 3, 4, 5, 6].map((product) => (
-          <div key={product} className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="h-48 bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-500">Product Image</span>
-            </div>
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium text-gray-900">Solar Panel XYZ</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                High-efficiency solar panel with 25-year warranty.
-              </p>
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-xl font-bold text-gray-900">$599.99</span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  In Stock
-                </span>
+      {!loading && products.length > 0 && (
+        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {products.map((product) => (
+            <div key={product.id} className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="h-48 bg-gray-200 flex items-center justify-center">
+                {product.image_url ? (
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling!.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div className={`flex items-center justify-center h-full w-full ${product.image_url ? 'hidden' : ''}`}>
+                  <FaImage className="h-12 w-12 text-gray-400" />
+                </div>
               </div>
-              <div className="mt-4 flex space-x-3">
-                <button
-                  type="button"
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                  <FaEdit className="mr-2 h-4 w-4" />
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                >
-                  <FaTrash className="mr-2 h-4 w-4 text-red-500" />
-                  Delete
-                </button>
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg font-medium text-gray-900 truncate" title={product.name}>
+                  {product.name}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 line-clamp-2" title={product.description}>
+                  {product.description || 'No description available'}
+                </p>
+                {product.category_name && (
+                  <p className="mt-1 text-xs text-blue-600">
+                    {product.category_name}
+                  </p>
+                )}
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-xl font-bold text-gray-900">
+                    {formatPrice(product.price)}
+                  </span>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    product.is_active
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {product.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-sm text-gray-500 truncate" title={`SKU: ${product.sku}`}>
+                    SKU: {product.sku}
+                  </span>
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => navigateToEdit(product)}
+                      className="text-blue-600 hover:text-blue-900"
+                      title="Edit product"
+                    >
+                      <FaEdit className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openDeleteModal(product)}
+                      className="text-red-600 hover:text-red-900"
+                      title="Delete product"
+                    >
+                      <FaTrash className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
-      <div className="mt-6 flex items-center justify-between">
-        <div className="flex-1 flex justify-between sm:hidden">
-          <a
-            href="#"
-            className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            Previous
-          </a>
-          <a
-            href="#"
-            className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            Next
-          </a>
-        </div>
-        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-gray-700">
-              Showing <span className="font-medium">1</span> to <span className="font-medium">6</span> of{' '}
-              <span className="font-medium">56</span> results
-            </p>
+      {!loading && products.length > 0 && totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-between">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => currentPage > 1 && fetchProducts(currentPage - 1, searchQuery)}
+              disabled={currentPage <= 1}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => currentPage < totalPages && fetchProducts(currentPage + 1, searchQuery)}
+              disabled={currentPage >= totalPages}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
           </div>
-          <div>
-            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-              <a
-                href="#"
-                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-              >
-                <span className="sr-only">Previous</span>
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </a>
-              <a
-                href="#"
-                aria-current="page"
-                className="z-10 bg-green-50 border-green-500 text-green-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-              >
-                1
-              </a>
-              <a
-                href="#"
-                className="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-              >
-                2
-              </a>
-              <a
-                href="#"
-                className="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-              >
-                3
-              </a>
-              <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                ...
-              </span>
-              <a
-                href="#"
-                className="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-              >
-                10
-              </a>
-              <a
-                href="#"
-                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-              >
-                <span className="sr-only">Next</span>
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-              </a>
-            </nav>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{((currentPage - 1) * 12) + 1}</span> to{' '}
+                <span className="font-medium">{Math.min(currentPage * 12, total)}</span> of{' '}
+                <span className="font-medium">{total}</span> results
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  onClick={() => currentPage > 1 && fetchProducts(currentPage - 1, searchQuery)}
+                  disabled={currentPage <= 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const page = i + 1;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => fetchProducts(page, searchQuery)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        page === currentPage
+                          ? 'bg-green-50 border-green-500 text-green-600'
+                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => currentPage < totalPages && fetchProducts(currentPage + 1, searchQuery)}
+                  disabled={currentPage >= totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </nav>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Delete Modal */}
+      <DeleteProductModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteProduct}
+        product={selectedProduct}
+      />
     </div>
   );
 }
