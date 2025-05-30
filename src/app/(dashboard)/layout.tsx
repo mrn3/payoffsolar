@@ -22,13 +22,14 @@ export default async function DashboardLayout({
 
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="w-full">
+        {/* Header - only visible on mobile */}
+        <header className="w-full md:hidden">
           <div className="relative z-10 flex-shrink-0 h-16 bg-white border-b border-gray-200 shadow-sm flex">
-            <div className="flex-1 flex justify-between px-4 md:px-0">
-              <div className="flex-1 flex md:ml-64">
-                <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-8">
-                  {/* Mobile logo - centered horizontally, hidden on desktop */}
-                  <div className="md:hidden flex items-center justify-center h-full">
+            <div className="flex-1 flex justify-between px-4">
+              <div className="flex-1 flex">
+                <div className="max-w-7xl w-full mx-auto px-4 sm:px-6">
+                  {/* Mobile logo - centered horizontally */}
+                  <div className="flex items-center justify-center h-full">
                     <div className="flex items-center gap-2">
                       <FaSun className="h-6 w-6 text-green-500" />
                       <span className="text-xl font-bold text-gray-900">Payoff Solar</span>
@@ -36,7 +37,7 @@ export default async function DashboardLayout({
                   </div>
                 </div>
               </div>
-              <div className="ml-4 flex items-center md:ml-6">
+              <div className="ml-4 flex items-center">
                 {/* Profile dropdown */}
                 <div className="ml-3 relative">
                   <div>
