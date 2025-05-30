@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import { Customer } from '@/lib/models';
+import PhoneInput from '@/components/ui/PhoneInput';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/utils/phone';
 
 interface CustomerModalProps {
   isOpen: boolean;
@@ -33,7 +35,7 @@ export default function CustomerModal({ isOpen, onClose, onSave, customer, title
         first_name: customer.first_name || '',
         last_name: customer.last_name || '',
         email: customer.email || '',
-        phone: customer.phone || '',
+        phone: formatPhoneNumber(customer.phone || ''),
         address: customer.address || '',
         city: customer.city || '',
         state: customer.state || '',
@@ -72,6 +74,11 @@ export default function CustomerModal({ isOpen, onClose, onSave, customer, title
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email && !emailRegex.test(formData.email)) {
       newErrors.email = 'Invalid email format';
+    }
+
+    // Phone validation
+    if (formData.phone.trim() && !isValidPhoneNumber(formData.phone)) {
+      newErrors.phone = 'Phone number must be exactly 10 digits';
     }
 
     setErrors(newErrors);
@@ -168,14 +175,14 @@ export default function CustomerModal({ isOpen, onClose, onSave, customer, title
 
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">Phone *</label>
-                  <input
-                    type="tel"
+                  <PhoneInput
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
                     className={`mt-1 block w-full border rounded-md px-3 py-2 text-gray-900 ${
                       errors.phone ? 'border-red-300' : 'border-gray-300'
                     } focus:outline-none focus:ring-green-500 focus:border-green-500`}
+                    required
                   />
                   {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
                 </div>

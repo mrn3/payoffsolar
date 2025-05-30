@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CustomerModel } from '@/lib/models';
 import { requireAuth, isAdmin } from '@/lib/auth';
+import { isValidPhoneNumber } from '@/lib/utils/phone';
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,6 +65,11 @@ export async function POST(request: NextRequest) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+    }
+
+    // Validate phone format
+    if (!isValidPhoneNumber(data.phone)) {
+      return NextResponse.json({ error: 'Phone number must be exactly 10 digits' }, { status: 400 });
     }
 
     const customerId = await CustomerModel.create({

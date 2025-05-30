@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CustomerModel } from '@/lib/models';
 import { requireAuth, isAdmin } from '@/lib/auth';
+import { isValidPhoneNumber } from '@/lib/utils/phone';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
@@ -13,7 +14,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const customer = await CustomerModel.getById(params.id);
+    const { id } = await params;
+    const customer = await CustomerModel.getById(id);
     if (!customer) {
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
@@ -27,7 +29,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
@@ -36,10 +38,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    const { id } = await params;
     const data = await request.json();
 
     // Check if customer exists
-    const existingCustomer = await CustomerModel.getById(params.id);
+    const existingCustomer = await CustomerModel.getById(id);
     if (!existingCustomer) {
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
@@ -60,7 +63,12 @@ export async function PUT(
       }
     }
 
-    await CustomerModel.update(params.id, {
+    // Validate phone format if provided
+    if (data.phone && data.phone.trim() && !isValidPhoneNumber(data.phone)) {
+      return NextResponse.json({ error: 'Phone number must be exactly 10 digits' }, { status: 400 });
+    }
+
+    await CustomerModel.update(id, {
       first_name: data.first_name,
       last_name: data.last_name,
       email: data.email,
@@ -73,7 +81,7 @@ export async function PUT(
       user_id: data.user_id
     });
 
-    const updatedCustomer = await CustomerModel.getById(params.id);
+    const updatedCustomer = await CustomerModel.getById(id);
     return NextResponse.json({ customer: updatedCustomer });
   } catch (error) {
     console.error('Error updating customer:', error);
@@ -83,7 +91,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
@@ -92,13 +100,15 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    const { id } = await params;
+
     // Check if customer exists
-    const existingCustomer = await CustomerModel.getById(params.id);
+    const existingCustomer = await CustomerModel.getById(id);
     if (!existingCustomer) {
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
 
-    await CustomerModel.delete(params.id);
+    await CustomerModel.delete(id);
     return NextResponse.json({ message: 'Customer deleted successfully' });
   } catch (error) {
     console.error('Error deleting customer:', error);

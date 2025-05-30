@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
+import PhoneInput from '@/components/ui/PhoneInput';
 import { Customer } from '@/lib/models';
+import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/utils/phone';
 
 export default function EditCustomerPage() {
   const router = useRouter();
@@ -50,7 +52,7 @@ export default function EditCustomerPage() {
         first_name: data.customer.first_name || '',
         last_name: data.customer.last_name || '',
         email: data.customer.email || '',
-        phone: data.customer.phone || '',
+        phone: formatPhoneNumber(data.customer.phone || ''),
         address: data.customer.address || '',
         city: data.customer.city || '',
         state: data.customer.state || '',
@@ -74,6 +76,11 @@ export default function EditCustomerPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email.trim() && !emailRegex.test(formData.email)) {
       newErrors.email = 'Invalid email format';
+    }
+
+    // Phone validation (only if phone is provided)
+    if (formData.phone.trim() && !isValidPhoneNumber(formData.phone)) {
+      newErrors.phone = 'Phone number must be exactly 10 digits';
     }
 
     setErrors(newErrors);
@@ -212,8 +219,7 @@ export default function EditCustomerPage() {
 
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700">Phone</label>
-              <input
-                type="tel"
+              <PhoneInput
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
