@@ -57,8 +57,8 @@ export default function DashboardLayout({
       <div className="hidden md:flex md:w-64 md:flex-col">
         <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-white border-r">
           <div className="flex items-center flex-shrink-0 px-4 mb-5">
-            <FaSun className="h-6 w-6 text-green-500 mr-2" />
-            <span className="text-xl font-bold">Payoff Solar</span>
+            <FaSun className="h-6 w-6 text-green-600 mr-2" />
+            <span className="text-xl font-bold text-gray-900">Payoff Solar</span>
           </div>
           <div className="flex flex-col flex-grow px-4 mt-5">
             <nav className="flex-1 space-y-1 bg-white">
@@ -132,8 +132,8 @@ export default function DashboardLayout({
             </div>
             <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
               <div className="flex-shrink-0 flex items-center px-4">
-                <FaSun className="h-6 w-6 text-green-500 mr-2" />
-                <span className="text-xl font-bold">Payoff Solar</span>
+                <FaSun className="h-6 w-6 text-green-600 mr-2" />
+                <span className="text-xl font-bold text-gray-900">Payoff Solar</span>
               </div>
               <nav className="mt-5 px-2 space-y-1">
                 {navItems.map((item) => (
