@@ -99,6 +99,17 @@ CREATE TABLE IF NOT EXISTS products (
   FOREIGN KEY (category_id) REFERENCES product_categories(id)
 );
 
+-- Create product images table for multiple images per product
+CREATE TABLE IF NOT EXISTS product_images (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  product_id VARCHAR(36) NOT NULL,
+  image_url VARCHAR(500) NOT NULL,
+  alt_text VARCHAR(255),
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
 -- Create warehouses table
 CREATE TABLE IF NOT EXISTS warehouses (
   id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),

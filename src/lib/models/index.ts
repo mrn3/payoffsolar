@@ -135,10 +135,32 @@ export interface ProductWithCategory extends Product {
   category_name?: string;
 }
 
+// Product image model
+export interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  alt_text?: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ProductWithImages extends ProductWithCategory {
+  images?: ProductImage[];
+}
+
+export interface ProductWithFirstImage extends ProductWithCategory {
+  first_image_url?: string;
+}
+
 export const ProductModel = {
-  async getAll(limit = 50, offset = 0): Promise<ProductWithCategory[]> {
-    return executeQuery<ProductWithCategory>(
-      `SELECT p.*, pc.name as category_name
+  async getAll(limit = 50, offset = 0): Promise<ProductWithFirstImage[]> {
+    return executeQuery<ProductWithFirstImage>(
+      `SELECT p.*, pc.name as category_name,
+       (SELECT pi.image_url FROM product_images pi
+        WHERE pi.product_id = p.id
+        ORDER BY pi.sort_order ASC, pi.created_at ASC
+        LIMIT 1) as first_image_url
        FROM products p
        LEFT JOIN product_categories pc ON p.category_id = pc.id
        WHERE p.is_active = TRUE
@@ -147,9 +169,13 @@ export const ProductModel = {
     );
   },
 
-  async getAllIncludingInactive(limit = 50, offset = 0): Promise<ProductWithCategory[]> {
-    return executeQuery<ProductWithCategory>(
-      `SELECT p.*, pc.name as category_name
+  async getAllIncludingInactive(limit = 50, offset = 0): Promise<ProductWithFirstImage[]> {
+    return executeQuery<ProductWithFirstImage>(
+      `SELECT p.*, pc.name as category_name,
+       (SELECT pi.image_url FROM product_images pi
+        WHERE pi.product_id = p.id
+        ORDER BY pi.sort_order ASC, pi.created_at ASC
+        LIMIT 1) as first_image_url
        FROM products p
        LEFT JOIN product_categories pc ON p.category_id = pc.id
        ORDER BY p.created_at DESC LIMIT ? OFFSET ?`,
@@ -157,10 +183,14 @@ export const ProductModel = {
     );
   },
 
-  async search(query: string, limit = 50, offset = 0): Promise<ProductWithCategory[]> {
+  async search(query: string, limit = 50, offset = 0): Promise<ProductWithFirstImage[]> {
     const searchTerm = `%${query}%`;
-    return executeQuery<ProductWithCategory>(
-      `SELECT p.*, pc.name as category_name
+    return executeQuery<ProductWithFirstImage>(
+      `SELECT p.*, pc.name as category_name,
+       (SELECT pi.image_url FROM product_images pi
+        WHERE pi.product_id = p.id
+        ORDER BY pi.sort_order ASC, pi.created_at ASC
+        LIMIT 1) as first_image_url
        FROM products p
        LEFT JOIN product_categories pc ON p.category_id = pc.id
        WHERE p.is_active = TRUE AND (p.name LIKE ? OR p.description LIKE ? OR p.sku LIKE ?)
@@ -252,6 +282,41 @@ export const ProductModel = {
       [searchTerm, searchTerm, searchTerm]
     );
     return result?.count || 0;
+  }
+};
+
+export const ProductImageModel = {
+  async getByProductId(productId: string): Promise<ProductImage[]> {
+    return executeQuery<ProductImage>(
+      'SELECT * FROM product_images WHERE product_id = ? ORDER BY sort_order ASC, created_at ASC',
+      [productId]
+    );
+  },
+
+  async create(data: Omit<ProductImage, 'id' | 'created_at'>): Promise<string> {
+    const result = await executeSingle(
+      `INSERT INTO product_images (id, product_id, image_url, alt_text, sort_order)
+       VALUES (UUID(), ?, ?, ?, ?)`,
+      [data.product_id, data.image_url, data.alt_text, data.sort_order]
+    );
+
+    const image = await getOne<{ id: string }>(
+      'SELECT id FROM product_images WHERE product_id = ? AND image_url = ? ORDER BY created_at DESC LIMIT 1',
+      [data.product_id, data.image_url]
+    );
+    return image!.id;
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM product_images WHERE id = ?', [id]);
+  },
+
+  async deleteByProductId(productId: string): Promise<void> {
+    await executeSingle('DELETE FROM product_images WHERE product_id = ?', [productId]);
+  },
+
+  async updateSortOrder(id: string, sortOrder: number): Promise<void> {
+    await executeSingle('UPDATE product_images SET sort_order = ? WHERE id = ?', [sortOrder, id]);
   }
 };
 

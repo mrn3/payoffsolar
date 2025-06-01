@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaImage } from 'react-icons/fa';
-import { ProductWithCategory } from '@/lib/models';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaImage, FaEye } from 'react-icons/fa';
+import { ProductWithFirstImage } from '@/lib/models';
 import DeleteProductModal from '@/components/products/DeleteProductModal';
 import { format } from 'date-fns';
 
 interface ProductsResponse {
-  products: ProductWithCategory[];
+  products: ProductWithFirstImage[];
   pagination: {
     page: number;
     limit: number;
@@ -19,14 +19,14 @@ interface ProductsResponse {
 
 export default function ProductsPage() {
   const router = useRouter();
-  const [products, setProducts] = useState<ProductWithCategory[]>([]);
+  const [products, setProducts] = useState<ProductWithFirstImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<ProductWithCategory | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductWithFirstImage | null>(null);
 
   const fetchProducts = async (page: number, search: string = '') => {
     try {
@@ -92,11 +92,11 @@ export default function ProductsPage() {
     }
   };
 
-  const navigateToEdit = (product: ProductWithCategory) => {
+  const navigateToEdit = (product: ProductWithFirstImage) => {
     router.push(`/dashboard/products/${product.id}/edit`);
   };
 
-  const openDeleteModal = (product: ProductWithCategory) => {
+  const openDeleteModal = (product: ProductWithFirstImage) => {
     setSelectedProduct(product);
     setIsDeleteModalOpen(true);
   };
@@ -193,9 +193,9 @@ export default function ProductsPage() {
           {products.map((product) => (
             <div key={product.id} className="bg-white overflow-hidden shadow rounded-lg">
               <div className="h-48 bg-gray-200 flex items-center justify-center">
-                {product.image_url ? (
+                {(product.first_image_url || product.image_url) ? (
                   <img
-                    src={product.image_url}
+                    src={product.first_image_url || product.image_url}
                     alt={product.name}
                     className="h-full w-full object-cover"
                     onError={(e) => {
@@ -204,7 +204,7 @@ export default function ProductsPage() {
                     }}
                   />
                 ) : null}
-                <div className={`flex items-center justify-center h-full w-full ${product.image_url ? 'hidden' : ''}`}>
+                <div className={`flex items-center justify-center h-full w-full ${(product.first_image_url || product.image_url) ? 'hidden' : ''}`}>
                   <FaImage className="h-12 w-12 text-gray-400" />
                 </div>
               </div>
@@ -237,6 +237,14 @@ export default function ProductsPage() {
                     SKU: {product.sku}
                   </span>
                   <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/dashboard/products/${product.id}`)}
+                      className="text-green-600 hover:text-green-900"
+                      title="View product"
+                    >
+                      <FaEye className="h-4 w-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => navigateToEdit(product)}

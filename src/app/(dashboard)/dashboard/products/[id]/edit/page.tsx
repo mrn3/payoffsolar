@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { FaArrowLeft } from 'react-icons/fa';
-import { Product, ProductCategory } from '@/lib/models';
+import { Product, ProductCategory, ProductImage } from '@/lib/models';
+import ImageUpload from '@/components/ui/ImageUpload';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function EditProductPage() {
     is_active: true
   });
   const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -29,6 +31,7 @@ export default function EditProductPage() {
   useEffect(() => {
     fetchProduct();
     fetchCategories();
+    fetchProductImages();
   }, [productId]);
 
   const fetchProduct = async () => {
@@ -75,6 +78,62 @@ export default function EditProductPage() {
     }
   };
 
+  const fetchProductImages = async () => {
+    try {
+      const response = await fetch(`/api/products/${productId}/images`);
+      if (response.ok) {
+        const data = await response.json();
+        setProductImages(data.images);
+      }
+    } catch (error) {
+      console.error('Error fetching product images:', error);
+    }
+  };
+
+  const handleImagesUploaded = async (uploadedFiles: any[]) => {
+    try {
+      // Add each uploaded image to the product
+      for (const file of uploadedFiles) {
+        await fetch(`/api/products/${productId}/images`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image_url: file.url,
+            alt_text: file.originalName
+          })
+        });
+      }
+
+      // Refresh the images list
+      await fetchProductImages();
+    } catch (error) {
+      console.error('Error adding images to product:', error);
+      setError('Failed to add images to product');
+    }
+  };
+
+  const handleImageRemoved = async (imageUrl: string) => {
+    try {
+      // Find the image to remove
+      const imageToRemove = productImages.find(img => img.image_url === imageUrl);
+      if (!imageToRemove) return;
+
+      const response = await fetch(`/api/products/${productId}/images?imageId=${imageToRemove.id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to remove image');
+      }
+
+      // Refresh the images list
+      await fetchProductImages();
+    } catch (error) {
+      console.error('Error removing image:', error);
+      setError('Failed to remove image');
+    }
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -100,13 +159,7 @@ export default function EditProductPage() {
       }
     }
 
-    if (formData.image_url.trim()) {
-      try {
-        new URL(formData.image_url);
-      } catch {
-        newErrors.image_url = 'Invalid image URL format';
-      }
-    }
+
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -157,13 +210,6 @@ export default function EditProductPage() {
         } else {
           delete newErrors.price;
         }
-      }
-    } else if (name === 'image_url' && formData.image_url.trim()) {
-      try {
-        new URL(formData.image_url);
-        delete newErrors.image_url;
-      } catch {
-        newErrors.image_url = 'Invalid image URL format';
       }
     }
     
@@ -327,19 +373,14 @@ export default function EditProductPage() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Image URL</label>
-              <input
-                type="url"
-                name="image_url"
-                value={formData.image_url}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 text-gray-900 ${
-                  errors.image_url ? 'border-red-300' : 'border-gray-300'
-                } focus:outline-none focus:ring-green-500 focus:border-green-500`}
-                placeholder="https://example.com/image.jpg"
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
+              <ImageUpload
+                onImagesUploaded={handleImagesUploaded}
+                onImageRemoved={handleImageRemoved}
+                existingImages={productImages.map(img => img.image_url)}
+                maxImages={10}
+                className="w-full"
               />
-              {errors.image_url && <p className="mt-1 text-sm text-red-600">{errors.image_url}</p>}
             </div>
 
             <div className="sm:col-span-2">
