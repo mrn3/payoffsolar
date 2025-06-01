@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import { FaChevronLeft, FaChevronRight, FaImage } from 'react-icons/fa';
+import { ProductImage } from '@/lib/models';
 
 interface ImageCarouselProps {
-  images: string[];
+  images: string[] | ProductImage[];
   alt?: string;
   className?: string;
   showThumbnails?: boolean;
@@ -22,12 +23,25 @@ export default function ImageCarousel({
 }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Helper function to get image URL
+  const getImageUrl = (image: string | ProductImage): string => {
+    return typeof image === 'string' ? image : image.image_url;
+  };
+
+  // Helper function to get alt text
+  const getAltText = (image: string | ProductImage, index: number): string => {
+    if (typeof image === 'string') {
+      return `${alt} ${index + 1}`;
+    }
+    return image.alt_text || `${alt} ${index + 1}`;
+  };
+
   // Auto-play functionality
   React.useEffect(() => {
     if (!autoPlay || images.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => 
+      setCurrentIndex((prevIndex) =>
         prevIndex === images.length - 1 ? 0 : prevIndex + 1
       );
     }, autoPlayInterval);
@@ -60,8 +74,8 @@ export default function ImageCarousel({
       <div className={className}>
         <div className="relative w-full h-full">
           <img
-            src={images[0]}
-            alt={alt}
+            src={getImageUrl(images[0])}
+            alt={getAltText(images[0], 0)}
             className="w-full h-full object-cover rounded-lg"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
@@ -81,8 +95,8 @@ export default function ImageCarousel({
       {/* Main Image */}
       <div className="relative w-full h-full group">
         <img
-          src={images[currentIndex]}
-          alt={`${alt} ${currentIndex + 1}`}
+          src={getImageUrl(images[currentIndex])}
+          alt={getAltText(images[currentIndex], currentIndex)}
           className="w-full h-full object-cover rounded-lg"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
@@ -134,7 +148,7 @@ export default function ImageCarousel({
         <div className="mt-4 flex space-x-2 overflow-x-auto pb-2">
           {images.map((image, index) => (
             <button
-              key={index}
+              key={typeof image === 'string' ? index : image.id}
               onClick={() => goToSlide(index)}
               className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
                 index === currentIndex
@@ -143,8 +157,8 @@ export default function ImageCarousel({
               }`}
             >
               <img
-                src={image}
-                alt={`${alt} thumbnail ${index + 1}`}
+                src={getImageUrl(image)}
+                alt={getAltText(image, index)}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';

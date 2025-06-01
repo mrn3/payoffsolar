@@ -154,7 +154,30 @@ export interface ProductWithFirstImage extends ProductWithCategory {
 }
 
 export const ProductModel = {
-  async getAll(limit = 50, offset = 0): Promise<ProductWithFirstImage[]> {
+  async getAll(limit = 50, offset = 0, sort = ''): Promise<ProductWithFirstImage[]> {
+    let orderBy = 'p.created_at DESC'; // default sort
+
+    switch (sort) {
+      case 'name_asc':
+        orderBy = 'p.name ASC';
+        break;
+      case 'name_desc':
+        orderBy = 'p.name DESC';
+        break;
+      case 'price_asc':
+        orderBy = 'p.price ASC';
+        break;
+      case 'price_desc':
+        orderBy = 'p.price DESC';
+        break;
+      case 'newest':
+        orderBy = 'p.created_at DESC';
+        break;
+      case 'oldest':
+        orderBy = 'p.created_at ASC';
+        break;
+    }
+
     return executeQuery<ProductWithFirstImage>(
       `SELECT p.*, pc.name as category_name,
        (SELECT pi.image_url FROM product_images pi
@@ -164,7 +187,7 @@ export const ProductModel = {
        FROM products p
        LEFT JOIN product_categories pc ON p.category_id = pc.id
        WHERE p.is_active = TRUE
-       ORDER BY p.created_at DESC LIMIT ? OFFSET ?`,
+       ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
       [limit, offset]
     );
   },
@@ -183,7 +206,30 @@ export const ProductModel = {
     );
   },
 
-  async search(query: string, limit = 50, offset = 0): Promise<ProductWithFirstImage[]> {
+  async search(query: string, limit = 50, offset = 0, sort = ''): Promise<ProductWithFirstImage[]> {
+    let orderBy = 'p.created_at DESC'; // default sort
+
+    switch (sort) {
+      case 'name_asc':
+        orderBy = 'p.name ASC';
+        break;
+      case 'name_desc':
+        orderBy = 'p.name DESC';
+        break;
+      case 'price_asc':
+        orderBy = 'p.price ASC';
+        break;
+      case 'price_desc':
+        orderBy = 'p.price DESC';
+        break;
+      case 'newest':
+        orderBy = 'p.created_at DESC';
+        break;
+      case 'oldest':
+        orderBy = 'p.created_at ASC';
+        break;
+    }
+
     const searchTerm = `%${query}%`;
     return executeQuery<ProductWithFirstImage>(
       `SELECT p.*, pc.name as category_name,
@@ -194,7 +240,7 @@ export const ProductModel = {
        FROM products p
        LEFT JOIN product_categories pc ON p.category_id = pc.id
        WHERE p.is_active = TRUE AND (p.name LIKE ? OR p.description LIKE ? OR p.sku LIKE ?)
-       ORDER BY p.created_at DESC LIMIT ? OFFSET ?`,
+       ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
       [searchTerm, searchTerm, searchTerm, limit, offset]
     );
   },
@@ -280,6 +326,52 @@ export const ProductModel = {
       `SELECT COUNT(*) as count FROM products
        WHERE is_active = TRUE AND (name LIKE ? OR description LIKE ? OR sku LIKE ?)`,
       [searchTerm, searchTerm, searchTerm]
+    );
+    return result?.count || 0;
+  },
+
+  async getByCategory(categoryId: string, limit = 50, offset = 0, sort = ''): Promise<ProductWithFirstImage[]> {
+    let orderBy = 'p.created_at DESC'; // default sort
+
+    switch (sort) {
+      case 'name_asc':
+        orderBy = 'p.name ASC';
+        break;
+      case 'name_desc':
+        orderBy = 'p.name DESC';
+        break;
+      case 'price_asc':
+        orderBy = 'p.price ASC';
+        break;
+      case 'price_desc':
+        orderBy = 'p.price DESC';
+        break;
+      case 'newest':
+        orderBy = 'p.created_at DESC';
+        break;
+      case 'oldest':
+        orderBy = 'p.created_at ASC';
+        break;
+    }
+
+    return executeQuery<ProductWithFirstImage>(
+      `SELECT p.*, pc.name as category_name,
+       (SELECT pi.image_url FROM product_images pi
+        WHERE pi.product_id = p.id
+        ORDER BY pi.sort_order ASC, pi.created_at ASC
+        LIMIT 1) as first_image_url
+       FROM products p
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       WHERE p.is_active = TRUE AND p.category_id = ?
+       ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+      [categoryId, limit, offset]
+    );
+  },
+
+  async getCategoryCount(categoryId: string): Promise<number> {
+    const result = await getOne<{ count: number }>(
+      'SELECT COUNT(*) as count FROM products WHERE is_active = TRUE AND category_id = ?',
+      [categoryId]
     );
     return result?.count || 0;
   }
