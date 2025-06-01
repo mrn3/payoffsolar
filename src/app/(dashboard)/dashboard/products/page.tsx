@@ -192,12 +192,15 @@ export default function ProductsPage() {
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
             <div key={product.id} className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="h-48 bg-gray-200 flex items-center justify-center">
+              <button
+                onClick={() => router.push(`/dashboard/products/${product.id}`)}
+                className="w-full h-48 bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
+              >
                 {(product.first_image_url || product.image_url) ? (
                   <img
                     src={product.first_image_url || product.image_url}
                     alt={product.name}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover hover:opacity-90 transition-opacity duration-200"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                       e.currentTarget.nextElementSibling!.style.display = 'flex';
@@ -207,7 +210,7 @@ export default function ProductsPage() {
                 <div className={`flex items-center justify-center h-full w-full ${(product.first_image_url || product.image_url) ? 'hidden' : ''}`}>
                   <FaImage className="h-12 w-12 text-gray-400" />
                 </div>
-              </div>
+              </button>
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg font-medium text-gray-900 truncate" title={product.name}>
                   {product.name}

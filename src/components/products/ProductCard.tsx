@@ -17,19 +17,21 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <div className="aspect-w-16 aspect-h-9 bg-gray-200">
-        {product.first_image_url ? (
-          <img
-            src={product.first_image_url}
-            alt={product.name}
-            className="w-full h-48 object-cover"
-          />
-        ) : (
-          <div className="w-full h-48 flex items-center justify-center bg-gray-100">
-            <FaImage className="h-12 w-12 text-gray-400" />
-          </div>
-        )}
-      </div>
+      <Link href={`/products/${product.id}`} className="block">
+        <div className="aspect-w-16 aspect-h-9 bg-gray-200">
+          {product.first_image_url ? (
+            <img
+              src={product.first_image_url}
+              alt={product.name}
+              className="w-full h-48 object-cover hover:opacity-90 transition-opacity duration-200"
+            />
+          ) : (
+            <div className="w-full h-48 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200">
+              <FaImage className="h-12 w-12 text-gray-400" />
+            </div>
+          )}
+        </div>
+      </Link>
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
           {product.name}
