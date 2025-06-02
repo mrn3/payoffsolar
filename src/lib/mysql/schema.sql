@@ -239,3 +239,14 @@ CREATE INDEX IF NOT EXISTS idx_content_author ON content(author_id);
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user ON password_reset_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_content_published ON content(published);
+
+-- Insert sample roles
+INSERT IGNORE INTO roles (id, name, description) VALUES
+('admin-role-id', 'admin', 'Administrator with full access'),
+('customer-role-id', 'customer', 'Customer with limited access');
+
+-- Insert sample warehouses
+INSERT IGNORE INTO warehouses (id, name, address, city, state, zip) VALUES
+('main-warehouse-id', 'Main Warehouse', '123 Industrial Blvd', 'Phoenix', 'AZ', '85001'),
+('east-warehouse-id', 'East Coast Warehouse', '456 Commerce St', 'Atlanta', 'GA', '30301'),
+('west-warehouse-id', 'West Coast Warehouse', '789 Pacific Ave', 'Los Angeles', 'CA', '90001');

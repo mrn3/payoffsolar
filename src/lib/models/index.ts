@@ -833,19 +833,134 @@ export interface Inventory {
 
 export interface InventoryWithDetails extends Inventory {
   product_name?: string;
+  product_sku?: string;
   warehouse_name?: string;
 }
 
 export const InventoryModel = {
+  async getAll(limit = 50, offset = 0, warehouseId?: string, search?: string): Promise<InventoryWithDetails[]> {
+    let query = `
+      SELECT i.*, p.name as product_name, p.sku as product_sku, w.name as warehouse_name
+      FROM inventory i
+      LEFT JOIN products p ON i.product_id = p.id
+      LEFT JOIN warehouses w ON i.warehouse_id = w.id
+      WHERE 1=1
+    `;
+    const params: any[] = [];
+
+    if (warehouseId) {
+      query += ' AND i.warehouse_id = ?';
+      params.push(warehouseId);
+    }
+
+    if (search) {
+      query += ' AND (p.name LIKE ? OR p.sku LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    query += ' ORDER BY i.updated_at DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
+    return executeQuery<InventoryWithDetails>(query, params);
+  },
+
+  async getCount(warehouseId?: string, search?: string): Promise<number> {
+    let query = `
+      SELECT COUNT(*) as count
+      FROM inventory i
+      LEFT JOIN products p ON i.product_id = p.id
+      WHERE 1=1
+    `;
+    const params: any[] = [];
+
+    if (warehouseId) {
+      query += ' AND i.warehouse_id = ?';
+      params.push(warehouseId);
+    }
+
+    if (search) {
+      query += ' AND (p.name LIKE ? OR p.sku LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    const result = await getOne<{ count: number }>(query, params);
+    return result?.count || 0;
+  },
+
+  async getById(id: string): Promise<InventoryWithDetails | null> {
+    return getOne<InventoryWithDetails>(
+      `SELECT i.*, p.name as product_name, p.sku as product_sku, w.name as warehouse_name
+       FROM inventory i
+       LEFT JOIN products p ON i.product_id = p.id
+       LEFT JOIN warehouses w ON i.warehouse_id = w.id
+       WHERE i.id = ?`,
+      [id]
+    );
+  },
+
+  async getByProductAndWarehouse(productId: string, warehouseId: string): Promise<Inventory | null> {
+    return getOne<Inventory>(
+      'SELECT * FROM inventory WHERE product_id = ? AND warehouse_id = ?',
+      [productId, warehouseId]
+    );
+  },
+
+  async create(data: Omit<Inventory, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    const result = await executeSingle(
+      `INSERT INTO inventory (id, product_id, warehouse_id, quantity, min_quantity)
+       VALUES (UUID(), ?, ?, ?, ?)`,
+      [data.product_id, data.warehouse_id, data.quantity, data.min_quantity]
+    );
+
+    const inventory = await getOne<{ id: string }>(
+      'SELECT id FROM inventory WHERE product_id = ? AND warehouse_id = ? ORDER BY created_at DESC LIMIT 1',
+      [data.product_id, data.warehouse_id]
+    );
+    return inventory!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<Inventory, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (data.quantity !== undefined) {
+      fields.push('quantity = ?');
+      values.push(data.quantity);
+    }
+    if (data.min_quantity !== undefined) {
+      fields.push('min_quantity = ?');
+      values.push(data.min_quantity);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE inventory SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM inventory WHERE id = ?', [id]);
+  },
+
   async getLowStock(limit = 10): Promise<InventoryWithDetails[]> {
     return executeQuery<InventoryWithDetails>(
-      `SELECT i.*, p.name as product_name, w.name as warehouse_name
+      `SELECT i.*, p.name as product_name, p.sku as product_sku, w.name as warehouse_name
        FROM inventory i
        LEFT JOIN products p ON i.product_id = p.id
        LEFT JOIN warehouses w ON i.warehouse_id = w.id
        WHERE i.quantity <= i.min_quantity
        ORDER BY i.updated_at DESC LIMIT ?`,
       [limit]
+    );
+  },
+
+  async adjustQuantity(id: string, adjustment: number, reason?: string): Promise<void> {
+    await executeSingle(
+      'UPDATE inventory SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [adjustment, id]
     );
   }
 };
@@ -865,6 +980,62 @@ export interface Warehouse {
 export const WarehouseModel = {
   async getAll(): Promise<Warehouse[]> {
     return executeQuery<Warehouse>('SELECT * FROM warehouses ORDER BY name');
+  },
+
+  async getById(id: string): Promise<Warehouse | null> {
+    return getOne<Warehouse>('SELECT * FROM warehouses WHERE id = ?', [id]);
+  },
+
+  async create(data: Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    const result = await executeSingle(
+      `INSERT INTO warehouses (id, name, address, city, state, zip)
+       VALUES (UUID(), ?, ?, ?, ?, ?)`,
+      [data.name, data.address || null, data.city || null, data.state || null, data.zip || null]
+    );
+
+    const warehouse = await getOne<{ id: string }>(
+      'SELECT id FROM warehouses WHERE name = ? ORDER BY created_at DESC LIMIT 1',
+      [data.name]
+    );
+    return warehouse!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (data.name !== undefined) {
+      fields.push('name = ?');
+      values.push(data.name);
+    }
+    if (data.address !== undefined) {
+      fields.push('address = ?');
+      values.push(data.address);
+    }
+    if (data.city !== undefined) {
+      fields.push('city = ?');
+      values.push(data.city);
+    }
+    if (data.state !== undefined) {
+      fields.push('state = ?');
+      values.push(data.state);
+    }
+    if (data.zip !== undefined) {
+      fields.push('zip = ?');
+      values.push(data.zip);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE warehouses SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM warehouses WHERE id = ?', [id]);
   }
 };
 
