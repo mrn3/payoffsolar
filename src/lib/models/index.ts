@@ -428,6 +428,25 @@ export interface OrderWithCustomer extends Order {
   customer_last_name?: string;
 }
 
+// Order Item model
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  price: number | string;
+  created_at: string;
+}
+
+export interface OrderItemWithProduct extends OrderItem {
+  product_name?: string;
+  product_sku?: string;
+}
+
+export interface OrderWithItems extends OrderWithCustomer {
+  items?: OrderItemWithProduct[];
+}
+
 export const OrderModel = {
   async getAll(limit = 50, offset = 0): Promise<OrderWithCustomer[]> {
     return executeQuery<OrderWithCustomer>(
@@ -498,6 +517,139 @@ export const OrderModel = {
        ORDER BY o.created_at DESC LIMIT ?`,
       [userId, limit]
     );
+  },
+
+  async getWithItems(id: string): Promise<OrderWithItems | null> {
+    const order = await getOne<OrderWithCustomer>(
+      `SELECT o.*, c.first_name as customer_first_name, c.last_name as customer_last_name
+       FROM orders o
+       LEFT JOIN customers c ON o.customer_id = c.id
+       WHERE o.id = ?`,
+      [id]
+    );
+
+    if (!order) return null;
+
+    const items = await executeQuery<OrderItemWithProduct>(
+      `SELECT oi.*, p.name as product_name, p.sku as product_sku
+       FROM order_items oi
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE oi.order_id = ?
+       ORDER BY oi.created_at ASC`,
+      [id]
+    );
+
+    return { ...order, items };
+  },
+
+  async create(data: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    const result = await executeSingle(
+      `INSERT INTO orders (id, customer_id, status, total, notes)
+       VALUES (UUID(), ?, ?, ?, ?)`,
+      [data.customer_id, data.status, data.total, data.notes || null]
+    );
+
+    const order = await getOne<{ id: string }>(
+      'SELECT id FROM orders WHERE customer_id = ? AND total = ? ORDER BY created_at DESC LIMIT 1',
+      [data.customer_id, data.total]
+    );
+    return order!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<Order, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.customer_id !== undefined) {
+      fields.push('customer_id = ?');
+      values.push(data.customer_id);
+    }
+    if (data.status !== undefined) {
+      fields.push('status = ?');
+      values.push(data.status);
+    }
+    if (data.total !== undefined) {
+      fields.push('total = ?');
+      values.push(data.total);
+    }
+    if (data.notes !== undefined) {
+      fields.push('notes = ?');
+      values.push(data.notes);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE orders SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM orders WHERE id = ?', [id]);
+  }
+};
+
+// Order Item model
+export const OrderItemModel = {
+  async getByOrderId(orderId: string): Promise<OrderItemWithProduct[]> {
+    return executeQuery<OrderItemWithProduct>(
+      `SELECT oi.*, p.name as product_name, p.sku as product_sku
+       FROM order_items oi
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE oi.order_id = ?
+       ORDER BY oi.created_at ASC`,
+      [orderId]
+    );
+  },
+
+  async create(data: Omit<OrderItem, 'id' | 'created_at'>): Promise<string> {
+    const result = await executeSingle(
+      `INSERT INTO order_items (id, order_id, product_id, quantity, price)
+       VALUES (UUID(), ?, ?, ?, ?)`,
+      [data.order_id, data.product_id, data.quantity, data.price]
+    );
+
+    const item = await getOne<{ id: string }>(
+      'SELECT id FROM order_items WHERE order_id = ? AND product_id = ? ORDER BY created_at DESC LIMIT 1',
+      [data.order_id, data.product_id]
+    );
+    return item!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<OrderItem, 'id' | 'order_id' | 'created_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.product_id !== undefined) {
+      fields.push('product_id = ?');
+      values.push(data.product_id);
+    }
+    if (data.quantity !== undefined) {
+      fields.push('quantity = ?');
+      values.push(data.quantity);
+    }
+    if (data.price !== undefined) {
+      fields.push('price = ?');
+      values.push(data.price);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE order_items SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM order_items WHERE id = ?', [id]);
+  },
+
+  async deleteByOrderId(orderId: string): Promise<void> {
+    await executeSingle('DELETE FROM order_items WHERE order_id = ?', [orderId]);
   }
 };
 
