@@ -79,26 +79,31 @@ export default async function PublicLayout({
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Services</h3>
+              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Pricing</h3>
               <ul className="mt-4 space-y-2">
                 <li>
-                  <Link href="/services/installation" className="text-sm text-gray-700 hover:text-green-500">
-                    Installation
+                  <Link href="/pricing" className="text-sm text-gray-700 hover:text-green-500">
+                    Installation Packages
                   </Link>
                 </li>
                 <li>
-                  <Link href="/services/maintenance" className="text-sm text-gray-700 hover:text-green-500">
-                    Maintenance
+                  <Link href="/pricing#small" className="text-sm text-gray-700 hover:text-green-500">
+                    Small Package
                   </Link>
                 </li>
                 <li>
-                  <Link href="/services/consultation" className="text-sm text-gray-700 hover:text-green-500">
-                    Consultation
+                  <Link href="/pricing#medium" className="text-sm text-gray-700 hover:text-green-500">
+                    Medium Package
                   </Link>
                 </li>
                 <li>
-                  <Link href="/services/system-upgrade" className="text-sm text-gray-700 hover:text-green-500">
-                    System Upgrade
+                  <Link href="/pricing#large" className="text-sm text-gray-700 hover:text-green-500">
+                    Large Package
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/pricing#extra-large" className="text-sm text-gray-700 hover:text-green-500">
+                    Extra Large Package
                   </Link>
                 </li>
               </ul>

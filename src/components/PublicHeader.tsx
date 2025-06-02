@@ -23,7 +23,7 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
   const navItems = [
     { href: '/', label: 'Home' },
     { href: '/products', label: 'Products' },
-    { href: '/services', label: 'Services' },
+    { href: '/pricing', label: 'Pricing' },
     { href: '/about', label: 'About Us' },
     { href: '/blog', label: 'Blog' },
     { href: '/contact', label: 'Contact' },
