@@ -1053,3 +1053,205 @@ export const RoleModel = {
     return getOne<Role>('SELECT * FROM roles WHERE name = ?', [name]);
   }
 };
+
+// Content Type model
+export interface ContentType {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+}
+
+export const ContentTypeModel = {
+  async getAll(): Promise<ContentType[]> {
+    return executeQuery<ContentType>('SELECT * FROM content_types ORDER BY name');
+  },
+
+  async getById(id: string): Promise<ContentType | null> {
+    return getOne<ContentType>('SELECT * FROM content_types WHERE id = ?', [id]);
+  },
+
+  async getByName(name: string): Promise<ContentType | null> {
+    return getOne<ContentType>('SELECT * FROM content_types WHERE name = ?', [name]);
+  }
+};
+
+// Content model
+export interface Content {
+  id: string;
+  title: string;
+  slug: string;
+  content?: string;
+  type_id: string;
+  published: boolean;
+  author_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContentWithDetails extends Content {
+  type_name?: string;
+  author_name?: string;
+}
+
+export const ContentModel = {
+  async getAll(limit = 50, offset = 0): Promise<ContentWithDetails[]> {
+    return executeQuery<ContentWithDetails>(
+      `SELECT c.*, ct.name as type_name,
+       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       FROM content c
+       LEFT JOIN content_types ct ON c.type_id = ct.id
+       LEFT JOIN users u ON c.author_id = u.id
+       ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+  },
+
+  async getByType(typeId: string, limit = 50, offset = 0): Promise<ContentWithDetails[]> {
+    return executeQuery<ContentWithDetails>(
+      `SELECT c.*, ct.name as type_name,
+       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       FROM content c
+       LEFT JOIN content_types ct ON c.type_id = ct.id
+       LEFT JOIN users u ON c.author_id = u.id
+       WHERE c.type_id = ?
+       ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
+      [typeId, limit, offset]
+    );
+  },
+
+  async getPublished(limit = 50, offset = 0): Promise<ContentWithDetails[]> {
+    return executeQuery<ContentWithDetails>(
+      `SELECT c.*, ct.name as type_name,
+       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       FROM content c
+       LEFT JOIN content_types ct ON c.type_id = ct.id
+       LEFT JOIN users u ON c.author_id = u.id
+       WHERE c.published = TRUE
+       ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+  },
+
+  async getPublishedByType(typeId: string, limit = 50, offset = 0): Promise<ContentWithDetails[]> {
+    return executeQuery<ContentWithDetails>(
+      `SELECT c.*, ct.name as type_name,
+       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       FROM content c
+       LEFT JOIN content_types ct ON c.type_id = ct.id
+       LEFT JOIN users u ON c.author_id = u.id
+       WHERE c.published = TRUE AND c.type_id = ?
+       ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
+      [typeId, limit, offset]
+    );
+  },
+
+  async getById(id: string): Promise<ContentWithDetails | null> {
+    return getOne<ContentWithDetails>(
+      `SELECT c.*, ct.name as type_name,
+       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       FROM content c
+       LEFT JOIN content_types ct ON c.type_id = ct.id
+       LEFT JOIN users u ON c.author_id = u.id
+       WHERE c.id = ?`,
+      [id]
+    );
+  },
+
+  async getBySlug(slug: string): Promise<ContentWithDetails | null> {
+    return getOne<ContentWithDetails>(
+      `SELECT c.*, ct.name as type_name,
+       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       FROM content c
+       LEFT JOIN content_types ct ON c.type_id = ct.id
+       LEFT JOIN users u ON c.author_id = u.id
+       WHERE c.slug = ?`,
+      [slug]
+    );
+  },
+
+  async search(query: string, limit = 50, offset = 0): Promise<ContentWithDetails[]> {
+    const searchTerm = `%${query}%`;
+    return executeQuery<ContentWithDetails>(
+      `SELECT c.*, ct.name as type_name,
+       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       FROM content c
+       LEFT JOIN content_types ct ON c.type_id = ct.id
+       LEFT JOIN users u ON c.author_id = u.id
+       WHERE c.title LIKE ? OR c.content LIKE ?
+       ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
+      [searchTerm, searchTerm, limit, offset]
+    );
+  },
+
+  async create(data: Omit<Content, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    const result = await executeSingle(
+      `INSERT INTO content (id, title, slug, content, type_id, published, author_id)
+       VALUES (UUID(), ?, ?, ?, ?, ?, ?)`,
+      [data.title, data.slug, data.content || null, data.type_id, data.published, data.author_id || null]
+    );
+
+    const content = await getOne<{ id: string }>(
+      'SELECT id FROM content WHERE slug = ? ORDER BY created_at DESC LIMIT 1',
+      [data.slug]
+    );
+    return content!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<Content, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (data.title !== undefined) {
+      fields.push('title = ?');
+      values.push(data.title);
+    }
+    if (data.slug !== undefined) {
+      fields.push('slug = ?');
+      values.push(data.slug);
+    }
+    if (data.content !== undefined) {
+      fields.push('content = ?');
+      values.push(data.content || null);
+    }
+    if (data.type_id !== undefined) {
+      fields.push('type_id = ?');
+      values.push(data.type_id);
+    }
+    if (data.published !== undefined) {
+      fields.push('published = ?');
+      values.push(data.published);
+    }
+    if (data.author_id !== undefined) {
+      fields.push('author_id = ?');
+      values.push(data.author_id || null);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE content SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM content WHERE id = ?', [id]);
+  },
+
+  async getCount(): Promise<number> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM content');
+    return result?.count || 0;
+  },
+
+  async getCountByType(typeId: string): Promise<number> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM content WHERE type_id = ?', [typeId]);
+    return result?.count || 0;
+  },
+
+  async getPublishedCount(): Promise<number> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM content WHERE published = TRUE');
+    return result?.count || 0;
+  }
+};
