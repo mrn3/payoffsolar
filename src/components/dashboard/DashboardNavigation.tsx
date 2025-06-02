@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FaTachometerAlt, FaUsers, FaBoxes, FaShoppingCart, FaFileInvoiceDollar, FaWarehouse, FaCalendarAlt, FaEdit, FaSun, FaUser, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaBoxes, FaShoppingCart, FaFileInvoiceDollar, FaWarehouse, FaEdit, FaSun, FaUser, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
 import { UserRole } from '@/lib/auth';
 
 interface NavigationProps {
@@ -67,7 +67,6 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
       { href: '/dashboard/orders', icon: <FaShoppingCart className="mr-3 h-5 w-5" />, label: 'Orders' },
       { href: '/dashboard/invoices', icon: <FaFileInvoiceDollar className="mr-3 h-5 w-5" />, label: 'Invoices' },
       { href: '/dashboard/inventory', icon: <FaWarehouse className="mr-3 h-5 w-5" />, label: 'Inventory' },
-      { href: '/dashboard/services', icon: <FaCalendarAlt className="mr-3 h-5 w-5" />, label: 'Services' },
       { href: '/dashboard/cms', icon: <FaEdit className="mr-3 h-5 w-5" />, label: 'CMS' },
     ];
   };
