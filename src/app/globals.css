@@ -28,6 +28,11 @@ body {
     font-weight: 600; /* font-semibold */
   }
 
+  /* Make all form inputs have dark text by default */
+  input, textarea, select {
+    color: #111827 !important; /* text-gray-900 */
+  }
+
   /* Override light gray colors on headings when on light backgrounds */
   h1.text-gray-100, h1.text-gray-200, h1.text-gray-300, h1.text-gray-400, h1.text-gray-500, h1.text-gray-600,
   h2.text-gray-100, h2.text-gray-200, h2.text-gray-300, h2.text-gray-400, h2.text-gray-500, h2.text-gray-600,

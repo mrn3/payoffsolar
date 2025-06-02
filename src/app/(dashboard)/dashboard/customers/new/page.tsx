@@ -127,7 +127,7 @@ export default function NewCustomerPage() {
                 name="first_name"
                 value={formData.first_name}
                 onChange={handleChange}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 text-gray-900 ${
+                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
                   errors.first_name ? 'border-red-300' : 'border-gray-300'
                 } focus:outline-none focus:ring-green-500 focus:border-green-500`}
               />
@@ -141,7 +141,7 @@ export default function NewCustomerPage() {
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleChange}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 text-gray-900 ${
+                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
                   errors.last_name ? 'border-red-300' : 'border-gray-300'
                 } focus:outline-none focus:ring-green-500 focus:border-green-500`}
               />
@@ -155,7 +155,7 @@ export default function NewCustomerPage() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 text-gray-900 ${
+                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
                   errors.email ? 'border-red-300' : 'border-gray-300'
                 } focus:outline-none focus:ring-green-500 focus:border-green-500`}
               />
@@ -169,7 +169,7 @@ export default function NewCustomerPage() {
                 value={formData.phone}
                 onChange={handleChange}
                 onBlur={handlePhoneBlur}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 text-gray-900 ${
+                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
                   errors.phone ? 'border-red-300' : 'border-gray-300'
                 } focus:outline-none focus:ring-green-500 focus:border-green-500`}
               />
@@ -183,7 +183,7 @@ export default function NewCustomerPage() {
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
               />
             </div>
 
@@ -194,7 +194,7 @@ export default function NewCustomerPage() {
                 name="city"
                 value={formData.city}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
               />
             </div>
 
@@ -205,7 +205,7 @@ export default function NewCustomerPage() {
                 name="state"
                 value={formData.state}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
               />
             </div>
 
@@ -216,7 +216,7 @@ export default function NewCustomerPage() {
                 name="zip"
                 value={formData.zip}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
               />
             </div>
 
@@ -227,7 +227,7 @@ export default function NewCustomerPage() {
                 rows={4}
                 value={formData.notes}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
                 placeholder="Additional notes about this customer..."
               />
             </div>

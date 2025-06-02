@@ -141,7 +141,7 @@ export default function RegisterPage() {
                     autoComplete="given-name"
                     className={`block w-full appearance-none rounded-md border ${
                       errors.firstName ? 'border-red-300' : 'border-gray-300'
-                    } px-3 py-2 placeholder-gray-400 text-gray-900 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
+                    } px-3 py-2 placeholder-gray-400 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
                     {...register('firstName')}
                   />
                   {errors.firstName && (
@@ -161,7 +161,7 @@ export default function RegisterPage() {
                     autoComplete="family-name"
                     className={`block w-full appearance-none rounded-md border ${
                       errors.lastName ? 'border-red-300' : 'border-gray-300'
-                    } px-3 py-2 placeholder-gray-400 text-gray-900 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
+                    } px-3 py-2 placeholder-gray-400 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
                     {...register('lastName')}
                   />
                   {errors.lastName && (
@@ -182,7 +182,7 @@ export default function RegisterPage() {
                   autoComplete="email"
                   className={`block w-full appearance-none rounded-md border ${
                     errors.email ? 'border-red-300' : 'border-gray-300'
-                  } px-3 py-2 placeholder-gray-400 text-gray-900 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
+                  } px-3 py-2 placeholder-gray-400 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
                   {...register('email')}
                 />
                 {errors.email && (
@@ -202,7 +202,7 @@ export default function RegisterPage() {
                   autoComplete="new-password"
                   className={`block w-full appearance-none rounded-md border ${
                     errors.password ? 'border-red-300' : 'border-gray-300'
-                  } px-3 py-2 placeholder-gray-400 text-gray-900 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
+                  } px-3 py-2 placeholder-gray-400 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
                   {...register('password')}
                 />
                 {errors.password && (
@@ -222,7 +222,7 @@ export default function RegisterPage() {
                   autoComplete="new-password"
                   className={`block w-full appearance-none rounded-md border ${
                     errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                  } px-3 py-2 placeholder-gray-400 text-gray-900 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
+                  } px-3 py-2 placeholder-gray-400 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
                   {...register('confirmPassword')}
                 />
                 {errors.confirmPassword && (

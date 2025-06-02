@@ -308,7 +308,7 @@ export default function EditProductPage() {
                 value={formData.name}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 text-gray-900 ${
+                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
                   errors.name ? 'border-red-300' : 'border-gray-300'
                 } focus:outline-none focus:ring-green-500 focus:border-green-500`}
                 placeholder="Enter product name"
@@ -324,7 +324,7 @@ export default function EditProductPage() {
                 value={formData.sku}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 text-gray-900 ${
+                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
                   errors.sku ? 'border-red-300' : 'border-gray-300'
                 } focus:outline-none focus:ring-green-500 focus:border-green-500`}
                 placeholder="e.g., SP-001"
@@ -346,7 +346,7 @@ export default function EditProductPage() {
                   value={formData.price}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`block w-full pl-7 pr-3 py-2 border rounded-md text-gray-900 ${
+                  className={`block w-full pl-7 pr-3 py-2 border rounded-md ${
                     errors.price ? 'border-red-300' : 'border-gray-300'
                   } focus:outline-none focus:ring-green-500 focus:border-green-500`}
                   placeholder="0.00"
@@ -361,7 +361,7 @@ export default function EditProductPage() {
                 name="category_id"
                 value={formData.category_id}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
               >
                 <option value="">Select a category</option>
                 {categories.map((category) => (
@@ -390,7 +390,7 @@ export default function EditProductPage() {
                 rows={4}
                 value={formData.description}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
                 placeholder="Enter product description"
               />
             </div>

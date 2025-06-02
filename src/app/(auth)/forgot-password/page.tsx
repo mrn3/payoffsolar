@@ -111,7 +111,7 @@ export default function ForgotPasswordPage() {
                   autoComplete="email"
                   className={`block w-full appearance-none rounded-md border ${
                     errors.email ? 'border-red-300' : 'border-gray-300'
-                  } px-3 py-2 placeholder-gray-400 text-gray-900 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
+                  } px-3 py-2 placeholder-gray-400 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
                   {...register('email')}
                 />
                 {errors.email && (
