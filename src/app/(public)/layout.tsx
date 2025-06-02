@@ -1,5 +1,6 @@
 import React from 'react';
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
+import Link from 'next/link';
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaSun } from 'react-icons/fa';
 import { getUserProfile } from '@/lib/auth';
 import PublicHeader from '@/components/PublicHeader';
 
