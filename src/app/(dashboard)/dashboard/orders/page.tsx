@@ -1,31 +1,94 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FaPlus, FaEye, FaEdit, FaTrash } from 'react-icons/fa';
-import { getUserProfile, isCustomer, requireAuth } from '@/lib/auth';
-import { OrderModel } from '@/lib/models';
 import { format } from 'date-fns';
 
-export default async function OrdersPage() {
-  // Require authentication
-  const session = await requireAuth();
-  const profile = session.profile;
+interface Order {
+  id: string;
+  customer_id: string;
+  status: string;
+  total: number | string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  customer_first_name?: string;
+  customer_last_name?: string;
+}
 
-  let orders = [];
-  let error = null;
+interface UserProfile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  role: string | null;
+}
 
-  try {
-    if (isCustomer(profile.role)) {
-      // Customer users only see their own orders
-      orders = await OrderModel.getAllByUser(profile.id, 50, 0);
-    } else {
-      // Admin and other roles see all orders
-      orders = await OrderModel.getAll(50, 0);
+export default function OrdersPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      // First get user profile
+      const profileRes = await fetch('/api/auth/profile');
+      if (!profileRes.ok) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const profileData = await profileRes.json();
+      setProfile(profileData.profile);
+
+      // Then get orders
+      const ordersRes = await fetch('/api/orders');
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        setOrders(ordersData.orders || []);
+      } else {
+        setError('Failed to load orders');
+      }
+    } catch (err) {
+      console.error('Error loading data:', err);
+      setError('Failed to load data');
+    } finally {
+      setLoading(false);
     }
-    console.log('🛒 Orders loaded:', orders.length, 'First order total type:', typeof orders[0]?.total);
-  } catch (err) {
-    console.error('Error loading orders:', err);
-    error = 'Failed to load orders';
-  }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm('Are you sure you want to delete this order?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Remove the order from the list
+        setOrders(prev => prev.filter(order => order.id !== orderId));
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to delete order');
+      }
+    } catch (err) {
+      console.error('Error deleting order:', err);
+      alert('Failed to delete order');
+    }
+  };
+
+  const isCustomer = (role: string | null) => {
+    return role === 'customer';
+  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -42,6 +105,22 @@ export default async function OrdersPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="text-sm text-red-600">Failed to load user profile</div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="sm:flex sm:items-center sm:justify-between">
@@ -50,7 +129,7 @@ export default async function OrdersPage() {
             {isCustomer(profile.role) ? 'My Orders' : 'Orders'}
           </h1>
           <p className="mt-2 text-sm text-gray-700">
-            {isCustomer(profile.role) 
+            {isCustomer(profile.role)
               ? 'View and track your orders.'
               : 'A list of all orders in your system including their status and customer details.'
             }
@@ -152,12 +231,7 @@ export default async function OrdersPage() {
                                 <button
                                   className="text-red-600 hover:text-red-900"
                                   title="Delete order"
-                                  onClick={() => {
-                                    if (confirm('Are you sure you want to delete this order?')) {
-                                      // TODO: Implement delete functionality
-                                      console.log('Delete order:', order.id);
-                                    }
-                                  }}
+                                  onClick={() => handleDeleteOrder(order.id)}
                                 >
                                   <FaTrash className="h-4 w-4" />
                                 </button>
