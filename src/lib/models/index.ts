@@ -669,6 +669,8 @@ export interface InvoiceWithCustomer extends Invoice {
   customer_first_name?: string;
   customer_last_name?: string;
   customer_email?: string;
+  order_total?: number | string;
+  order_status?: string;
 }
 
 export const InvoiceModel = {
@@ -747,6 +749,74 @@ export const InvoiceModel = {
        ORDER BY i.created_at DESC LIMIT ?`,
       [userId, limit]
     );
+  },
+
+  async getWithDetails(id: string): Promise<InvoiceWithCustomer | null> {
+    return getOne<InvoiceWithCustomer>(
+      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email,
+              o.total as order_total, o.status as order_status
+       FROM invoices i
+       LEFT JOIN orders o ON i.order_id = o.id
+       LEFT JOIN customers c ON o.customer_id = c.id
+       WHERE i.id = ?`,
+      [id]
+    );
+  },
+
+  async create(data: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    const result = await executeSingle(
+      `INSERT INTO invoices (id, order_id, invoice_number, amount, status, due_date)
+       VALUES (UUID(), ?, ?, ?, ?, ?)`,
+      [data.order_id, data.invoice_number, data.amount, data.status, data.due_date]
+    );
+
+    const invoice = await getOne<{ id: string }>('SELECT id FROM invoices WHERE invoice_number = ? ORDER BY created_at DESC LIMIT 1', [data.invoice_number]);
+    return invoice!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<Invoice, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.order_id !== undefined) {
+      fields.push('order_id = ?');
+      values.push(data.order_id);
+    }
+    if (data.invoice_number !== undefined) {
+      fields.push('invoice_number = ?');
+      values.push(data.invoice_number);
+    }
+    if (data.amount !== undefined) {
+      fields.push('amount = ?');
+      values.push(data.amount);
+    }
+    if (data.status !== undefined) {
+      fields.push('status = ?');
+      values.push(data.status);
+    }
+    if (data.due_date !== undefined) {
+      fields.push('due_date = ?');
+      values.push(data.due_date);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE invoices SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM invoices WHERE id = ?', [id]);
+  },
+
+  async generateInvoiceNumber(): Promise<string> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM invoices');
+    const count = result?.count || 0;
+    const nextNumber = count + 1;
+    return `INV-${new Date().getFullYear()}-${nextNumber.toString().padStart(4, '0')}`;
   }
 };
 

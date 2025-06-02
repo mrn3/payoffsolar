@@ -4,6 +4,7 @@ import { FaPlus, FaEye, FaEdit, FaTrash, FaDownload } from 'react-icons/fa';
 import { getUserProfile, isCustomer, requireAuth } from '@/lib/auth';
 import { InvoiceModel } from '@/lib/models';
 import { format } from 'date-fns';
+import DeleteInvoiceButton from './components/DeleteInvoiceButton';
 
 export default async function InvoicesPage() {
   // Require authentication
@@ -58,13 +59,13 @@ export default async function InvoicesPage() {
         </div>
         {!isCustomer(profile.role) && (
           <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <button
-              type="button"
+            <Link
+              href="/dashboard/invoices/create"
               className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
             >
               <FaPlus className="mr-2 h-4 w-4" />
               Create invoice
-            </button>
+            </Link>
           </div>
         )}
       </div>
@@ -139,20 +140,18 @@ export default async function InvoicesPage() {
                         </td>
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                           <div className="flex justify-end space-x-2">
-                            <button className="text-green-600 hover:text-green-900" title="View">
+                            <Link href={`/dashboard/invoices/${invoice.id}`} className="text-green-600 hover:text-green-900" title="View">
                               <FaEye className="h-4 w-4" />
-                            </button>
-                            <button className="text-blue-600 hover:text-blue-900" title="Download">
+                            </Link>
+                            <Link href={`/api/invoices/${invoice.id}/download`} className="text-blue-600 hover:text-blue-900" title="Download">
                               <FaDownload className="h-4 w-4" />
-                            </button>
+                            </Link>
                             {!isCustomer(profile.role) && (
                               <>
-                                <button className="text-orange-600 hover:text-orange-900" title="Edit">
+                                <Link href={`/dashboard/invoices/${invoice.id}/edit`} className="text-orange-600 hover:text-orange-900" title="Edit">
                                   <FaEdit className="h-4 w-4" />
-                                </button>
-                                <button className="text-red-600 hover:text-red-900" title="Delete">
-                                  <FaTrash className="h-4 w-4" />
-                                </button>
+                                </Link>
+                                <DeleteInvoiceButton invoiceId={invoice.id} invoiceNumber={invoice.invoice_number} />
                               </>
                             )}
                           </div>
