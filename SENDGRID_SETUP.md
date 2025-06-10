@@ -67,7 +67,7 @@ SENDGRID_FROM_NAME=Payoff Solar
    npm run dev
    ```
 
-2. Go to the forgot password page: `http://localhost:3000/forgot-password`
+2. Go to the forgot password page: `http://localhost:5000/forgot-password`
 
 3. Enter a valid email address that exists in your database
 
