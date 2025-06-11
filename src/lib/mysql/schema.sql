@@ -17,7 +17,7 @@ INSERT IGNORE INTO roles (id, name, description) VALUES
   (UUID(), 'manager', 'Manager with access to most features'),
   (UUID(), 'sales', 'Sales staff with access to customers and orders'),
   (UUID(), 'inventory', 'Inventory staff with access to products and inventory'),
-  (UUID(), 'customer', 'Customer with access to their own orders and invoices');
+  (UUID(), 'customer', 'Customer with access to their own orders');
 
 -- Create users table (replaces Supabase auth.users)
 CREATE TABLE IF NOT EXISTS users (
@@ -160,18 +160,7 @@ CREATE TABLE IF NOT EXISTS order_items (
   FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
--- Create invoices table
-CREATE TABLE IF NOT EXISTS invoices (
-  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-  order_id VARCHAR(36) NOT NULL,
-  invoice_number VARCHAR(50) UNIQUE NOT NULL,
-  amount DECIMAL(10, 2) NOT NULL,
-  status VARCHAR(50) NOT NULL DEFAULT 'pending',
-  due_date DATE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
-);
+
 
 -- Create services table
 CREATE TABLE IF NOT EXISTS services (
@@ -233,7 +222,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id);
-CREATE INDEX IF NOT EXISTS idx_invoices_order ON invoices(order_id);
+
 CREATE INDEX IF NOT EXISTS idx_content_type ON content(type_id);
 CREATE INDEX IF NOT EXISTS idx_content_author ON content(author_id);
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);

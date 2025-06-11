@@ -653,172 +653,9 @@ export const OrderItemModel = {
   }
 };
 
-// Invoice model
-export interface Invoice {
-  id: string;
-  order_id: string;
-  invoice_number: string;
-  amount: number | string;
-  status: string;
-  due_date: string;
-  created_at: string;
-  updated_at: string;
-}
 
-export interface InvoiceWithCustomer extends Invoice {
-  customer_first_name?: string;
-  customer_last_name?: string;
-  customer_email?: string;
-  order_total?: number | string;
-  order_status?: string;
-}
 
-export const InvoiceModel = {
-  async getAll(limit = 50, offset = 0): Promise<InvoiceWithCustomer[]> {
-    return executeQuery<InvoiceWithCustomer>(
-      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email
-       FROM invoices i
-       LEFT JOIN orders o ON i.order_id = o.id
-       LEFT JOIN customers c ON o.customer_id = c.id
-       ORDER BY i.created_at DESC LIMIT ? OFFSET ?`,
-      [limit, offset]
-    );
-  },
 
-  async getAllByUser(userId: string, limit = 50, offset = 0): Promise<InvoiceWithCustomer[]> {
-    return executeQuery<InvoiceWithCustomer>(
-      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email
-       FROM invoices i
-       LEFT JOIN orders o ON i.order_id = o.id
-       LEFT JOIN customers c ON o.customer_id = c.id
-       WHERE c.user_id = ?
-       ORDER BY i.created_at DESC LIMIT ? OFFSET ?`,
-      [userId, limit, offset]
-    );
-  },
-
-  async getById(id: string): Promise<Invoice | null> {
-    return getOne<Invoice>('SELECT * FROM invoices WHERE id = ?', [id]);
-  },
-
-  async getByIdForUser(id: string, userId: string): Promise<InvoiceWithCustomer | null> {
-    return getOne<InvoiceWithCustomer>(
-      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email
-       FROM invoices i
-       LEFT JOIN orders o ON i.order_id = o.id
-       LEFT JOIN customers c ON o.customer_id = c.id
-       WHERE i.id = ? AND c.user_id = ?`,
-      [id, userId]
-    );
-  },
-
-  async getCount(): Promise<number> {
-    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM invoices');
-    return result?.count || 0;
-  },
-
-  async getCountByUser(userId: string): Promise<number> {
-    const result = await getOne<{ count: number }>(
-      `SELECT COUNT(*) as count FROM invoices i
-       LEFT JOIN orders o ON i.order_id = o.id
-       LEFT JOIN customers c ON o.customer_id = c.id
-       WHERE c.user_id = ?`,
-      [userId]
-    );
-    return result?.count || 0;
-  },
-
-  async getRecent(limit = 3): Promise<InvoiceWithCustomer[]> {
-    return executeQuery<InvoiceWithCustomer>(
-      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email
-       FROM invoices i
-       LEFT JOIN orders o ON i.order_id = o.id
-       LEFT JOIN customers c ON o.customer_id = c.id
-       ORDER BY i.created_at DESC LIMIT ?`,
-      [limit]
-    );
-  },
-
-  async getRecentByUser(userId: string, limit = 3): Promise<InvoiceWithCustomer[]> {
-    return executeQuery<InvoiceWithCustomer>(
-      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email
-       FROM invoices i
-       LEFT JOIN orders o ON i.order_id = o.id
-       LEFT JOIN customers c ON o.customer_id = c.id
-       WHERE c.user_id = ?
-       ORDER BY i.created_at DESC LIMIT ?`,
-      [userId, limit]
-    );
-  },
-
-  async getWithDetails(id: string): Promise<InvoiceWithCustomer | null> {
-    return getOne<InvoiceWithCustomer>(
-      `SELECT i.*, c.first_name as customer_first_name, c.last_name as customer_last_name, c.email as customer_email,
-              o.total as order_total, o.status as order_status
-       FROM invoices i
-       LEFT JOIN orders o ON i.order_id = o.id
-       LEFT JOIN customers c ON o.customer_id = c.id
-       WHERE i.id = ?`,
-      [id]
-    );
-  },
-
-  async create(data: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-    const result = await executeSingle(
-      `INSERT INTO invoices (id, order_id, invoice_number, amount, status, due_date)
-       VALUES (UUID(), ?, ?, ?, ?, ?)`,
-      [data.order_id, data.invoice_number, data.amount, data.status, data.due_date]
-    );
-
-    const invoice = await getOne<{ id: string }>('SELECT id FROM invoices WHERE invoice_number = ? ORDER BY created_at DESC LIMIT 1', [data.invoice_number]);
-    return invoice!.id;
-  },
-
-  async update(id: string, data: Partial<Omit<Invoice, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
-    const fields = [];
-    const values = [];
-
-    if (data.order_id !== undefined) {
-      fields.push('order_id = ?');
-      values.push(data.order_id);
-    }
-    if (data.invoice_number !== undefined) {
-      fields.push('invoice_number = ?');
-      values.push(data.invoice_number);
-    }
-    if (data.amount !== undefined) {
-      fields.push('amount = ?');
-      values.push(data.amount);
-    }
-    if (data.status !== undefined) {
-      fields.push('status = ?');
-      values.push(data.status);
-    }
-    if (data.due_date !== undefined) {
-      fields.push('due_date = ?');
-      values.push(data.due_date);
-    }
-
-    if (fields.length === 0) return;
-
-    values.push(id);
-    await executeSingle(
-      `UPDATE invoices SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      values
-    );
-  },
-
-  async delete(id: string): Promise<void> {
-    await executeSingle('DELETE FROM invoices WHERE id = ?', [id]);
-  },
-
-  async generateInvoiceNumber(): Promise<string> {
-    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM invoices');
-    const count = result?.count || 0;
-    const nextNumber = count + 1;
-    return `INV-${new Date().getFullYear()}-${nextNumber.toString().padStart(4, '0')}`;
-  }
-};
 
 // Inventory model
 export interface Inventory {
@@ -1098,10 +935,10 @@ export const ContentModel = {
   async getAll(limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
-       LEFT JOIN users u ON c.author_id = u.id
+       LEFT JOIN profiles p ON c.author_id = p.id
        ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
       [limit, offset]
     );
@@ -1110,10 +947,10 @@ export const ContentModel = {
   async getByType(typeId: string, limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
-       LEFT JOIN users u ON c.author_id = u.id
+       LEFT JOIN profiles p ON c.author_id = p.id
        WHERE c.type_id = ?
        ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
       [typeId, limit, offset]
@@ -1123,10 +960,10 @@ export const ContentModel = {
   async getPublished(limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
-       LEFT JOIN users u ON c.author_id = u.id
+       LEFT JOIN profiles p ON c.author_id = p.id
        WHERE c.published = TRUE
        ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
       [limit, offset]
@@ -1136,10 +973,10 @@ export const ContentModel = {
   async getPublishedByType(typeId: string, limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
-       LEFT JOIN users u ON c.author_id = u.id
+       LEFT JOIN profiles p ON c.author_id = p.id
        WHERE c.published = TRUE AND c.type_id = ?
        ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
       [typeId, limit, offset]
@@ -1149,10 +986,10 @@ export const ContentModel = {
   async getById(id: string): Promise<ContentWithDetails | null> {
     return getOne<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
-       LEFT JOIN users u ON c.author_id = u.id
+       LEFT JOIN profiles p ON c.author_id = p.id
        WHERE c.id = ?`,
       [id]
     );
@@ -1161,10 +998,10 @@ export const ContentModel = {
   async getBySlug(slug: string): Promise<ContentWithDetails | null> {
     return getOne<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
-       LEFT JOIN users u ON c.author_id = u.id
+       LEFT JOIN profiles p ON c.author_id = p.id
        WHERE c.slug = ?`,
       [slug]
     );
@@ -1174,10 +1011,10 @@ export const ContentModel = {
     const searchTerm = `%${query}%`;
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(u.first_name, ' ', u.last_name) as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
-       LEFT JOIN users u ON c.author_id = u.id
+       LEFT JOIN profiles p ON c.author_id = p.id
        WHERE c.title LIKE ? OR c.content LIKE ?
        ORDER BY c.updated_at DESC LIMIT ? OFFSET ?`,
       [searchTerm, searchTerm, limit, offset]

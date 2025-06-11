@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FaPlus, FaEye, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaEye, FaEdit, FaTrash, FaDownload } from 'react-icons/fa';
 import { format } from 'date-fns';
 
 interface Order {
@@ -219,11 +219,18 @@ export default function OrdersPage() {
                             >
                               <FaEye className="h-4 w-4" />
                             </Link>
+                            <Link
+                              href={`/api/orders/${order.id}/receipt`}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="Download receipt"
+                            >
+                              <FaDownload className="h-4 w-4" />
+                            </Link>
                             {!isCustomer(profile.role) && (
                               <>
                                 <Link
                                   href={`/dashboard/orders/${order.id}/edit`}
-                                  className="text-blue-600 hover:text-blue-900"
+                                  className="text-orange-600 hover:text-orange-900"
                                   title="Edit order"
                                 >
                                   <FaEdit className="h-4 w-4" />

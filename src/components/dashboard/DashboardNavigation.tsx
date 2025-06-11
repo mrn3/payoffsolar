@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FaTachometerAlt, FaUsers, FaBoxes, FaShoppingCart, FaFileInvoiceDollar, FaWarehouse, FaBuilding, FaEdit, FaSun, FaUser, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaBoxes, FaShoppingCart, FaWarehouse, FaBuilding, FaEdit, FaSun, FaUser, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
 import { UserRole } from '@/lib/auth';
 
 interface NavigationProps {
@@ -50,12 +50,11 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
       { href: '/dashboard', icon: <FaTachometerAlt className="mr-3 h-5 w-5" />, label: 'Dashboard' },
     ];
 
-    // Customer users only see orders and invoices
+    // Customer users only see orders
     if (userProfile?.role === 'customer') {
       return [
         ...baseItems,
         { href: '/dashboard/orders', icon: <FaShoppingCart className="mr-3 h-5 w-5" />, label: 'My Orders' },
-        { href: '/dashboard/invoices', icon: <FaFileInvoiceDollar className="mr-3 h-5 w-5" />, label: 'My Invoices' },
       ];
     }
 
@@ -65,7 +64,6 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
       { href: '/dashboard/customers', icon: <FaUsers className="mr-3 h-5 w-5" />, label: 'Customers' },
       { href: '/dashboard/products', icon: <FaBoxes className="mr-3 h-5 w-5" />, label: 'Products' },
       { href: '/dashboard/orders', icon: <FaShoppingCart className="mr-3 h-5 w-5" />, label: 'Orders' },
-      { href: '/dashboard/invoices', icon: <FaFileInvoiceDollar className="mr-3 h-5 w-5" />, label: 'Invoices' },
       { href: '/dashboard/inventory', icon: <FaWarehouse className="mr-3 h-5 w-5" />, label: 'Inventory' },
       { href: '/dashboard/warehouses', icon: <FaBuilding className="mr-3 h-5 w-5" />, label: 'Warehouses' },
       { href: '/dashboard/cms', icon: <FaEdit className="mr-3 h-5 w-5" />, label: 'CMS' },

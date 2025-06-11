@@ -1,8 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { FaUsers, FaBoxes, FaShoppingCart, FaFileInvoiceDollar, FaWarehouse, FaEdit, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { FaUsers, FaBoxes, FaShoppingCart, FaWarehouse, FaEdit, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import { getUserProfile, isAdmin, isCustomer } from '@/lib/auth';
-import { CustomerModel, ProductModel, OrderModel, InventoryModel, InvoiceModel } from '@/lib/models';
+import { CustomerModel, ProductModel, OrderModel, InventoryModel } from '@/lib/models';
 import { formatDistanceToNow, format } from 'date-fns';
 
 async function getStats(userId?: string, userRole?: string) {
@@ -12,13 +12,10 @@ async function getStats(userId?: string, userRole?: string) {
     if (userRole === 'customer' && userId) {
       // Customer users only see their own data
       const orderCount = await OrderModel.getCountByUser(userId);
-      const invoiceCount = await InvoiceModel.getCountByUser(userId);
       console.log('🛒 User order count:', orderCount);
-      console.log('📄 User invoice count:', invoiceCount);
 
       return {
-        orderCount: orderCount || 0,
-        invoiceCount: invoiceCount || 0
+        orderCount: orderCount || 0
       };
     } else {
       // Admin and other roles see all data
@@ -31,14 +28,10 @@ async function getStats(userId?: string, userRole?: string) {
       const orderCount = await OrderModel.getCount();
       console.log('🛒 Order count:', orderCount);
 
-      const invoiceCount = await InvoiceModel.getCount();
-      console.log('📄 Invoice count:', invoiceCount);
-
       return {
         customerCount: customerCount || 0,
         productCount: productCount || 0,
-        orderCount: orderCount || 0,
-        invoiceCount: invoiceCount || 0
+        orderCount: orderCount || 0
       };
     }
   } catch (error) {
@@ -46,8 +39,7 @@ async function getStats(userId?: string, userRole?: string) {
     return {
       customerCount: 0,
       productCount: 0,
-      orderCount: 0,
-      invoiceCount: 0
+      orderCount: 0
     };
   }
 }
@@ -61,12 +53,8 @@ async function getRecentActivity(userId?: string, userRole?: string) {
       const recentOrders = await OrderModel.getRecentByUser(userId, 3);
       console.log('🛒 User recent orders:', recentOrders?.length || 0);
 
-      const recentInvoices = await InvoiceModel.getRecentByUser(userId, 3);
-      console.log('📄 User recent invoices:', recentInvoices?.length || 0);
-
       return {
         recentOrders: recentOrders || [],
-        recentInvoices: recentInvoices || [],
         recentCustomers: [],
         lowStockItems: []
       };
@@ -81,14 +69,10 @@ async function getRecentActivity(userId?: string, userRole?: string) {
       const lowStockItems = await InventoryModel.getLowStock(3);
       console.log('📦 Low stock items:', lowStockItems?.length || 0);
 
-      const recentInvoices = await InvoiceModel.getRecent(3);
-      console.log('📄 Recent invoices:', recentInvoices?.length || 0);
-
       return {
         recentOrders: recentOrders || [],
         recentCustomers: recentCustomers || [],
-        lowStockItems: lowStockItems || [],
-        recentInvoices: recentInvoices || []
+        lowStockItems: lowStockItems || []
       };
     }
   } catch (error) {
@@ -96,8 +80,7 @@ async function getRecentActivity(userId?: string, userRole?: string) {
     return {
       recentOrders: [],
       recentCustomers: [],
-      lowStockItems: [],
-      recentInvoices: []
+      lowStockItems: []
     };
   }
 }
@@ -159,17 +142,7 @@ export default async function DashboardPage() {
       date: new Date(item.updated_at),
       statusColor: 'yellow'
     })),
-    ...(activity.recentInvoices || []).map(invoice => ({
-      type: 'invoice',
-      id: invoice.id,
-      title: `${isCustomer(profile?.role) ? 'Invoice' : 'New Invoice'} #${invoice.invoice_number}`,
-      status: invoice.status,
-      name: invoice.customer_first_name && invoice.customer_last_name
-        ? `${invoice.customer_first_name} ${invoice.customer_last_name}`
-        : 'Unknown Customer',
-      date: new Date(invoice.created_at),
-      statusColor: invoice.status === 'paid' ? 'green' : invoice.status === 'overdue' ? 'red' : 'yellow'
-    }))
+
   ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
 
   return (
@@ -178,7 +151,7 @@ export default async function DashboardPage() {
       <p className="mt-1 text-sm text-gray-500">
         Welcome{profile ? `, ${profile.first_name}` : ''} to your Payoff Solar dashboard.
         {isCustomer(profile?.role)
-          ? "Here's an overview of your orders and invoices."
+          ? "Here's an overview of your orders."
           : "Here's an overview of your business."
         }
       </p>
@@ -270,33 +243,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Invoices - All users */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-orange-100 rounded-md p-3">
-                <FaFileInvoiceDollar className="h-6 w-6 text-orange-600" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    {isCustomer(profile?.role) ? 'My Invoices' : 'Total Invoices'}
-                  </dt>
-                  <dd>
-                    <div className="text-lg font-medium text-gray-900">{(stats.invoiceCount || 0).toLocaleString()}</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          <div className="bg-gray-50 px-4 py-4 sm:px-6">
-            <div className="text-sm">
-              <Link href="/dashboard/invoices" className="font-medium text-orange-600 hover:text-orange-500">
-                {isCustomer(profile?.role) ? 'View my invoices' : 'View all invoices'}
-              </Link>
-            </div>
-          </div>
-        </div>
+
       </div>
 
       {/* Recent Activity */}
