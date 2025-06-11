@@ -1087,6 +1087,11 @@ export const ContentModel = {
     return result?.count || 0;
   },
 
+  async getPublishedCountByType(typeId: string): Promise<number> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM content WHERE type_id = ? AND published = TRUE', [typeId]);
+    return result?.count || 0;
+  },
+
   async getPublishedCount(): Promise<number> {
     const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM content WHERE published = TRUE');
     return result?.count || 0;

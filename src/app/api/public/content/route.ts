@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid content type' }, { status: 400 });
       }
       content = await ContentModel.getPublishedByType(contentType.id, limit, offset);
-      total = await ContentModel.getCountByType(contentType.id);
+      total = await ContentModel.getPublishedCountByType(contentType.id);
     } else {
       content = await ContentModel.getPublished(limit, offset);
       total = await ContentModel.getPublishedCount();
