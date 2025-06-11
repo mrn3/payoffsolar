@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, isAdmin } from '@/lib/auth/session';
+import { requireAuth, isAdmin } from '@/lib/auth';
 import { CustomerModel } from '@/lib/models';
-import { isValidPhoneNumber } from '@/lib/utils/validation';
+import { isValidPhoneNumber } from '@/lib/utils/phone';
 
 interface ImportCustomer {
   first_name: string;
