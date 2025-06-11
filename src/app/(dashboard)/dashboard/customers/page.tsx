@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaPlus, FaSearch, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaUpload } from 'react-icons/fa';
 import { Customer } from '@/lib/models';
 import DeleteCustomerModal from '@/components/customers/DeleteCustomerModal';
+import ImportCustomersModal from '@/components/customers/ImportCustomersModal';
 import { format } from 'date-fns';
 
 interface CustomersResponse {
@@ -33,6 +34,7 @@ export default function CustomersPage() {
 
   // Modal states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   const fetchCustomers = async (page = 1, search = '') => {
@@ -106,6 +108,10 @@ export default function CustomersPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const handleImportComplete = () => {
+    fetchCustomers(1, searchQuery);
+  };
+
   return (
     <div>
       <div className="sm:flex sm:items-center sm:justify-between">
@@ -116,14 +122,24 @@ export default function CustomersPage() {
           </p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <button
-            type="button"
-            onClick={navigateToAdd}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
-          >
-            <FaPlus className="mr-2 h-4 w-4" />
-            Add customer
-          </button>
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={() => setIsImportModalOpen(true)}
+              className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
+            >
+              <FaUpload className="mr-2 h-4 w-4" />
+              Import CSV
+            </button>
+            <button
+              type="button"
+              onClick={navigateToAdd}
+              className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
+            >
+              <FaPlus className="mr-2 h-4 w-4" />
+              Add customer
+            </button>
+          </div>
         </div>
       </div>
 
@@ -346,6 +362,12 @@ export default function CustomersPage() {
         }}
         onConfirm={handleDeleteCustomer}
         customer={selectedCustomer}
+      />
+
+      <ImportCustomersModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportComplete={handleImportComplete}
       />
     </div>
   );
