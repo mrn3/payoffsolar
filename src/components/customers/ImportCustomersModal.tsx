@@ -29,7 +29,7 @@ interface ValidationError {
 const CUSTOMER_FIELDS = [
   { key: '', label: 'Skip this column' },
   { key: 'first_name', label: 'First Name *', required: true },
-  { key: 'last_name', label: 'Last Name *', required: true },
+  { key: 'last_name', label: 'Last Name', required: false },
   { key: 'email', label: 'Email' },
   { key: 'phone', label: 'Phone' },
   { key: 'address', label: 'Address' },
@@ -165,7 +165,7 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
         const value = row[mapping.csvColumn]?.trim() || '';
 
         // Check required fields
-        if ((mapping.customerField === 'first_name' || mapping.customerField === 'last_name') && !value) {
+        if (mapping.customerField === 'first_name' && !value) {
           errors.push({
             row: index + 1,
             field: mapping.customerField,
@@ -321,7 +321,7 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
           <div>
             <h4 className="text-lg font-medium text-gray-900 mb-4">Map CSV Columns</h4>
             <p className="text-sm text-gray-600 mb-6">
-              Map your CSV columns to customer fields. First Name and Last Name are required.
+              Map your CSV columns to customer fields. First Name is required.
             </p>
 
             {/* Preview of CSV data */}

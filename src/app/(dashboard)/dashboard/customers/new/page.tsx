@@ -28,7 +28,6 @@ export default function NewCustomerPage() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.first_name.trim()) newErrors.first_name = 'First name is required';
-    if (!formData.last_name.trim()) newErrors.last_name = 'Last name is required';
 
     // Email validation (only if email is provided)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -135,7 +134,7 @@ export default function NewCustomerPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Last Name *</label>
+              <label className="block text-sm font-medium text-gray-700">Last Name</label>
               <input
                 type="text"
                 name="last_name"

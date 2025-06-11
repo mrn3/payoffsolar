@@ -5,7 +5,7 @@ import { isValidPhoneNumber } from '@/lib/utils/validation';
 
 interface ImportCustomer {
   first_name: string;
-  last_name: string;
+  last_name?: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -41,9 +41,6 @@ export async function POST(request: NextRequest) {
         if (!customer.first_name || !customer.first_name.trim()) {
           throw new Error(`Row ${i + 1}: First name is required`);
         }
-        if (!customer.last_name || !customer.last_name.trim()) {
-          throw new Error(`Row ${i + 1}: Last name is required`);
-        }
 
         // Validate email format if provided
         if (customer.email && customer.email.trim()) {
@@ -61,7 +58,7 @@ export async function POST(request: NextRequest) {
         // Create customer
         await CustomerModel.create({
           first_name: customer.first_name.trim(),
-          last_name: customer.last_name.trim(),
+          last_name: customer.last_name?.trim() || '',
           email: customer.email?.trim() || '',
           phone: customer.phone?.trim() || '',
           address: customer.address?.trim() || '',

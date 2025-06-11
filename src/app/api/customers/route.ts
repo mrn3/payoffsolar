@@ -53,12 +53,9 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json();
 
-    // Validate required fields (only first_name and last_name are required)
+    // Validate required fields (only first_name is required)
     if (!data.first_name || !data.first_name.trim()) {
       return NextResponse.json({ error: 'First name is required' }, { status: 400 });
-    }
-    if (!data.last_name || !data.last_name.trim()) {
-      return NextResponse.json({ error: 'Last name is required' }, { status: 400 });
     }
 
     // Validate email format if provided
