@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { FaArrowLeft, FaEdit, FaUser, FaCalendarAlt, FaDownload } from 'react-icons/fa';
-import { requireAuth, isCustomer } from '@/lib/auth';
+import { requireAuth, isContact } from '@/lib/auth';
 import { OrderModel } from '@/lib/models';
 import { format } from 'date-fns';
 import { notFound } from 'next/navigation';

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { FaSun, FaBars, FaTimes, FaUser, FaSignOutAlt, FaChevronDown } from 'react-icons/fa';
 import { UserProfile } from '@/lib/auth';
+import CartIcon from '@/components/cart/CartIcon';
 
 interface PublicHeaderProps {
   userProfile: UserProfile | null;
@@ -77,6 +78,9 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
         </nav>
 
         <div className="flex items-center gap-4">
+          {/* Cart Icon */}
+          <CartIcon />
+
           {userProfile ? (
             // User is logged in - show user dropdown
             <div className="relative">

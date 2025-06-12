@@ -7,7 +7,8 @@ import { Product, ProductCategory, ProductImage } from '@/lib/models';
 import ImageCarousel from '@/components/ui/ImageCarousel';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import RelatedProducts from '@/components/products/RelatedProducts';
-import { FaArrowLeft, FaImage, FaSpinner } from 'react-icons/fa';
+import { FaArrowLeft, FaImage, FaSpinner, FaShoppingCart, FaPlus, FaMinus } from 'react-icons/fa';
+import { useCart } from '@/contexts/CartContext';
 
 interface ProductWithDetails extends Product {
   category_name?: string;
@@ -17,9 +18,12 @@ interface ProductWithDetails extends Product {
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { addItem } = useCart();
+
   const [product, setProduct] = useState<ProductWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     if (params.id) {
@@ -59,6 +63,21 @@ export default function ProductDetailPage() {
       currency: 'USD',
     }).format(price);
   };
+
+  const handleAddToCart = () => {
+    if (product) {
+      addItem({
+        product_id: product.id,
+        product_name: product.name,
+        product_sku: product.sku,
+        product_price: product.price,
+        product_image_url: product.images?.[0]?.image_url,
+      }, quantity);
+    }
+  };
+
+  const incrementQuantity = () => setQuantity(prev => prev + 1);
+  const decrementQuantity = () => setQuantity(prev => Math.max(1, prev - 1));
 
   if (loading) {
     return (
@@ -157,20 +176,57 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Call to Action */}
+              {/* Quantity and Add to Cart */}
               <div className="space-y-4">
-                <Link
-                  href="/contact"
-                  className="w-full bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 transition-colors text-center block font-medium"
+                {/* Quantity Selector */}
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm font-medium text-gray-700">Quantity:</span>
+                  <div className="flex items-center border border-gray-300 rounded-md">
+                    <button
+                      onClick={decrementQuantity}
+                      className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                      aria-label="Decrease quantity"
+                    >
+                      <FaMinus className="h-4 w-4" />
+                    </button>
+                    <span className="px-4 py-2 text-gray-900 font-medium min-w-[3rem] text-center">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={incrementQuantity}
+                      className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                      aria-label="Increase quantity"
+                    >
+                      <FaPlus className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Add to Cart Button */}
+                <button
+                  onClick={handleAddToCart}
+                  disabled={!product.is_active}
+                  className="w-full bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 transition-colors font-medium flex items-center justify-center space-x-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
-                  Get a Quote
-                </Link>
-                <Link
-                  href="/contact"
-                  className="w-full bg-white text-green-500 border border-green-500 px-6 py-3 rounded-md hover:bg-green-50 transition-colors text-center block font-medium"
-                >
-                  Contact Us for More Info
-                </Link>
+                  <FaShoppingCart className="h-5 w-5" />
+                  <span>Add to Cart</span>
+                </button>
+
+                {/* Secondary Actions */}
+                <div className="grid grid-cols-2 gap-3">
+                  <Link
+                    href="/contact"
+                    className="bg-white text-green-500 border border-green-500 px-4 py-2 rounded-md hover:bg-green-50 transition-colors text-center block font-medium"
+                  >
+                    Get Quote
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors text-center block font-medium"
+                  >
+                    Contact Us
+                  </Link>
+                </div>
               </div>
 
               {/* Product Status */}

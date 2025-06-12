@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaSun } from 'react-icons/fa';
 import { getUserProfile } from '@/lib/auth';
 import PublicHeader from '@/components/PublicHeader';
+import { CartProvider } from '@/contexts/CartContext';
+import CartSidebar from '@/components/cart/CartSidebar';
 
 export default async function PublicLayout({
   children,
@@ -18,10 +20,14 @@ export default async function PublicLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <PublicHeader userProfile={userProfile} />
+    <CartProvider>
+      <div className="flex min-h-screen flex-col">
+        <PublicHeader userProfile={userProfile} />
 
-      <main className="flex-1">{children}</main>
+        <main className="flex-1">{children}</main>
+
+        {/* Cart Sidebar */}
+        <CartSidebar />
 
       <footer className="border-t bg-gray-50">
         <div className="container mx-auto px-4 py-12">
@@ -138,6 +144,7 @@ export default async function PublicLayout({
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </CartProvider>
   );
 }

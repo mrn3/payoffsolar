@@ -29,6 +29,10 @@ export const ContactModel = {
     return getOne<Contact>('SELECT * FROM contacts WHERE id = ?', [id]);
   },
 
+  async getByEmail(email: string): Promise<Contact | null> {
+    return getOne<Contact>('SELECT * FROM contacts WHERE email = ?', [email]);
+  },
+
   async create(data: Omit<Contact, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     const result = await executeSingle(
       `INSERT INTO contacts (id, first_name, last_name, email, phone, address, city, state, zip, notes, user_id)
@@ -445,6 +449,16 @@ export interface OrderItemWithProduct extends OrderItem {
 
 export interface OrderWithItems extends OrderWithContact {
   items?: OrderItemWithProduct[];
+}
+
+// Cart item interface for frontend cart management
+export interface CartItem {
+  product_id: string;
+  product_name: string;
+  product_sku: string;
+  product_price: number;
+  product_image_url?: string;
+  quantity: number;
 }
 
 export const OrderModel = {

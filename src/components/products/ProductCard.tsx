@@ -1,18 +1,32 @@
 import React from 'react';
 import Link from 'next/link';
 import { ProductWithFirstImage } from '@/lib/models';
-import { FaImage } from 'react-icons/fa';
+import { FaImage, FaShoppingCart } from 'react-icons/fa';
+import { useCart } from '@/contexts/CartContext';
 
 interface ProductCardProps {
   product: ProductWithFirstImage;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const { addItem } = useCart();
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
     }).format(price);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation when clicking the button
+    addItem({
+      product_id: product.id,
+      product_name: product.name,
+      product_sku: product.sku,
+      product_price: product.price,
+      product_image_url: product.first_image_url,
+    });
   };
 
   return (
@@ -52,12 +66,21 @@ export default function ProductCard({ product }: ProductCardProps) {
             SKU: {product.sku}
           </span>
         </div>
-        <Link
-          href={`/products/${product.id}`}
-          className="w-full bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors text-center block font-medium"
-        >
-          View Details
-        </Link>
+        <div className="flex space-x-2">
+          <Link
+            href={`/products/${product.id}`}
+            className="flex-1 bg-gray-100 text-gray-900 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors text-center block font-medium"
+          >
+            View Details
+          </Link>
+          <button
+            onClick={handleAddToCart}
+            className="flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors font-medium flex items-center justify-center space-x-2"
+          >
+            <FaShoppingCart className="h-4 w-4" />
+            <span>Add to Cart</span>
+          </button>
+        </div>
       </div>
     </div>
   );
