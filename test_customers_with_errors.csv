@@ -1,0 +1,8 @@
+first_name,last_name,email,phone
+John,Doe,john@example.com,555-123-4567
+,Smith,jane@example.com,555-987-6543
+Bob,Johnson,invalid-email,555-111-2222
+Alice,Williams,alice@example.com,123
+Charlie,Brown,charlie@example.com,555-555-5555
+,Davis,sarah@example.com,555-777-8888
+Mike,Wilson,mike@invalid,555-999-0000

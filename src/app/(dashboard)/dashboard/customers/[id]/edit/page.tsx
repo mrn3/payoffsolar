@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import PhoneInput from '@/components/ui/PhoneInput';
+import StateSelect from '@/components/ui/StateSelect';
 import { Customer } from '@/lib/models';
 import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/utils/phone';
 
@@ -112,7 +113,7 @@ export default function EditCustomerPage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -269,8 +270,7 @@ export default function EditCustomerPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">State</label>
-              <input
-                type="text"
+              <StateSelect
                 name="state"
                 value={formData.state}
                 onChange={handleChange}

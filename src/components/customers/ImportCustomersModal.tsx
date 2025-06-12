@@ -26,6 +26,12 @@ interface ValidationError {
   value: string;
 }
 
+interface ImportResults {
+  success: number;
+  errors: number;
+  errorDetails?: string[];
+}
+
 const CUSTOMER_FIELDS = [
   { key: '', label: 'Skip this column' },
   { key: 'first_name', label: 'First Name *', required: true },
@@ -45,7 +51,8 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [columnMappings, setColumnMappings] = useState<ColumnMapping[]>([]);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
-  const [importResults, setImportResults] = useState<{ success: number; errors: number }>({ success: 0, errors: 0 });
+  const [importResults, setImportResults] = useState<ImportResults>({ success: 0, errors: 0 });
+  const [showFailedRecords, setShowFailedRecords] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -56,6 +63,7 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
     setColumnMappings([]);
     setValidationErrors([]);
     setImportResults({ success: 0, errors: 0 });
+    setShowFailedRecords(false);
     setIsProcessing(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -490,19 +498,68 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
 
         {/* Complete Step */}
         {step === 'complete' && (
-          <div className="text-center py-8">
-            <FaCheck className="mx-auto h-12 w-12 text-green-600 mb-4" />
-            <h4 className="text-lg font-medium text-gray-900 mb-2">Import Complete</h4>
-            <div className="text-sm text-gray-600 mb-6">
-              <p className="mb-2">
-                <span className="font-medium text-green-600">{importResults.success}</span> customers imported successfully
-              </p>
-              {importResults.errors > 0 && (
-                <p>
-                  <span className="font-medium text-red-600">{importResults.errors}</span> customers failed to import
+          <div className="py-8">
+            <div className="text-center mb-6">
+              <FaCheck className="mx-auto h-12 w-12 text-green-600 mb-4" />
+              <h4 className="text-lg font-medium text-gray-900 mb-2">Import Complete</h4>
+              <div className="text-sm text-gray-600">
+                <p className="mb-2">
+                  <span className="font-medium text-green-600">{importResults.success}</span> customers imported successfully
                 </p>
-              )}
+                {importResults.errors > 0 && (
+                  <p>
+                    <span className="font-medium text-red-600">{importResults.errors}</span> customers failed to import
+                  </p>
+                )}
+              </div>
             </div>
+
+            {/* Failed Records Section */}
+            {importResults.errors > 0 && importResults.errorDetails && importResults.errorDetails.length > 0 && (
+              <div className="mb-6">
+                <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex">
+                      <FaExclamationTriangle className="h-5 w-5 text-red-400 mt-0.5" />
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-red-800">
+                          Failed Records Details
+                        </h3>
+                        <div className="mt-1 text-sm text-red-700">
+                          <p>The following records could not be imported:</p>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowFailedRecords(!showFailedRecords)}
+                      className="text-sm text-red-600 hover:text-red-800 font-medium"
+                    >
+                      {showFailedRecords ? 'Hide Details' : 'Show Details'}
+                    </button>
+                  </div>
+                </div>
+
+                {showFailedRecords && (
+                  <div className="max-h-60 overflow-y-auto border border-gray-300 rounded-md">
+                    <table className="min-w-full divide-y divide-gray-300">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Error Details</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {importResults.errorDetails.map((error, index) => (
+                          <tr key={index}>
+                            <td className="px-3 py-2 text-sm text-red-600">{error}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex justify-center space-x-4">
               <button
                 onClick={handleClose}
