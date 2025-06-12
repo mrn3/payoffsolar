@@ -1,7 +1,7 @@
 import { executeQuery, getOne, executeSingle } from '../mysql/connection';
 
-// Customer model
-export interface Customer {
+// Contact model
+export interface Contact {
   id: string;
   first_name: string;
   last_name: string;
@@ -17,30 +17,30 @@ export interface Customer {
   updated_at: string;
 }
 
-export const CustomerModel = {
-  async getAll(limit = 50, offset = 0): Promise<Customer[]> {
-    return executeQuery<Customer>(
-      'SELECT * FROM customers ORDER BY created_at DESC LIMIT ? OFFSET ?',
+export const ContactModel = {
+  async getAll(limit = 50, offset = 0): Promise<Contact[]> {
+    return executeQuery<Contact>(
+      'SELECT * FROM contacts ORDER BY created_at DESC LIMIT ? OFFSET ?',
       [limit, offset]
     );
   },
 
-  async getById(id: string): Promise<Customer | null> {
-    return getOne<Customer>('SELECT * FROM customers WHERE id = ?', [id]);
+  async getById(id: string): Promise<Contact | null> {
+    return getOne<Contact>('SELECT * FROM contacts WHERE id = ?', [id]);
   },
 
-  async create(data: Omit<Customer, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+  async create(data: Omit<Contact, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     const result = await executeSingle(
-      `INSERT INTO customers (id, first_name, last_name, email, phone, address, city, state, zip, notes, user_id)
+      `INSERT INTO contacts (id, first_name, last_name, email, phone, address, city, state, zip, notes, user_id)
        VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [data.first_name, data.last_name, data.email, data.phone, data.address, data.city, data.state, data.zip, data.notes, data.user_id]
     );
-    
-    const customer = await getOne<{ id: string }>('SELECT id FROM customers WHERE email = ? ORDER BY created_at DESC LIMIT 1', [data.email]);
-    return customer!.id;
+
+    const contact = await getOne<{ id: string }>('SELECT id FROM contacts WHERE email = ? ORDER BY created_at DESC LIMIT 1', [data.email]);
+    return contact!.id;
   },
 
-  async update(id: string, data: Partial<Omit<Customer, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+  async update(id: string, data: Partial<Omit<Contact, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
     const fields = [];
     const values = [];
 
@@ -59,19 +59,19 @@ export const CustomerModel = {
 
     values.push(id);
     await executeSingle(
-      `UPDATE customers SET ${fields.join(', ')} WHERE id = ?`,
+      `UPDATE contacts SET ${fields.join(', ')} WHERE id = ?`,
       values
     );
   },
 
   async delete(id: string): Promise<void> {
-    await executeSingle('DELETE FROM customers WHERE id = ?', [id]);
+    await executeSingle('DELETE FROM contacts WHERE id = ?', [id]);
   },
 
-  async search(query: string, limit = 50, offset = 0): Promise<Customer[]> {
+  async search(query: string, limit = 50, offset = 0): Promise<Contact[]> {
     const searchTerm = `%${query}%`;
-    return executeQuery<Customer>(
-      `SELECT * FROM customers
+    return executeQuery<Contact>(
+      `SELECT * FROM contacts
        WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?
        ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       [searchTerm, searchTerm, searchTerm, searchTerm, limit, offset]
@@ -79,14 +79,14 @@ export const CustomerModel = {
   },
 
   async getCount(): Promise<number> {
-    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM customers');
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM contacts');
     return result?.count || 0;
   },
 
   async getSearchCount(query: string): Promise<number> {
     const searchTerm = `%${query}%`;
     const result = await getOne<{ count: number }>(
-      `SELECT COUNT(*) as count FROM customers
+      `SELECT COUNT(*) as count FROM contacts
        WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?`,
       [searchTerm, searchTerm, searchTerm, searchTerm]
     );
@@ -415,7 +415,7 @@ export const ProductImageModel = {
 // Order model
 export interface Order {
   id: string;
-  customer_id: string;
+  contact_id: string;
   status: string;
   total: number | string;
   notes?: string;
@@ -423,9 +423,9 @@ export interface Order {
   updated_at: string;
 }
 
-export interface OrderWithCustomer extends Order {
-  customer_first_name?: string;
-  customer_last_name?: string;
+export interface OrderWithContact extends Order {
+  contact_first_name?: string;
+  contact_last_name?: string;
 }
 
 // Order Item model
@@ -443,26 +443,26 @@ export interface OrderItemWithProduct extends OrderItem {
   product_sku?: string;
 }
 
-export interface OrderWithItems extends OrderWithCustomer {
+export interface OrderWithItems extends OrderWithContact {
   items?: OrderItemWithProduct[];
 }
 
 export const OrderModel = {
-  async getAll(limit = 50, offset = 0): Promise<OrderWithCustomer[]> {
-    return executeQuery<OrderWithCustomer>(
-      `SELECT o.*, c.first_name as customer_first_name, c.last_name as customer_last_name
+  async getAll(limit = 50, offset = 0): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
        FROM orders o
-       LEFT JOIN customers c ON o.customer_id = c.id
+       LEFT JOIN contacts c ON o.contact_id = c.id
        ORDER BY o.created_at DESC LIMIT ? OFFSET ?`,
       [limit, offset]
     );
   },
 
-  async getAllByUser(userId: string, limit = 50, offset = 0): Promise<OrderWithCustomer[]> {
-    return executeQuery<OrderWithCustomer>(
-      `SELECT o.*, c.first_name as customer_first_name, c.last_name as customer_last_name
+  async getAllByUser(userId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
        FROM orders o
-       LEFT JOIN customers c ON o.customer_id = c.id
+       LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE c.user_id = ?
        ORDER BY o.created_at DESC LIMIT ? OFFSET ?`,
       [userId, limit, offset]
@@ -473,11 +473,11 @@ export const OrderModel = {
     return getOne<Order>('SELECT * FROM orders WHERE id = ?', [id]);
   },
 
-  async getByIdForUser(id: string, userId: string): Promise<OrderWithCustomer | null> {
-    return getOne<OrderWithCustomer>(
-      `SELECT o.*, c.first_name as customer_first_name, c.last_name as customer_last_name
+  async getByIdForUser(id: string, userId: string): Promise<OrderWithContact | null> {
+    return getOne<OrderWithContact>(
+      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
        FROM orders o
-       LEFT JOIN customers c ON o.customer_id = c.id
+       LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE o.id = ? AND c.user_id = ?`,
       [id, userId]
     );
@@ -491,28 +491,28 @@ export const OrderModel = {
   async getCountByUser(userId: string): Promise<number> {
     const result = await getOne<{ count: number }>(
       `SELECT COUNT(*) as count FROM orders o
-       LEFT JOIN customers c ON o.customer_id = c.id
+       LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE c.user_id = ?`,
       [userId]
     );
     return result?.count || 0;
   },
 
-  async getRecent(limit = 3): Promise<OrderWithCustomer[]> {
-    return executeQuery<OrderWithCustomer>(
-      `SELECT o.*, c.first_name as customer_first_name, c.last_name as customer_last_name
+  async getRecent(limit = 3): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
        FROM orders o
-       LEFT JOIN customers c ON o.customer_id = c.id
+       LEFT JOIN contacts c ON o.contact_id = c.id
        ORDER BY o.created_at DESC LIMIT ?`,
       [limit]
     );
   },
 
-  async getRecentByUser(userId: string, limit = 3): Promise<OrderWithCustomer[]> {
-    return executeQuery<OrderWithCustomer>(
-      `SELECT o.*, c.first_name as customer_first_name, c.last_name as customer_last_name
+  async getRecentByUser(userId: string, limit = 3): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
        FROM orders o
-       LEFT JOIN customers c ON o.customer_id = c.id
+       LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE c.user_id = ?
        ORDER BY o.created_at DESC LIMIT ?`,
       [userId, limit]
@@ -520,10 +520,10 @@ export const OrderModel = {
   },
 
   async getWithItems(id: string): Promise<OrderWithItems | null> {
-    const order = await getOne<OrderWithCustomer>(
-      `SELECT o.*, c.first_name as customer_first_name, c.last_name as customer_last_name
+    const order = await getOne<OrderWithContact>(
+      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
        FROM orders o
-       LEFT JOIN customers c ON o.customer_id = c.id
+       LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE o.id = ?`,
       [id]
     );
@@ -544,14 +544,14 @@ export const OrderModel = {
 
   async create(data: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     const result = await executeSingle(
-      `INSERT INTO orders (id, customer_id, status, total, notes)
+      `INSERT INTO orders (id, contact_id, status, total, notes)
        VALUES (UUID(), ?, ?, ?, ?)`,
-      [data.customer_id, data.status, data.total, data.notes || null]
+      [data.contact_id, data.status, data.total, data.notes || null]
     );
 
     const order = await getOne<{ id: string }>(
-      'SELECT id FROM orders WHERE customer_id = ? AND total = ? ORDER BY created_at DESC LIMIT 1',
-      [data.customer_id, data.total]
+      'SELECT id FROM orders WHERE contact_id = ? AND total = ? ORDER BY created_at DESC LIMIT 1',
+      [data.contact_id, data.total]
     );
     return order!.id;
   },
@@ -560,9 +560,9 @@ export const OrderModel = {
     const fields = [];
     const values = [];
 
-    if (data.customer_id !== undefined) {
-      fields.push('customer_id = ?');
-      values.push(data.customer_id);
+    if (data.contact_id !== undefined) {
+      fields.push('contact_id = ?');
+      values.push(data.contact_id);
     }
     if (data.status !== undefined) {
       fields.push('status = ?');

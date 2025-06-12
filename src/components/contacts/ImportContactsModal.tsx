@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { FaTimes, FaUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import Papa from 'papaparse';
 
-interface ImportCustomersModalProps {
+interface ImportContactsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onImportComplete: () => void;
@@ -16,7 +16,7 @@ interface CSVRow {
 
 interface ColumnMapping {
   csvColumn: string;
-  customerField: string;
+  contactField: string;
 }
 
 interface ValidationError {
@@ -32,7 +32,7 @@ interface ImportResults {
   errorDetails?: string[];
 }
 
-const CUSTOMER_FIELDS = [
+const CONTACT_FIELDS = [
   { key: '', label: 'Skip this column' },
   { key: 'first_name', label: 'First Name *', required: true },
   { key: 'last_name', label: 'Last Name', required: false },
@@ -45,7 +45,7 @@ const CUSTOMER_FIELDS = [
   { key: 'notes', label: 'Notes' }
 ];
 
-export default function ImportCustomersModal({ isOpen, onClose, onImportComplete }: ImportCustomersModalProps) {
+export default function ImportContactsModal({ isOpen, onClose, onImportComplete }: ImportContactsModalProps) {
   const [step, setStep] = useState<'upload' | 'mapping' | 'validation' | 'importing' | 'complete'>('upload');
   const [csvData, setCsvData] = useState<CSVRow[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -104,7 +104,7 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
         // Initialize column mappings
         const mappings: ColumnMapping[] = headers.map(header => ({
           csvColumn: header,
-          customerField: autoMapColumn(header)
+          contactField: autoMapColumn(header)
         }));
         setColumnMappings(mappings);
         
@@ -134,11 +134,11 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
     return '';
   };
 
-  const updateColumnMapping = (csvColumn: string, customerField: string) => {
+  const updateColumnMapping = (csvColumn: string, contactField: string) => {
     setColumnMappings(prev => 
       prev.map(mapping => 
         mapping.csvColumn === csvColumn 
-          ? { ...mapping, customerField }
+          ? { ...mapping, contactField }
           : mapping
       )
     );
@@ -146,8 +146,8 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
 
   const validateMappings = () => {
     const mappedFields = columnMappings
-      .filter(m => m.customerField !== '')
-      .map(m => m.customerField);
+      .filter(m => m.contactField !== '')
+      .map(m => m.contactField);
     
     const hasFirstName = mappedFields.includes('first_name');
     const hasLastName = mappedFields.includes('last_name');
@@ -168,22 +168,22 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
 
     csvData.forEach((row, index) => {
       columnMappings.forEach(mapping => {
-        if (mapping.customerField === '') return;
+        if (mapping.contactField === '') return;
 
         const value = row[mapping.csvColumn]?.trim() || '';
 
         // Check required fields
-        if (mapping.customerField === 'first_name' && !value) {
+        if (mapping.contactField === 'first_name' && !value) {
           errors.push({
             row: index + 1,
-            field: mapping.customerField,
+            field: mapping.contactField,
             message: 'This field is required',
             value
           });
         }
 
         // Validate email format
-        if (mapping.customerField === 'email' && value) {
+        if (mapping.contactField === 'email' && value) {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(value)) {
             errors.push({
@@ -196,7 +196,7 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
         }
 
         // Validate phone format
-        if (mapping.customerField === 'phone' && value) {
+        if (mapping.contactField === 'phone' && value) {
           const phoneDigits = value.replace(/\D/g, '');
           if (phoneDigits.length < 10) {
             errors.push({
@@ -220,25 +220,25 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
     setIsProcessing(true);
 
     try {
-      // Transform CSV data to customer format
-      const customers = csvData.map(row => {
-        const customer: any = {};
+      // Transform CSV data to contact format
+      const contacts = csvData.map(row => {
+        const contact: any = {};
         columnMappings.forEach(mapping => {
-          if (mapping.customerField && mapping.customerField !== '') {
-            customer[mapping.customerField] = row[mapping.csvColumn]?.trim() || '';
+          if (mapping.contactField && mapping.contactField !== '') {
+            contact[mapping.contactField] = row[mapping.csvColumn]?.trim() || '';
           }
         });
-        return customer;
+        return contact;
       });
 
-      const response = await fetch('/api/customers/import', {
+      const response = await fetch('/api/contacts/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customers })
+        body: JSON.stringify({ contacts })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to import customers');
+        throw new Error('Failed to import contacts');
       }
 
       const result = await response.json();
@@ -246,7 +246,7 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
       setStep('complete');
 
     } catch (error) {
-      alert('Error importing customers: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      alert('Error importing contacts: ' + (error instanceof Error ? error.message : 'Unknown error'));
       setStep('validation');
     } finally {
       setIsProcessing(false);
@@ -260,7 +260,7 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
       <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-gray-900">
-            Import Customers from CSV
+            Import Contacts from CSV
           </h3>
           <button
             onClick={handleClose}
@@ -305,7 +305,7 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
             <FaUpload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h4 className="text-lg font-medium text-gray-900 mb-2">Upload CSV File</h4>
             <p className="text-sm text-gray-600 mb-6">
-              Select a CSV file containing customer data. The first row should contain column headers.
+              Select a CSV file containing contact data. The first row should contain column headers.
             </p>
             <input
               ref={fileInputRef}
@@ -329,7 +329,7 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
           <div>
             <h4 className="text-lg font-medium text-gray-900 mb-4">Map CSV Columns</h4>
             <p className="text-sm text-gray-600 mb-6">
-              Map your CSV columns to customer fields. First Name is required.
+              Map your CSV columns to contact fields. First Name is required.
             </p>
 
             {/* Preview of CSV data */}
@@ -373,11 +373,11 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
                   </div>
                   <div className="flex-1">
                     <select
-                      value={mapping.customerField}
+                      value={mapping.contactField}
                       onChange={(e) => updateColumnMapping(mapping.csvColumn, e.target.value)}
                       className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
                     >
-                      {CUSTOMER_FIELDS.map((field) => (
+                      {CONTACT_FIELDS.map((field) => (
                         <option key={field.key} value={field.key}>
                           {field.label}
                         </option>
@@ -478,7 +478,7 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
                   onClick={handleImport}
                   className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
-                  Import Customers
+                  Import Contacts
                 </button>
               )}
             </div>
@@ -489,9 +489,9 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
         {step === 'importing' && (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <h4 className="text-lg font-medium text-gray-900 mb-2">Importing Customers</h4>
+            <h4 className="text-lg font-medium text-gray-900 mb-2">Importing Contacts</h4>
             <p className="text-sm text-gray-600">
-              Please wait while we import your customers...
+              Please wait while we import your contacts...
             </p>
           </div>
         )}
@@ -504,11 +504,11 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
               <h4 className="text-lg font-medium text-gray-900 mb-2">Import Complete</h4>
               <div className="text-sm text-gray-600">
                 <p className="mb-2">
-                  <span className="font-medium text-green-600">{importResults.success}</span> customers imported successfully
+                  <span className="font-medium text-green-600">{importResults.success}</span> contacts imported successfully
                 </p>
                 {importResults.errors > 0 && (
                   <p>
-                    <span className="font-medium text-red-600">{importResults.errors}</span> customers failed to import
+                    <span className="font-medium text-red-600">{importResults.errors}</span> contacts failed to import
                   </p>
                 )}
               </div>
@@ -574,7 +574,7 @@ export default function ImportCustomersModal({ isOpen, onClose, onImportComplete
                 }}
                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               >
-                View Customers
+                View Contacts
               </button>
             </div>
           </div>

@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS roles (
 INSERT IGNORE INTO roles (id, name, description) VALUES
   (UUID(), 'admin', 'Administrator with full access'),
   (UUID(), 'manager', 'Manager with access to most features'),
-  (UUID(), 'sales', 'Sales staff with access to customers and orders'),
+  (UUID(), 'sales', 'Sales staff with access to contacts and orders'),
   (UUID(), 'inventory', 'Inventory staff with access to products and inventory'),
-  (UUID(), 'customer', 'Customer with access to their own orders');
+  (UUID(), 'contact', 'Contact with access to their own orders');
 
 -- Create users table (replaces Supabase auth.users)
 CREATE TABLE IF NOT EXISTS users (
@@ -54,8 +54,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
--- Create customers table
-CREATE TABLE IF NOT EXISTS customers (
+-- Create contacts table
+CREATE TABLE IF NOT EXISTS contacts (
   id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
@@ -139,13 +139,13 @@ CREATE TABLE IF NOT EXISTS inventory (
 -- Create orders table
 CREATE TABLE IF NOT EXISTS orders (
   id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-  customer_id VARCHAR(36) NOT NULL,
+  contact_id VARCHAR(36) NOT NULL,
   status VARCHAR(50) NOT NULL DEFAULT 'pending',
   total DECIMAL(10, 2) NOT NULL,
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+  FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
 );
 
 -- Create order items table
@@ -213,12 +213,12 @@ CREATE TABLE IF NOT EXISTS content (
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
+CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email);
 CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_product ON inventory(product_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_warehouse ON inventory(warehouse_id);
-CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
+CREATE INDEX IF NOT EXISTS idx_orders_contact ON orders(contact_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id);
@@ -232,7 +232,7 @@ CREATE INDEX IF NOT EXISTS idx_content_published ON content(published);
 -- Insert sample roles
 INSERT IGNORE INTO roles (id, name, description) VALUES
 ('admin-role-id', 'admin', 'Administrator with full access'),
-('customer-role-id', 'customer', 'Customer with limited access');
+('contact-role-id', 'contact', 'Contact with limited access');
 
 -- Insert sample warehouses
 INSERT IGNORE INTO warehouses (id, name, address, city, state, zip) VALUES

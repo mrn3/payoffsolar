@@ -7,14 +7,14 @@ import { format } from 'date-fns';
 
 interface Order {
   id: string;
-  customer_id: string;
+  contact_id: string;
   status: string;
   total: number | string;
   notes?: string;
   created_at: string;
   updated_at: string;
-  customer_first_name?: string;
-  customer_last_name?: string;
+  contact_first_name?: string;
+  contact_last_name?: string;
 }
 
 interface UserProfile {
@@ -86,8 +86,8 @@ export default function OrdersPage() {
     }
   };
 
-  const isCustomer = (role: string | null) => {
-    return role === 'customer';
+  const isContact = (role: string | null) => {
+    return role === 'contact';
   };
 
   const getStatusColor = (status: string) => {
@@ -126,16 +126,16 @@ export default function OrdersPage() {
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            {isCustomer(profile.role) ? 'My Orders' : 'Orders'}
+            {isContact(profile.role) ? 'My Orders' : 'Orders'}
           </h1>
           <p className="mt-2 text-sm text-gray-700">
-            {isCustomer(profile.role)
+            {isContact(profile.role)
               ? 'View and track your orders.'
-              : 'A list of all orders in your system including their status and customer details.'
+              : 'A list of all orders in your system including their status and contact details.'
             }
           </p>
         </div>
-        {!isCustomer(profile.role) && (
+        {!isContact(profile.role) && (
           <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
             <Link
               href="/dashboard/orders/new"
@@ -165,9 +165,9 @@ export default function OrdersPage() {
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
                       Order ID
                     </th>
-                    {!isCustomer(profile.role) && (
+                    {!isContact(profile.role) && (
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                        Customer
+                        Contact
                       </th>
                     )}
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -191,11 +191,11 @@ export default function OrdersPage() {
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                           #{order.id.substring(0, 8)}
                         </td>
-                        {!isCustomer(profile.role) && (
+                        {!isContact(profile.role) && (
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {order.customer_first_name && order.customer_last_name
-                              ? `${order.customer_first_name} ${order.customer_last_name}`
-                              : 'Unknown Customer'
+                            {order.contact_first_name && order.contact_last_name
+                              ? `${order.contact_first_name} ${order.contact_last_name}`
+                              : 'Unknown Contact'
                             }
                           </td>
                         )}
@@ -226,7 +226,7 @@ export default function OrdersPage() {
                             >
                               <FaDownload className="h-4 w-4" />
                             </Link>
-                            {!isCustomer(profile.role) && (
+                            {!isContact(profile.role) && (
                               <>
                                 <Link
                                   href={`/dashboard/orders/${order.id}/edit`}
@@ -250,8 +250,8 @@ export default function OrdersPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={isCustomer(profile.role) ? 5 : 6} className="px-6 py-4 text-center text-sm text-gray-500">
-                        {isCustomer(profile.role) ? 'You have no orders yet.' : 'No orders found.'}
+                      <td colSpan={isContact(profile.role) ? 5 : 6} className="px-6 py-4 text-center text-sm text-gray-500">
+                        {isContact(profile.role) ? 'You have no orders yet.' : 'No orders found.'}
                       </td>
                     </tr>
                   )}

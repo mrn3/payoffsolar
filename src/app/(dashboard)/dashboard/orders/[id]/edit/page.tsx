@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
 
-interface Customer {
+interface Contact {
   id: string;
   first_name: string;
   last_name: string;
@@ -28,7 +28,7 @@ interface OrderItem {
 
 interface Order {
   id: string;
-  customer_id: string;
+  contact_id: string;
   status: string;
   total: number;
   notes?: string;
@@ -40,14 +40,14 @@ export default function EditOrderPage() {
   const params = useParams();
   const orderId = params.id as string;
   
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
-    customer_id: '',
+    contact_id: '',
     status: 'pending',
     notes: '',
     items: [{ product_id: '', quantity: 1, price: 0 }] as OrderItem[]
@@ -59,15 +59,15 @@ export default function EditOrderPage() {
 
   const fetchData = async () => {
     try {
-      const [customersRes, productsRes, orderRes] = await Promise.all([
-        fetch('/api/customers'),
+      const [contactsRes, productsRes, orderRes] = await Promise.all([
+        fetch('/api/contacts'),
         fetch('/api/products'),
         fetch(`/api/orders/${orderId}`)
       ]);
 
-      if (customersRes.ok) {
-        const customersData = await customersRes.json();
-        setCustomers(customersData.customers || []);
+      if (contactsRes.ok) {
+        const contactsData = await contactsRes.json();
+        setContacts(contactsData.contacts || []);
       }
 
       if (productsRes.ok) {
@@ -79,10 +79,10 @@ export default function EditOrderPage() {
         const orderData = await orderRes.json();
         const order: Order = orderData.order;
         setFormData({
-          customer_id: order.customer_id,
+          contact_id: order.contact_id,
           status: order.status,
           notes: order.notes || '',
-          items: order.items && order.items.length > 0 
+          items: order.items && order.items.length > 0
             ? order.items.map(item => ({
                 id: item.id,
                 product_id: item.product_id,
@@ -208,20 +208,20 @@ export default function EditOrderPage() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="customer_id" className="block text-sm font-medium text-gray-700">
-                Customer *
+              <label htmlFor="contact_id" className="block text-sm font-medium text-gray-700">
+                Contact *
               </label>
               <select
-                id="customer_id"
+                id="contact_id"
                 required
-                value={formData.customer_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, customer_id: e.target.value }))}
+                value={formData.contact_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, contact_id: e.target.value }))}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
               >
-                <option value="">Select a customer</option>
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.first_name} {customer.last_name} ({customer.email})
+                <option value="">Select a contact</option>
+                {contacts.map((contact) => (
+                  <option key={contact.id} value={contact.id}>
+                    {contact.first_name} {contact.last_name} ({contact.email})
                   </option>
                 ))}
               </select>

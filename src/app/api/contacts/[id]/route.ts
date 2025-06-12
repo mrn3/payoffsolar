@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CustomerModel } from '@/lib/models';
+import { ContactModel } from '@/lib/models';
 import { requireAuth, isAdmin } from '@/lib/auth';
 import { isValidPhoneNumber } from '@/lib/utils/phone';
 
@@ -15,14 +15,14 @@ export async function GET(
     }
 
     const { id } = await params;
-    const customer = await CustomerModel.getById(id);
-    if (!customer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+    const contact = await ContactModel.getById(id);
+    if (!contact) {
+      return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ customer });
+    return NextResponse.json({ contact });
   } catch (error) {
-    console.error('Error fetching customer:', error);
+    console.error('Error fetching contact:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -41,10 +41,10 @@ export async function PUT(
     const { id } = await params;
     const data = await request.json();
 
-    // Check if customer exists
-    const existingCustomer = await CustomerModel.getById(id);
-    if (!existingCustomer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+    // Check if contact exists
+    const existingContact = await ContactModel.getById(id);
+    if (!existingContact) {
+      return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
     }
 
     // Validate required fields (only first_name is required for updates)
@@ -65,7 +65,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Phone number must be exactly 10 digits' }, { status: 400 });
     }
 
-    await CustomerModel.update(id, {
+    await ContactModel.update(id, {
       first_name: data.first_name,
       last_name: data.last_name,
       email: data.email,
@@ -78,10 +78,10 @@ export async function PUT(
       user_id: data.user_id
     });
 
-    const updatedCustomer = await CustomerModel.getById(id);
-    return NextResponse.json({ customer: updatedCustomer });
+    const updatedContact = await ContactModel.getById(id);
+    return NextResponse.json({ contact: updatedContact });
   } catch (error) {
-    console.error('Error updating customer:', error);
+    console.error('Error updating contact:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -99,16 +99,16 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Check if customer exists
-    const existingCustomer = await CustomerModel.getById(id);
-    if (!existingCustomer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+    // Check if contact exists
+    const existingContact = await ContactModel.getById(id);
+    if (!existingContact) {
+      return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
     }
 
-    await CustomerModel.delete(id);
-    return NextResponse.json({ message: 'Customer deleted successfully' });
+    await ContactModel.delete(id);
+    return NextResponse.json({ message: 'Contact deleted successfully' });
   } catch (error) {
-    console.error('Error deleting customer:', error);
+    console.error('Error deleting contact:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

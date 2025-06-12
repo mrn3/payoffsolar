@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaUpload } from 'react-icons/fa';
-import { Customer } from '@/lib/models';
-import DeleteCustomerModal from '@/components/customers/DeleteCustomerModal';
-import ImportCustomersModal from '@/components/customers/ImportCustomersModal';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaUpload, FaCopy } from 'react-icons/fa';
+import { Contact } from '@/lib/models';
+import DeleteContactModal from '@/components/contacts/DeleteContactModal';
+import ImportContactsModal from '@/components/contacts/ImportContactsModal';
+import DuplicateContactsModal from '@/components/contacts/DuplicateContactsModal';
 import { format } from 'date-fns';
 
-interface CustomersResponse {
-  customers: Customer[];
+interface ContactsResponse {
+  contacts: Contact[];
   pagination: {
     page: number;
     limit: number;
@@ -18,9 +19,9 @@ interface CustomersResponse {
   };
 }
 
-export default function CustomersPage() {
+export default function ContactsPage() {
   const router = useRouter();
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,9 +36,10 @@ export default function CustomersPage() {
   // Modal states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isDuplicatesModalOpen, setIsDuplicatesModalOpen] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
 
-  const fetchCustomers = async (page = 1, search = '') => {
+  const fetchContacts = async (page = 1, search = '') => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -46,13 +48,13 @@ export default function CustomersPage() {
         ...(search && { search })
       });
 
-      const response = await fetch(`/api/customers?${params}`);
+      const response = await fetch(`/api/contacts?${params}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch customers');
+        throw new Error('Failed to fetch contacts');
       }
 
-      const data: CustomersResponse = await response.json();
-      setCustomers(data.customers);
+      const data: ContactsResponse = await response.json();
+      setContacts(data.contacts);
       setPagination(data.pagination);
       setCurrentPage(page);
     } catch (err) {
@@ -63,7 +65,7 @@ export default function CustomersPage() {
   };
 
   useEffect(() => {
-    fetchCustomers(1, searchQuery);
+    fetchContacts(1, searchQuery);
   }, [searchQuery]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,57 +74,67 @@ export default function CustomersPage() {
   };
 
   const navigateToAdd = () => {
-    router.push('/dashboard/customers/new');
+    router.push('/dashboard/contacts/new');
   };
 
-
-
-  const handleDeleteCustomer = async () => {
-    if (!selectedCustomer) return;
+  const handleDeleteContact = async () => {
+    if (!selectedContact) return;
 
     try {
-      const response = await fetch(`/api/customers/${selectedCustomer.id}`, {
+      const response = await fetch(`/api/contacts/${selectedContact.id}`, {
         method: 'DELETE'
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete customer');
+        throw new Error(errorData.error || 'Failed to delete contact');
       }
 
-      await fetchCustomers(currentPage, searchQuery);
+      await fetchContacts(currentPage, searchQuery);
       setIsDeleteModalOpen(false);
-      setSelectedCustomer(null);
+      setSelectedContact(null);
     } catch (err) {
-      console.error('Error deleting customer:', err);
+      console.error('Error deleting contact:', err);
       throw err;
     }
   };
 
-  const navigateToEdit = (customer: Customer) => {
-    router.push(`/dashboard/customers/${customer.id}/edit`);
+  const navigateToEdit = (contact: Contact) => {
+    router.push(`/dashboard/contacts/${contact.id}/edit`);
   };
 
-  const openDeleteModal = (customer: Customer) => {
-    setSelectedCustomer(customer);
+  const openDeleteModal = (contact: Contact) => {
+    setSelectedContact(contact);
     setIsDeleteModalOpen(true);
   };
 
   const handleImportComplete = () => {
-    fetchCustomers(1, searchQuery);
+    fetchContacts(1, searchQuery);
+  };
+
+  const handleDuplicatesComplete = () => {
+    fetchContacts(currentPage, searchQuery);
   };
 
   return (
     <div>
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Customers</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Contacts</h1>
           <p className="mt-2 text-sm text-gray-700">
-            A list of all customers in your account including their name, email, and other details.
+            A list of all contacts in your account including their name, email, and other details.
           </p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
           <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={() => setIsDuplicatesModalOpen(true)}
+              className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
+            >
+              <FaCopy className="mr-2 h-4 w-4" />
+              Find Duplicates
+            </button>
             <button
               type="button"
               onClick={() => setIsImportModalOpen(true)}
@@ -137,7 +149,7 @@ export default function CustomersPage() {
               className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
             >
               <FaPlus className="mr-2 h-4 w-4" />
-              Add customer
+              Add contact
             </button>
           </div>
         </div>
@@ -154,7 +166,7 @@ export default function CustomersPage() {
             value={searchQuery}
             onChange={handleSearch}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
-            placeholder="Search customers by name, email, or phone"
+            placeholder="Search contacts by name, email, or phone"
           />
         </div>
       </div>
@@ -166,7 +178,7 @@ export default function CustomersPage() {
         </div>
       )}
 
-      {/* Customers table - Desktop */}
+      {/* Contacts table - Desktop */}
       <div className="mt-8 hidden sm:flex sm:flex-col">
         <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
@@ -198,43 +210,43 @@ export default function CustomersPage() {
                   {loading ? (
                     <tr>
                       <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
-                        Loading customers...
+                        Loading contacts...
                       </td>
                     </tr>
-                  ) : customers.length > 0 ? (
-                    customers.map((customer) => (
-                      <tr key={customer.id}>
+                  ) : contacts.length > 0 ? (
+                    contacts.map((contact) => (
+                      <tr key={contact.id}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          {customer.first_name} {customer.last_name}
+                          {contact.first_name} {contact.last_name}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {customer.email}
+                          {contact.email}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {customer.phone}
+                          {contact.phone}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {customer.city}, {customer.state}
+                          {contact.city}, {contact.state}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {format(new Date(customer.created_at), 'MMM d, yyyy')}
+                          {format(new Date(contact.created_at), 'MMM d, yyyy')}
                         </td>
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                           <div className="flex items-center justify-end space-x-3">
                             <button
                               type="button"
-                              onClick={() => navigateToEdit(customer)}
+                              onClick={() => navigateToEdit(contact)}
                               className="text-blue-600 hover:text-blue-900"
-                              title="Edit customer"
+                              title="Edit contact"
                             >
                               <FaEdit className="h-4 w-4" />
                               <span className="sr-only">Edit</span>
                             </button>
                             <button
                               type="button"
-                              onClick={() => openDeleteModal(customer)}
+                              onClick={() => openDeleteModal(contact)}
                               className="text-red-600 hover:text-red-900"
-                              title="Delete customer"
+                              title="Delete contact"
                             >
                               <FaTrash className="h-4 w-4" />
                               <span className="sr-only">Delete</span>
@@ -246,7 +258,7 @@ export default function CustomersPage() {
                   ) : (
                     <tr>
                       <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
-                        {searchQuery ? 'No customers found matching your search.' : 'No customers found.'}
+                        {searchQuery ? 'No contacts found matching your search.' : 'No contacts found.'}
                       </td>
                     </tr>
                   )}
@@ -257,57 +269,57 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* Customers cards - Mobile */}
+      {/* Contacts cards - Mobile */}
       <div className="mt-8 sm:hidden">
         {loading ? (
           <div className="text-center py-8">
-            <p className="text-sm text-gray-500">Loading customers...</p>
+            <p className="text-sm text-gray-500">Loading contacts...</p>
           </div>
-        ) : customers.length > 0 ? (
+        ) : contacts.length > 0 ? (
           <div className="space-y-4">
-            {customers.map((customer) => (
-              <div key={customer.id} className="bg-white shadow rounded-lg border border-gray-200 p-4">
+            {contacts.map((contact) => (
+              <div key={contact.id} className="bg-white shadow rounded-lg border border-gray-200 p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-medium text-gray-900 truncate">
-                      {customer.first_name} {customer.last_name}
+                      {contact.first_name} {contact.last_name}
                     </h3>
                     <div className="mt-2 space-y-1">
-                      {customer.email && (
+                      {contact.email && (
                         <p className="text-sm text-gray-600 truncate">
-                          <span className="font-medium">Email:</span> {customer.email}
+                          <span className="font-medium">Email:</span> {contact.email}
                         </p>
                       )}
-                      {customer.phone && (
+                      {contact.phone && (
                         <p className="text-sm text-gray-600">
-                          <span className="font-medium">Phone:</span> {customer.phone}
+                          <span className="font-medium">Phone:</span> {contact.phone}
                         </p>
                       )}
-                      {(customer.city || customer.state) && (
+                      {(contact.city || contact.state) && (
                         <p className="text-sm text-gray-600">
-                          <span className="font-medium">Location:</span> {customer.city}, {customer.state}
+                          <span className="font-medium">Location:</span> {contact.city}, {contact.state}
                         </p>
                       )}
                       <p className="text-sm text-gray-600">
-                        <span className="font-medium">Created:</span> {format(new Date(customer.created_at), 'MMM d, yyyy')}
+                        <span className="font-medium">Created:</span> {format(new Date(contact.created_at), 'MMM d, yyyy')}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3 ml-4">
                     <button
                       type="button"
-                      onClick={() => navigateToEdit(customer)}
+                      onClick={() => navigateToEdit(contact)}
                       className="text-blue-600 hover:text-blue-900 p-2"
-                      title="Edit customer"
+                      title="Edit contact"
                     >
                       <FaEdit className="h-5 w-5" />
                       <span className="sr-only">Edit</span>
                     </button>
                     <button
                       type="button"
-                      onClick={() => openDeleteModal(customer)}
+                      onClick={() => openDeleteModal(contact)}
                       className="text-red-600 hover:text-red-900 p-2"
-                      title="Delete customer"
+                      title="Delete contact"
                     >
                       <FaTrash className="h-5 w-5" />
                       <span className="sr-only">Delete</span>
@@ -320,7 +332,7 @@ export default function CustomersPage() {
         ) : (
           <div className="text-center py-8">
             <p className="text-sm text-gray-500">
-              {searchQuery ? 'No customers found matching your search.' : 'No customers found.'}
+              {searchQuery ? 'No contacts found matching your search.' : 'No contacts found.'}
             </p>
           </div>
         )}
@@ -336,14 +348,14 @@ export default function CustomersPage() {
           </div>
           <div className="flex space-x-2">
             <button
-              onClick={() => fetchCustomers(currentPage - 1, searchQuery)}
+              onClick={() => fetchContacts(currentPage - 1, searchQuery)}
               disabled={currentPage <= 1}
               className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
-              onClick={() => fetchCustomers(currentPage + 1, searchQuery)}
+              onClick={() => fetchContacts(currentPage + 1, searchQuery)}
               disabled={currentPage >= pagination.totalPages}
               className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -354,20 +366,26 @@ export default function CustomersPage() {
       )}
 
       {/* Modals */}
-      <DeleteCustomerModal
+      <DeleteContactModal
         isOpen={isDeleteModalOpen}
         onClose={() => {
           setIsDeleteModalOpen(false);
-          setSelectedCustomer(null);
+          setSelectedContact(null);
         }}
-        onConfirm={handleDeleteCustomer}
-        customer={selectedCustomer}
+        onConfirm={handleDeleteContact}
+        contact={selectedContact}
       />
 
-      <ImportCustomersModal
+      <ImportContactsModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImportComplete={handleImportComplete}
+      />
+
+      <DuplicateContactsModal
+        isOpen={isDuplicatesModalOpen}
+        onClose={() => setIsDuplicatesModalOpen(false)}
+        onMergeComplete={handleDuplicatesComplete}
       />
     </div>
   );

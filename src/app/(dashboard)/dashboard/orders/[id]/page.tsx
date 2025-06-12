@@ -222,7 +222,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
               <div>
                 <dt className="text-sm font-medium text-gray-500">Name</dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {order.customer_first_name} {order.customer_last_name}
+                  {order.contact_first_name} {order.contact_last_name}
                 </dd>
               </div>
             </dl>

@@ -2,16 +2,16 @@
 
 import React, { useState } from 'react';
 import { FaExclamationTriangle } from 'react-icons/fa';
-import { Customer } from '@/lib/models';
+import { Contact } from '@/lib/models';
 
-interface DeleteCustomerModalProps {
+interface DeleteContactModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
-  customer: Customer | null;
+  contact: Contact | null;
 }
 
-export default function DeleteCustomerModal({ isOpen, onClose, onConfirm, customer }: DeleteCustomerModalProps) {
+export default function DeleteContactModal({ isOpen, onClose, onConfirm, contact }: DeleteContactModalProps) {
   const [loading, setLoading] = useState(false);
 
   const handleConfirm = async () => {
@@ -20,13 +20,13 @@ export default function DeleteCustomerModal({ isOpen, onClose, onConfirm, custom
       await onConfirm();
       onClose();
     } catch (error) {
-      console.error('Error deleting customer:', error);
+      console.error('Error deleting contact:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!isOpen || !customer) return null;
+  if (!isOpen || !contact) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -41,11 +41,11 @@ export default function DeleteCustomerModal({ isOpen, onClose, onConfirm, custom
               </div>
               <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  Delete Customer
+                  Delete Contact
                 </h3>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
-                    Are you sure you want to delete <strong>{customer.first_name} {customer.last_name}</strong>? 
+                    Are you sure you want to delete <strong>{contact.first_name} {contact.last_name}</strong>? 
                     This action cannot be undone and will also delete all associated orders and invoices.
                   </p>
                 </div>

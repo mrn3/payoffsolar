@@ -5,15 +5,15 @@ import { useRouter, useParams } from 'next/navigation';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import PhoneInput from '@/components/ui/PhoneInput';
 import StateSelect from '@/components/ui/StateSelect';
-import { Customer } from '@/lib/models';
+import { Contact } from '@/lib/models';
 import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/utils/phone';
 
-export default function EditCustomerPage() {
+export default function EditContactPage() {
   const router = useRouter();
   const params = useParams();
-  const customerId = params.id as string;
+  const contactId = params.id as string;
 
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [contact, setContact] = useState<Contact | null>(null);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -31,34 +31,34 @@ export default function EditCustomerPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchCustomer();
-  }, [customerId]);
+    fetchContact();
+  }, [contactId]);
 
-  const fetchCustomer = async () => {
+  const fetchContact = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/customers/${customerId}`);
+      const response = await fetch(`/api/contacts/${contactId}`);
       
       if (!response.ok) {
         if (response.status === 404) {
-          setError('Customer not found');
+          setError('Contact not found');
           return;
         }
-        throw new Error('Failed to fetch customer');
+        throw new Error('Failed to fetch contact');
       }
 
       const data = await response.json();
-      setCustomer(data.customer);
+      setContact(data.contact);
       setFormData({
-        first_name: data.customer.first_name || '',
-        last_name: data.customer.last_name || '',
-        email: data.customer.email || '',
-        phone: formatPhoneNumber(data.customer.phone || ''),
-        address: data.customer.address || '',
-        city: data.customer.city || '',
-        state: data.customer.state || '',
-        zip: data.customer.zip || '',
-        notes: data.customer.notes || ''
+        first_name: data.contact.first_name || '',
+        last_name: data.contact.last_name || '',
+        email: data.contact.email || '',
+        phone: formatPhoneNumber(data.contact.phone || ''),
+        address: data.contact.address || '',
+        city: data.contact.city || '',
+        state: data.contact.state || '',
+        zip: data.contact.zip || '',
+        notes: data.contact.notes || ''
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -94,7 +94,7 @@ export default function EditCustomerPage() {
 
     setSaving(true);
     try {
-      const response = await fetch(`/api/customers/${customerId}`, {
+      const response = await fetch(`/api/contacts/${contactId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -102,10 +102,10 @@ export default function EditCustomerPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update customer');
+        throw new Error(errorData.error || 'Failed to update contact');
       }
 
-      router.push('/dashboard/customers');
+      router.push('/dashboard/contacts');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -135,7 +135,7 @@ export default function EditCustomerPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading customer...</p>
+          <p className="mt-4 text-gray-600">Loading contact...</p>
         </div>
       </div>
     );
@@ -148,11 +148,11 @@ export default function EditCustomerPage() {
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
-            onClick={() => router.push('/dashboard/customers')}
+            onClick={() => router.push('/dashboard/contacts')}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
           >
             <FaArrowLeft className="mr-2 h-4 w-4" />
-            Back to Customers
+            Back to Contacts
           </button>
         </div>
       </div>
@@ -165,18 +165,18 @@ export default function EditCustomerPage() {
       <div className="mb-6">
         <div className="flex items-center mb-4">
           <button
-            onClick={() => router.push('/dashboard/customers')}
+            onClick={() => router.push('/dashboard/contacts')}
             className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
           >
             <FaArrowLeft className="mr-2 h-4 w-4" />
-            Back to Customers
+            Back to Contacts
           </button>
         </div>
         <h1 className="text-2xl font-semibold text-gray-900">
-          Edit Customer: {customer?.first_name} {customer?.last_name}
+          Edit Contact: {contact?.first_name} {contact?.last_name}
         </h1>
         <p className="mt-2 text-sm text-gray-700">
-          Update customer information and contact details.
+          Update contact information and contact details.
         </p>
       </div>
 
@@ -303,7 +303,7 @@ export default function EditCustomerPage() {
                 value={formData.notes}
                 onChange={handleChange}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
-                placeholder="Additional notes about this customer..."
+                placeholder="Additional notes about this contact..."
               />
             </div>
           </div>
@@ -312,7 +312,7 @@ export default function EditCustomerPage() {
           <div className="mt-6 flex items-center justify-end space-x-3">
             <button
               type="button"
-              onClick={() => router.push('/dashboard/customers')}
+              onClick={() => router.push('/dashboard/contacts')}
               className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
               Cancel

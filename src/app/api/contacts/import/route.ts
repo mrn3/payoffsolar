@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isAdmin } from '@/lib/auth';
-import { CustomerModel } from '@/lib/models';
+import { ContactModel } from '@/lib/models';
 import { isValidPhoneNumber } from '@/lib/utils/phone';
 
-interface ImportCustomer {
+interface ImportContact {
   first_name: string;
   last_name?: string;
   email?: string;
@@ -23,49 +23,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { customers } = await request.json();
+    const { contacts } = await request.json();
 
-    if (!Array.isArray(customers) || customers.length === 0) {
-      return NextResponse.json({ error: 'No customers provided' }, { status: 400 });
+    if (!Array.isArray(contacts) || contacts.length === 0) {
+      return NextResponse.json({ error: 'No contacts provided' }, { status: 400 });
     }
 
     let successCount = 0;
     let errorCount = 0;
     const errors: string[] = [];
 
-    for (let i = 0; i < customers.length; i++) {
-      const customer = customers[i] as ImportCustomer;
+    for (let i = 0; i < contacts.length; i++) {
+      const contact = contacts[i] as ImportContact;
       
       try {
         // Validate required fields
-        if (!customer.first_name || !customer.first_name.trim()) {
+        if (!contact.first_name || !contact.first_name.trim()) {
           throw new Error(`Row ${i + 1}: First name is required`);
         }
 
         // Validate email format if provided
-        if (customer.email && customer.email.trim()) {
+        if (contact.email && contact.email.trim()) {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(customer.email)) {
+          if (!emailRegex.test(contact.email)) {
             throw new Error(`Row ${i + 1}: Invalid email format`);
           }
         }
 
         // Validate phone format if provided
-        if (customer.phone && customer.phone.trim() && !isValidPhoneNumber(customer.phone)) {
+        if (contact.phone && contact.phone.trim() && !isValidPhoneNumber(contact.phone)) {
           throw new Error(`Row ${i + 1}: Phone number must be exactly 10 digits`);
         }
 
-        // Create customer
-        await CustomerModel.create({
-          first_name: customer.first_name.trim(),
-          last_name: customer.last_name?.trim() || '',
-          email: customer.email?.trim() || '',
-          phone: customer.phone?.trim() || '',
-          address: customer.address?.trim() || '',
-          city: customer.city?.trim() || '',
-          state: customer.state?.trim() || '',
-          zip: customer.zip?.trim() || '',
-          notes: customer.notes?.trim() || null,
+        // Create contact
+        await ContactModel.create({
+          first_name: contact.first_name.trim(),
+          last_name: contact.last_name?.trim() || '',
+          email: contact.email?.trim() || '',
+          phone: contact.phone?.trim() || '',
+          address: contact.address?.trim() || '',
+          city: contact.city?.trim() || '',
+          state: contact.state?.trim() || '',
+          zip: contact.zip?.trim() || '',
+          notes: contact.notes?.trim() || null,
           user_id: null
         });
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         errorCount++;
         const errorMessage = error instanceof Error ? error.message : `Row ${i + 1}: Unknown error`;
         errors.push(errorMessage);
-        console.error(`Error importing customer at row ${i + 1}:`, error);
+        console.error(`Error importing contact at row ${i + 1}:`, error);
       }
     }
 
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error in bulk customer import:', error);
+    console.error('Error in bulk contact import:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

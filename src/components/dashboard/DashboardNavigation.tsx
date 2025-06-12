@@ -50,8 +50,8 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
       { href: '/dashboard', icon: <FaTachometerAlt className="mr-3 h-5 w-5" />, label: 'Dashboard' },
     ];
 
-    // Customer users only see orders
-    if (userProfile?.role === 'customer') {
+    // Contact users only see orders
+    if (userProfile?.role === 'contact') {
       return [
         ...baseItems,
         { href: '/dashboard/orders', icon: <FaShoppingCart className="mr-3 h-5 w-5" />, label: 'My Orders' },
@@ -61,7 +61,7 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
     // Admin and other roles see all items
     return [
       ...baseItems,
-      { href: '/dashboard/customers', icon: <FaUsers className="mr-3 h-5 w-5" />, label: 'Customers' },
+      { href: '/dashboard/contacts', icon: <FaUsers className="mr-3 h-5 w-5" />, label: 'Contacts' },
       { href: '/dashboard/products', icon: <FaBoxes className="mr-3 h-5 w-5" />, label: 'Products' },
       { href: '/dashboard/orders', icon: <FaShoppingCart className="mr-3 h-5 w-5" />, label: 'Orders' },
       { href: '/dashboard/inventory', icon: <FaWarehouse className="mr-3 h-5 w-5" />, label: 'Inventory' },

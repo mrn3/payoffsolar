@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CustomerModel } from '@/lib/models';
+import { ContactModel } from '@/lib/models';
 import { z } from 'zod';
 
 const contactSchema = z.object({
@@ -18,8 +18,8 @@ export async function POST(request: NextRequest) {
     // Validate the request body
     const validatedData = contactSchema.parse(body);
     
-    // Create a new customer record
-    await CustomerModel.create({
+    // Create a new contact record
+    await ContactModel.create({
       first_name: validatedData.firstName,
       last_name: validatedData.lastName || '',
       email: validatedData.email,

@@ -327,7 +327,7 @@ function generateWelcomeEmailHtml(firstName: string, loginUrl: string): string {
           <li>Browse our solar products and solutions</li>
           <li>Get personalized quotes for your home</li>
           <li>Track your orders and installations</li>
-          <li>Access exclusive customer resources</li>
+          <li>Access exclusive contact resources</li>
         </ul>
 
         <div style="text-align: center;">
@@ -359,7 +359,7 @@ Your account has been successfully created. You can now:
 - Browse our solar products and solutions
 - Get personalized quotes for your home
 - Track your orders and installations
-- Access exclusive customer resources
+- Access exclusive contact resources
 
 Login to your account: ${loginUrl}
 

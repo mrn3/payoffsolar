@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OrderModel } from '@/lib/models';
-import { requireAuth, isCustomer } from '@/lib/auth';
+import { requireAuth, isContact } from '@/lib/auth';
 import { format } from 'date-fns';
 
 export async function GET(
@@ -15,8 +15,8 @@ export async function GET(
     const { id } = await params;
     
     let order;
-    if (isCustomer(profile.role)) {
-      // Customer users can only download their own order receipts
+    if (isContact(profile.role)) {
+      // Contact users can only download their own order receipts
       order = await OrderModel.getByIdForUser(id, profile.id);
     } else {
       // Admin and other roles can download all order receipts
@@ -45,7 +45,7 @@ export async function GET(
 
 function generateOrderReceiptHTML(order: any): string {
   const orderDate = format(new Date(order.created_at), 'MMMM d, yyyy');
-  const customerName = `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim();
+  const contactName = `${order.contact_first_name || ''} ${order.contact_last_name || ''}`.trim();
   
   return `
 <!DOCTYPE html>
@@ -181,10 +181,10 @@ function generateOrderReceiptHTML(order: any): string {
         </div>
         
         <div class="info-section">
-            <h3>Customer Information</h3>
-            <p><strong>Name:</strong> ${customerName || 'N/A'}</p>
-            ${order.customer_email ? `<p><strong>Email:</strong> ${order.customer_email}</p>` : ''}
-            ${order.customer_phone ? `<p><strong>Phone:</strong> ${order.customer_phone}</p>` : ''}
+            <h3>Contact Information</h3>
+            <p><strong>Name:</strong> ${contactName || 'N/A'}</p>
+            ${order.contact_email ? `<p><strong>Email:</strong> ${order.contact_email}</p>` : ''}
+            ${order.contact_phone ? `<p><strong>Phone:</strong> ${order.contact_phone}</p>` : ''}
         </div>
     </div>
 

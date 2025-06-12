@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CustomerModel } from '@/lib/models';
+import { ContactModel } from '@/lib/models';
 import { requireAuth, isAdmin } from '@/lib/auth';
 import { isValidPhoneNumber } from '@/lib/utils/phone';
 
@@ -17,19 +17,19 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const offset = (page - 1) * limit;
 
-    let customers;
+    let contacts;
     let total;
 
     if (search) {
-      customers = await CustomerModel.search(search, limit, offset);
-      total = await CustomerModel.getSearchCount(search);
+      contacts = await ContactModel.search(search, limit, offset);
+      total = await ContactModel.getSearchCount(search);
     } else {
-      customers = await CustomerModel.getAll(limit, offset);
-      total = await CustomerModel.getCount();
+      contacts = await ContactModel.getAll(limit, offset);
+      total = await ContactModel.getCount();
     }
 
     return NextResponse.json({
-      customers,
+      contacts,
       pagination: {
         page,
         limit,
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Error fetching customers:', error);
+    console.error('Error fetching contacts:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Phone number must be exactly 10 digits' }, { status: 400 });
     }
 
-    const customerId = await CustomerModel.create({
+    const contactId = await ContactModel.create({
       first_name: data.first_name,
       last_name: data.last_name,
       email: data.email,
@@ -84,10 +84,10 @@ export async function POST(request: NextRequest) {
       user_id: data.user_id || null
     });
 
-    const customer = await CustomerModel.getById(customerId);
-    return NextResponse.json({ customer }, { status: 201 });
+    const contact = await ContactModel.getById(contactId);
+    return NextResponse.json({ contact }, { status: 201 });
   } catch (error) {
-    console.error('Error creating customer:', error);
+    console.error('Error creating contact:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

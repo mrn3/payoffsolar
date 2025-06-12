@@ -7,7 +7,7 @@ import PhoneInput from '@/components/ui/PhoneInput';
 import StateSelect from '@/components/ui/StateSelect';
 import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/utils/phone';
 
-export default function NewCustomerPage() {
+export default function NewContactPage() {
   const router = useRouter();
   
   const [formData, setFormData] = useState({
@@ -52,7 +52,7 @@ export default function NewCustomerPage() {
 
     setSaving(true);
     try {
-      const response = await fetch('/api/customers', {
+      const response = await fetch('/api/contacts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -60,10 +60,10 @@ export default function NewCustomerPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create customer');
+        throw new Error(errorData.error || 'Failed to create contact');
       }
 
-      router.push('/dashboard/customers');
+      router.push('/dashboard/contacts');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -94,18 +94,18 @@ export default function NewCustomerPage() {
       <div className="mb-6">
         <div className="flex items-center mb-4">
           <button
-            onClick={() => router.push('/dashboard/customers')}
+            onClick={() => router.push('/dashboard/contacts')}
             className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
           >
             <FaArrowLeft className="mr-2 h-4 w-4" />
-            Back to Customers
+            Back to Contacts
           </button>
         </div>
         <h1 className="text-2xl font-semibold text-gray-900">
-          Add New Customer
+          Add New Contact
         </h1>
         <p className="mt-2 text-sm text-gray-700">
-          Create a new customer record with their contact information and details.
+          Create a new contact record with their contact information and details.
         </p>
       </div>
 
@@ -227,7 +227,7 @@ export default function NewCustomerPage() {
                 value={formData.notes}
                 onChange={handleChange}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
-                placeholder="Additional notes about this customer..."
+                placeholder="Additional notes about this contact..."
               />
             </div>
           </div>
@@ -236,7 +236,7 @@ export default function NewCustomerPage() {
           <div className="mt-6 flex items-center justify-end space-x-3">
             <button
               type="button"
-              onClick={() => router.push('/dashboard/customers')}
+              onClick={() => router.push('/dashboard/contacts')}
               className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
               Cancel
@@ -247,7 +247,7 @@ export default function NewCustomerPage() {
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
             >
               <FaSave className="mr-2 h-4 w-4" />
-              {saving ? 'Creating...' : 'Create Customer'}
+              {saving ? 'Creating...' : 'Create Contact'}
             </button>
           </div>
         </form>

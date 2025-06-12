@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { executeQuery, getOne, executeSingle } from '../mysql/connection';
 import crypto from 'crypto';
 
-export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'customer';
+export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'contact';
 
 export interface User {
   id: string;
@@ -230,14 +230,14 @@ export async function signUp(
   // Hash password
   const passwordHash = await hashPassword(password);
 
-  // Get customer role ID
-  const customerRole = await getOne<{ id: string }>(
+  // Get contact role ID
+  const contactRole = await getOne<{ id: string }>(
     'SELECT id FROM roles WHERE name = ?',
-    ['customer']
+    ['contact']
   );
 
-  if (!customerRole) {
-    throw new Error('Customer role not found');
+  if (!contactRole) {
+    throw new Error('Contact role not found');
   }
 
   try {
@@ -260,7 +260,7 @@ export async function signUp(
     // Create profile
     await executeSingle(
       'INSERT INTO profiles (id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
-      [user.id, firstName, lastName, email, customerRole.id]
+      [user.id, firstName, lastName, email, contactRole.id]
     );
 
     // Generate token and set cookie
@@ -274,7 +274,7 @@ export async function signUp(
         email: user.email,
         first_name: firstName,
         last_name: lastName,
-        role: 'customer',
+        role: 'contact',
       },
     };
   } catch (error) {
@@ -321,9 +321,9 @@ export function isAdmin(userRole: UserRole | null): boolean {
   return userRole === 'admin';
 }
 
-// Check if user is customer
-export function isCustomer(userRole: UserRole | null): boolean {
-  return userRole === 'customer';
+// Check if user is contact
+export function isContact(userRole: UserRole | null): boolean {
+  return userRole === 'contact';
 }
 
 // Create admin user function

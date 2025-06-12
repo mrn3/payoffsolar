@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OrderModel, OrderItemModel, CustomerModel, ProductModel } from '@/lib/models';
+import { OrderModel, OrderItemModel, ContactModel, ProductModel } from '@/lib/models';
 import { requireAuth, isAdmin } from '@/lib/auth';
 
 export async function GET(
@@ -46,11 +46,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Validate customer if provided
-    if (data.customer_id) {
-      const customer = await CustomerModel.getById(data.customer_id);
-      if (!customer) {
-        return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+    // Validate contact if provided
+    if (data.contact_id) {
+      const contact = await ContactModel.getById(data.contact_id);
+      if (!contact) {
+        return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
       }
     }
 
@@ -100,7 +100,7 @@ export async function PUT(
 
     // Update order
     await OrderModel.update(id, {
-      customer_id: data.customer_id,
+      contact_id: data.contact_id,
       status: data.status,
       total: data.total,
       notes: data.notes

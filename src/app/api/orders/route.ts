@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OrderModel, OrderItemModel, CustomerModel, ProductModel } from '@/lib/models';
+import { OrderModel, OrderItemModel, ContactModel, ProductModel } from '@/lib/models';
 import { requireAuth, isAdmin } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -44,9 +44,9 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
 
     // Validate required fields
-    if (!data.customer_id || !data.status || data.items === undefined || !Array.isArray(data.items)) {
+    if (!data.contact_id || !data.status || data.items === undefined || !Array.isArray(data.items)) {
       return NextResponse.json({ 
-        error: 'Customer ID, status, and items array are required' 
+        error: 'Contact ID, status, and items array are required'
       }, { status: 400 });
     }
 
@@ -56,10 +56,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate customer exists
-    const customer = await CustomerModel.getById(data.customer_id);
-    if (!customer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+    // Validate contact exists
+    const contact = await ContactModel.getById(data.contact_id);
+    if (!contact) {
+      return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
     }
 
     // Validate items and calculate total
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     // Create order
     const orderId = await OrderModel.create({
-      customer_id: data.customer_id,
+      contact_id: data.contact_id,
       status: data.status,
       total: total,
       notes: data.notes || null
