@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaImage, FaEye } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaImage, FaEye, FaUpload } from 'react-icons/fa';
 import { ProductWithFirstImage } from '@/lib/models';
 import DeleteProductModal from '@/components/products/DeleteProductModal';
+import ImportProductsModal from '@/components/products/ImportProductsModal';
 import { format } from 'date-fns';
 
 interface ProductsResponse {
@@ -27,6 +28,7 @@ export default function ProductsPage() {
   const [total, setTotal] = useState(0);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductWithFirstImage | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const fetchProducts = async (page: number, search: string = '') => {
     try {
@@ -68,6 +70,10 @@ export default function ProductsPage() {
 
   const navigateToAdd = () => {
     router.push('/dashboard/products/new');
+  };
+
+  const handleImportComplete = () => {
+    fetchProducts(currentPage, searchQuery);
   };
 
   const handleDeleteProduct = async () => {
@@ -118,14 +124,24 @@ export default function ProductsPage() {
           </p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <button
-            type="button"
-            onClick={navigateToAdd}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
-          >
-            <FaPlus className="mr-2 h-4 w-4" />
-            Add product
-          </button>
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={() => setIsImportModalOpen(true)}
+              className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
+            >
+              <FaUpload className="mr-2 h-4 w-4" />
+              Import
+            </button>
+            <button
+              type="button"
+              onClick={navigateToAdd}
+              className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
+            >
+              <FaPlus className="mr-2 h-4 w-4" />
+              Add product
+            </button>
+          </div>
         </div>
       </div>
 
@@ -343,6 +359,13 @@ export default function ProductsPage() {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteProduct}
         product={selectedProduct}
+      />
+
+      {/* Import Modal */}
+      <ImportProductsModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportComplete={handleImportComplete}
       />
     </div>
   );

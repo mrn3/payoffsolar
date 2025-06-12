@@ -1,0 +1,7 @@
+Product Name,Description,Price,SKU,Category Name,Image URL,Active Status
+Solar Panel 400W,High-efficiency monocrystalline solar panel,299.99,SP-400W-001,Solar Panels,https://example.com/solar-panel.jpg,true
+Battery Pack 10kWh,Lithium-ion battery storage system,4999.99,BP-10KWH-001,Batteries,https://example.com/battery.jpg,true
+Inverter 5000W,Grid-tie inverter with MPPT,1299.99,INV-5000W-001,Inverters,https://example.com/inverter.jpg,true
+Mounting Rails,Aluminum mounting rails for roof installation,89.99,MR-ALU-001,Accessories,,true
+Solar Panel 300W,Standard efficiency solar panel,199.99,SP-300W-001,Solar Panels,,true
+Charge Controller,MPPT charge controller 60A,249.99,CC-MPPT-60A,Accessories,,false
