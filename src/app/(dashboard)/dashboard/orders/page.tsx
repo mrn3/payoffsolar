@@ -55,8 +55,8 @@ export default function OrdersPage() {
       const profileData = await profileRes.json();
       setProfile(profileData.profile);
 
-      // Then get orders
-      const ordersRes = await fetch('/api/orders');
+      // Then get orders (fetch all orders by setting a high limit)
+      const ordersRes = await fetch('/api/orders?limit=1000');
       if (ordersRes.ok) {
         const ordersData = await ordersRes.json();
         setOrders(ordersData.orders || []);

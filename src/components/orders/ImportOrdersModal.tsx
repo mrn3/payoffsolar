@@ -59,6 +59,8 @@ const autoMapColumn = (header: string): string => {
   if (lowerHeader.includes('order') && lowerHeader.includes('date')) return 'order_date';
   if (lowerHeader === 'date' || lowerHeader.includes('order_date')) return 'order_date';
   if (lowerHeader.includes('note')) return 'notes';
+  if (lowerHeader.includes('order') && lowerHeader.includes('reference')) return 'notes';
+  if (lowerHeader.includes('reference') || lowerHeader.includes('ref')) return 'notes';
   if (lowerHeader.includes('sku')) return 'product_sku';
   if (lowerHeader.includes('product') && lowerHeader.includes('name')) return 'product_name';
   if (lowerHeader.includes('qty') || lowerHeader.includes('quantity')) return 'quantity';

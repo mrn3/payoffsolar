@@ -147,13 +147,13 @@ export async function POST(request: NextRequest) {
 
           const contactId = await ContactModel.create({
             name: item.contact_name?.trim() || 'Unknown',
-            email: item.contact_email?.trim() || '',
-            phone: '',
-            address: '',
-            city: '',
-            state: '',
-            zip: '',
-            notes: null,
+            email: item.contact_email?.trim() || `${(item.contact_name?.trim() || 'unknown').toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            phone: '000-000-0000',
+            address: 'N/A',
+            city: 'N/A',
+            state: 'N/A',
+            zip: '00000',
+            notes: 'Created during order import',
             user_id: null
           });
 
@@ -243,10 +243,15 @@ export async function POST(request: NextRequest) {
           throw new Error(`Row ${i + 1}: Failed to create or find product`);
         }
 
-        // Create order group key (contact + status + order_date + notes)
+        // Create order group key (contact + status + order_date + notes + row index for uniqueness)
         const status = item.status?.trim() || 'pending';
         const notes = item.notes?.trim() || '';
-        const orderKey = `${contact.id}-${status}-${orderDate}-${notes}`;
+
+        // If notes are provided (like order reference), use them to group orders
+        // Otherwise, create a unique order for each row to prevent incorrect grouping
+        const orderKey = notes ?
+          `${contact.id}-${status}-${orderDate}-${notes}` :
+          `${contact.id}-${status}-${orderDate}-row-${i}`;
 
         if (!orderGroups.has(orderKey)) {
           orderGroups.set(orderKey, {
@@ -270,14 +275,20 @@ export async function POST(request: NextRequest) {
         const errorMessage = error instanceof Error ? error.message : `Row ${i + 1}: Unknown error`;
         errors.push(errorMessage);
         console.error(`Error processing order item at row ${i + 1}:`, error);
+        console.error(`Row ${i + 1} data:`, JSON.stringify(item, null, 2));
       }
     }
+
+    console.log(`Processed ${orderItems.length} rows into ${orderGroups.size} order groups`);
+    console.log(`Row processing errors: ${errorCount}`);
 
     // Create orders from groups
     for (const [orderKey, orderData] of orderGroups) {
       try {
         // Calculate total
         const total = orderData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+        console.log(`Creating order for key: ${orderKey}, total: ${total}, items: ${orderData.items.length}`);
 
         // Create order
         const orderId = await OrderModel.create({
@@ -299,11 +310,14 @@ export async function POST(request: NextRequest) {
         }
 
         successCount++;
+        console.log(`Successfully created order ${orderId} with ${orderData.items.length} items`);
       } catch (error) {
         errorCount++;
         const errorMessage = error instanceof Error ? error.message : `Order creation failed`;
-        errors.push(errorMessage);
-        console.error(`Error creating order:`, error);
+        const detailedError = `Order creation failed for key ${orderKey}: ${errorMessage}`;
+        errors.push(detailedError);
+        console.error(`Error creating order for key ${orderKey}:`, error);
+        console.error(`Order data:`, JSON.stringify(orderData, null, 2));
       }
     }
 
