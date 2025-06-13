@@ -34,8 +34,7 @@ interface ImportResults {
 
 const CONTACT_FIELDS = [
   { key: '', label: 'Skip this column' },
-  { key: 'first_name', label: 'First Name *', required: true },
-  { key: 'last_name', label: 'Last Name', required: false },
+  { key: 'name', label: 'Name *', required: true },
   { key: 'email', label: 'Email' },
   { key: 'phone', label: 'Phone' },
   { key: 'address', label: 'Address' },
@@ -120,9 +119,8 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
 
   const autoMapColumn = (csvHeader: string): string => {
     const header = csvHeader.toLowerCase().trim();
-    
-    if (header.includes('first') && header.includes('name')) return 'first_name';
-    if (header.includes('last') && header.includes('name')) return 'last_name';
+
+    if (header.includes('name')) return 'name';
     if (header.includes('email')) return 'email';
     if (header.includes('phone')) return 'phone';
     if (header.includes('address')) return 'address';
@@ -130,7 +128,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
     if (header.includes('state')) return 'state';
     if (header.includes('zip') || header.includes('postal')) return 'zip';
     if (header.includes('note')) return 'notes';
-    
+
     return '';
   };
 
@@ -328,7 +326,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
           <div>
             <h4 className="text-lg font-medium text-gray-900 mb-4">Map CSV Columns</h4>
             <p className="text-sm text-gray-600 mb-6">
-              Map your CSV columns to contact fields. First Name is required.
+              Map your CSV columns to contact fields. Name is required.
             </p>
 
             {/* Preview of CSV data */}

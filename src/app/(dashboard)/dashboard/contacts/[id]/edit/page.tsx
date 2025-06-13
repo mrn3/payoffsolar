@@ -15,8 +15,7 @@ export default function EditContactPage() {
 
   const [contact, setContact] = useState<Contact | null>(null);
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
+    name: '',
     email: '',
     phone: '',
     address: '',

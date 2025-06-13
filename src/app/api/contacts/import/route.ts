@@ -5,8 +5,6 @@ import { isValidPhoneNumber } from '@/lib/utils/phone';
 
 interface ImportContact {
   name?: string;
-  first_name?: string;
-  last_name?: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -38,21 +36,12 @@ export async function POST(request: NextRequest) {
       const contact = contacts[i] as ImportContact;
       
       try {
-        // Determine the name - support both old format (first_name + last_name) and new format (name)
-        let fullName = '';
-        if (contact.name && contact.name.trim()) {
-          fullName = contact.name.trim();
-        } else if (contact.first_name && contact.first_name.trim()) {
-          fullName = contact.first_name.trim();
-          if (contact.last_name && contact.last_name.trim()) {
-            fullName += ' ' + contact.last_name.trim();
-          }
-        }
-
         // Validate required fields
-        if (!fullName) {
+        if (!contact.name || !contact.name.trim()) {
           throw new Error(`Row ${i + 1}: Name is required`);
         }
+
+        const fullName = contact.name.trim();
 
         // Validate email format if provided
         if (contact.email && contact.email.trim()) {
