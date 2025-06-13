@@ -259,7 +259,7 @@ export default function ContactsPage() {
                           {contact.phone}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {contact.city}, {contact.state}
+                          {[contact.city, contact.state].filter(Boolean).join(', ')}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {format(new Date(contact.created_at), 'MMM d, yyyy')}
@@ -330,7 +330,7 @@ export default function ContactsPage() {
                       )}
                       {(contact.city || contact.state) && (
                         <p className="text-sm text-gray-600">
-                          <span className="font-medium">Location:</span> {contact.city}, {contact.state}
+                          <span className="font-medium">Location:</span> {[contact.city, contact.state].filter(Boolean).join(', ')}
                         </p>
                       )}
                       <p className="text-sm text-gray-600">
