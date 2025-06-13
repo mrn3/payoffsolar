@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FaPlus, FaEye, FaEdit, FaTrash, FaDownload } from 'react-icons/fa';
+import { FaPlus, FaEye, FaEdit, FaTrash, FaDownload, FaUpload } from 'react-icons/fa';
 import { format } from 'date-fns';
+import ImportOrdersModal from '@/components/orders/ImportOrdersModal';
 
 interface Order {
   id: string;
@@ -30,6 +31,7 @@ export default function OrdersPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -137,13 +139,22 @@ export default function OrdersPage() {
         </div>
         {!isContact(profile.role) && (
           <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <Link
-              href="/dashboard/orders/new"
-              className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
-            >
-              <FaPlus className="mr-2 h-4 w-4" />
-              Add order
-            </Link>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
+              >
+                <FaUpload className="mr-2 h-4 w-4" />
+                Import
+              </button>
+              <Link
+                href="/dashboard/orders/new"
+                className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
+              >
+                <FaPlus className="mr-2 h-4 w-4" />
+                Add order
+              </Link>
+            </div>
           </div>
         )}
       </div>
@@ -279,6 +290,16 @@ export default function OrdersPage() {
           </div>
         </div>
       )}
+
+      {/* Import Modal */}
+      <ImportOrdersModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportComplete={() => {
+          setShowImportModal(false);
+          fetchData(); // Refresh the orders list
+        }}
+      />
     </div>
   );
 }
