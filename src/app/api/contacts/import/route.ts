@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
         // Validate phone format if provided
         if (contact.phone && contact.phone.trim() && !isValidPhoneNumber(contact.phone)) {
-          throw new Error(`Row ${i + 1}: Phone number must be exactly 10 digits`);
+          throw new Error(`Row ${i + 1}: Phone number must be 10 digits or 11 digits with +1`);
         }
 
         // Create contact

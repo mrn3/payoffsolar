@@ -54,6 +54,16 @@ export async function PUT(
       }
     }
 
+    // Validate order_date format if provided
+    if (data.order_date) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(data.order_date)) {
+        return NextResponse.json({
+          error: 'Order date must be in YYYY-MM-DD format'
+        }, { status: 400 });
+      }
+    }
+
     // If items are provided, validate and update them
     if (data.items !== undefined) {
       if (!Array.isArray(data.items)) {
@@ -103,6 +113,7 @@ export async function PUT(
       contact_id: data.contact_id,
       status: data.status,
       total: data.total,
+      order_date: data.order_date,
       notes: data.notes
     });
 

@@ -131,7 +131,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
               <div>
                 <dt className="text-sm font-medium text-gray-500">Order Date</dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {format(new Date(order.created_at), 'MMM d, yyyy h:mm a')}
+                  {format(new Date(order.order_date), 'MMM d, yyyy')}
                 </dd>
               </div>
               {order.notes && (

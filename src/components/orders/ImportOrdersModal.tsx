@@ -37,6 +37,7 @@ const orderFields = [
   { value: 'contact_email', label: 'Contact Email' },
   { value: 'contact_name', label: 'Contact Name' },
   { value: 'status', label: 'Order Status' },
+  { value: 'order_date', label: 'Order Date' },
   { value: 'notes', label: 'Order Notes' },
   { value: 'product_sku', label: 'Product SKU' },
   { value: 'product_name', label: 'Product Name' },
@@ -53,6 +54,8 @@ const autoMapColumn = (header: string): string => {
   if ((lowerHeader.includes('contact') && lowerHeader.includes('name')) ||
       (lowerHeader === 'name' || lowerHeader === 'customer' || lowerHeader === 'client')) return 'contact_name';
   if (lowerHeader.includes('status')) return 'status';
+  if (lowerHeader.includes('order') && lowerHeader.includes('date')) return 'order_date';
+  if (lowerHeader === 'date' || lowerHeader.includes('order_date')) return 'order_date';
   if (lowerHeader.includes('note')) return 'notes';
   if (lowerHeader.includes('sku')) return 'product_sku';
   if (lowerHeader.includes('product') && lowerHeader.includes('name')) return 'product_name';
@@ -214,6 +217,19 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
               });
             }
           }
+
+          // Validate order_date format
+          if (mapping.orderField === 'order_date' && value) {
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(value)) {
+              errors.push({
+                row: index + 1,
+                field: mapping.orderField,
+                message: 'Order date must be in YYYY-MM-DD format',
+                value: value
+              });
+            }
+          }
         }
       });
     });
@@ -331,8 +347,9 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
               {isProcessing ? 'Processing...' : 'Choose CSV File'}
             </button>
             <div className="mt-4 text-xs text-gray-500">
-              <p>Expected columns: Contact Email/Name, Product SKU/Name, Quantity, Price, Status (optional), Notes (optional)</p>
+              <p>Expected columns: Contact Email/Name, Product SKU/Name, Quantity, Price, Order Date (optional), Status (optional), Notes (optional)</p>
               <p>Products and contacts will be created automatically if they don't exist in the system.</p>
+              <p>Order Date should be in YYYY-MM-DD format. If not provided, today's date will be used.</p>
             </div>
           </div>
         )}

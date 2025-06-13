@@ -20,7 +20,7 @@ export default function PhoneInput({
   onChange,
   onBlur,
   className = '',
-  placeholder = '(555) 123-4567',
+  placeholder = '+1 (555) 123-4567',
   required = false,
   error = false
 }: PhoneInputProps) {
@@ -58,7 +58,7 @@ export default function PhoneInput({
       className={className}
       placeholder={placeholder}
       required={required}
-      maxLength={14} // (XXX) XXX-XXXX = 14 characters
+      maxLength={17} // +1 (XXX) XXX-XXXX = 17 characters
     />
   );
 }

@@ -62,7 +62,7 @@ export async function PUT(
 
     // Validate phone format if provided
     if (data.phone && data.phone.trim() && !isValidPhoneNumber(data.phone)) {
-      return NextResponse.json({ error: 'Phone number must be exactly 10 digits' }, { status: 400 });
+      return NextResponse.json({ error: 'Phone number must be 10 digits or 11 digits with +1' }, { status: 400 });
     }
 
     await ContactModel.update(id, {

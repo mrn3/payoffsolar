@@ -195,11 +195,11 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
         // Validate phone format
         if (mapping.contactField === 'phone' && value) {
           const phoneDigits = value.replace(/\D/g, '');
-          if (phoneDigits.length < 10) {
+          if (phoneDigits.length < 10 || (phoneDigits.length === 11 && !phoneDigits.startsWith('1')) || phoneDigits.length > 11) {
             errors.push({
               row: index + 1,
               field: 'phone',
-              message: 'Phone number must be at least 10 digits',
+              message: 'Phone number must be 10 digits or 11 digits starting with 1',
               value
             });
           }

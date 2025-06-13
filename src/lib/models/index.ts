@@ -431,6 +431,7 @@ export interface Order {
   contact_id: string;
   status: string;
   total: number | string;
+  order_date: string;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -475,7 +476,7 @@ export const OrderModel = {
       `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
-       ORDER BY o.created_at DESC LIMIT ? OFFSET ?`,
+       ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
       [limit, offset]
     );
   },
@@ -486,7 +487,7 @@ export const OrderModel = {
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE c.user_id = ?
-       ORDER BY o.created_at DESC LIMIT ? OFFSET ?`,
+       ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
       [userId, limit, offset]
     );
   },
@@ -566,14 +567,14 @@ export const OrderModel = {
 
   async create(data: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     const result = await executeSingle(
-      `INSERT INTO orders (id, contact_id, status, total, notes)
-       VALUES (UUID(), ?, ?, ?, ?)`,
-      [data.contact_id, data.status, data.total, data.notes || null]
+      `INSERT INTO orders (id, contact_id, status, total, order_date, notes)
+       VALUES (UUID(), ?, ?, ?, ?, ?)`,
+      [data.contact_id, data.status, data.total, data.order_date, data.notes || null]
     );
 
     const order = await getOne<{ id: string }>(
-      'SELECT id FROM orders WHERE contact_id = ? AND total = ? ORDER BY created_at DESC LIMIT 1',
-      [data.contact_id, data.total]
+      'SELECT id FROM orders WHERE contact_id = ? AND total = ? AND order_date = ? ORDER BY created_at DESC LIMIT 1',
+      [data.contact_id, data.total, data.order_date]
     );
     return order!.id;
   },
@@ -593,6 +594,10 @@ export const OrderModel = {
     if (data.total !== undefined) {
       fields.push('total = ?');
       values.push(data.total);
+    }
+    if (data.order_date !== undefined) {
+      fields.push('order_date = ?');
+      values.push(data.order_date);
     }
     if (data.notes !== undefined) {
       fields.push('notes = ?');

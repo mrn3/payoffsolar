@@ -36,6 +36,7 @@ export default function NewOrderPage() {
   const [formData, setFormData] = useState({
     contact_id: '',
     status: 'pending',
+    order_date: new Date().toISOString().split('T')[0], // Default to today
     notes: '',
     items: [{ product_id: '', quantity: 1, price: 0 }] as OrderItem[]
   });
@@ -211,6 +212,20 @@ export default function NewOrderPage() {
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
+          </div>
+
+          <div className="mt-6">
+            <label htmlFor="order_date" className="block text-sm font-medium text-gray-700">
+              Order Date *
+            </label>
+            <input
+              type="date"
+              id="order_date"
+              required
+              value={formData.order_date}
+              onChange={(e) => setFormData(prev => ({ ...prev, order_date: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
+            />
           </div>
 
           <div className="mt-6">

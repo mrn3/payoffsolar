@@ -11,11 +11,11 @@ interface Order {
   contact_id: string;
   status: string;
   total: number | string;
+  order_date: string;
   notes?: string;
   created_at: string;
   updated_at: string;
-  contact_first_name?: string;
-  contact_last_name?: string;
+  contact_name?: string;
 }
 
 interface UserProfile {
@@ -216,7 +216,7 @@ export default function OrdersPage() {
                           ${Number(order.total).toFixed(2)}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {format(new Date(order.created_at), 'MMM d, yyyy')}
+                          {format(new Date(order.order_date), 'MMM d, yyyy')}
                         </td>
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                           <div className="flex justify-end space-x-2">

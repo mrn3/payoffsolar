@@ -37,7 +37,7 @@ export default function NewContactPage() {
 
     // Phone validation (only if phone is provided)
     if (formData.phone.trim() && !isValidPhoneNumber(formData.phone)) {
-      newErrors.phone = 'Phone number must be exactly 10 digits';
+      newErrors.phone = 'Phone number must be 10 digits or 11 digits with +1';
     }
 
     setErrors(newErrors);
@@ -81,7 +81,7 @@ export default function NewContactPage() {
   const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { value } = e.target;
     if (value.trim() && !isValidPhoneNumber(value)) {
-      setErrors(prev => ({ ...prev, phone: 'Phone number must be exactly 10 digits' }));
+      setErrors(prev => ({ ...prev, phone: 'Phone number must be 10 digits or 11 digits with +1' }));
     } else if (errors.phone) {
       setErrors(prev => ({ ...prev, phone: '' }));
     }

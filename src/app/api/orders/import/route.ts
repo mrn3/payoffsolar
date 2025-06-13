@@ -8,6 +8,7 @@ interface ImportOrderItem {
   contact_last_name?: string;
   contact_name?: string;
   status?: string;
+  order_date?: string;
   notes?: string;
   product_sku?: string;
   product_name?: string;
@@ -18,6 +19,7 @@ interface ImportOrderItem {
 interface ProcessedOrder {
   contact_id: string;
   status: string;
+  order_date: string;
   notes?: string;
   items: Array<{
     product_id: string;
@@ -70,6 +72,18 @@ export async function POST(request: NextRequest) {
 
         if (isNaN(price) || price < 0) {
           throw new Error(`Row ${i + 1}: Price must be a non-negative number`);
+        }
+
+        // Validate and process order_date
+        let orderDate = item.order_date?.trim();
+        if (orderDate) {
+          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+          if (!dateRegex.test(orderDate)) {
+            throw new Error(`Row ${i + 1}: Order date must be in YYYY-MM-DD format`);
+          }
+        } else {
+          // Default to today's date if not provided
+          orderDate = new Date().toISOString().split('T')[0];
         }
 
         // Find or create contact
@@ -152,15 +166,16 @@ export async function POST(request: NextRequest) {
           throw new Error(`Row ${i + 1}: Failed to create or find product`);
         }
 
-        // Create order group key (contact + status + notes)
+        // Create order group key (contact + status + order_date + notes)
         const status = item.status?.trim() || 'pending';
         const notes = item.notes?.trim() || '';
-        const orderKey = `${contact.id}-${status}-${notes}`;
+        const orderKey = `${contact.id}-${status}-${orderDate}-${notes}`;
 
         if (!orderGroups.has(orderKey)) {
           orderGroups.set(orderKey, {
             contact_id: contact.id,
             status: status,
+            order_date: orderDate,
             notes: notes || undefined,
             items: []
           });
@@ -192,6 +207,7 @@ export async function POST(request: NextRequest) {
           contact_id: orderData.contact_id,
           status: orderData.status,
           total: total,
+          order_date: orderData.order_date,
           notes: orderData.notes || null
         });
 

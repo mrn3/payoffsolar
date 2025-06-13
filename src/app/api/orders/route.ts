@@ -44,9 +44,9 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
 
     // Validate required fields
-    if (!data.contact_id || !data.status || data.items === undefined || !Array.isArray(data.items)) {
-      return NextResponse.json({ 
-        error: 'Contact ID, status, and items array are required'
+    if (!data.contact_id || !data.status || !data.order_date || data.items === undefined || !Array.isArray(data.items)) {
+      return NextResponse.json({
+        error: 'Contact ID, status, order date, and items array are required'
       }, { status: 400 });
     }
 
@@ -60,6 +60,14 @@ export async function POST(request: NextRequest) {
     const contact = await ContactModel.getById(data.contact_id);
     if (!contact) {
       return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
+    }
+
+    // Validate order_date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(data.order_date)) {
+      return NextResponse.json({
+        error: 'Order date must be in YYYY-MM-DD format'
+      }, { status: 400 });
     }
 
     // Validate items and calculate total
@@ -87,6 +95,7 @@ export async function POST(request: NextRequest) {
       contact_id: data.contact_id,
       status: data.status,
       total: total,
+      order_date: data.order_date,
       notes: data.notes || null
     });
 
