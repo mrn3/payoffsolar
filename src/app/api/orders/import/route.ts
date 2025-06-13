@@ -31,9 +31,20 @@ interface ProcessedOrder {
 export async function POST(request: NextRequest) {
   try {
     // Require admin access
-    const session = await requireAuth();
+    let session;
+    try {
+      session = await requireAuth();
+    } catch (error) {
+      console.error('Authentication error in order import:', error);
+      return NextResponse.json({
+        error: 'Authentication required. Please log in as an admin user.'
+      }, { status: 401 });
+    }
+
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({
+        error: 'Admin access required for order import.'
+      }, { status: 403 });
     }
 
     const { orderItems } = await request.json();

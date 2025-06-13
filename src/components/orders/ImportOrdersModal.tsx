@@ -263,7 +263,20 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
       });
 
       if (!response.ok) {
-        throw new Error('Failed to import orders');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || 'Failed to import orders';
+
+        if (response.status === 401) {
+          toast.error('Authentication required. Please log in as an admin user.');
+          onClose();
+          return;
+        } else if (response.status === 403) {
+          toast.error('Admin access required for order import.');
+          onClose();
+          return;
+        }
+
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
