@@ -3,8 +3,7 @@ import { ContactModel } from '@/lib/models';
 import { z } from 'zod';
 
 const contactSchema = z.object({
-  firstName: z.string().min(2, 'First name must be at least 2 characters'),
-  lastName: z.string().optional(),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
   phone: z.string().min(10, 'Please enter a valid phone number'),
   subject: z.string().min(5, 'Subject must be at least 5 characters'),
@@ -20,8 +19,7 @@ export async function POST(request: NextRequest) {
     
     // Create a new contact record
     await ContactModel.create({
-      first_name: validatedData.firstName,
-      last_name: validatedData.lastName || '',
+      name: validatedData.name,
       email: validatedData.email,
       phone: validatedData.phone,
       notes: `Subject: ${validatedData.subject}\n\n${validatedData.message}`,

@@ -57,8 +57,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- Create contacts table
 CREATE TABLE IF NOT EXISTS contacts (
   id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-  first_name VARCHAR(100) NOT NULL,
-  last_name VARCHAR(100) NOT NULL,
+  name VARCHAR(200) NOT NULL,
   email VARCHAR(255) NOT NULL,
   phone VARCHAR(20) NOT NULL,
   address VARCHAR(255) NOT NULL,

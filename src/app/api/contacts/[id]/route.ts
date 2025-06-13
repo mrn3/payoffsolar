@@ -47,9 +47,9 @@ export async function PUT(
       return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
     }
 
-    // Validate required fields (only first_name is required for updates)
-    if (data.first_name !== undefined && !data.first_name.trim()) {
-      return NextResponse.json({ error: 'First name cannot be empty' }, { status: 400 });
+    // Validate required fields (only name is required for updates)
+    if (data.name !== undefined && !data.name.trim()) {
+      return NextResponse.json({ error: 'Name cannot be empty' }, { status: 400 });
     }
 
     // Validate email format if provided
@@ -66,8 +66,7 @@ export async function PUT(
     }
 
     await ContactModel.update(id, {
-      first_name: data.first_name,
-      last_name: data.last_name,
+      name: data.name,
       email: data.email,
       phone: data.phone,
       address: data.address,

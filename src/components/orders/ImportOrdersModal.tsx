@@ -35,8 +35,7 @@ interface ImportOrdersModalProps {
 const orderFields = [
   { value: '', label: 'Do not import' },
   { value: 'contact_email', label: 'Contact Email' },
-  { value: 'contact_first_name', label: 'Contact First Name' },
-  { value: 'contact_last_name', label: 'Contact Last Name' },
+  { value: 'contact_name', label: 'Contact Name' },
   { value: 'status', label: 'Order Status' },
   { value: 'notes', label: 'Order Notes' },
   { value: 'product_sku', label: 'Product SKU' },

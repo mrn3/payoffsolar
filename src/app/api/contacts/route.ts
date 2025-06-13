@@ -53,9 +53,9 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json();
 
-    // Validate required fields (only first_name is required)
-    if (!data.first_name || !data.first_name.trim()) {
-      return NextResponse.json({ error: 'First name is required' }, { status: 400 });
+    // Validate required fields (only name is required)
+    if (!data.name || !data.name.trim()) {
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
     // Validate email format if provided
@@ -72,8 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     const contactId = await ContactModel.create({
-      first_name: data.first_name,
-      last_name: data.last_name,
+      name: data.name,
       email: data.email,
       phone: data.phone,
       address: data.address,

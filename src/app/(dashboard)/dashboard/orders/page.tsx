@@ -204,10 +204,7 @@ export default function OrdersPage() {
                         </td>
                         {!isContact(profile.role) && (
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {order.contact_first_name && order.contact_last_name
-                              ? `${order.contact_first_name} ${order.contact_last_name}`
-                              : 'Unknown Contact'
-                            }
+                            {order.contact_name || 'Unknown Contact'}
                           </td>
                         )}
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">

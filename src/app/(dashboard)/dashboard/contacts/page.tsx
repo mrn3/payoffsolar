@@ -217,7 +217,7 @@ export default function ContactsPage() {
                     contacts.map((contact) => (
                       <tr key={contact.id}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          {contact.first_name} {contact.last_name}
+                          {contact.name}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {contact.email}
@@ -282,7 +282,7 @@ export default function ContactsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-medium text-gray-900 truncate">
-                      {contact.first_name} {contact.last_name}
+                      {contact.name}
                     </h3>
                     <div className="mt-2 space-y-1">
                       {contact.email && (

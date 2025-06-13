@@ -243,7 +243,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                         {group.contacts.map((contact, index) => (
                           <div key={contact.id} className="bg-gray-50 rounded-md p-3">
                             <h4 className="font-medium text-gray-900">
-                              {contact.first_name} {contact.last_name}
+                              {contact.name}
                             </h4>
                             <div className="mt-1 text-sm text-gray-600 space-y-1">
                               {contact.email && <p>Email: {contact.email}</p>}
@@ -290,7 +290,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                   </span>
                 </div>
                 <div className="space-y-2 text-sm">
-                  <p><strong>Name:</strong> {primaryContact.first_name} {primaryContact.last_name}</p>
+                  <p><strong>Name:</strong> {primaryContact.name}</p>
                   <p><strong>Email:</strong> {primaryContact.email || 'N/A'}</p>
                   <p><strong>Phone:</strong> {primaryContact.phone || 'N/A'}</p>
                   <p><strong>Address:</strong> {primaryContact.address || 'N/A'}</p>

@@ -148,15 +148,14 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
     const mappedFields = columnMappings
       .filter(m => m.contactField !== '')
       .map(m => m.contactField);
-    
-    const hasFirstName = mappedFields.includes('first_name');
-    const hasLastName = mappedFields.includes('last_name');
-    
-    if (!hasFirstName || !hasLastName) {
-      alert('First Name and Last Name are required fields. Please map these columns.');
+
+    const hasName = mappedFields.includes('name');
+
+    if (!hasName) {
+      alert('Name is a required field. Please map this column.');
       return false;
     }
-    
+
     return true;
   };
 
@@ -173,7 +172,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
         const value = row[mapping.csvColumn]?.trim() || '';
 
         // Check required fields
-        if (mapping.contactField === 'first_name' && !value) {
+        if (mapping.contactField === 'name' && !value) {
           errors.push({
             row: index + 1,
             field: mapping.contactField,

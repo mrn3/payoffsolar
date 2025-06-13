@@ -78,24 +78,22 @@ export async function POST(request: NextRequest) {
           contact = await ContactModel.getByEmail(item.contact_email.trim());
         }
         
-        if (!contact && item.contact_first_name) {
+        if (!contact && item.contact_name) {
           // Try to find by name if email not found
           const contacts = await ContactModel.getAll(1000, 0); // Get a large number to search through
           contact = contacts.find(c =>
-            c.first_name.toLowerCase() === item.contact_first_name.toLowerCase().trim() &&
-            (!item.contact_last_name || c.last_name.toLowerCase() === item.contact_last_name.toLowerCase().trim())
+            c.name.toLowerCase() === item.contact_name.toLowerCase().trim()
           );
         }
 
         if (!contact) {
           // Create new contact
-          if (!item.contact_first_name && !item.contact_email) {
-            throw new Error(`Row ${i + 1}: Contact first name or email is required to create contact`);
+          if (!item.contact_name && !item.contact_email) {
+            throw new Error(`Row ${i + 1}: Contact name or email is required to create contact`);
           }
 
           const contactId = await ContactModel.create({
-            first_name: item.contact_first_name?.trim() || 'Unknown',
-            last_name: item.contact_last_name?.trim() || '',
+            name: item.contact_name?.trim() || 'Unknown',
             email: item.contact_email?.trim() || '',
             phone: '',
             address: '',

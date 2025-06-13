@@ -3,8 +3,7 @@ import { executeQuery, getOne, executeSingle } from '../mysql/connection';
 // Contact model
 export interface Contact {
   id: string;
-  first_name: string;
-  last_name: string;
+  name: string;
   email: string;
   phone: string;
   address: string;
@@ -35,9 +34,9 @@ export const ContactModel = {
 
   async create(data: Omit<Contact, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     const result = await executeSingle(
-      `INSERT INTO contacts (id, first_name, last_name, email, phone, address, city, state, zip, notes, user_id)
-       VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [data.first_name, data.last_name, data.email, data.phone, data.address, data.city, data.state, data.zip, data.notes, data.user_id]
+      `INSERT INTO contacts (id, name, email, phone, address, city, state, zip, notes, user_id)
+       VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [data.name, data.email, data.phone, data.address, data.city, data.state, data.zip, data.notes, data.user_id]
     );
 
     const contact = await getOne<{ id: string }>('SELECT id FROM contacts WHERE email = ? ORDER BY created_at DESC LIMIT 1', [data.email]);
@@ -48,8 +47,7 @@ export const ContactModel = {
     const fields = [];
     const values = [];
 
-    if (data.first_name !== undefined) { fields.push('first_name = ?'); values.push(data.first_name); }
-    if (data.last_name !== undefined) { fields.push('last_name = ?'); values.push(data.last_name); }
+    if (data.name !== undefined) { fields.push('name = ?'); values.push(data.name); }
     if (data.email !== undefined) { fields.push('email = ?'); values.push(data.email); }
     if (data.phone !== undefined) { fields.push('phone = ?'); values.push(data.phone); }
     if (data.address !== undefined) { fields.push('address = ?'); values.push(data.address); }
@@ -76,9 +74,9 @@ export const ContactModel = {
     const searchTerm = `%${query}%`;
     return executeQuery<Contact>(
       `SELECT * FROM contacts
-       WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?
+       WHERE name LIKE ? OR email LIKE ? OR phone LIKE ?
        ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [searchTerm, searchTerm, searchTerm, searchTerm, limit, offset]
+      [searchTerm, searchTerm, searchTerm, limit, offset]
     );
   },
 
@@ -91,8 +89,8 @@ export const ContactModel = {
     const searchTerm = `%${query}%`;
     const result = await getOne<{ count: number }>(
       `SELECT COUNT(*) as count FROM contacts
-       WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?`,
-      [searchTerm, searchTerm, searchTerm, searchTerm]
+       WHERE name LIKE ? OR email LIKE ? OR phone LIKE ?`,
+      [searchTerm, searchTerm, searchTerm]
     );
     return result?.count || 0;
   }
@@ -428,8 +426,7 @@ export interface Order {
 }
 
 export interface OrderWithContact extends Order {
-  contact_first_name?: string;
-  contact_last_name?: string;
+  contact_name?: string;
 }
 
 // Order Item model
@@ -464,7 +461,7 @@ export interface CartItem {
 export const OrderModel = {
   async getAll(limit = 50, offset = 0): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
+      `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        ORDER BY o.created_at DESC LIMIT ? OFFSET ?`,
@@ -474,7 +471,7 @@ export const OrderModel = {
 
   async getAllByUser(userId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
+      `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE c.user_id = ?
@@ -489,7 +486,7 @@ export const OrderModel = {
 
   async getByIdForUser(id: string, userId: string): Promise<OrderWithContact | null> {
     return getOne<OrderWithContact>(
-      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
+      `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE o.id = ? AND c.user_id = ?`,
@@ -514,7 +511,7 @@ export const OrderModel = {
 
   async getRecent(limit = 3): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
+      `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        ORDER BY o.created_at DESC LIMIT ?`,
@@ -524,7 +521,7 @@ export const OrderModel = {
 
   async getRecentByUser(userId: string, limit = 3): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
+      `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE c.user_id = ?
@@ -535,7 +532,7 @@ export const OrderModel = {
 
   async getWithItems(id: string): Promise<OrderWithItems | null> {
     const order = await getOne<OrderWithContact>(
-      `SELECT o.*, c.first_name as contact_first_name, c.last_name as contact_last_name
+      `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE o.id = ?`,
@@ -949,7 +946,7 @@ export const ContentModel = {
   async getAll(limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(p.first_name, ' ', p.last_name) as author_name
+       p.name as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -961,7 +958,7 @@ export const ContentModel = {
   async getByType(typeId: string, limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(p.first_name, ' ', p.last_name) as author_name
+       p.name as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -974,7 +971,7 @@ export const ContentModel = {
   async getPublished(limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(p.first_name, ' ', p.last_name) as author_name
+       p.name as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -987,7 +984,7 @@ export const ContentModel = {
   async getPublishedByType(typeId: string, limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(p.first_name, ' ', p.last_name) as author_name
+       p.name as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -1000,7 +997,7 @@ export const ContentModel = {
   async getById(id: string): Promise<ContentWithDetails | null> {
     return getOne<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(p.first_name, ' ', p.last_name) as author_name
+       p.name as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -1012,7 +1009,7 @@ export const ContentModel = {
   async getBySlug(slug: string): Promise<ContentWithDetails | null> {
     return getOne<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(p.first_name, ' ', p.last_name) as author_name
+       p.name as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -1025,7 +1022,7 @@ export const ContentModel = {
     const searchTerm = `%${query}%`;
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       CONCAT(p.first_name, ' ', p.last_name) as author_name
+       p.name as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id

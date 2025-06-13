@@ -50,8 +50,7 @@ export default function EditContactPage() {
       const data = await response.json();
       setContact(data.contact);
       setFormData({
-        first_name: data.contact.first_name || '',
-        last_name: data.contact.last_name || '',
+        name: data.contact.name || '',
         email: data.contact.email || '',
         phone: formatPhoneNumber(data.contact.phone || ''),
         address: data.contact.address || '',
@@ -70,7 +69,7 @@ export default function EditContactPage() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.first_name.trim()) newErrors.first_name = 'First name is required';
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
 
     // Email validation (only if email is provided)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -173,7 +172,7 @@ export default function EditContactPage() {
           </button>
         </div>
         <h1 className="text-2xl font-semibold text-gray-900">
-          Edit Contact: {contact?.first_name} {contact?.last_name}
+          Edit Contact: {contact?.name}
         </h1>
         <p className="mt-2 text-sm text-gray-700">
           Update contact information and contact details.
@@ -184,32 +183,18 @@ export default function EditContactPage() {
       <div className="bg-white shadow rounded-lg">
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">First Name *</label>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Name *</label>
               <input
                 type="text"
-                name="first_name"
-                value={formData.first_name}
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
                 className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.first_name ? 'border-red-300' : 'border-gray-300'
+                  errors.name ? 'border-red-300' : 'border-gray-300'
                 } focus:outline-none focus:ring-green-500 focus:border-green-500`}
               />
-              {errors.first_name && <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Last Name</label>
-              <input
-                type="text"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.last_name ? 'border-red-300' : 'border-gray-300'
-                } focus:outline-none focus:ring-green-500 focus:border-green-500`}
-              />
-              {errors.last_name && <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>}
+              {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
             </div>
 
             <div className="sm:col-span-2">

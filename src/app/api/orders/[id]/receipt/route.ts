@@ -45,7 +45,7 @@ export async function GET(
 
 function generateOrderReceiptHTML(order: any): string {
   const orderDate = format(new Date(order.created_at), 'MMMM d, yyyy');
-  const contactName = `${order.contact_first_name || ''} ${order.contact_last_name || ''}`.trim();
+  const contactName = order.contact_name || '';
   
   return `
 <!DOCTYPE html>

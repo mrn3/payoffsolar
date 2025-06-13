@@ -7,8 +7,7 @@ interface MergeRequest {
   primaryContactId: string;
   duplicateContactId: string;
   mergedData: {
-    first_name: string;
-    last_name: string;
+    name: string;
     email: string;
     phone: string;
     address: string;
