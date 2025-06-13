@@ -55,8 +55,7 @@ export async function POST(request: NextRequest) {
 
       // 2. Update the primary contact with merged data
       await ContactModel.update(primaryContactId, {
-        first_name: mergedData.first_name,
-        last_name: mergedData.last_name,
+        name: mergedData.name,
         email: mergedData.email,
         phone: mergedData.phone,
         address: mergedData.address,

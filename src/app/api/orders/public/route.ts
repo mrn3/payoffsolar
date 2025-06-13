@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
     
     if (!contact) {
       // Create new contact
+      const fullName = `${customerInfo.firstName} ${customerInfo.lastName}`.trim();
       const contactId = await ContactModel.create({
-        first_name: customerInfo.firstName,
-        last_name: customerInfo.lastName,
+        name: fullName,
         email: customerInfo.email,
         phone: customerInfo.phone || '',
         address: customerInfo.address || '',

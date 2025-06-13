@@ -65,8 +65,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
     
     // Initialize merged data with primary contact data
     setMergedData({
-      first_name: group.contacts[0].first_name,
-      last_name: group.contacts[0].last_name,
+      name: group.contacts[0].name,
       email: group.contacts[0].email,
       phone: group.contacts[0].phone,
       address: group.contacts[0].address,
@@ -307,7 +306,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                   </span>
                 </div>
                 <div className="space-y-2 text-sm">
-                  <p><strong>Name:</strong> {duplicateContact.first_name} {duplicateContact.last_name}</p>
+                  <p><strong>Name:</strong> {duplicateContact.name}</p>
                   <p><strong>Email:</strong> {duplicateContact.email || 'N/A'}</p>
                   <p><strong>Phone:</strong> {duplicateContact.phone || 'N/A'}</p>
                   <p><strong>Address:</strong> {duplicateContact.address || 'N/A'}</p>
@@ -320,20 +319,11 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                 <h5 className="font-medium text-blue-900 mb-3">Merged Contact Data</h5>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">First Name</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
                     <input
                       type="text"
-                      value={mergedData.first_name || ''}
-                      onChange={(e) => setMergedData(prev => ({ ...prev, first_name: e.target.value }))}
-                      className="w-full text-sm border border-gray-300 rounded px-2 py-1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Last Name</label>
-                    <input
-                      type="text"
-                      value={mergedData.last_name || ''}
-                      onChange={(e) => setMergedData(prev => ({ ...prev, last_name: e.target.value }))}
+                      value={mergedData.name || ''}
+                      onChange={(e) => setMergedData(prev => ({ ...prev, name: e.target.value }))}
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                     />
                   </div>

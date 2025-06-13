@@ -107,8 +107,8 @@ export function calculateContactSimilarity(contact1: Contact, contact2: Contact)
   }
 
   // Name match (medium priority)
-  const fullName1 = `${contact1.first_name} ${contact1.last_name}`.trim();
-  const fullName2 = `${contact2.first_name} ${contact2.last_name}`.trim();
+  const fullName1 = contact1.name || '';
+  const fullName2 = contact2.name || '';
   const nameSimilarity = stringSimilarity(fullName1, fullName2);
   
   if (nameSimilarity === 100) {
