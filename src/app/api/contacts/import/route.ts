@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isAdmin } from '@/lib/auth';
 import { ContactModel } from '@/lib/models';
 import { isValidPhoneNumber } from '@/lib/utils/phone';
+import { getStateCode } from '@/lib/utils/states';
 
 interface ImportContact {
   name?: string;
@@ -56,6 +57,22 @@ export async function POST(request: NextRequest) {
           throw new Error(`Row ${i + 1}: Phone number must be 10 digits or 11 digits with +1`);
         }
 
+        // Normalize state to state code if it's a full state name
+        let normalizedState = contact.state?.trim() || '';
+        if (normalizedState) {
+          // If it's already a 2-letter code, keep it as is
+          if (normalizedState.length === 2) {
+            normalizedState = normalizedState.toUpperCase();
+          } else {
+            // Try to convert full state name to code
+            const stateCode = getStateCode(normalizedState);
+            if (stateCode) {
+              normalizedState = stateCode;
+            }
+            // If we can't find a matching code, keep the original value
+          }
+        }
+
         // Create contact
         await ContactModel.create({
           name: fullName,
@@ -63,7 +80,7 @@ export async function POST(request: NextRequest) {
           phone: contact.phone?.trim() || '',
           address: contact.address?.trim() || '',
           city: contact.city?.trim() || '',
-          state: contact.state?.trim() || '',
+          state: normalizedState,
           zip: contact.zip?.trim() || '',
           notes: contact.notes?.trim() || null,
           user_id: null

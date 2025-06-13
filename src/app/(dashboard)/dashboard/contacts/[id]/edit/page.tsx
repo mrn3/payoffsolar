@@ -7,6 +7,7 @@ import PhoneInput from '@/components/ui/PhoneInput';
 import StateSelect from '@/components/ui/StateSelect';
 import { Contact } from '@/lib/models';
 import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/utils/phone';
+import { getStateCode } from '@/lib/utils/states';
 
 export default function EditContactPage() {
   const router = useRouter();
@@ -48,13 +49,24 @@ export default function EditContactPage() {
 
       const data = await response.json();
       setContact(data.contact);
+
+      // Normalize state value - convert full state name to code if needed
+      let normalizedState = data.contact.state || '';
+      if (normalizedState && normalizedState.length > 2) {
+        // If it's longer than 2 characters, try to convert to state code
+        const stateCode = getStateCode(normalizedState);
+        if (stateCode) {
+          normalizedState = stateCode;
+        }
+      }
+
       setFormData({
         name: data.contact.name || '',
         email: data.contact.email || '',
         phone: formatPhoneNumber(data.contact.phone || ''),
         address: data.contact.address || '',
         city: data.contact.city || '',
-        state: data.contact.state || '',
+        state: normalizedState,
         zip: data.contact.zip || '',
         notes: data.contact.notes || ''
       });

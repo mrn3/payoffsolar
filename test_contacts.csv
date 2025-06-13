@@ -1,0 +1,4 @@
+name,email,phone,address,city,state,zip,notes
+John Doe,john.doe@example.com,555-123-4567,123 Main St,Los Angeles,California,90210,Test contact with full state name
+Jane Smith,jane.smith@example.com,555-987-6543,456 Oak Ave,Austin,Texas,78701,Another test contact
+Bob Johnson,bob.johnson@example.com,555-555-5555,789 Pine Rd,Miami,FL,33101,Test contact with state abbreviation
