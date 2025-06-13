@@ -21,8 +21,8 @@ export default async function OrderPage({ params }: OrderPageProps) {
   let error = null;
 
   try {
-    if (isCustomer(profile.role)) {
-      // Customer users only see their own orders
+    if (isContact(profile.role)) {
+      // Contact users only see their own orders
       order = await OrderModel.getByIdForUser(id, profile.id);
     } else {
       // Admin and other roles see all orders
@@ -93,7 +93,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
             <FaDownload className="mr-2 h-4 w-4" />
             Download Receipt
           </Link>
-          {!isCustomer(profile.role) && (
+          {!isContact(profile.role) && (
             <Link
               href={`/dashboard/orders/${order.id}/edit`}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
