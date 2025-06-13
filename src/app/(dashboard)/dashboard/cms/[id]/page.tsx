@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaArrowLeft, FaEdit, FaTrash, FaGlobe } from 'react-icons/fa';
 import { ContentWithDetails } from '@/lib/models';
+import toast from 'react-hot-toast';
 
 export default function ViewContentPage() {
   const params = useParams();
@@ -47,11 +48,11 @@ export default function ViewContentPage() {
       if (response.ok) {
         router.push('/dashboard/cms');
       } else {
-        alert('Failed to delete content');
+        toast.error('Failed to delete content');
       }
     } catch (error) {
       console.error('Error deleting content:', error);
-      alert('Failed to delete content');
+      toast.error('Failed to delete content');
     }
   };
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 import { ContentType } from '@/lib/models';
 
 export default function CreateContentPage() {
@@ -102,12 +103,12 @@ export default function CreateContentPage() {
         if (errorData.error === 'Slug already exists') {
           setErrors({ slug: 'This slug is already in use' });
         } else {
-          alert(errorData.error || 'Failed to create content');
+          toast.error(errorData.error || 'Failed to create content');
         }
       }
     } catch (error) {
       console.error('Error creating content:', error);
-      alert('Failed to create content');
+      toast.error('Failed to create content');
     } finally {
       setLoading(false);
     }

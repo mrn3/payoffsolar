@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { FaTimes, FaUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import Papa from 'papaparse';
+import toast from 'react-hot-toast';
 
 interface CSVRow {
   [key: string]: string;
@@ -88,7 +89,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
     if (!file) return;
 
     if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
-      alert('Please select a CSV file');
+      toast.error('Please select a CSV file');
       return;
     }
 
@@ -98,7 +99,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
       skipEmptyLines: true,
       complete: (results) => {
         if (results.errors.length > 0) {
-          alert('Error parsing CSV file: ' + results.errors[0].message);
+          toast.error('Error parsing CSV file: ' + results.errors[0].message);
           setIsProcessing(false);
           return;
         }
@@ -120,7 +121,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
         setIsProcessing(false);
       },
       error: (error) => {
-        alert('Error reading file: ' + error.message);
+        toast.error('Error reading file: ' + error.message);
         setIsProcessing(false);
       }
     });
@@ -217,7 +218,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
       setStep('complete');
 
     } catch (error) {
-      alert('Error importing products: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast.error('Error importing products: ' + (error instanceof Error ? error.message : 'Unknown error'));
       setStep('validation');
     } finally {
       setIsProcessing(false);

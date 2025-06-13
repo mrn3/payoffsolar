@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { FaTimes, FaUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import Papa from 'papaparse';
+import toast from 'react-hot-toast';
 
 interface ImportContactsModalProps {
   isOpen: boolean;
@@ -79,7 +80,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith('.csv')) {
-      alert('Please select a CSV file');
+      toast.error('Please select a CSV file');
       return;
     }
 
@@ -89,7 +90,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
       skipEmptyLines: true,
       complete: (results) => {
         if (results.errors.length > 0) {
-          alert('Error parsing CSV file: ' + results.errors[0].message);
+          toast.error('Error parsing CSV file: ' + results.errors[0].message);
           setIsProcessing(false);
           return;
         }
@@ -111,7 +112,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
         setIsProcessing(false);
       },
       error: (error) => {
-        alert('Error reading file: ' + error.message);
+        toast.error('Error reading file: ' + error.message);
         setIsProcessing(false);
       }
     });
@@ -150,7 +151,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
     const hasName = mappedFields.includes('name');
 
     if (!hasName) {
-      alert('Name is a required field. Please map this column.');
+      toast.error('Name is a required field. Please map this column.');
       return false;
     }
 
@@ -243,7 +244,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
       setStep('complete');
 
     } catch (error) {
-      alert('Error importing contacts: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast.error('Error importing contacts: ' + (error instanceof Error ? error.message : 'Unknown error'));
       setStep('validation');
     } finally {
       setIsProcessing(false);

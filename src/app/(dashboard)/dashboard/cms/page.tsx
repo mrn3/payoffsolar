@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FaPlus, FaSearch, FaEdit, FaTrash, FaEye, FaGlobe } from 'react-icons/fa';
 import { ContentWithDetails, ContentType } from '@/lib/models';
+import toast from 'react-hot-toast';
 
 export default function CMSPage() {
   const [content, setContent] = useState<ContentWithDetails[]>([]);
@@ -72,11 +73,11 @@ export default function CMSPage() {
       if (response.ok) {
         fetchContent(); // Refresh the list
       } else {
-        alert('Failed to delete content');
+        toast.error('Failed to delete content');
       }
     } catch (error) {
       console.error('Error deleting content:', error);
-      alert('Failed to delete content');
+      toast.error('Failed to delete content');
     }
   };
 

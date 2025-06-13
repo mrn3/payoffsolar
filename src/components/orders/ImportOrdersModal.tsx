@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { FaTimes, FaUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import Papa from 'papaparse';
+import toast from 'react-hot-toast';
 
 interface CSVRow {
   [key: string]: string;
@@ -97,7 +98,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith('.csv')) {
-      alert('Please select a CSV file');
+      toast.error('Please select a CSV file');
       return;
     }
 
@@ -107,7 +108,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
       skipEmptyLines: true,
       complete: (results) => {
         if (results.errors.length > 0) {
-          alert('Error parsing CSV file: ' + results.errors[0].message);
+          toast.error('Error parsing CSV file: ' + results.errors[0].message);
           setIsProcessing(false);
           return;
         }
@@ -129,7 +130,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
         setIsProcessing(false);
       },
       error: (error) => {
-        alert('Error reading file: ' + error.message);
+        toast.error('Error reading file: ' + error.message);
         setIsProcessing(false);
       }
     });
@@ -153,25 +154,25 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
     const mappedFields = columnMappings.filter(m => m.orderField !== '').map(m => m.orderField);
     
     if (!mappedFields.includes('contact_email') && !mappedFields.includes('contact_first_name') && !mappedFields.includes('contact_name')) {
-      alert('You must map at least Contact Email, Contact Name, or Contact First Name to identify contacts.');
+      toast.error('You must map at least Contact Email, Contact Name, or Contact First Name to identify contacts.');
       setIsProcessing(false);
       return;
     }
 
     if (!mappedFields.includes('product_sku') && !mappedFields.includes('product_name')) {
-      alert('You must map at least Product SKU or Product Name to identify products.');
+      toast.error('You must map at least Product SKU or Product Name to identify products.');
       setIsProcessing(false);
       return;
     }
 
     if (!mappedFields.includes('quantity')) {
-      alert('You must map the Quantity field.');
+      toast.error('You must map the Quantity field.');
       setIsProcessing(false);
       return;
     }
 
     if (!mappedFields.includes('price')) {
-      alert('You must map the Price field.');
+      toast.error('You must map the Price field.');
       setIsProcessing(false);
       return;
     }
@@ -270,7 +271,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
       setStep('complete');
 
     } catch (error) {
-      alert('Error importing orders: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast.error('Error importing orders: ' + (error instanceof Error ? error.message : 'Unknown error'));
       setStep('validation');
     } finally {
       setIsProcessing(false);

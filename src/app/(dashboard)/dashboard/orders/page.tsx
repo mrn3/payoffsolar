@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FaPlus, FaEye, FaEdit, FaTrash, FaDownload, FaUpload } from 'react-icons/fa';
 import { format } from 'date-fns';
 import ImportOrdersModal from '@/components/orders/ImportOrdersModal';
+import toast from 'react-hot-toast';
 
 interface Order {
   id: string;
@@ -80,11 +81,11 @@ export default function OrdersPage() {
         setOrders(prev => prev.filter(order => order.id !== orderId));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || 'Failed to delete order');
+        toast.error(errorData.error || 'Failed to delete order');
       }
     } catch (err) {
       console.error('Error deleting order:', err);
-      alert('Failed to delete order');
+      toast.error('Failed to delete order');
     }
   };
 
