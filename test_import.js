@@ -36,7 +36,7 @@ async function testImport() {
   try {
     console.log('Testing order import with', testOrderItems.length, 'items...');
     
-    const response = await fetch('http://localhost:6600/api/orders/import', {
+    const response = await fetch('http://localhost:6660/api/orders/import', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

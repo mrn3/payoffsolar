@@ -6,7 +6,7 @@
 
 const fetch = require('node-fetch');
 
-const BASE_URL = 'http://localhost:6600';
+const BASE_URL = 'http://localhost:6660';
 
 async function testDeleteAllOrders() {
   console.log('🧪 Testing delete all orders functionality...');
@@ -155,7 +155,7 @@ async function runTests() {
   
   console.log('\n✨ Tests completed!');
   console.log('\n📝 Note: To run this test properly, you need to:');
-  console.log('1. Make sure the dev server is running on port 6600');
+  console.log('1. Make sure the dev server is running on port 6660');
   console.log('2. Replace "your-admin-token-here" with a real admin auth token');
   console.log('3. Have proper database setup with contacts and products for test order creation');
 }
