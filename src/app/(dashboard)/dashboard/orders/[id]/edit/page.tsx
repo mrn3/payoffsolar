@@ -4,36 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
-
-interface Contact {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  sku: string;
-  price: number;
-}
-
-interface OrderItem {
-  id?: string;
-  product_id: string;
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  id: string;
-  contact_id: string;
-  status: string;
-  total: number;
-  notes?: string;
-  items?: OrderItem[];
-}
+import { Order, OrderItem, Contact, Product } from '@/lib/models';
+import ContactAutocomplete from '@/components/ui/ContactAutocomplete';
 
 export default function EditOrderPage() {
   const router = useRouter();
@@ -79,10 +51,20 @@ export default function EditOrderPage() {
       if (orderRes.ok) {
         const orderData = await orderRes.json();
         const order: Order = orderData.order;
+
+        // Format order_date for HTML date input (YYYY-MM-DD)
+        let formattedOrderDate = '';
+        if (order.order_date) {
+          const date = new Date(order.order_date);
+          if (!isNaN(date.getTime())) {
+            formattedOrderDate = date.toISOString().split('T')[0];
+          }
+        }
+
         setFormData({
-          contact_id: order.contact_id,
+          contact_id: order.contact_id || '',
           status: order.status,
-          order_date: order.order_date || '',
+          order_date: formattedOrderDate,
           notes: order.notes || '',
           items: order.items && order.items.length > 0
             ? order.items.map(item => ({
@@ -213,20 +195,13 @@ export default function EditOrderPage() {
               <label htmlFor="contact_id" className="block text-sm font-medium text-gray-700">
                 Contact *
               </label>
-              <select
-                id="contact_id"
-                required
+              <ContactAutocomplete
                 value={formData.contact_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, contact_id: e.target.value }))}
+                onChange={(contactId, contactName) => setFormData(prev => ({ ...prev, contact_id: contactId }))}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
-              >
-                <option value="">Select a contact</option>
-                {contacts.map((contact) => (
-                  <option key={contact.id} value={contact.id}>
-                    {contact.first_name} {contact.last_name} ({contact.email})
-                  </option>
-                ))}
-              </select>
+                placeholder="Search for a contact..."
+                required
+              />
             </div>
 
             <div>
