@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaUpload, FaCopy } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaUpload, FaCopy, FaTrashAlt } from 'react-icons/fa';
 import { Contact } from '@/lib/models';
 import DeleteContactModal from '@/components/contacts/DeleteContactModal';
+import DeleteAllContactsModal from '@/components/contacts/DeleteAllContactsModal';
 import ImportContactsModal from '@/components/contacts/ImportContactsModal';
 import DuplicateContactsModal from '@/components/contacts/DuplicateContactsModal';
 import { format } from 'date-fns';
@@ -35,6 +36,7 @@ export default function ContactsPage() {
 
   // Modal states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDuplicatesModalOpen, setIsDuplicatesModalOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -99,6 +101,27 @@ export default function ContactsPage() {
     }
   };
 
+  const handleDeleteAllContacts = async () => {
+    try {
+      const response = await fetch('/api/contacts/bulk-delete', {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete all contacts');
+      }
+
+      await fetchContacts(1, '');
+      setSearchQuery('');
+      setCurrentPage(1);
+      setIsDeleteAllModalOpen(false);
+    } catch (err) {
+      console.error('Error deleting all contacts:', err);
+      throw err;
+    }
+  };
+
   const navigateToEdit = (contact: Contact) => {
     router.push(`/dashboard/contacts/${contact.id}/edit`);
   };
@@ -126,7 +149,7 @@ export default function ContactsPage() {
           </p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() => setIsDuplicatesModalOpen(true)}
@@ -143,6 +166,16 @@ export default function ContactsPage() {
               <FaUpload className="mr-2 h-4 w-4" />
               Import CSV
             </button>
+            {pagination.total > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsDeleteAllModalOpen(true)}
+                className="inline-flex items-center justify-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
+              >
+                <FaTrashAlt className="mr-2 h-4 w-4" />
+                Delete All
+              </button>
+            )}
             <button
               type="button"
               onClick={navigateToAdd}
@@ -374,6 +407,13 @@ export default function ContactsPage() {
         }}
         onConfirm={handleDeleteContact}
         contact={selectedContact}
+      />
+
+      <DeleteAllContactsModal
+        isOpen={isDeleteAllModalOpen}
+        onClose={() => setIsDeleteAllModalOpen(false)}
+        onConfirm={handleDeleteAllContacts}
+        contactCount={pagination.total}
       />
 
       <ImportContactsModal

@@ -70,6 +70,17 @@ export const ContactModel = {
     await executeSingle('DELETE FROM contacts WHERE id = ?', [id]);
   },
 
+  async deleteAll(): Promise<number> {
+    const countResult = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM contacts');
+    const count = countResult?.count || 0;
+
+    if (count > 0) {
+      await executeSingle('DELETE FROM contacts');
+    }
+
+    return count;
+  },
+
   async search(query: string, limit = 50, offset = 0): Promise<Contact[]> {
     const searchTerm = `%${query}%`;
     return executeQuery<Contact>(
