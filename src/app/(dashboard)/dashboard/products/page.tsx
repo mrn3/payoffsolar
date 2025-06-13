@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaImage, FaEye, FaUpload } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaImage, FaEye, FaUpload, FaTrashAlt } from 'react-icons/fa';
 import { ProductWithFirstImage } from '@/lib/models';
 import DeleteProductModal from '@/components/products/DeleteProductModal';
+import DeleteAllProductsModal from '@/components/products/DeleteAllProductsModal';
 import ImportProductsModal from '@/components/products/ImportProductsModal';
 import { format } from 'date-fns';
 
@@ -28,6 +29,7 @@ export default function ProductsPage() {
   const [total, setTotal] = useState(0);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductWithFirstImage | null>(null);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const fetchProducts = async (page: number, search: string = '') => {
@@ -98,6 +100,27 @@ export default function ProductsPage() {
     }
   };
 
+  const handleDeleteAllProducts = async () => {
+    try {
+      const response = await fetch('/api/products/bulk-delete', {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete all products');
+      }
+
+      await fetchProducts(1, '');
+      setSearchQuery('');
+      setCurrentPage(1);
+      setIsDeleteAllModalOpen(false);
+    } catch (err) {
+      console.error('Error deleting all products:', err);
+      throw err;
+    }
+  };
+
   const navigateToEdit = (product: ProductWithFirstImage) => {
     router.push(`/dashboard/products/${product.id}/edit`);
   };
@@ -133,6 +156,16 @@ export default function ProductsPage() {
               <FaUpload className="mr-2 h-4 w-4" />
               Import
             </button>
+            {total > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsDeleteAllModalOpen(true)}
+                className="inline-flex items-center justify-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
+              >
+                <FaTrashAlt className="mr-2 h-4 w-4" />
+                Delete All
+              </button>
+            )}
             <button
               type="button"
               onClick={navigateToAdd}
@@ -359,6 +392,14 @@ export default function ProductsPage() {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteProduct}
         product={selectedProduct}
+      />
+
+      {/* Delete All Modal */}
+      <DeleteAllProductsModal
+        isOpen={isDeleteAllModalOpen}
+        onClose={() => setIsDeleteAllModalOpen(false)}
+        onConfirm={handleDeleteAllProducts}
+        productCount={total}
       />
 
       {/* Import Modal */}

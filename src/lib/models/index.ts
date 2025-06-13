@@ -331,6 +331,20 @@ export const ProductModel = {
     await executeSingle('DELETE FROM products WHERE id = ?', [id]);
   },
 
+  async deleteAll(): Promise<number> {
+    const countResult = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM products');
+    const count = countResult?.count || 0;
+
+    if (count > 0) {
+      // Delete all product images first (due to foreign key constraints)
+      await executeSingle('DELETE FROM product_images');
+      // Then delete all products
+      await executeSingle('DELETE FROM products');
+    }
+
+    return count;
+  },
+
   async getCount(): Promise<number> {
     const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM products WHERE is_active = TRUE');
     return result?.count || 0;
