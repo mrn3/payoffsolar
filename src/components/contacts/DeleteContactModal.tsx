@@ -45,7 +45,7 @@ export default function DeleteContactModal({ isOpen, onClose, onConfirm, contact
                 </h3>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
-                    Are you sure you want to delete <strong>{contact.first_name} {contact.last_name}</strong>? 
+                    Are you sure you want to delete <strong>{contact.name}</strong>?
                     This action cannot be undone and will also delete all associated orders and invoices.
                   </p>
                 </div>
