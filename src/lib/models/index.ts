@@ -615,6 +615,16 @@ export const OrderModel = {
 
   async delete(id: string): Promise<void> {
     await executeSingle('DELETE FROM orders WHERE id = ?', [id]);
+  },
+
+  async bulkUpdateStatus(orderIds: string[], status: string): Promise<void> {
+    if (orderIds.length === 0) return;
+
+    const placeholders = orderIds.map(() => '?').join(',');
+    await executeSingle(
+      `UPDATE orders SET status = ? WHERE id IN (${placeholders})`,
+      [status, ...orderIds]
+    );
   }
 };
 

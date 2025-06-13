@@ -33,6 +33,9 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState('');
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -91,6 +94,61 @@ export default function OrdersPage() {
 
   const isContact = (role: string | null) => {
     return role === 'contact';
+  };
+
+  const handleSelectOrder = (orderId: string) => {
+    const newSelected = new Set(selectedOrders);
+    if (newSelected.has(orderId)) {
+      newSelected.delete(orderId);
+    } else {
+      newSelected.add(orderId);
+    }
+    setSelectedOrders(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedOrders.size === orders.length) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(orders.map(order => order.id)));
+    }
+  };
+
+  const handleBulkStatusUpdate = async () => {
+    if (selectedOrders.size === 0 || !bulkStatus) {
+      toast.error('Please select orders and choose a status');
+      return;
+    }
+
+    setBulkUpdating(true);
+    try {
+      const response = await fetch('/api/orders/bulk-update', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderIds: Array.from(selectedOrders),
+          status: bulkStatus
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(data.message);
+        setSelectedOrders(new Set());
+        setBulkStatus('');
+        fetchData(); // Refresh the orders list
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to update orders');
+      }
+    } catch (err) {
+      console.error('Error updating orders:', err);
+      toast.error('Failed to update orders');
+    } finally {
+      setBulkUpdating(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -166,6 +224,51 @@ export default function OrdersPage() {
         </div>
       )}
 
+      {/* Bulk Actions Toolbar */}
+      {!isContact(profile.role) && selectedOrders.size > 0 && (
+        <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <span className="text-sm font-medium text-gray-700">
+                {selectedOrders.size} order{selectedOrders.size !== 1 ? 's' : ''} selected
+              </span>
+              <div className="flex items-center space-x-2">
+                <label htmlFor="bulk-status" className="text-sm font-medium text-gray-700">
+                  Update status to:
+                </label>
+                <select
+                  id="bulk-status"
+                  value={bulkStatus}
+                  onChange={(e) => setBulkStatus(e.target.value)}
+                  className="rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm"
+                >
+                  <option value="">Select status...</option>
+                  <option value="pending">Pending</option>
+                  <option value="processing">Processing</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleBulkStatusUpdate}
+                disabled={!bulkStatus || bulkUpdating}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {bulkUpdating ? 'Updating...' : 'Update Status'}
+              </button>
+              <button
+                onClick={() => setSelectedOrders(new Set())}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                Clear Selection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Orders table */}
       <div className="mt-8 flex flex-col">
         <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -174,6 +277,16 @@ export default function OrdersPage() {
               <table className="min-w-full divide-y divide-gray-300">
                 <thead className="bg-gray-50">
                   <tr>
+                    {!isContact(profile.role) && (
+                      <th scope="col" className="relative w-12 px-6 sm:w-16 sm:px-8">
+                        <input
+                          type="checkbox"
+                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                          checked={orders.length > 0 && selectedOrders.size === orders.length}
+                          onChange={handleSelectAll}
+                        />
+                      </th>
+                    )}
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
                       Order ID
                     </th>
@@ -199,7 +312,17 @@ export default function OrdersPage() {
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {orders.length > 0 ? (
                     orders.map((order) => (
-                      <tr key={order.id}>
+                      <tr key={order.id} className={selectedOrders.has(order.id) ? 'bg-gray-50' : ''}>
+                        {!isContact(profile.role) && (
+                          <td className="relative w-12 px-6 sm:w-16 sm:px-8">
+                            <input
+                              type="checkbox"
+                              className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              checked={selectedOrders.has(order.id)}
+                              onChange={() => handleSelectOrder(order.id)}
+                            />
+                          </td>
+                        )}
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                           #{order.id.substring(0, 8)}
                         </td>
@@ -259,7 +382,7 @@ export default function OrdersPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={isContact(profile.role) ? 5 : 6} className="px-6 py-4 text-center text-sm text-gray-500">
+                      <td colSpan={isContact(profile.role) ? 5 : 7} className="px-6 py-4 text-center text-sm text-gray-500">
                         {isContact(profile.role) ? 'You have no orders yet.' : 'No orders found.'}
                       </td>
                     </tr>
