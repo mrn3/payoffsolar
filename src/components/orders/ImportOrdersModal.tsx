@@ -25,6 +25,7 @@ interface ImportResults {
   success: number;
   errors: number;
   errorDetails?: string[];
+  totalProcessed?: number;
 }
 
 interface ImportOrdersModalProps {
@@ -264,7 +265,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || 'Failed to import orders';
+        const errorMessage = errorData.error || `Failed to import orders (HTTP ${response.status})`;
 
         if (response.status === 401) {
           toast.error('Authentication required. Please log in as an admin user.');
@@ -284,7 +285,8 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
       setStep('complete');
 
     } catch (error) {
-      toast.error('Error importing orders: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Error importing orders: ${errorMessage}`);
       setStep('validation');
     } finally {
       setIsProcessing(false);
@@ -536,14 +538,18 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
             <h4 className="text-lg font-medium text-gray-900 mb-2">Import Complete</h4>
 
             <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-blue-600">{importResults.totalProcessed || csvData.length}</span>
+                  <span className="text-gray-600 ml-1">records processed</span>
+                </div>
                 <div>
                   <span className="font-medium text-green-600">{importResults.success}</span>
-                  <span className="text-gray-600 ml-1">orders imported successfully</span>
+                  <span className="text-gray-600 ml-1">orders imported</span>
                 </div>
                 <div>
                   <span className="font-medium text-red-600">{importResults.errors}</span>
-                  <span className="text-gray-600 ml-1">orders failed</span>
+                  <span className="text-gray-600 ml-1">errors</span>
                 </div>
               </div>
             </div>

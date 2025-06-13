@@ -39,7 +39,14 @@ export const ContactModel = {
       [data.name, data.email, data.phone, data.address, data.city, data.state, data.zip, data.notes, data.user_id]
     );
 
-    const contact = await getOne<{ id: string }>('SELECT id FROM contacts WHERE email = ? ORDER BY created_at DESC LIMIT 1', [data.email]);
+    // Look up by name and email to find the correct contact
+    let contact;
+    if (data.email && data.email.trim() !== '') {
+      contact = await getOne<{ id: string }>('SELECT id FROM contacts WHERE email = ? ORDER BY created_at DESC LIMIT 1', [data.email]);
+    } else {
+      // If no email, look up by name and creation time
+      contact = await getOne<{ id: string }>('SELECT id FROM contacts WHERE name = ? AND email = ? ORDER BY created_at DESC LIMIT 1', [data.name, data.email]);
+    }
     return contact!.id;
   },
 
@@ -273,7 +280,8 @@ export const ProductModel = {
       [data.name, data.description, data.price, data.image_url, data.category_id, data.sku, data.is_active]
     );
 
-    const product = await getOne<{ id: string }>('SELECT id FROM products WHERE sku = ? ORDER BY created_at DESC LIMIT 1', [data.sku]);
+    // Look up by name and SKU to find the correct product
+    const product = await getOne<{ id: string }>('SELECT id FROM products WHERE name = ? AND sku = ? ORDER BY created_at DESC LIMIT 1', [data.name, data.sku]);
     return product!.id;
   },
 

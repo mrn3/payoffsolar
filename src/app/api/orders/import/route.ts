@@ -30,6 +30,8 @@ interface ProcessedOrder {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Starting order import process...');
+
     // Require admin access
     let session;
     try {
@@ -42,16 +44,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isAdmin(session.profile.role)) {
+      console.error('Non-admin user attempted order import:', session.profile.role);
       return NextResponse.json({
         error: 'Admin access required for order import.'
       }, { status: 403 });
     }
 
     const { orderItems } = await request.json();
+    console.log(`Received ${orderItems?.length || 0} order items for import`);
 
     if (!Array.isArray(orderItems) || orderItems.length === 0) {
-      return NextResponse.json({ 
-        error: 'Order items array is required and cannot be empty' 
+      return NextResponse.json({
+        error: 'Order items array is required and cannot be empty'
       }, { status: 400 });
     }
 
@@ -61,6 +65,10 @@ export async function POST(request: NextRequest) {
 
     // Group order items by contact and order details
     const orderGroups = new Map<string, ProcessedOrder>();
+
+    // Cache contacts and products to avoid repeated database calls
+    const contactCache = new Map<string, any>();
+    const productCache = new Map<string, any>();
 
     for (let i = 0; i < orderItems.length; i++) {
       const item = orderItems[i];
@@ -99,17 +107,36 @@ export async function POST(request: NextRequest) {
 
         // Find or create contact
         let contact = null;
-        
-        if (item.contact_email) {
-          contact = await ContactModel.getByEmail(item.contact_email.trim());
-        }
-        
-        if (!contact && item.contact_name) {
-          // Try to find by name if email not found
-          const contacts = await ContactModel.getAll(1000, 0); // Get a large number to search through
-          contact = contacts.find(c =>
-            c.name.toLowerCase() === item.contact_name.toLowerCase().trim()
-          );
+
+        // Create separate cache keys for email and name lookups
+        const emailKey = item.contact_email?.trim() ? `email:${item.contact_email.trim().toLowerCase()}` : null;
+        const nameKey = item.contact_name?.trim() ? `name:${item.contact_name.trim().toLowerCase()}` : null;
+
+        // Check cache first
+        if (emailKey && contactCache.has(emailKey)) {
+          contact = contactCache.get(emailKey);
+        } else if (nameKey && contactCache.has(nameKey)) {
+          contact = contactCache.get(nameKey);
+        } else {
+          // Look up in database
+          if (item.contact_email) {
+            contact = await ContactModel.getByEmail(item.contact_email.trim());
+            if (emailKey) {
+              contactCache.set(emailKey, contact);
+            }
+          }
+
+          if (!contact && item.contact_name) {
+            // Try to find by name if email not found
+            // Get all contacts to search through (no limit for import matching)
+            const contacts = await ContactModel.getAll(10000, 0); // Use a very high limit for import
+            contact = contacts.find(c =>
+              c.name.toLowerCase() === item.contact_name.toLowerCase().trim()
+            );
+            if (nameKey) {
+              contactCache.set(nameKey, contact);
+            }
+          }
         }
 
         if (!contact) {
@@ -131,6 +158,16 @@ export async function POST(request: NextRequest) {
           });
 
           contact = await ContactModel.getById(contactId);
+
+          // Update cache with newly created contact
+          if (contact) {
+            if (emailKey) {
+              contactCache.set(emailKey, contact);
+            }
+            if (nameKey) {
+              contactCache.set(nameKey, contact);
+            }
+          }
         }
 
         if (!contact) {
@@ -140,15 +177,34 @@ export async function POST(request: NextRequest) {
         // Find or create product
         let product = null;
 
-        if (item.product_sku) {
-          product = await ProductModel.getBySku(item.product_sku.trim());
-        }
+        // Create separate cache keys for SKU and name lookups
+        const skuKey = item.product_sku?.trim() ? `sku:${item.product_sku.trim().toLowerCase()}` : null;
+        const productNameKey = item.product_name?.trim() ? `name:${item.product_name.trim().toLowerCase()}` : null;
 
-        if (!product && item.product_name) {
-          const products = await ProductModel.getAllIncludingInactive(1000, 0); // Get a large number to search through
-          product = products.find(p =>
-            p.name.toLowerCase() === item.product_name.toLowerCase().trim()
-          );
+        // Check cache first
+        if (skuKey && productCache.has(skuKey)) {
+          product = productCache.get(skuKey);
+        } else if (productNameKey && productCache.has(productNameKey)) {
+          product = productCache.get(productNameKey);
+        } else {
+          // Look up in database
+          if (item.product_sku) {
+            product = await ProductModel.getBySku(item.product_sku.trim());
+            if (skuKey) {
+              productCache.set(skuKey, product);
+            }
+          }
+
+          if (!product && item.product_name) {
+            // Get all products to search through (no limit for import matching)
+            const products = await ProductModel.getAllIncludingInactive(10000, 0); // Use a very high limit for import
+            product = products.find(p =>
+              p.name.toLowerCase() === item.product_name.toLowerCase().trim()
+            );
+            if (productNameKey) {
+              productCache.set(productNameKey, product);
+            }
+          }
         }
 
         if (!product) {
@@ -171,6 +227,16 @@ export async function POST(request: NextRequest) {
           });
 
           product = await ProductModel.getById(productId);
+
+          // Update cache with newly created product
+          if (product) {
+            if (skuKey) {
+              productCache.set(skuKey, product);
+            }
+            if (productNameKey) {
+              productCache.set(productNameKey, product);
+            }
+          }
         }
 
         if (!product) {
@@ -241,16 +307,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log(`Order import completed: ${successCount} successful, ${errorCount} errors`);
+
     return NextResponse.json({
       success: successCount,
       errors: errorCount,
-      errorDetails: errors
+      errorDetails: errors,
+      totalProcessed: orderItems.length
     });
 
   } catch (error) {
     console.error('Error importing orders:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error' 
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json({
+      error: `Internal server error: ${errorMessage}`
     }, { status: 500 });
   }
 }
