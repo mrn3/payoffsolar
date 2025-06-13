@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FaPlus, FaEye, FaEdit, FaTrash, FaDownload, FaUpload } from 'react-icons/fa';
 import { format } from 'date-fns';
 import ImportOrdersModal from '@/components/orders/ImportOrdersModal';
+import DeleteAllOrdersModal from '@/components/orders/DeleteAllOrdersModal';
 import toast from 'react-hot-toast';
 
 interface Order {
@@ -36,6 +37,7 @@ export default function OrdersPage() {
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState('');
   const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -151,6 +153,28 @@ export default function OrdersPage() {
     }
   };
 
+  const handleDeleteAllOrders = async () => {
+    try {
+      const response = await fetch('/api/orders/delete-all', {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(data.message);
+        setSelectedOrders(new Set());
+        setBulkStatus('');
+        fetchData(); // Refresh the orders list
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to delete all orders');
+      }
+    } catch (err) {
+      console.error('Error deleting all orders:', err);
+      toast.error('Failed to delete all orders');
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
@@ -206,6 +230,15 @@ export default function OrdersPage() {
                 <FaUpload className="mr-2 h-4 w-4" />
                 Import
               </button>
+              {orders.length > 0 && (
+                <button
+                  onClick={() => setShowDeleteAllModal(true)}
+                  className="inline-flex items-center justify-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
+                >
+                  <FaTrash className="mr-2 h-4 w-4" />
+                  Delete All
+                </button>
+              )}
               <Link
                 href="/dashboard/orders/new"
                 className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
@@ -420,6 +453,14 @@ export default function OrdersPage() {
           setShowImportModal(false);
           fetchData(); // Refresh the orders list
         }}
+      />
+
+      {/* Delete All Orders Modal */}
+      <DeleteAllOrdersModal
+        isOpen={showDeleteAllModal}
+        onClose={() => setShowDeleteAllModal(false)}
+        onConfirm={handleDeleteAllOrders}
+        orderCount={orders.length}
       />
     </div>
   );

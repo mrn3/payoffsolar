@@ -625,6 +625,20 @@ export const OrderModel = {
       `UPDATE orders SET status = ? WHERE id IN (${placeholders})`,
       [status, ...orderIds]
     );
+  },
+
+  async deleteAll(): Promise<number> {
+    const countResult = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM orders');
+    const count = countResult?.count || 0;
+
+    if (count > 0) {
+      // Delete all order items first (due to foreign key constraints)
+      await executeSingle('DELETE FROM order_items');
+      // Then delete all orders
+      await executeSingle('DELETE FROM orders');
+    }
+
+    return count;
   }
 };
 
