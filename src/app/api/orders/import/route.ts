@@ -6,6 +6,7 @@ interface ImportOrderItem {
   contact_email?: string;
   contact_first_name?: string;
   contact_last_name?: string;
+  contact_name?: string;
   status?: string;
   notes?: string;
   product_sku?: string;
@@ -111,13 +112,13 @@ export async function POST(request: NextRequest) {
           throw new Error(`Row ${i + 1}: Failed to create or find contact`);
         }
 
-        // Find product
+        // Find or create product
         let product = null;
-        
+
         if (item.product_sku) {
           product = await ProductModel.getBySku(item.product_sku.trim());
         }
-        
+
         if (!product && item.product_name) {
           const products = await ProductModel.getAllIncludingInactive(1000, 0); // Get a large number to search through
           product = products.find(p =>
@@ -126,7 +127,29 @@ export async function POST(request: NextRequest) {
         }
 
         if (!product) {
-          throw new Error(`Row ${i + 1}: Product not found (SKU: ${item.product_sku || 'N/A'}, Name: ${item.product_name || 'N/A'})`);
+          // Create new product
+          if (!item.product_name) {
+            throw new Error(`Row ${i + 1}: Product name is required to create product`);
+          }
+
+          // Generate SKU if not provided
+          const sku = item.product_sku?.trim() || `AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+
+          const productId = await ProductModel.create({
+            name: item.product_name.trim(),
+            description: `Auto-created product from order import`,
+            price: parseFloat(item.price.toString()) || 0,
+            image_url: null,
+            category_id: null,
+            sku: sku,
+            is_active: true
+          });
+
+          product = await ProductModel.getById(productId);
+        }
+
+        if (!product) {
+          throw new Error(`Row ${i + 1}: Failed to create or find product`);
         }
 
         // Create order group key (contact + status + notes)

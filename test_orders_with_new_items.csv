@@ -1,0 +1,7 @@
+Contact Name,Product Name,Quantity,Price,Status,Notes
+John Smith,Solar Panel 400W,2,349.99,pending,New customer with new product
+Jane Doe,Wind Turbine 2kW,1,1299.99,confirmed,Another new customer and product
+Bob Wilson,Solar Panel 400W,3,349.99,processing,Existing product for new customer
+Alice Johnson,Battery Storage 15kWh,1,6999.99,pending,New high-capacity battery
+Mike Brown,Solar Panel 300W,4,299.99,confirmed,Existing product type
+Sarah Davis,Micro Inverter 250W,10,89.99,pending,Small inverters for distributed system

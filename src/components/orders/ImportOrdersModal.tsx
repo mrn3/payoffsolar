@@ -46,17 +46,19 @@ const orderFields = [
 
 const autoMapColumn = (header: string): string => {
   const lowerHeader = header.toLowerCase().trim();
-  
+
   if (lowerHeader.includes('email')) return 'contact_email';
   if (lowerHeader.includes('first') && lowerHeader.includes('name')) return 'contact_first_name';
   if (lowerHeader.includes('last') && lowerHeader.includes('name')) return 'contact_last_name';
+  if ((lowerHeader.includes('contact') && lowerHeader.includes('name')) ||
+      (lowerHeader === 'name' || lowerHeader === 'customer' || lowerHeader === 'client')) return 'contact_name';
   if (lowerHeader.includes('status')) return 'status';
   if (lowerHeader.includes('note')) return 'notes';
   if (lowerHeader.includes('sku')) return 'product_sku';
   if (lowerHeader.includes('product') && lowerHeader.includes('name')) return 'product_name';
   if (lowerHeader.includes('qty') || lowerHeader.includes('quantity')) return 'quantity';
   if (lowerHeader.includes('price') || lowerHeader.includes('cost') || lowerHeader.includes('amount')) return 'price';
-  
+
   return '';
 };
 
@@ -147,8 +149,8 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
     // Check if required mappings exist
     const mappedFields = columnMappings.filter(m => m.orderField !== '').map(m => m.orderField);
     
-    if (!mappedFields.includes('contact_email') && !mappedFields.includes('contact_first_name')) {
-      alert('You must map at least Contact Email or Contact First Name to identify contacts.');
+    if (!mappedFields.includes('contact_email') && !mappedFields.includes('contact_first_name') && !mappedFields.includes('contact_name')) {
+      alert('You must map at least Contact Email, Contact Name, or Contact First Name to identify contacts.');
       setIsProcessing(false);
       return;
     }
@@ -312,6 +314,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
             <h4 className="text-lg font-medium text-gray-900 mb-2">Upload CSV File</h4>
             <p className="text-sm text-gray-600 mb-6">
               Select a CSV file containing order data. Each row should represent one order item. The first row should contain column headers.
+              Products and contacts will be created automatically if they don't exist.
             </p>
             <input
               ref={fileInputRef}
@@ -329,6 +332,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
             </button>
             <div className="mt-4 text-xs text-gray-500">
               <p>Expected columns: Contact Email/Name, Product SKU/Name, Quantity, Price, Status (optional), Notes (optional)</p>
+              <p>Products and contacts will be created automatically if they don't exist in the system.</p>
             </div>
           </div>
         )}
@@ -339,6 +343,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
             <h4 className="text-lg font-medium text-gray-900 mb-4">Map CSV Columns</h4>
             <p className="text-sm text-gray-600 mb-6">
               Map your CSV columns to order fields. Contact Email/Name, Product SKU/Name, Quantity, and Price are required.
+              Products and contacts will be created automatically if they don't exist.
             </p>
 
             <div className="max-h-96 overflow-y-auto">
