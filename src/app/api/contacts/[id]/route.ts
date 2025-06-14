@@ -1,69 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ContactModel } from '@/lib/models';
 import {requireAuth, isAdmin} from '@/lib/auth';
+import { isValidPhoneNumber } from '@/lib/utils/phone';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ _id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { _id } = await params;
-    const contact = await ContactModel.getById(_id);
+    const { id } = await params;
+    const contact = await ContactModel.getById(id);
     if (!contact) {
-      return NextResponse.json({ _error: 'Contact not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
     }
 
     return NextResponse.json({ contact });
   } catch (_error) {
     console.error('Error fetching contact:', _error);
-    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PUT(
   _request: NextRequest,
-  { params }: { params: Promise<{ _id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { _id } = await params;
-    
+    const { id } = await params;
+    const data = await _request.json();
+
     // Check if contact exists
-    const existingContact = await ContactModel.getById(_id);
+    const existingContact = await ContactModel.getById(id);
     if (!existingContact) {
-      return NextResponse.json({ _error: 'Contact not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
     }
 
     // Validate required fields (only name is required for updates)
-    if (_data.name !== undefined && !data.name.trim()) {
-      return NextResponse.json({ _error: 'Name cannot be empty' }, { status: 400 });
+    if (data.name !== undefined && !data.name.trim()) {
+      return NextResponse.json({ error: 'Name cannot be empty' }, { status: 400 });
     }
 
     // Validate email format if provided
-    if (_data.email && data.email.trim()) {
+    if (data.email && data.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(_data.email)) {
-        return NextResponse.json({ _error: 'Invalid email format' }, { status: 400 });
+      if (!emailRegex.test(data.email)) {
+        return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
       }
     }
 
     // Validate phone format if provided
-    if (_data.phone && data.phone.trim() && !isValidPhoneNumber(_data.phone)) {
-      return NextResponse.json({ _error: 'Phone number must be 10 digits or 11 digits with +1' }, { status: 400 });
+    if (data.phone && data.phone.trim() && !isValidPhoneNumber(data.phone)) {
+      return NextResponse.json({ error: 'Phone number must be 10 digits or 11 digits with +1' }, { status: 400 });
     }
 
-    await ContactModel.update(_id, {
+    await ContactModel.update(id, {
       name: data.name,
       email: data.email,
       phone: data.phone,
@@ -75,37 +77,37 @@ export async function PUT(
       user_id: data.user_id
     });
 
-    const updatedContact = await ContactModel.getById(_id);
+    const updatedContact = await ContactModel.getById(id);
     return NextResponse.json({ contact: updatedContact });
   } catch (_error) {
     console.error('Error updating contact:', _error);
-    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ _id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { _id } = await params;
+    const { id } = await params;
 
     // Check if contact exists
-    const existingContact = await ContactModel.getById(_id);
+    const existingContact = await ContactModel.getById(id);
     if (!existingContact) {
-      return NextResponse.json({ _error: 'Contact not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
     }
 
-    await ContactModel.delete(_id);
+    await ContactModel.delete(id);
     return NextResponse.json({ message: 'Contact deleted successfully' });
   } catch (_error) {
     console.error('Error deleting contact:', _error);
-    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

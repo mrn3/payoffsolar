@@ -11,7 +11,7 @@ import ImportContactsModal from '@/components/contacts/ImportContactsModal';
 import DuplicateContactsModal from '@/components/contacts/DuplicateContactsModal';
 
 interface ContactsResponse {
-  _contacts: Contact[];
+  contacts: Contact[];
   pagination: {
     page: number;
     limit: number;
@@ -51,11 +51,11 @@ export default function ContactsPage() {
       });
 
       const _response = await fetch(`/api/contacts?${params}`);
-      if (!response.ok) {
+      if (!_response.ok) {
         throw new Error('Failed to fetch contacts');
       }
 
-      const _data: ContactsResponse = await response.json();
+      const _data: ContactsResponse = await _response.json();
       setContacts(_data.contacts);
       setPagination(_data.pagination);
       setCurrentPage(page);
@@ -87,8 +87,8 @@ export default function ContactsPage() {
         method: 'DELETE'
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!_response.ok) {
+        const errorData = await _response.json();
         throw new Error(errorData.error || 'Failed to delete contact');
       }
 
@@ -107,8 +107,8 @@ export default function ContactsPage() {
         method: 'DELETE'
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!_response.ok) {
+        const errorData = await _response.json();
         throw new Error(errorData.error || 'Failed to delete all contacts');
       }
 

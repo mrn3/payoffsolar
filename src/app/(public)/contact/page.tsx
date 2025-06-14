@@ -51,8 +51,8 @@ export default function ContactPage() {
         body: JSON.stringify(_data),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!_response.ok) {
+        const errorData = await _response.json();
         throw new Error(errorData.error || 'Failed to submit form');
       }
 

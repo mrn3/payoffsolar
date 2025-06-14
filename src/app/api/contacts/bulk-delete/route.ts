@@ -7,18 +7,18 @@ export async function DELETE(_request: NextRequest) {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     // Delete all contacts
     const deletedCount = await ContactModel.deleteAll();
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: `Successfully deleted ${deletedCount} contacts`,
-      deletedCount 
+      deletedCount
     });
   } catch (_error) {
-    console.error('Error deleting all _contacts:', _error);
-    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
+    console.error('Error deleting all contacts:', _error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

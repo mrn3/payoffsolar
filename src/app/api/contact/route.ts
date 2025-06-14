@@ -12,7 +12,7 @@ const contactSchema = z.object({
 
 export async function POST(_request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await _request.json();
     
     // Validate the request body
     const validatedData = contactSchema.parse(body);
@@ -38,7 +38,7 @@ export async function POST(_request: NextRequest) {
     
     if (_error instanceof z.ZodError) {
       return NextResponse.json(
-        { _error: 'Validation error', details: error.errors },
+        { _error: 'Validation error', details: _error.errors },
         { status: 400 }
       );
     }

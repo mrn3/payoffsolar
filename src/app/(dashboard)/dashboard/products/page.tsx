@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { ProductWithFirstImage } from '@/lib/models';
 import DeleteProductModal from '@/components/products/DeleteProductModal';
 import DeleteAllProductsModal from '@/components/products/DeleteAllProductsModal';
