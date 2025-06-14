@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import Link from 'next/link';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaEye, FaGlobe } from 'react-icons/fa';
 import { ContentWithDetails, ContentType } from '@/lib/models';
 import toast from 'react-hot-toast';
+import {FaEdit, FaEye, FaGlobe, FaPlus, FaSearch, FaTrash} from 'react-icons/fa';
 
 export default function CMSPage() {
   const [content, setContent] = useState<ContentWithDetails[]>([]);
@@ -15,24 +15,7 @@ export default function CMSPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    fetchContentTypes();
-    fetchContent();
-  }, [currentPage, selectedType, searchTerm]);
-
-  const fetchContentTypes = async () => {
-    try {
-      const response = await fetch('/api/content-types');
-      if (response.ok) {
-        const data = await response.json();
-        setContentTypes(data.contentTypes);
-      }
-    } catch (error) {
-      console.error('Error fetching content types:', error);
-    }
-  };
-
-  const fetchContent = async () => {
+  const fetchContent = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -47,36 +30,53 @@ export default function CMSPage() {
         params.append('type', selectedType);
       }
 
-      const response = await fetch(`/api/content?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        setContent(data.content);
-        setTotalPages(data.pagination.totalPages);
+      const _response = await fetch(`/api/content?${params}`);
+      if (_response.ok) {
+        const _data = await _response.json();
+        setContent(_data.content);
+        setTotalPages(_data.pagination.totalPages);
       }
-    } catch (error) {
-      console.error('Error fetching content:', error);
+    } catch (_error) {
+      console.error('Error fetching content:', _error);
     } finally {
       setLoading(false);
     }
+  }, [currentPage, selectedType, searchTerm]);
+
+  useEffect(() => {
+    fetchContentTypes();
+    fetchContent();
+  }, [fetchContent]);
+
+  const fetchContentTypes = async () => {
+    try {
+      const _response = await fetch('/api/content-types');
+      if (_response.ok) {
+        const _data = await _response.json();
+        setContentTypes(_data.contentTypes);
+      }
+    } catch (_error) {
+      console.error('Error fetching content types:', _error);
+    }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (_id: string) => {
     if (!confirm('Are you sure you want to delete this content?')) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/content/${id}`, {
+      const _response = await fetch(`/api/content/${_id}`, {
         method: 'DELETE',
       });
 
-      if (response.ok) {
+      if (_response.ok) {
         fetchContent(); // Refresh the list
       } else {
         toast.error('Failed to delete content');
       }
-    } catch (error) {
-      console.error('Error deleting content:', error);
+    } catch (_error) {
+      console.error('Error deleting content:', _error);
       toast.error('Failed to delete content');
     }
   };
@@ -114,7 +114,7 @@ export default function CMSPage() {
         <div className="sm:w-64">
           <select
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
+            onChange={(_e) => setSelectedType(_e.target.value)}
             className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
           >
             <option value="">All Content</option>
@@ -132,7 +132,7 @@ export default function CMSPage() {
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(_e) => setSearchTerm(_e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
             placeholder="Search content"
           />
@@ -211,7 +211,7 @@ export default function CMSPage() {
                               ? 'bg-green-100 text-green-800'
                               : 'bg-yellow-100 text-yellow-800'
                           }`}>
-                            {item.published ? 'Published' : 'Draft'}
+                            {item.published ? 'Published' : 'Draft' }
                           </span>
                         </td>
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">

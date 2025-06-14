@@ -3,11 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { FaCheckCircle, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import { useCart } from '@/contexts/CartContext';
+import {FaExclamationTriangle, FaCheckCircle, FaSpinner} from 'react-icons/fa';
 
 interface OrderData {
-  id: string;
+  _id: string;
   total: number;
   status: string;
   created_at: string;
@@ -21,9 +21,9 @@ interface OrderData {
 }
 
 export default function CheckoutSuccessPage() {
-  const searchParams = useSearchParams();
+  const _searchParams = useSearchParams();
   const { clearCart } = useCart();
-  const [order, setOrder] = useState<OrderData | null>(null);
+  const [order] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,20 +35,13 @@ export default function CheckoutSuccessPage() {
       clearCart();
       
       // In a real implementation, you would fetch the order details
-      // For now, we'll show a generic success message
+      // For now, we&apos;ll show a generic success message
       setLoading(false);
     } else {
       setError('No payment information found');
       setLoading(false);
     }
   }, [paymentIntentId, clearCart]);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(price);
-  };
 
   if (loading) {
     return (
@@ -61,7 +54,7 @@ export default function CheckoutSuccessPage() {
     );
   }
 
-  if (error) {
+  if (_error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md">
@@ -115,7 +108,7 @@ export default function CheckoutSuccessPage() {
             </div>
           </div>
 
-          {/* What's Next */}
+          {/* What&apos;s Next */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">What happens next?</h2>
             <div className="space-y-4">
@@ -125,7 +118,7 @@ export default function CheckoutSuccessPage() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Order Confirmation</h3>
-                  <p className="text-gray-600 text-sm">You'll receive an email confirmation with your order details.</p>
+                  <p className="text-gray-600 text-sm">You&apos;ll receive an email confirmation with your order details.</p>
                 </div>
               </div>
               
@@ -145,7 +138,7 @@ export default function CheckoutSuccessPage() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Shipping Notification</h3>
-                  <p className="text-gray-600 text-sm">You'll receive tracking information once your order ships.</p>
+                  <p className="text-gray-600 text-sm">You&apos;ll receive tracking information once your order ships.</p>
                 </div>
               </div>
               

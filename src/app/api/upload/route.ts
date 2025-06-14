@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import { requireAuth , isAdmin} from '@/lib/auth';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
 
     if (!files || files.length === 0) {
-      return NextResponse.json({ error: 'No files provided' }, { status: 400 });
+      return NextResponse.json({ _error: 'No files provided' }, { status: 400 });
     }
 
     const uploadedFiles = [];
@@ -27,17 +27,17 @@ export async function POST(request: NextRequest) {
 
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
+      if (!allowedTypes.includes(_file.type)) {
         return NextResponse.json({ 
-          error: `Invalid file type: ${file.type}. Only JPEG, PNG, and WebP images are allowed.` 
+          _error: `Invalid file type: ${file.type}. Only JPEG, PNG, and WebP images are allowed.` 
         }, { status: 400 });
       }
 
       // Validate file size (max 5MB)
       const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
+      if (_file.size > maxSize) {
         return NextResponse.json({ 
-          error: `File ${file.name} is too large. Maximum size is 5MB.` 
+          _error: `File ${file.name} is too large. Maximum size is 5MB.` 
         }, { status: 400 });
       }
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       const uploadDir = join(process.cwd(), 'public', 'uploads', 'products');
       try {
         await mkdir(uploadDir, { recursive: true });
-      } catch (error) {
+      } catch (_error) {
         // Directory might already exist, ignore error
       }
 
@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
       files: uploadedFiles 
     });
 
-  } catch (error) {
-    console.error('Error uploading files:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error uploading files:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }

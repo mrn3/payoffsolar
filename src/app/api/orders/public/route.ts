@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OrderModel, OrderItemModel, ContactModel } from '@/lib/models';
+import {OrderItemModel, ContactModel} from '@/lib/models';
 import stripe from '@/lib/stripe';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const body = await request.json();
     const { paymentIntentId, customerInfo, items, shipping } = body;
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!paymentIntentId || !customerInfo || !items || !Array.isArray(items)) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { _error: 'Missing required fields' },
         { status: 400 }
       );
     }
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     
     if (paymentIntent.status !== 'succeeded') {
       return NextResponse.json(
-        { error: 'Payment not completed' },
+        { _error: 'Payment not completed' },
         { status: 400 }
       );
     }
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     if (!contact) {
       return NextResponse.json(
-        { error: 'Failed to create contact' },
+        { _error: 'Failed to create contact' },
         { status: 500 }
       );
     }
@@ -78,13 +78,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true,
-      order: newOrder,
+      _order: newOrder,
       message: 'Order created successfully'
     }, { status: 201 });
-  } catch (error) {
-    console.error('Error creating order:', error);
+  } catch (_error) {
+    console.error('Error creating _order:', _error);
     return NextResponse.json(
-      { error: 'Failed to create order' },
+      { _error: 'Failed to create order' },
       { status: 500 }
     );
   }

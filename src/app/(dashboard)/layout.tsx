@@ -1,8 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { FaUser, FaSun } from 'react-icons/fa';
 import { getUserProfile } from '@/lib/auth';
 import DashboardNavigation from '@/components/dashboard/DashboardNavigation';
+import { FaSun, FaUser } from 'react-icons/fa';
 
 export default async function DashboardLayout({
   children,
@@ -13,8 +13,8 @@ export default async function DashboardLayout({
   let userProfile = null;
   try {
     userProfile = await getUserProfile();
-  } catch (error) {
-    console.error('Error loading user profile:', error);
+  } catch (_error) {
+    console.error('Error loading user profile:', _error);
   }
 
   return (

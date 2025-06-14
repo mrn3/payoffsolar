@@ -1,57 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { WarehouseModel } from '@/lib/models';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import {requireAuth, isAdmin} from '@/lib/auth';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ _id: string }> }
 ) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { id } = await params;
-    const warehouse = await WarehouseModel.getById(id);
+    const { _id } = await params;
+    const warehouse = await WarehouseModel.getById(_id);
     if (!warehouse) {
-      return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
+      return NextResponse.json({ _error: 'Warehouse not found' }, { status: 404 });
     }
 
     return NextResponse.json({ warehouse });
-  } catch (error) {
-    console.error('Error fetching warehouse:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error fetching warehouse:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ _id: string }> }
 ) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { id } = await params;
-    const data = await request.json();
-
+    const { _id } = await params;
+    
     // Check if warehouse exists
-    const existingWarehouse = await WarehouseModel.getById(id);
+    const existingWarehouse = await WarehouseModel.getById(_id);
     if (!existingWarehouse) {
-      return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
+      return NextResponse.json({ _error: 'Warehouse not found' }, { status: 404 });
     }
 
     // Validate name if provided
-    if (data.name !== undefined && (!data.name || !data.name.trim())) {
-      return NextResponse.json({ error: 'Warehouse name cannot be empty' }, { status: 400 });
+    if (_data.name !== undefined && (!data.name || !data.name.trim())) {
+      return NextResponse.json({ _error: 'Warehouse name cannot be empty' }, { status: 400 });
     }
 
-    await WarehouseModel.update(id, {
+    await WarehouseModel.update(_id, {
       name: data.name?.trim(),
       address: data.address?.trim(),
       city: data.city?.trim(),
@@ -59,37 +58,37 @@ export async function PUT(
       zip: data.zip?.trim()
     });
 
-    const updatedWarehouse = await WarehouseModel.getById(id);
+    const updatedWarehouse = await WarehouseModel.getById(_id);
     return NextResponse.json({ warehouse: updatedWarehouse });
-  } catch (error) {
-    console.error('Error updating warehouse:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error updating warehouse:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ _id: string }> }
 ) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { id } = await params;
+    const { _id } = await params;
     
     // Check if warehouse exists
-    const existingWarehouse = await WarehouseModel.getById(id);
+    const existingWarehouse = await WarehouseModel.getById(_id);
     if (!existingWarehouse) {
-      return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
+      return NextResponse.json({ _error: 'Warehouse not found' }, { status: 404 });
     }
 
-    await WarehouseModel.delete(id);
+    await WarehouseModel.delete(_id);
     return NextResponse.json({ message: 'Warehouse deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting warehouse:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error deleting warehouse:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }

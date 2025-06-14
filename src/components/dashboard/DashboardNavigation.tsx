@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FaTachometerAlt, FaUsers, FaBoxes, FaShoppingCart, FaWarehouse, FaBuilding, FaEdit, FaSun, FaUser, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
 import { UserRole } from '@/lib/auth';
+import {FaTachometerAlt, FaShoppingCart, FaUsers, FaBoxes, FaWarehouse, FaBuilding, FaSun, FaUser, FaSignOutAlt, FaBars, FaTimes, FaEdit} from 'react-icons/fa';
 
 interface NavigationProps {
   userProfile: {
@@ -22,16 +22,16 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
 
   const handleSignOut = async () => {
     try {
-      const response = await fetch('/api/auth/signout', {
+      const _response = await fetch('/api/auth/signout', {
         method: 'POST',
       });
 
-      if (response.ok) {
+      if (_response.ok) {
         router.push('/login');
         router.refresh();
       }
-    } catch (error) {
-      console.error('Error signing out:', error);
+    } catch (_error) {
+      console.error('Error signing out:', _error);
     }
   };
 
@@ -40,7 +40,7 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
     if (path === '/dashboard') {
       return pathname === '/dashboard';
     }
-    // For other routes, check exact match or if it's a sub-route
+    // For other routes, check exact match or if it&apos;s a sub-route
     return pathname === path || pathname?.startsWith(`${path}/`);
   };
 
@@ -95,7 +95,7 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <span className={isActive(item.href) ? 'text-green-500' : 'text-gray-500'}>
+                  <span className={isActive(item.href) ? 'text-green-500' : 'text-gray-500' }>
                     {item.icon}
                   </span>
                   {item.label}
@@ -112,7 +112,7 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-700">
-                  {userProfile ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() : 'Loading...'}
+                  {userProfile ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() : 'Loading...' }
                 </p>
                 <p className="text-xs text-gray-500 capitalize">
                   {userProfile?.role || 'Loading...'}
@@ -143,7 +143,7 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
         </button>
 
         {/* Mobile menu panel */}
-        <div className={`fixed inset-0 z-50 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+        <div className={`fixed inset-0 z-50 ${mobileMenuOpen ? 'block' : 'hidden' }`}>
           <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setMobileMenuOpen(false)}></div>
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
@@ -175,7 +175,7 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <span className={isActive(item.href) ? 'text-green-500' : 'text-gray-500'}>
+                    <span className={isActive(item.href) ? 'text-green-500' : 'text-gray-500' }>
                       {item.icon}
                     </span>
                     {item.label}
@@ -192,7 +192,7 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
                 </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-700">
-                    {userProfile ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() : 'Loading...'}
+                    {userProfile ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() : 'Loading...' }
                   </p>
                   <p className="text-xs text-gray-500 capitalize">
                     {userProfile?.role || 'Loading...'}

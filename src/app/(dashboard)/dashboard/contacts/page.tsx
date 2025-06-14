@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaUpload, FaCopy, FaTrashAlt } from 'react-icons/fa';
+import {FaCopy, FaEdit, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload} from 'react-icons/fa';
+import { format } from 'date-fns';
 import { Contact } from '@/lib/models';
 import DeleteContactModal from '@/components/contacts/DeleteContactModal';
 import DeleteAllContactsModal from '@/components/contacts/DeleteAllContactsModal';
 import ImportContactsModal from '@/components/contacts/ImportContactsModal';
 import DuplicateContactsModal from '@/components/contacts/DuplicateContactsModal';
-import { format } from 'date-fns';
 
 interface ContactsResponse {
-  contacts: Contact[];
+  _contacts: Contact[];
   pagination: {
     page: number;
     limit: number;
@@ -50,14 +50,14 @@ export default function ContactsPage() {
         ...(search && { search })
       });
 
-      const response = await fetch(`/api/contacts?${params}`);
+      const _response = await fetch(`/api/contacts?${params}`);
       if (!response.ok) {
         throw new Error('Failed to fetch contacts');
       }
 
-      const data: ContactsResponse = await response.json();
-      setContacts(data.contacts);
-      setPagination(data.pagination);
+      const _data: ContactsResponse = await response.json();
+      setContacts(_data.contacts);
+      setPagination(_data.pagination);
       setCurrentPage(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -70,8 +70,8 @@ export default function ContactsPage() {
     fetchContacts(1, searchQuery);
   }, [searchQuery]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleSearch = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(_e.target.value);
     setCurrentPage(1);
   };
 
@@ -83,7 +83,7 @@ export default function ContactsPage() {
     if (!selectedContact) return;
 
     try {
-      const response = await fetch(`/api/contacts/${selectedContact.id}`, {
+      const _response = await fetch(`/api/contacts/${selectedContact.id}`, {
         method: 'DELETE'
       });
 
@@ -103,7 +103,7 @@ export default function ContactsPage() {
 
   const handleDeleteAllContacts = async () => {
     try {
-      const response = await fetch('/api/contacts/bulk-delete', {
+      const _response = await fetch('/api/contacts/bulk-delete', {
         method: 'DELETE'
       });
 
@@ -117,7 +117,7 @@ export default function ContactsPage() {
       setCurrentPage(1);
       setIsDeleteAllModalOpen(false);
     } catch (err) {
-      console.error('Error deleting all contacts:', err);
+      console.error('Error deleting all _contacts:', err);
       throw err;
     }
   };
@@ -291,7 +291,7 @@ export default function ContactsPage() {
                   ) : (
                     <tr>
                       <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
-                        {searchQuery ? 'No contacts found matching your search.' : 'No contacts found.'}
+                        {searchQuery ? 'No contacts found matching your search.' : 'No contacts found.' }
                       </td>
                     </tr>
                   )}
@@ -365,7 +365,7 @@ export default function ContactsPage() {
         ) : (
           <div className="text-center py-8">
             <p className="text-sm text-gray-500">
-              {searchQuery ? 'No contacts found matching your search.' : 'No contacts found.'}
+              {searchQuery ? 'No contacts found matching your search.' : 'No contacts found.' }
             </p>
           </div>
         )}

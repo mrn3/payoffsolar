@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ProductModel } from '@/lib/models';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '12');
+    const { _searchParams } = new URL(_request.url);
+    const page = parseInt(_searchParams.get('page') || '1');
+    const limit = parseInt(_searchParams.get('limit') || '12');
     const search = searchParams.get('search') || '';
-    const categoryId = searchParams.get('category') || '';
-    const sort = searchParams.get('sort') || '';
+        const sort = searchParams.get('sort') || '';
     const offset = (page - 1) * limit;
 
     let products;
@@ -17,9 +16,9 @@ export async function GET(request: NextRequest) {
     if (search) {
       products = await ProductModel.search(search, limit, offset, sort);
       total = await ProductModel.getSearchCount(search);
-    } else if (categoryId) {
-      products = await ProductModel.getByCategory(categoryId, limit, offset, sort);
-      total = await ProductModel.getCategoryCount(categoryId);
+    } else if (_categoryId) {
+      products = await ProductModel.getByCategory(_categoryId, limit, offset, sort);
+      total = await ProductModel.getCategoryCount(_categoryId);
     } else {
       products = await ProductModel.getAll(limit, offset, sort);
       total = await ProductModel.getCount();
@@ -36,8 +35,8 @@ export async function GET(request: NextRequest) {
         totalPages
       }
     });
-  } catch (error) {
-    console.error('Error fetching public products:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error fetching public products:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }

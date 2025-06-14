@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { FaArrowLeft } from 'react-icons/fa';
-import { Product, ProductCategory, ProductImage } from '@/lib/models';
+import {useParams} from 'next/navigation';
+import {Product, ProductImage} from '@/lib/models';
 import ImageUpload from '@/components/ui/ImageUpload';
+import { FaArrowLeft } from 'react-icons/fa';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -32,23 +32,22 @@ export default function EditProductPage() {
     fetchProduct();
     fetchCategories();
     fetchProductImages();
-  }, [productId]);
+  }, [productId, fetchProduct, fetchProductImages]);
 
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/products/${productId}`);
+      const _response = await fetch(`/api/products/${productId}`);
       
       if (!response.ok) {
-        if (response.status === 404) {
+        if (_response.status === 404) {
           setError('Product not found');
           return;
         }
         throw new Error('Failed to fetch product');
       }
 
-      const data = await response.json();
-      setProduct(data.product);
+            setProduct(_data.product);
       setFormData({
         name: data.product.name || '',
         description: data.product.description || '',
@@ -58,8 +57,8 @@ export default function EditProductPage() {
         sku: data.product.sku || '',
         is_active: data.product.is_active
       });
-    } catch (error) {
-      console.error('Error fetching product:', error);
+    } catch (_error) {
+      console.error('Error fetching product:', _error);
       setError('Failed to load product');
     } finally {
       setLoading(false);
@@ -68,29 +67,27 @@ export default function EditProductPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/product-categories');
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data.categories);
+      const _response = await fetch('/api/product-categories');
+      if (_response.ok) {
+                setCategories(_data.categories);
       }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
+    } catch (_error) {
+      console.error('Error fetching categories:', _error);
     }
   };
 
   const fetchProductImages = async () => {
     try {
-      const response = await fetch(`/api/products/${productId}/images`);
-      if (response.ok) {
-        const data = await response.json();
-        setProductImages(data.images);
+      const _response = await fetch(`/api/products/${productId}/images`);
+      if (_response.ok) {
+                setProductImages(_data.images);
       }
-    } catch (error) {
-      console.error('Error fetching product images:', error);
+    } catch (_error) {
+      console.error('Error fetching product images:', _error);
     }
   };
 
-  const handleImagesUploaded = async (uploadedFiles: any[]) => {
+  const handleImagesUploaded = async (uploadedFiles: unknown[]) => {
     try {
       // Add each uploaded image to the product
       for (const file of uploadedFiles) {
@@ -106,8 +103,8 @@ export default function EditProductPage() {
 
       // Refresh the images list
       await fetchProductImages();
-    } catch (error) {
-      console.error('Error adding images to product:', error);
+    } catch (_error) {
+      console.error('Error adding images to product:', _error);
       setError('Failed to add images to product');
     }
   };
@@ -118,7 +115,7 @@ export default function EditProductPage() {
       const imageToRemove = productImages.find(img => img.image_url === imageUrl);
       if (!imageToRemove) return;
 
-      const response = await fetch(`/api/products/${productId}/images?imageId=${imageToRemove.id}`, {
+      const _response = await fetch(`/api/products/${productId}/images?imageId=${imageToRemove.id}`, {
         method: 'DELETE'
       });
 
@@ -128,8 +125,8 @@ export default function EditProductPage() {
 
       // Refresh the images list
       await fetchProductImages();
-    } catch (error) {
-      console.error('Error removing image:', error);
+    } catch (_error) {
+      console.error('Error removing image:', _error);
       setError('Failed to remove image');
     }
   };
@@ -159,17 +156,15 @@ export default function EditProductPage() {
       }
     }
 
-
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (_e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
     if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked;
+      const checked = (_e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -181,7 +176,7 @@ export default function EditProductPage() {
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleBlur = (_e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name } = e.target;
     
     // Validate individual field on blur
@@ -216,14 +211,14 @@ export default function EditProductPage() {
     setErrors(newErrors);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (_e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
 
     setSaving(true);
     try {
-      const response = await fetch(`/api/products/${productId}`, {
+      const _response = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -424,7 +419,7 @@ export default function EditProductPage() {
               disabled={saving}
               className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Saving...' : 'Save Changes' }
             </button>
           </div>
         </form>

@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { FaArrowLeft, FaEdit, FaTrash } from 'react-icons/fa';
-import { Product, ProductCategory, ProductImage } from '@/lib/models';
+import {useParams} from 'next/navigation';
+import {Product, ProductImage} from '@/lib/models';
 import ImageCarousel from '@/components/ui/ImageCarousel';
+import {FaArrowLeft, FaEdit} from 'react-icons/fa';
 
 export default function ProductDetailPage() {
   const router = useRouter();
@@ -20,30 +20,29 @@ export default function ProductDetailPage() {
   useEffect(() => {
     fetchProduct();
     fetchProductImages();
-  }, [productId]);
+  }, [productId, fetchProduct, fetchProductImages]);
 
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/products/${productId}`);
+      const _response = await fetch(`/api/products/${productId}`);
       
       if (!response.ok) {
-        if (response.status === 404) {
+        if (_response.status === 404) {
           setError('Product not found');
           return;
         }
         throw new Error('Failed to fetch product');
       }
 
-      const data = await response.json();
-      setProduct(data.product);
+            setProduct(_data.product);
 
       // Fetch category if product has one
-      if (data.product.category_id) {
-        fetchCategory(data.product.category_id);
+      if (_data.product.category_id) {
+        fetchCategory(_data.product.category_id);
       }
-    } catch (error) {
-      console.error('Error fetching product:', error);
+    } catch (_error) {
+      console.error('Error fetching product:', _error);
       setError('Failed to load product');
     } finally {
       setLoading(false);
@@ -52,26 +51,24 @@ export default function ProductDetailPage() {
 
   const fetchProductImages = async () => {
     try {
-      const response = await fetch(`/api/products/${productId}/images`);
-      if (response.ok) {
-        const data = await response.json();
-        setProductImages(data.images);
+      const _response = await fetch(`/api/products/${productId}/images`);
+      if (_response.ok) {
+                setProductImages(_data.images);
       }
-    } catch (error) {
-      console.error('Error fetching product images:', error);
+    } catch (_error) {
+      console.error('Error fetching product images:', _error);
     }
   };
 
-  const fetchCategory = async (categoryId: string) => {
+  const fetchCategory = async (_categoryId: string) => {
     try {
-      const response = await fetch('/api/product-categories');
-      if (response.ok) {
-        const data = await response.json();
-        const foundCategory = data.categories.find((cat: ProductCategory) => cat.id === categoryId);
+      const _response = await fetch('/api/product-categories');
+      if (_response.ok) {
+                const foundCategory = data.categories.find((cat: ProductCategory) => cat._id === categoryId);
         setCategory(foundCategory || null);
       }
-    } catch (error) {
-      console.error('Error fetching category:', error);
+    } catch (_error) {
+      console.error('Error fetching category:', _error);
     }
   };
 
@@ -181,7 +178,7 @@ export default function ProductDetailPage() {
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {product.is_active ? 'Active' : 'Inactive'}
+                      {product.is_active ? 'Active' : 'Inactive' }
                     </span>
                   </dd>
                 </div>

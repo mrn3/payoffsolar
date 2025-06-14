@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { FaSun } from 'react-icons/fa';
 import { useState } from 'react';
+import { FaSun } from 'react-icons/fa';
 
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -30,13 +30,13 @@ export default function ForgotPasswordPage() {
     },
   });
 
-  const onSubmit = async (data: ForgotPasswordFormValues) => {
+  const onSubmit = async (_data: ForgotPasswordFormValues) => {
     setIsLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      const _response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -44,16 +44,15 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email: data.email }),
       });
 
-      const result = await response.json();
-
+      
       if (!response.ok) {
         throw new Error(result.error || 'Failed to send reset instructions');
       }
 
       setSuccess('Password reset instructions have been sent to your email.');
-    } catch (error: any) {
-      console.error('Password reset error:', error);
-      setError(error.message || 'Failed to send reset instructions. Please try again.');
+    } catch (_error: unknown) {
+      console.error('Password reset _error:', _error);
+      setError(_error instanceof Error ? _error.message : 'Failed to send reset instructions. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +68,7 @@ export default function ForgotPasswordPage() {
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">Reset your password</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Enter your email address and we'll send you a link to reset your password.
+            Enter your email address and we&apos;ll send you a link to reset your password.
           </p>
         </div>
         <div className="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">

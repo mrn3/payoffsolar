@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaTimes } from 'react-icons/fa';
-import { ProductCategory } from '@/lib/models';
+import {FaSearch, FaTimes} from 'react-icons/fa';
+
+interface ProductCategory {
+  _id: string;
+  name: string;
+}
 
 interface ProductSearchProps {
   searchQuery: string;
   selectedCategory: string;
   sortBy: string;
   categories: ProductCategory[];
-  onSearchChange: (query: string) => void;
-  onCategoryChange: (categoryId: string) => void;
+  onSearchChange: (_query: string) => void;
+  onCategoryChange: (_categoryId: string) => void;
   onSortChange: (sortBy: string) => void;
   onClearFilters: () => void;
 }
@@ -47,7 +51,7 @@ export default function ProductSearch({
               type="text"
               placeholder="Search products..."
               value={localSearchQuery}
-              onChange={(e) => setLocalSearchQuery(e.target.value)}
+              onChange={(_e) => setLocalSearchQuery(_e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
@@ -57,7 +61,7 @@ export default function ProductSearch({
         <div className="lg:w-64">
           <select
             value={selectedCategory}
-            onChange={(e) => onCategoryChange(e.target.value)}
+            onChange={(_e) => onCategoryChange(_e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
           >
             <option value="">All Categories</option>
@@ -73,7 +77,7 @@ export default function ProductSearch({
         <div className="lg:w-64">
           <select
             value={sortBy}
-            onChange={(e) => onSortChange(e.target.value)}
+            onChange={(_e) => onSortChange(_e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
           >
             <option value="">Sort by</option>

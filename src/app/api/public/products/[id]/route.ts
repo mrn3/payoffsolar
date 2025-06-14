@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ProductModel, ProductImageModel, ProductCategoryModel } from '@/lib/models';
+import {ProductModel} from '@/lib/models';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ _id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { _id } = await params;
     
     // Fetch product details
-    const product = await ProductModel.getById(id);
+    const product = await ProductModel.getById(_id);
     if (!product || !product.is_active) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      return NextResponse.json({ _error: 'Product not found' }, { status: 404 });
     }
 
     // Fetch product images
-    const images = await ProductImageModel.getByProductId(id);
+    const images = await ProductImageModel.getByProductId(_id);
 
     // Fetch category name if product has a category
     let categoryName = null;
@@ -31,8 +31,8 @@ export async function GET(
     };
 
     return NextResponse.json({ product: productWithDetails });
-  } catch (error) {
-    console.error('Error fetching public product:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error fetching public product:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }

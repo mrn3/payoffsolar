@@ -1,8 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { ProductWithFirstImage } from '@/lib/models';
-import { FaImage, FaShoppingCart } from 'react-icons/fa';
 import { useCart } from '@/contexts/CartContext';
+import { FaImage, FaShoppingCart } from 'react-icons/fa';
 
 interface ProductCardProps {
   product: ProductWithFirstImage;
@@ -18,7 +18,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     }).format(price);
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = (_e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation when clicking the button
     addItem({
       product_id: product.id,

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaSun, FaBars, FaTimes } from 'react-icons/fa';
+import { FaBars, FaSun, FaTimes } from 'react-icons/fa';
 
 export default function Header() {
   const pathname = usePathname();
@@ -72,7 +72,7 @@ export default function Header() {
       </div>
 
       {/* Mobile Navigation */}
-      <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+      <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden' }`}>
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
           {navItems.map((item) => (
             <Link

@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { FaSun } from 'react-icons/fa';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { FaSun } from 'react-icons/fa';
 
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -18,7 +17,7 @@ const registerSchema = z.object({
   terms: z.boolean().refine(val => val === true, {
     message: 'You must agree to the terms and conditions',
   }),
-}).refine(data => data.password === data.confirmPassword, {
+}).refine(_data => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
 });
@@ -47,13 +46,13 @@ export default function RegisterPage() {
     },
   });
 
-  const onSubmit = async (data: RegisterFormValues) => {
+  const onSubmit = async (_data: RegisterFormValues) => {
     setIsLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const response = await fetch('/api/auth/signup', {
+      const _response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,9 +76,9 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push('/dashboard');
       }, 2000);
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      setError(error.message || 'Failed to register. Please try again.');
+    } catch (_error: unknown) {
+      console.error('Registration _error:', _error);
+      setError(_error instanceof Error ? _error.message : 'Failed to register. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -261,7 +260,7 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 className="flex w-full justify-center rounded-md border border-transparent bg-green-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
               >
-                {isLoading ? 'Creating account...' : 'Create account'}
+                {isLoading ? 'Creating account...' : 'Create account' }
               </button>
             </div>
           </form>

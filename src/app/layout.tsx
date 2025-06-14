@@ -42,7 +42,7 @@ export default function RootLayout({
                 background: '#22c55e',
               },
             },
-            error: {
+            _error: {
               style: {
                 background: '#ef4444',
               },

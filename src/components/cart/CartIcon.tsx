@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { FaShoppingCart } from 'react-icons/fa';
 import { useCart } from '@/contexts/CartContext';
+import { FaShoppingCart } from 'react-icons/fa';
 
 export default function CartIcon() {
   const { getTotalItems, toggleCart } = useCart();

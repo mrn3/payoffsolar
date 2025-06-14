@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import PhoneInput from '@/components/ui/PhoneInput';
 import StateSelect from '@/components/ui/StateSelect';
-import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/utils/phone';
+import { isValidPhoneNumber } from '@/lib/utils/phone';
+import { FaArrowLeft, FaSave } from 'react-icons/fa';
 
 export default function NewContactPage() {
   const router = useRouter();
@@ -44,21 +44,21 @@ export default function NewContactPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async (_e: React.FormEvent) => {
+    _e.preventDefault();
+
     if (!validateForm()) return;
 
     setSaving(true);
     try {
-      const response = await fetch('/api/contacts', {
+      const _response = await fetch('/api/contacts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!_response.ok) {
+        const errorData = await _response.json();
         throw new Error(errorData.error || 'Failed to create contact');
       }
 
@@ -70,16 +70,16 @@ export default function NewContactPage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleChange = (_e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = _e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const { value } = e.target;
+  const handlePhoneBlur = (_e: React.FocusEvent<HTMLInputElement>) => {
+    const { value } = _e.target;
     if (value.trim() && !isValidPhoneNumber(value)) {
       setErrors(prev => ({ ...prev, phone: 'Phone number must be 10 digits or 11 digits with +1' }));
     } else if (errors.phone) {
@@ -232,7 +232,7 @@ export default function NewContactPage() {
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
             >
               <FaSave className="mr-2 h-4 w-4" />
-              {saving ? 'Creating...' : 'Create Contact'}
+              {saving ? 'Creating...' : 'Create Contact' }
             </button>
           </div>
         </form>

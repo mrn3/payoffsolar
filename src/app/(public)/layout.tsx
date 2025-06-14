@@ -1,10 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaSun } from 'react-icons/fa';
 import { getUserProfile } from '@/lib/auth';
 import PublicHeader from '@/components/PublicHeader';
 import { CartProvider } from '@/contexts/CartContext';
 import CartSidebar from '@/components/cart/CartSidebar';
+import { FaFacebook, FaInstagram, FaLinkedin, FaSun, FaTwitter } from 'react-icons/fa';
 
 export default async function PublicLayout({
   children,
@@ -15,8 +15,8 @@ export default async function PublicLayout({
   let userProfile = null;
   try {
     userProfile = await getUserProfile();
-  } catch (error) {
-    console.error('Error loading user profile:', error);
+  } catch (_error) {
+    console.error('Error loading user profile:', _error);
   }
 
   return (

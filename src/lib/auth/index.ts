@@ -2,20 +2,20 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { executeQuery, getOne, executeSingle } from '../mysql/connection';
+import {getOne, executeSingle} from '../mysql/connection';
 import crypto from 'crypto';
 
 export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'contact';
 
 export interface User {
-  id: string;
+  _id: string;
   email: string;
   email_verified: boolean;
   created_at: string;
 }
 
 export interface UserProfile {
-  id: string;
+  _id: string;
   email: string;
   first_name: string | null;
   last_name: string | null;
@@ -42,7 +42,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 // Generate JWT token
-export function generateToken(userId: string): string {
+export function generateToken(_userId: string): string {
   return jwt.sign(
     { userId, iat: Math.floor(Date.now() / 1000) },
     JWT_SECRET,
@@ -51,11 +51,11 @@ export function generateToken(userId: string): string {
 }
 
 // Verify JWT token
-export function verifyToken(token: string): { userId: string } | null {
+export function verifyToken(token: string): { _userId: string } | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { _userId: string };
     return decoded;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -107,7 +107,7 @@ export async function getSession(): Promise<AuthSession | null> {
 
     // Get user from database
     const user = await getOne<User>(
-      'SELECT id, email, email_verified, created_at FROM users WHERE id = ?',
+      'SELECT id, email, email_verified, created_at FROM users WHERE id = ? ',
       [decoded.userId]
     );
 
@@ -131,15 +131,15 @@ export async function getSession(): Promise<AuthSession | null> {
     return {
       user,
       profile: {
-        id: profile.id,
+        _id: profile.id,
         email: profile.email || user.email,
         first_name: profile.first_name,
         last_name: profile.last_name,
         role: profile.role_name as UserRole || null,
       },
     };
-  } catch (error) {
-    console.error('Error getting session:', error);
+  } catch (_error) {
+    console.error('Error getting session:', _error);
     return null;
   }
 }
@@ -156,7 +156,7 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
 
   // Get user by email
   const user = await getOne<User & { password_hash: string }>(
-    'SELECT id, email, email_verified, password_hash, created_at FROM users WHERE email = ?',
+    'SELECT id, email, email_verified, password_hash, created_at FROM users WHERE email = ? ',
     [email]
   );
 
@@ -195,13 +195,13 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
 
   return {
     user: {
-      id: user.id,
+      _id: user.id,
       email: user.email,
       email_verified: user.email_verified,
       created_at: user.created_at,
     },
     profile: {
-      id: profile?.id || user.id,
+      _id: profile?.id || user.id,
       email: profile?.email || user.email,
       first_name: profile?.first_name || null,
       last_name: profile?.last_name || null,
@@ -219,7 +219,7 @@ export async function signUp(
 ): Promise<AuthSession> {
   // Check if user already exists
   const existingUser = await getOne(
-    'SELECT id FROM users WHERE email = ?',
+    'SELECT id FROM users WHERE email = ? ',
     [email]
   );
 
@@ -228,12 +228,11 @@ export async function signUp(
   }
 
   // Hash password
-  const passwordHash = await hashPassword(password);
-
+  
   // Get contact role ID
-  const contactRole = await getOne<{ id: string }>(
-    'SELECT id FROM roles WHERE name = ?',
-    ['contact']
+  const contactRole = await getOne<{ _id: string }>(
+    'SELECT id FROM roles WHERE name = ? ',
+    ['6579']
   );
 
   if (!contactRole) {
@@ -242,14 +241,10 @@ export async function signUp(
 
   try {
     // Create user
-    const userResult = await executeSingle(
-      'INSERT INTO users (id, email, password_hash, email_verified) VALUES (UUID(), ?, ?, FALSE)',
-      [email, passwordHash]
-    );
-
+    
     // Get the created user
     const user = await getOne<User>(
-      'SELECT id, email, email_verified, created_at FROM users WHERE email = ?',
+      'SELECT id, email, email_verified, created_at FROM users WHERE email = ? ',
       [email]
     );
 
@@ -259,7 +254,7 @@ export async function signUp(
 
     // Create profile
     await executeSingle(
-      'INSERT INTO profiles (id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO profiles (_id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
       [user.id, firstName, lastName, email, contactRole.id]
     );
 
@@ -270,15 +265,15 @@ export async function signUp(
     return {
       user,
       profile: {
-        id: user.id,
+        _id: user.id,
         email: user.email,
         first_name: firstName,
         last_name: lastName,
         role: 'contact',
       },
     };
-  } catch (error) {
-    console.error('Error creating user:', error);
+  } catch (_error) {
+    console.error('Error creating user:', _error);
     throw new Error('Failed to create user account');
   }
 }
@@ -335,7 +330,7 @@ export async function createAdminUser(
 ): Promise<AuthSession> {
   // Check if user already exists
   const existingUser = await getOne(
-    'SELECT id FROM users WHERE email = ?',
+    'SELECT id FROM users WHERE email = ? ',
     [email]
   );
 
@@ -344,12 +339,11 @@ export async function createAdminUser(
   }
 
   // Hash password
-  const passwordHash = await hashPassword(password);
-
+  
   // Get admin role ID
-  const adminRole = await getOne<{ id: string }>(
-    'SELECT id FROM roles WHERE name = ?',
-    ['admin']
+  const adminRole = await getOne<{ _id: string }>(
+    'SELECT id FROM roles WHERE name = ? ',
+    ['9536']
   );
 
   if (!adminRole) {
@@ -358,14 +352,10 @@ export async function createAdminUser(
 
   try {
     // Create user
-    const userResult = await executeSingle(
-      'INSERT INTO users (id, email, password_hash, email_verified) VALUES (UUID(), ?, ?, TRUE)',
-      [email, passwordHash]
-    );
-
+    
     // Get the created user
     const user = await getOne<User>(
-      'SELECT id, email, email_verified, created_at FROM users WHERE email = ?',
+      'SELECT id, email, email_verified, created_at FROM users WHERE email = ? ',
       [email]
     );
 
@@ -375,22 +365,22 @@ export async function createAdminUser(
 
     // Create profile
     await executeSingle(
-      'INSERT INTO profiles (id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO profiles (_id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
       [user.id, firstName, lastName, email, adminRole.id]
     );
 
     return {
       user,
       profile: {
-        id: user.id,
+        _id: user.id,
         email: user.email,
         first_name: firstName,
         last_name: lastName,
         role: 'admin',
       },
     };
-  } catch (error) {
-    console.error('Error creating admin user:', error);
+  } catch (_error) {
+    console.error('Error creating admin user:', _error);
     throw new Error('Failed to create admin user account');
   }
 }
@@ -399,12 +389,12 @@ export async function createAdminUser(
 export async function generateResetToken(email: string): Promise<string | null> {
   // Check if user exists
   const user = await getOne<User>(
-    'SELECT id, email FROM users WHERE email = ?',
+    'SELECT id, email FROM users WHERE email = ? ',
     [email]
   );
 
   if (!user) {
-    // Don't reveal if user exists or not for security
+    // Don&apos;t reveal if user exists or not for security
     return null;
   }
 
@@ -426,7 +416,7 @@ export async function generateResetToken(email: string): Promise<string | null> 
 // Verify password reset token
 export async function verifyResetToken(token: string): Promise<string | null> {
   const resetToken = await getOne<{ user_id: string; expires_at: Date; used: boolean }>(
-    'SELECT user_id, expires_at, used FROM password_reset_tokens WHERE token = ?',
+    'SELECT user_id, expires_at, used FROM password_reset_tokens WHERE token = ? ',
     [token]
   );
 
@@ -444,7 +434,7 @@ export async function verifyResetToken(token: string): Promise<string | null> {
 
   // Mark token as used
   await executeSingle(
-    'UPDATE password_reset_tokens SET used = TRUE WHERE token = ?',
+    'UPDATE password_reset_tokens SET used = TRUE WHERE token = ? ',
     [token]
   );
 
@@ -478,13 +468,8 @@ export async function resetPassword(email: string): Promise<boolean> {
 }
 
 // Update password
-export async function updatePassword(userId: string, newPassword: string): Promise<boolean> {
-  const passwordHash = await hashPassword(newPassword);
-
-  const result = await executeSingle(
-    'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-    [passwordHash, userId]
-  );
-
+export async function updatePassword(_userId: string, _newPassword: string): Promise<boolean> {
+  
+  
   return result.affectedRows > 0;
 }

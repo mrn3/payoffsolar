@@ -1,11 +1,11 @@
 import React from 'react';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import {requireAuth, isAdmin} from '@/lib/auth';
 import { redirect, notFound } from 'next/navigation';
 import { InventoryModel } from '@/lib/models';
 import InventoryForm from '@/components/InventoryForm';
 
 interface EditInventoryPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ _id: string }>;
 }
 
 export default async function EditInventoryPage({ params }: EditInventoryPageProps) {
@@ -15,22 +15,21 @@ export default async function EditInventoryPage({ params }: EditInventoryPagePro
     redirect('/dashboard');
   }
 
-  const { id } = await params;
+  const { _id } = await params;
 
   let inventory = null;
-  let error = null;
-
+  
   try {
-    inventory = await InventoryModel.getById(id);
+    inventory = await InventoryModel.getById(_id);
     if (!inventory) {
       notFound();
     }
   } catch (err) {
     console.error('Error loading inventory:', err);
-    error = 'Failed to load inventory item';
+    _error = 'Failed to load inventory item';
   }
 
-  if (error) {
+  if (_error) {
     return (
       <div>
         <div className="mb-6">

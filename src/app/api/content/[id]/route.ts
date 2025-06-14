@@ -1,87 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ContentModel, ContentTypeModel } from '@/lib/models';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import {requireAuth, isAdmin} from '@/lib/auth';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ _id: string }> }
 ) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { id } = await params;
+    const { _id } = await params;
     
-    const content = await ContentModel.getById(id);
+    const content = await ContentModel.getById(_id);
     if (!content) {
-      return NextResponse.json({ error: 'Content not found' }, { status: 404 });
+      return NextResponse.json({ _error: 'Content not found' }, { status: 404 });
     }
 
     return NextResponse.json({ content });
-  } catch (error) {
-    console.error('Error fetching content:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error fetching content:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ _id: string }> }
 ) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { id } = await params;
-    const data = await request.json();
-
+    const { _id } = await params;
+    
     // Check if content exists
-    const existingContent = await ContentModel.getById(id);
+    const existingContent = await ContentModel.getById(_id);
     if (!existingContent) {
-      return NextResponse.json({ error: 'Content not found' }, { status: 404 });
+      return NextResponse.json({ _error: 'Content not found' }, { status: 404 });
     }
 
     // Validate required fields if provided
-    if (data.title !== undefined && (!data.title || !data.title.trim())) {
+    if (_data.title !== undefined && (!data.title || !data.title.trim())) {
       return NextResponse.json({ 
-        error: 'Title cannot be empty' 
-      }, { status: 400 });
+        _error: 'Title cannot be empty' }, { status: 400 });
     }
 
-    if (data.slug !== undefined && (!data.slug || !data.slug.trim())) {
+    if (_data.slug !== undefined && (!data.slug || !data.slug.trim())) {
       return NextResponse.json({ 
-        error: 'Slug cannot be empty' 
-      }, { status: 400 });
+        _error: 'Slug cannot be empty' }, { status: 400 });
     }
 
     // Validate content type if provided
-    if (data.type_id !== undefined) {
-      const contentType = await ContentTypeModel.getById(data.type_id);
+    if (_data.type_id !== undefined) {
+      const contentType = await ContentTypeModel.getById(_data.type_id);
       if (!contentType) {
         return NextResponse.json({ 
-          error: 'Invalid content type' 
-        }, { status: 400 });
+          _error: 'Invalid content type' }, { status: 400 });
       }
     }
 
     // Check if slug already exists (if changing slug)
-    if (data.slug !== undefined && data.slug !== existingContent.slug) {
-      const slugExists = await ContentModel.getBySlug(data.slug);
+    if (_data.slug !== undefined && data.slug !== existingContent.slug) {
+      const slugExists = await ContentModel.getBySlug(_data.slug);
       if (slugExists) {
         return NextResponse.json({ 
-          error: 'Slug already exists' 
-        }, { status: 400 });
+          _error: 'Slug already exists' }, { status: 400 });
       }
     }
 
     // Update content
-    await ContentModel.update(id, {
+    await ContentModel.update(_id, {
       title: data.title?.trim(),
       slug: data.slug?.trim(),
       content: data.content,
@@ -89,37 +84,37 @@ export async function PUT(
       published: data.published
     });
 
-    const updatedContent = await ContentModel.getById(id);
+    const updatedContent = await ContentModel.getById(_id);
     return NextResponse.json({ content: updatedContent });
-  } catch (error) {
-    console.error('Error updating content:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error updating content:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ _id: string }> }
 ) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { id } = await params;
+    const { _id } = await params;
 
     // Check if content exists
-    const content = await ContentModel.getById(id);
+    const content = await ContentModel.getById(_id);
     if (!content) {
-      return NextResponse.json({ error: 'Content not found' }, { status: 404 });
+      return NextResponse.json({ _error: 'Content not found' }, { status: 404 });
     }
 
-    await ContentModel.delete(id);
+    await ContentModel.delete(_id);
     return NextResponse.json({ message: 'Content deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting content:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error deleting content:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }

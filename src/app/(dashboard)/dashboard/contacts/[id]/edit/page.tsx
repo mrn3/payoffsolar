@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { FaArrowLeft, FaSave } from 'react-icons/fa';
+import {useParams, useRouter} from 'next/navigation';
 import PhoneInput from '@/components/ui/PhoneInput';
 import StateSelect from '@/components/ui/StateSelect';
 import { Contact } from '@/lib/models';
-import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/utils/phone';
+import {formatPhoneNumber, isValidPhoneNumber} from '@/lib/utils/phone';
 import { getStateCode } from '@/lib/utils/states';
+import { FaArrowLeft, FaSave } from 'react-icons/fa';
 
 export default function EditContactPage() {
   const router = useRouter();
@@ -37,21 +37,21 @@ export default function EditContactPage() {
   const fetchContact = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/contacts/${contactId}`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
+      const _response = await fetch(`/api/contacts/${contactId}`);
+
+      if (!_response.ok) {
+        if (_response.status === 404) {
           setError('Contact not found');
           return;
         }
         throw new Error('Failed to fetch contact');
       }
 
-      const data = await response.json();
-      setContact(data.contact);
+      const _data = await _response.json();
+      setContact(_data.contact);
 
       // Normalize state value - convert full state name to code if needed
-      let normalizedState = data.contact.state || '';
+      let normalizedState = _data.contact.state || '';
       if (normalizedState && normalizedState.length > 2) {
         // If it's longer than 2 characters, try to convert to state code
         const stateCode = getStateCode(normalizedState);
@@ -61,14 +61,14 @@ export default function EditContactPage() {
       }
 
       setFormData({
-        name: data.contact.name || '',
-        email: data.contact.email || '',
-        phone: formatPhoneNumber(data.contact.phone || ''),
-        address: data.contact.address || '',
-        city: data.contact.city || '',
+        name: _data.contact.name || '',
+        email: _data.contact.email || '',
+        phone: formatPhoneNumber(_data.contact.phone || ''),
+        address: _data.contact.address || '',
+        city: _data.contact.city || '',
         state: normalizedState,
-        zip: data.contact.zip || '',
-        notes: data.contact.notes || ''
+        zip: _data.contact.zip || '',
+        notes: _data.contact.notes || ''
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -97,21 +97,21 @@ export default function EditContactPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async (_e: React.FormEvent) => {
+    _e.preventDefault();
+
     if (!validateForm()) return;
 
     setSaving(true);
     try {
-      const response = await fetch(`/api/contacts/${contactId}`, {
+      const _response = await fetch(`/api/contacts/${contactId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!_response.ok) {
+        const errorData = await _response.json();
         throw new Error(errorData.error || 'Failed to update contact');
       }
 
@@ -123,16 +123,16 @@ export default function EditContactPage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleChange = (_e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = _e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const { value } = e.target;
+  const handlePhoneBlur = (_e: React.FocusEvent<HTMLInputElement>) => {
+    const { value } = _e.target;
     if (value.trim() && !isValidPhoneNumber(value)) {
       setErrors(prev => ({ ...prev, phone: 'Phone number must be 10 digits or 11 digits with +1' }));
     } else if (errors.phone) {
@@ -319,7 +319,7 @@ export default function EditContactPage() {
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
             >
               <FaSave className="mr-2 h-4 w-4" />
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Saving...' : 'Save Changes' }
             </button>
           </div>
         </form>

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { FaTimes, FaUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
+import { FaTimes, FaUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 
 interface CSVRow {
   [key: string]: string;
@@ -84,17 +84,17 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
     onClose();
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileUpload = (_event: React.ChangeEvent<HTMLInputElement>) => {
+    const _file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+    if (_file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
       toast.error('Please select a CSV file');
       return;
     }
 
     setIsProcessing(true);
-    Papa.parse(file, {
+    Papa.parse(_file, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
@@ -104,10 +104,9 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
           return;
         }
 
-        const data = results.data as CSVRow[];
-        const headers = Object.keys(data[0] || {});
+                const headers = Object.keys(_data[0] || {});
         
-        setCsvData(data);
+        setCsvData(_data);
         setCsvHeaders(headers);
         
         // Initialize column mappings
@@ -120,8 +119,8 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
         setStep('mapping');
         setIsProcessing(false);
       },
-      error: (error) => {
-        toast.error('Error reading file: ' + error.message);
+      _error: (_error) => {
+        toast.error('Error reading file: ' + error instanceof Error ? error instanceof Error ? _error.message : String(_error) : String(_error));
         setIsProcessing(false);
       }
     });
@@ -157,7 +156,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
     });
 
     // Validate data rows
-    csvData.forEach((row, index) => {
+    csvData.forEach((row, _index) => {
       columnMappings.forEach(mapping => {
         if (!mapping.productField) return;
         
@@ -166,7 +165,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
         // Check required fields
         if (requiredFields.includes(mapping.productField) && !value) {
           errors.push({
-            row: index + 1,
+            row: _index + 1,
             field: mapping.productField,
             message: `${mapping.productField} is required but empty`
           });
@@ -175,7 +174,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
         // Validate price
         if (mapping.productField === 'price' && value && isNaN(Number(value))) {
           errors.push({
-            row: index + 1,
+            row: _index + 1,
             field: 'price',
             message: `Invalid price format: ${value}`
           });
@@ -194,7 +193,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
     try {
       // Transform CSV data to product format
       const products = csvData.map(row => {
-        const product: any = {};
+        const product: unknown = {};
         columnMappings.forEach(mapping => {
           if (mapping.productField && mapping.productField !== '') {
             product[mapping.productField] = row[mapping.csvColumn]?.trim() || '';
@@ -203,7 +202,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
         return product;
       });
 
-      const response = await fetch('/api/products/import', {
+      const _response = await fetch('/api/products/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ products })
@@ -213,12 +212,11 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
         throw new Error('Failed to import products');
       }
 
-      const result = await response.json();
-      setImportResults(result);
+            setImportResults(result);
       setStep('complete');
 
-    } catch (error) {
-      toast.error('Error importing products: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } catch (_error) {
+      toast.error('Error importing products: ' + (_error instanceof Error ? error instanceof Error ? error instanceof Error ? _error.message : String(_error) : String(_error) : 'Unknown error'));
       setStep('validation');
     } finally {
       setIsProcessing(false);
@@ -245,18 +243,17 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
         {/* Step indicator */}
         <div className="mb-6">
           <div className="flex items-center">
-            {['upload', 'mapping', 'validation', 'importing', 'complete'].map((stepName, index) => (
+            {['upload', 'mapping', 'validation', 'importing', 'complete'].map((stepName, _index) => (
               <React.Fragment key={stepName}>
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
                   step === stepName ? 'bg-green-600 text-white' :
-                  ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > index ? 'bg-green-600 text-white' :
-                  'bg-gray-300 text-gray-600'
+                  ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > _index ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-600'
                 }`}>
-                  {index + 1}
+                  {_index + 1}
                 </div>
-                {index < 4 && (
+                {_index < 4 && (
                   <div className={`flex-1 h-1 mx-2 ${
-                    ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > index ? 'bg-green-600' : 'bg-gray-300'
+                    ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > _index ? 'bg-green-600' : 'bg-gray-300'
                   }`} />
                 )}
               </React.Fragment>
@@ -291,7 +288,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
               disabled={isProcessing}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
             >
-              {isProcessing ? 'Processing...' : 'Choose CSV File'}
+              {isProcessing ? 'Processing...' : 'Choose CSV File' }
             </button>
           </div>
         )}
@@ -320,7 +317,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {columnMappings.map((mapping, index) => (
+                  {columnMappings.map((mapping, _index) => (
                     <tr key={mapping.csvColumn}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {mapping.csvColumn}
@@ -331,7 +328,7 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
                           value={mapping.productField}
-                          onChange={(e) => handleMappingChange(mapping.csvColumn, e.target.value)}
+                          onChange={(_e) => handleMappingChange(mapping.csvColumn, _e.target.value)}
                           className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm"
                         >
                           {productFields.map(field => (
@@ -394,10 +391,10 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
                     <div className="mt-2 text-sm text-red-700">
                       <p>Please fix the following errors before importing:</p>
                       <ul className="mt-2 list-disc list-inside max-h-40 overflow-y-auto">
-                        {validationErrors.map((error, index) => (
-                          <li key={index}>
-                            {error.row === 0 ? 'Mapping: ' : `Row ${error.row}: `}
-                            {error.message}
+                        {validationErrors.map((_error, _index) => (
+                          <li key={_index}>
+                            {_error.row === 0 ? 'Mapping: ' : `Row ${_error.row}: `}
+                            {_error.message}
                           </li>
                         ))}
                       </ul>
@@ -464,14 +461,14 @@ export default function ImportProductsModal({ isOpen, onClose, onImportComplete 
                   onClick={() => setShowFailedRecords(!showFailedRecords)}
                   className="text-sm text-blue-600 hover:text-blue-800"
                 >
-                  {showFailedRecords ? 'Hide' : 'Show'} failed records
+                  {showFailedRecords ? 'Hide' : 'Show' } failed records
                 </button>
 
                 {showFailedRecords && importResults.errorDetails && (
                   <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4 max-h-40 overflow-y-auto">
                     <ul className="text-sm text-red-700 space-y-1">
-                      {importResults.errorDetails.map((error, index) => (
-                        <li key={index}>{error}</li>
+                      {importResults.errorDetails.map((_error, _index) => (
+                        <li key={_index}>{_error}</li>
                       ))}
                     </ul>
                   </div>

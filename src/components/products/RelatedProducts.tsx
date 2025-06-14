@@ -8,7 +8,7 @@ interface RelatedProductsProps {
   categoryId?: string;
 }
 
-export default function RelatedProducts({ currentProductId, categoryId }: RelatedProductsProps) {
+export default function RelatedProducts({ currentProductId, _categoryId }: RelatedProductsProps) {
   const [products, setProducts] = useState<ProductWithFirstImage[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,21 +26,20 @@ export default function RelatedProducts({ currentProductId, categoryId }: Relate
       });
 
       // If we have a category, filter by it, otherwise get random products
-      if (categoryId) {
-        params.append('category', categoryId);
+      if (_categoryId) {
+        params.append('category', _categoryId);
       }
 
-      const response = await fetch(`/api/public/products?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        // Filter out the current product
+      const _response = await fetch(`/api/public/products?${params}`);
+      if (_response.ok) {
+                // Filter out the current product
         const filteredProducts = data.products.filter(
           (product: ProductWithFirstImage) => product.id !== currentProductId
         );
         setProducts(filteredProducts.slice(0, 4)); // Ensure we only show 4
       }
-    } catch (error) {
-      console.error('Error fetching related products:', error);
+    } catch (_error) {
+      console.error('Error fetching related products:', _error);
     } finally {
       setLoading(false);
     }
@@ -60,13 +59,13 @@ export default function RelatedProducts({ currentProductId, categoryId }: Relate
   }
 
   if (products.length === 0) {
-    return null; // Don't show the section if no related products
+    return null; // Don&apos;t show the section if no related products
   }
 
   return (
     <div className="mt-12">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
-        {categoryId ? 'Related Products' : 'Other Products'}
+        {categoryId ? 'Related Products' : 'Other Products' }
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {products.map((product) => (

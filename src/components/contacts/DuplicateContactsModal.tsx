@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaExclamationTriangle, FaCheck, FaSync } from 'react-icons/fa';
 import { Contact } from '@/lib/models';
 import { DuplicateGroup } from '@/lib/utils/duplicates';
-import { format } from 'date-fns';
+import { FaTimes, FaExclamationTriangle, FaSync, FaCheck } from 'react-icons/fa';
 
 interface DuplicateContactsModalProps {
   isOpen: boolean;
@@ -41,13 +40,13 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
     setError(null);
 
     try {
-      const response = await fetch(`/api/contacts/duplicates?threshold=${threshold}`);
-      if (!response.ok) {
+      const _response = await fetch(`/api/contacts/duplicates?threshold=${threshold}`);
+      if (!_response.ok) {
         throw new Error('Failed to find duplicates');
       }
 
-      const data: DuplicatesResponse = await response.json();
-      setDuplicateGroups(data.duplicateGroups);
+      const _data: DuplicatesResponse = await _response.json();
+      setDuplicateGroups(_data.duplicateGroups);
       setStep('list');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -85,7 +84,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
     setLoading(true);
 
     try {
-      const response = await fetch('/api/contacts/merge', {
+      const _response = await fetch('/api/contacts/merge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -95,8 +94,8 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
         })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!_response.ok) {
+        const errorData = await _response.json();
         throw new Error(errorData.error || 'Failed to merge contacts');
       }
 
@@ -184,7 +183,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                 </label>
                 <select
                   value={threshold}
-                  onChange={(e) => setThreshold(parseInt(e.target.value))}
+                  onChange={(_e) => setThreshold(parseInt(_e.target.value))}
                   className="border border-gray-300 rounded-md px-3 py-1 text-sm"
                 >
                   <option value={60}>60% - More matches</option>
@@ -239,7 +238,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {group.contacts.map((contact, index) => (
+                        {group.contacts.map((contact, _index) => (
                           <div key={contact.id} className="bg-gray-50 rounded-md p-3">
                             <h4 className="font-medium text-gray-900">
                               {contact.name}
@@ -323,7 +322,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                     <input
                       type="text"
                       value={mergedData.name || ''}
-                      onChange={(e) => setMergedData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(_e) => setMergedData(prev => ({ ...prev, name: _e.target.value }))}
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                     />
                   </div>
@@ -332,7 +331,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                     <input
                       type="email"
                       value={mergedData.email || ''}
-                      onChange={(e) => setMergedData(prev => ({ ...prev, email: e.target.value }))}
+                      onChange={(_e) => setMergedData(prev => ({ ...prev, email: _e.target.value }))}
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                     />
                   </div>
@@ -341,7 +340,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                     <input
                       type="text"
                       value={mergedData.phone || ''}
-                      onChange={(e) => setMergedData(prev => ({ ...prev, phone: e.target.value }))}
+                      onChange={(_e) => setMergedData(prev => ({ ...prev, phone: _e.target.value }))}
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                     />
                   </div>
@@ -350,7 +349,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                     <input
                       type="text"
                       value={mergedData.address || ''}
-                      onChange={(e) => setMergedData(prev => ({ ...prev, address: e.target.value }))}
+                      onChange={(_e) => setMergedData(prev => ({ ...prev, address: _e.target.value }))}
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                     />
                   </div>
@@ -360,7 +359,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                       <input
                         type="text"
                         value={mergedData.city || ''}
-                        onChange={(e) => setMergedData(prev => ({ ...prev, city: e.target.value }))}
+                        onChange={(_e) => setMergedData(prev => ({ ...prev, city: _e.target.value }))}
                         className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                       />
                     </div>
@@ -369,7 +368,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                       <input
                         type="text"
                         value={mergedData.state || ''}
-                        onChange={(e) => setMergedData(prev => ({ ...prev, state: e.target.value }))}
+                        onChange={(_e) => setMergedData(prev => ({ ...prev, state: _e.target.value }))}
                         className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                       />
                     </div>
@@ -379,7 +378,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                     <input
                       type="text"
                       value={mergedData.zip || ''}
-                      onChange={(e) => setMergedData(prev => ({ ...prev, zip: e.target.value }))}
+                      onChange={(_e) => setMergedData(prev => ({ ...prev, zip: _e.target.value }))}
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                     />
                   </div>

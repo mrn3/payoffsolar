@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import stripe, { formatAmountForStripe } from '@/lib/stripe';
 import { CartItem } from '@/lib/models';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const body = await request.json();
     const { items, shipping, customerInfo } = body;
@@ -10,14 +10,14 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
-        { error: 'Cart items are required' },
+        { _error: 'Cart items are required' },
         { status: 400 }
       );
     }
 
     if (!customerInfo || !customerInfo.email) {
       return NextResponse.json(
-        { error: 'Customer email is required' },
+        { _error: 'Customer email is required' },
         { status: 400 }
       );
     }
@@ -52,10 +52,10 @@ export async function POST(request: NextRequest) {
       paymentIntentId: paymentIntent.id,
       amount: total,
     });
-  } catch (error) {
-    console.error('Error creating payment intent:', error);
+  } catch (_error) {
+    console.error('Error creating payment intent:', _error);
     return NextResponse.json(
-      { error: 'Failed to create payment intent' },
+      { _error: 'Failed to create payment intent' },
       { status: 500 }
     );
   }

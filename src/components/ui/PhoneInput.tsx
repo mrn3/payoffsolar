@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { formatPhoneNumber, isValidPhoneNumber } from '@/lib/utils/phone';
+import {formatPhoneNumber} from '@/lib/utils/phone';
 
 interface PhoneInputProps {
   name: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onChange: (_e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (_e: React.FocusEvent<HTMLInputElement>) => void;
   className?: string;
   placeholder?: string;
   required?: boolean;
@@ -22,9 +22,9 @@ export default function PhoneInput({
   className = '',
   placeholder = '+1 (555) 123-4567',
   required = false,
-  error = false
+  _error = false
 }: PhoneInputProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     const formattedValue = formatPhoneNumber(inputValue);
 
@@ -41,10 +41,10 @@ export default function PhoneInput({
     onChange(formattedEvent as React.ChangeEvent<HTMLInputElement>);
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Call the parent's onBlur handler if provided
+  const handleBlur = (_e: React.FocusEvent<HTMLInputElement>) => {
+    // Call the parent&apos;s onBlur handler if provided
     if (onBlur) {
-      onBlur(e);
+      onBlur(_e);
     }
   };
 

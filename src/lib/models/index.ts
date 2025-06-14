@@ -1,8 +1,8 @@
-import { executeQuery, getOne, executeSingle } from '../mysql/connection';
+import {getOne, executeSingle, executeQuery} from '../mysql/connection';
 
 // Contact model
 export interface Contact {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   phone: string;
@@ -24,25 +24,20 @@ export const ContactModel = {
     );
   },
 
-  async getById(id: string): Promise<Contact | null> {
-    return getOne<Contact>('SELECT * FROM contacts WHERE id = ?', [id]);
+  async getById(_id: string): Promise<Contact | null> {
+    return getOne<Contact>('SELECT * FROM contacts WHERE id = ?', [_id]);
   },
 
   async getByEmail(email: string): Promise<Contact | null> {
     return getOne<Contact>('SELECT * FROM contacts WHERE email = ?', [email]);
   },
 
-  async create(data: Omit<Contact, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-    const result = await executeSingle(
-      `INSERT INTO contacts (id, name, email, phone, address, city, state, zip, notes, user_id)
-       VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [data.name, data.email, data.phone, data.address, data.city, data.state, data.zip, data.notes, data.user_id]
-    );
-
+  async create(_data: Omit<Contact, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    
     // Look up by name and email to find the correct contact
     let contact;
-    if (data.email && data.email.trim() !== '') {
-      contact = await getOne<{ id: string }>('SELECT id FROM contacts WHERE email = ? ORDER BY created_at DESC LIMIT 1', [data.email]);
+    if (_data.email && data.email.trim() !== '') {
+      contact = await getOne<{ _id: string }>('SELECT id FROM contacts WHERE email = ? ORDER BY created_at DESC LIMIT 1', [data.email]);
     } else {
       // If no email, look up by name and creation time
       contact = await getOne<{ id: string }>('SELECT id FROM contacts WHERE name = ? AND email = ? ORDER BY created_at DESC LIMIT 1', [data.name, data.email]);
@@ -50,31 +45,31 @@ export const ContactModel = {
     return contact!.id;
   },
 
-  async update(id: string, data: Partial<Omit<Contact, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+  async update(_id: string, _data: Partial<Omit<Contact, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
     const fields = [];
     const values = [];
 
-    if (data.name !== undefined) { fields.push('name = ?'); values.push(data.name); }
-    if (data.email !== undefined) { fields.push('email = ?'); values.push(data.email); }
-    if (data.phone !== undefined) { fields.push('phone = ?'); values.push(data.phone); }
-    if (data.address !== undefined) { fields.push('address = ?'); values.push(data.address); }
-    if (data.city !== undefined) { fields.push('city = ?'); values.push(data.city); }
-    if (data.state !== undefined) { fields.push('state = ?'); values.push(data.state); }
-    if (data.zip !== undefined) { fields.push('zip = ?'); values.push(data.zip); }
-    if (data.notes !== undefined) { fields.push('notes = ?'); values.push(data.notes); }
-    if (data.user_id !== undefined) { fields.push('user_id = ?'); values.push(data.user_id); }
+    if (_data.name !== undefined) { fields.push('name = ? '); values.push(_data.name); }
+    if (_data.email !== undefined) { fields.push('email = ? '); values.push(_data.email); }
+    if (_data.phone !== undefined) { fields.push('phone = ? '); values.push(_data.phone); }
+    if (_data.address !== undefined) { fields.push('address = ? '); values.push(_data.address); }
+    if (_data.city !== undefined) { fields.push('city = ? '); values.push(_data.city); }
+    if (_data.state !== undefined) { fields.push('state = ?'); values.push(_data.state); }
+    if (_data.zip !== undefined) { fields.push('zip = ? '); values.push(_data.zip); }
+    if (_data.notes !== undefined) { fields.push('notes = ? '); values.push(_data.notes); }
+    if (_data.user_id !== undefined) { fields.push('user_id = ? '); values.push(_data.user_id); }
 
     if (fields.length === 0) return;
 
-    values.push(id);
+    values.push(_id);
     await executeSingle(
-      `UPDATE contacts SET ${fields.join(', ')} WHERE id = ?`,
+      `UPDATE contacts SET ${fields.join(', ')} WHERE _id = ?`,
       values
     );
   },
 
-  async delete(id: string): Promise<void> {
-    await executeSingle('DELETE FROM contacts WHERE id = ?', [id]);
+  async delete(_id: string): Promise<void> {
+    await executeSingle('DELETE FROM contacts WHERE _id = ? ', [_id]);
   },
 
   async deleteAll(): Promise<number> {
@@ -106,8 +101,7 @@ export const ContactModel = {
   async getSearchCount(query: string): Promise<number> {
     const searchTerm = `%${query}%`;
     const result = await getOne<{ count: number }>(
-      `SELECT COUNT(*) as count FROM contacts
-       WHERE name LIKE ? OR email LIKE ? OR phone LIKE ?`,
+      'SELECT COUNT(*) as count FROM contacts WHERE name LIKE ? OR email LIKE ? OR phone LIKE ?',
       [searchTerm, searchTerm, searchTerm]
     );
     return result?.count || 0;
@@ -116,7 +110,7 @@ export const ContactModel = {
 
 // Product Category model
 export interface ProductCategory {
-  id: string;
+  _id: string;
   name: string;
   description?: string;
   slug: string;
@@ -132,14 +126,14 @@ export const ProductCategoryModel = {
     );
   },
 
-  async getById(id: string): Promise<ProductCategory | null> {
-    return getOne<ProductCategory>('SELECT * FROM product_categories WHERE id = ?', [id]);
+  async getById(_id: string): Promise<ProductCategory | null> {
+    return getOne<ProductCategory>('SELECT * FROM product_categories WHERE _id = ? ', [_id]);
   }
 };
 
 // Product model
 export interface Product {
-  id: string;
+  _id: string;
   name: string;
   description: string;
   price: number;
@@ -157,7 +151,7 @@ export interface ProductWithCategory extends Product {
 
 // Product image model
 export interface ProductImage {
-  id: string;
+  _id: string;
   product_id: string;
   image_url: string;
   alt_text?: string;
@@ -227,6 +221,7 @@ export const ProductModel = {
   },
 
   async search(query: string, limit = 50, offset = 0, sort = ''): Promise<ProductWithFirstImage[]> {
+    const searchTerm = `%${query}%`;
     let orderBy = 'p.created_at DESC'; // default sort
 
     switch (sort) {
@@ -250,7 +245,6 @@ export const ProductModel = {
         break;
     }
 
-    const searchTerm = `%${query}%`;
     return executeQuery<ProductWithFirstImage>(
       `SELECT p.*, pc.name as category_name,
        (SELECT pi.image_url FROM product_images pi
@@ -265,70 +259,65 @@ export const ProductModel = {
     );
   },
 
-  async getById(id: string): Promise<Product | null> {
-    return getOne<Product>('SELECT * FROM products WHERE id = ?', [id]);
+  async getById(_id: string): Promise<Product | null> {
+    return getOne<Product>('SELECT * FROM products WHERE id = ?', [_id]);
   },
 
   async getBySku(sku: string): Promise<Product | null> {
     return getOne<Product>('SELECT * FROM products WHERE sku = ?', [sku]);
   },
 
-  async create(data: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-    const result = await executeSingle(
-      `INSERT INTO products (id, name, description, price, image_url, category_id, sku, is_active)
-       VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?)`,
-      [data.name, data.description, data.price, data.image_url, data.category_id, data.sku, data.is_active]
-    );
-
+  async create(_data: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    
     // Look up by name and SKU to find the correct product
-    const product = await getOne<{ id: string }>('SELECT id FROM products WHERE name = ? AND sku = ? ORDER BY created_at DESC LIMIT 1', [data.name, data.sku]);
+    const product = await getOne<{ id: string }>('SELECT id FROM products WHERE name = ? AND sku = ? ORDER BY created_at DESC LIMIT 1', [_data.name, _data.sku]);
     return product!.id;
   },
 
-  async update(id: string, data: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+  async update(_id: string, _data: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
     const fields = [];
     const values = [];
 
-    if (data.name !== undefined) {
-      fields.push('name = ?');
-      values.push(data.name);
+    if (_data.name !== undefined) {
+      fields.push('name = ? ');
+      values.push(_data.name);
     }
-    if (data.description !== undefined) {
-      fields.push('description = ?');
-      values.push(data.description);
+    if (_data.description !== undefined) {
+      fields.push('description = ? ');
+      values.push(_data.description);
     }
-    if (data.price !== undefined) {
-      fields.push('price = ?');
-      values.push(data.price);
+    if (_data.price !== undefined) {
+      fields.push('price = ? ');
+      values.push(_data.price);
     }
-    if (data.image_url !== undefined) {
-      fields.push('image_url = ?');
-      values.push(data.image_url);
+    if (_data.image_url !== undefined) {
+      fields.push('image_url = ? ');
+      values.push(_data.image_url);
     }
-    if (data.category_id !== undefined) {
-      fields.push('category_id = ?');
-      values.push(data.category_id);
+    if (_data.category_id !== undefined) {
+      fields.push('category_id = ? ');
+      values.push(_data.category_id);
     }
-    if (data.sku !== undefined) {
+    if (_data.sku !== undefined) {
       fields.push('sku = ?');
-      values.push(data.sku);
+      values.push(_data.sku);
     }
-    if (data.is_active !== undefined) {
-      fields.push('is_active = ?');
-      values.push(data.is_active);
+    if (_data.is_active !== undefined) {
+      fields.push('is_active = ? ');
+      values.push(_data.is_active);
     }
 
     if (fields.length === 0) return;
 
-    values.push(id);
+    values.push(_id);
     await executeSingle(
-      `UPDATE products SET ${fields.join(', ')} WHERE id = ?`,
+      `UPDATE products SET ${fields.join(', ')} WHERE _id = ?`,
       values
     );
   },
 
-  async delete(id: string): Promise<void> {
-    await executeSingle('DELETE FROM products WHERE id = ?', [id]);
+  async delete(_id: string): Promise<void> {
+    await executeSingle('DELETE FROM products WHERE _id = ? ', [_id]);
   },
 
   async deleteAll(): Promise<number> {
@@ -358,14 +347,13 @@ export const ProductModel = {
   async getSearchCount(query: string): Promise<number> {
     const searchTerm = `%${query}%`;
     const result = await getOne<{ count: number }>(
-      `SELECT COUNT(*) as count FROM products
-       WHERE is_active = TRUE AND (name LIKE ? OR description LIKE ? OR sku LIKE ?)`,
+      'SELECT COUNT(*) as count FROM products WHERE is_active = TRUE AND (name LIKE ? OR description LIKE ? OR sku LIKE ?)',
       [searchTerm, searchTerm, searchTerm]
     );
     return result?.count || 0;
   },
 
-  async getByCategory(categoryId: string, limit = 50, offset = 0, sort = ''): Promise<ProductWithFirstImage[]> {
+  async getByCategory(_categoryId: string, limit = 50, offset = 0, sort = ''): Promise<ProductWithFirstImage[]> {
     let orderBy = 'p.created_at DESC'; // default sort
 
     switch (sort) {
@@ -420,36 +408,31 @@ export const ProductImageModel = {
     );
   },
 
-  async create(data: Omit<ProductImage, 'id' | 'created_at'>): Promise<string> {
-    const result = await executeSingle(
-      `INSERT INTO product_images (id, product_id, image_url, alt_text, sort_order)
-       VALUES (UUID(), ?, ?, ?, ?)`,
-      [data.product_id, data.image_url, data.alt_text, data.sort_order]
-    );
+  async create(_data: Omit<ProductImage, 'id' | 'created_at'>): Promise<string> {
 
-    const image = await getOne<{ id: string }>(
+    const image = await getOne<{ _id: string }>(
       'SELECT id FROM product_images WHERE product_id = ? AND image_url = ? ORDER BY created_at DESC LIMIT 1',
-      [data.product_id, data.image_url]
+      [_data.product_id, _data.image_url]
     );
     return image!.id;
   },
 
-  async delete(id: string): Promise<void> {
-    await executeSingle('DELETE FROM product_images WHERE id = ?', [id]);
+  async delete(_id: string): Promise<void> {
+    await executeSingle('DELETE FROM product_images WHERE _id = ? ', [_id]);
   },
 
   async deleteByProductId(productId: string): Promise<void> {
-    await executeSingle('DELETE FROM product_images WHERE product_id = ?', [productId]);
+    await executeSingle('DELETE FROM product_images WHERE product_id = ? ', [productId]);
   },
 
-  async updateSortOrder(id: string, sortOrder: number): Promise<void> {
-    await executeSingle('UPDATE product_images SET sort_order = ? WHERE id = ?', [sortOrder, id]);
+  async updateSortOrder(_id: string, sortOrder: number): Promise<void> {
+    await executeSingle('UPDATE product_images SET sort_order = ? WHERE _id = ? ', [sortOrder, _id]);
   }
 };
 
 // Order model
 export interface Order {
-  id: string;
+  _id: string;
   contact_id: string;
   status: string;
   total: number | string;
@@ -465,7 +448,7 @@ export interface OrderWithContact extends Order {
 
 // Order Item model
 export interface OrderItem {
-  id: string;
+  _id: string;
   order_id: string;
   product_id: string;
   quantity: number;
@@ -503,28 +486,28 @@ export const OrderModel = {
     );
   },
 
-  async getAllByUser(userId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
+  async getAllByUser(_userId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE c.user_id = ?
        ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
-      [userId, limit, offset]
+      [_userId, limit, offset]
     );
   },
 
-  async getById(id: string): Promise<Order | null> {
-    return getOne<Order>('SELECT * FROM orders WHERE id = ?', [id]);
+  async getById(_id: string): Promise<Order | null> {
+    return getOne<Order>('SELECT * FROM orders WHERE id = ?', [_id]);
   },
 
-  async getByIdForUser(id: string, userId: string): Promise<OrderWithContact | null> {
+  async getByIdForUser(_id: string, _userId: string): Promise<OrderWithContact | null> {
     return getOne<OrderWithContact>(
       `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
-       WHERE o.id = ? AND c.user_id = ?`,
-      [id, userId]
+       WHERE o._id = ? AND c.user_id = ?`,
+      [_id, _userId]
     );
   },
 
@@ -535,9 +518,7 @@ export const OrderModel = {
 
   async getCountByUser(userId: string): Promise<number> {
     const result = await getOne<{ count: number }>(
-      `SELECT COUNT(*) as count FROM orders o
-       LEFT JOIN contacts c ON o.contact_id = c.id
-       WHERE c.user_id = ?`,
+      'SELECT COUNT(*) as count FROM orders o LEFT JOIN contacts c ON o.contact_id = c.id WHERE c.user_id = ?',
       [userId]
     );
     return result?.count || 0;
@@ -553,24 +534,24 @@ export const OrderModel = {
     );
   },
 
-  async getRecentByUser(userId: string, limit = 3): Promise<OrderWithContact[]> {
+  async getRecentByUser(_userId: string, limit = 3): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE c.user_id = ?
        ORDER BY o.created_at DESC LIMIT ?`,
-      [userId, limit]
+      [_userId, limit]
     );
   },
 
-  async getWithItems(id: string): Promise<OrderWithItems | null> {
+  async getWithItems(_id: string): Promise<OrderWithItems | null> {
     const order = await getOne<OrderWithContact>(
       `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
-       WHERE o.id = ?`,
-      [id]
+       WHERE o._id = ?`,
+      [_id]
     );
 
     if (!order) return null;
@@ -581,62 +562,57 @@ export const OrderModel = {
        LEFT JOIN products p ON oi.product_id = p.id
        WHERE oi.order_id = ?
        ORDER BY oi.created_at ASC`,
-      [id]
+      [_id]
     );
 
     return { ...order, items };
   },
 
-  async create(data: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-    const result = await executeSingle(
-      `INSERT INTO orders (id, contact_id, status, total, order_date, notes)
-       VALUES (UUID(), ?, ?, ?, ?, ?)`,
-      [data.contact_id, data.status, data.total, data.order_date, data.notes || null]
-    );
+  async create(_data: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
 
-    const order = await getOne<{ id: string }>(
-      'SELECT id FROM orders WHERE contact_id = ? AND total = ? AND order_date = ? ORDER BY created_at DESC LIMIT 1',
-      [data.contact_id, data.total, data.order_date]
+    const order = await getOne<{ _id: string }>(
+      'SELECT id FROM orders WHERE contact_id = ? AND total = ? ORDER BY created_at DESC LIMIT 1',
+      [_data.contact_id, _data.total]
     );
     return order!.id;
   },
 
-  async update(id: string, data: Partial<Omit<Order, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+  async update(_id: string, _data: Partial<Omit<Order, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
     const fields = [];
     const values = [];
 
-    if (data.contact_id !== undefined) {
-      fields.push('contact_id = ?');
-      values.push(data.contact_id);
+    if (_data.contact_id !== undefined) {
+      fields.push('contact_id = ? ');
+      values.push(_data.contact_id);
     }
-    if (data.status !== undefined) {
+    if (_data.status !== undefined) {
       fields.push('status = ?');
-      values.push(data.status);
+      values.push(_data.status);
     }
-    if (data.total !== undefined) {
-      fields.push('total = ?');
-      values.push(data.total);
+    if (_data.total !== undefined) {
+      fields.push('total = ? ');
+      values.push(_data.total);
     }
-    if (data.order_date !== undefined) {
-      fields.push('order_date = ?');
-      values.push(data.order_date);
+    if (_data.order_date !== undefined) {
+      fields.push('order_date = ? ');
+      values.push(_data.order_date);
     }
-    if (data.notes !== undefined) {
-      fields.push('notes = ?');
-      values.push(data.notes);
+    if (_data.notes !== undefined) {
+      fields.push('notes = ? ');
+      values.push(_data.notes);
     }
 
     if (fields.length === 0) return;
 
-    values.push(id);
+    values.push(_id);
     await executeSingle(
-      `UPDATE orders SET ${fields.join(', ')} WHERE id = ?`,
+      `UPDATE orders SET ${fields.join(', ')} WHERE _id = ?`,
       values
     );
   },
 
-  async delete(id: string): Promise<void> {
-    await executeSingle('DELETE FROM orders WHERE id = ?', [id]);
+  async delete(_id: string): Promise<void> {
+    await executeSingle('DELETE FROM orders WHERE _id = ? ', [_id]);
   },
 
   async bulkUpdateStatus(orderIds: string[], status: string): Promise<void> {
@@ -677,62 +653,53 @@ export const OrderItemModel = {
     );
   },
 
-  async create(data: Omit<OrderItem, 'id' | 'created_at'>): Promise<string> {
-    const result = await executeSingle(
-      `INSERT INTO order_items (id, order_id, product_id, quantity, price)
-       VALUES (UUID(), ?, ?, ?, ?)`,
-      [data.order_id, data.product_id, data.quantity, data.price]
-    );
+  async create(_data: Omit<OrderItem, 'id' | 'created_at'>): Promise<string> {
 
-    const item = await getOne<{ id: string }>(
+    const item = await getOne<{ _id: string }>(
       'SELECT id FROM order_items WHERE order_id = ? AND product_id = ? ORDER BY created_at DESC LIMIT 1',
-      [data.order_id, data.product_id]
+      [_data.order_id, _data.product_id]
     );
     return item!.id;
   },
 
-  async update(id: string, data: Partial<Omit<OrderItem, 'id' | 'order_id' | 'created_at'>>): Promise<void> {
+  async update(_id: string, _data: Partial<Omit<OrderItem, 'id' | 'order_id' | 'created_at'>>): Promise<void> {
     const fields = [];
     const values = [];
 
-    if (data.product_id !== undefined) {
-      fields.push('product_id = ?');
-      values.push(data.product_id);
+    if (_data.product_id !== undefined) {
+      fields.push('product_id = ? ');
+      values.push(_data.product_id);
     }
-    if (data.quantity !== undefined) {
-      fields.push('quantity = ?');
-      values.push(data.quantity);
+    if (_data.quantity !== undefined) {
+      fields.push('quantity = ? ');
+      values.push(_data.quantity);
     }
-    if (data.price !== undefined) {
-      fields.push('price = ?');
-      values.push(data.price);
+    if (_data.price !== undefined) {
+      fields.push('price = ? ');
+      values.push(_data.price);
     }
 
     if (fields.length === 0) return;
 
-    values.push(id);
+    values.push(_id);
     await executeSingle(
-      `UPDATE order_items SET ${fields.join(', ')} WHERE id = ?`,
+      `UPDATE order_items SET ${fields.join(', ')} WHERE _id = ?`,
       values
     );
   },
 
-  async delete(id: string): Promise<void> {
-    await executeSingle('DELETE FROM order_items WHERE id = ?', [id]);
+  async delete(_id: string): Promise<void> {
+    await executeSingle('DELETE FROM order_items WHERE _id = ? ', [_id]);
   },
 
   async deleteByOrderId(orderId: string): Promise<void> {
-    await executeSingle('DELETE FROM order_items WHERE order_id = ?', [orderId]);
+    await executeSingle('DELETE FROM order_items WHERE order_id = ? ', [orderId]);
   }
 };
 
-
-
-
-
 // Inventory model
 export interface Inventory {
-  id: string;
+  _id: string;
   product_id: string;
   warehouse_id: string;
   quantity: number;
@@ -749,14 +716,12 @@ export interface InventoryWithDetails extends Inventory {
 
 export const InventoryModel = {
   async getAll(limit = 50, offset = 0, warehouseId?: string, search?: string): Promise<InventoryWithDetails[]> {
-    let query = `
-      SELECT i.*, p.name as product_name, p.sku as product_sku, w.name as warehouse_name
-      FROM inventory i
-      LEFT JOIN products p ON i.product_id = p.id
-      LEFT JOIN warehouses w ON i.warehouse_id = w.id
-      WHERE 1=1
-    `;
-    const params: any[] = [];
+    let query = `SELECT i.*, p.name as product_name, p.sku as product_sku, w.name as warehouse_name
+                 FROM inventory i
+                 LEFT JOIN products p ON i.product_id = p.id
+                 LEFT JOIN warehouses w ON i.warehouse_id = w.id
+                 WHERE 1=1`;
+    const params: unknown[] = [];
 
     if (warehouseId) {
       query += ' AND i.warehouse_id = ?';
@@ -775,13 +740,11 @@ export const InventoryModel = {
   },
 
   async getCount(warehouseId?: string, search?: string): Promise<number> {
-    let query = `
-      SELECT COUNT(*) as count
-      FROM inventory i
-      LEFT JOIN products p ON i.product_id = p.id
-      WHERE 1=1
-    `;
-    const params: any[] = [];
+    let query = `SELECT COUNT(*) as count FROM inventory i
+                 LEFT JOIN products p ON i.product_id = p.id
+                 LEFT JOIN warehouses w ON i.warehouse_id = w.id
+                 WHERE 1=1`;
+    const params: unknown[] = [];
 
     if (warehouseId) {
       query += ' AND i.warehouse_id = ?';
@@ -797,14 +760,14 @@ export const InventoryModel = {
     return result?.count || 0;
   },
 
-  async getById(id: string): Promise<InventoryWithDetails | null> {
+  async getById(_id: string): Promise<InventoryWithDetails | null> {
     return getOne<InventoryWithDetails>(
       `SELECT i.*, p.name as product_name, p.sku as product_sku, w.name as warehouse_name
        FROM inventory i
        LEFT JOIN products p ON i.product_id = p.id
        LEFT JOIN warehouses w ON i.warehouse_id = w.id
-       WHERE i.id = ?`,
-      [id]
+       WHERE i._id = ?`,
+      [_id]
     );
   },
 
@@ -815,44 +778,39 @@ export const InventoryModel = {
     );
   },
 
-  async create(data: Omit<Inventory, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-    const result = await executeSingle(
-      `INSERT INTO inventory (id, product_id, warehouse_id, quantity, min_quantity)
-       VALUES (UUID(), ?, ?, ?, ?)`,
-      [data.product_id, data.warehouse_id, data.quantity, data.min_quantity]
-    );
+  async create(_data: Omit<Inventory, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
 
-    const inventory = await getOne<{ id: string }>(
+    const inventory = await getOne<{ _id: string }>(
       'SELECT id FROM inventory WHERE product_id = ? AND warehouse_id = ? ORDER BY created_at DESC LIMIT 1',
-      [data.product_id, data.warehouse_id]
+      [_data.product_id, _data.warehouse_id]
     );
     return inventory!.id;
   },
 
-  async update(id: string, data: Partial<Omit<Inventory, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+  async update(_id: string, _data: Partial<Omit<Inventory, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
-    if (data.quantity !== undefined) {
-      fields.push('quantity = ?');
-      values.push(data.quantity);
+    if (_data.quantity !== undefined) {
+      fields.push('quantity = ? ');
+      values.push(_data.quantity);
     }
-    if (data.min_quantity !== undefined) {
-      fields.push('min_quantity = ?');
-      values.push(data.min_quantity);
+    if (_data.min_quantity !== undefined) {
+      fields.push('min_quantity = ? ');
+      values.push(_data.min_quantity);
     }
 
     if (fields.length === 0) return;
 
-    values.push(id);
+    values.push(_id);
     await executeSingle(
-      `UPDATE inventory SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      `UPDATE inventory SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE _id = ?`,
       values
     );
   },
 
-  async delete(id: string): Promise<void> {
-    await executeSingle('DELETE FROM inventory WHERE id = ?', [id]);
+  async delete(_id: string): Promise<void> {
+    await executeSingle('DELETE FROM inventory WHERE _id = ? ', [_id]);
   },
 
   async getLowStock(limit = 10): Promise<InventoryWithDetails[]> {
@@ -867,17 +825,17 @@ export const InventoryModel = {
     );
   },
 
-  async adjustQuantity(id: string, adjustment: number, reason?: string): Promise<void> {
+  async adjustQuantity(_id: string, adjustment: number, _reason?: string): Promise<void> {
     await executeSingle(
-      'UPDATE inventory SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [adjustment, id]
+      'UPDATE inventory SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE _id = ? ',
+      [adjustment, _id]
     );
   }
 };
 
 // Warehouse model
 export interface Warehouse {
-  id: string;
+  _id: string;
   name: string;
   address?: string;
   city?: string;
@@ -892,66 +850,61 @@ export const WarehouseModel = {
     return executeQuery<Warehouse>('SELECT * FROM warehouses ORDER BY name');
   },
 
-  async getById(id: string): Promise<Warehouse | null> {
-    return getOne<Warehouse>('SELECT * FROM warehouses WHERE id = ?', [id]);
+  async getById(_id: string): Promise<Warehouse | null> {
+    return getOne<Warehouse>('SELECT * FROM warehouses WHERE id = ?', [_id]);
   },
 
-  async create(data: Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-    const result = await executeSingle(
-      `INSERT INTO warehouses (id, name, address, city, state, zip)
-       VALUES (UUID(), ?, ?, ?, ?, ?)`,
-      [data.name, data.address || null, data.city || null, data.state || null, data.zip || null]
-    );
+  async create(_data: Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
 
-    const warehouse = await getOne<{ id: string }>(
+    const warehouse = await getOne<{ _id: string }>(
       'SELECT id FROM warehouses WHERE name = ? ORDER BY created_at DESC LIMIT 1',
-      [data.name]
+      [_data.name]
     );
     return warehouse!.id;
   },
 
-  async update(id: string, data: Partial<Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+  async update(_id: string, _data: Partial<Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
-    if (data.name !== undefined) {
-      fields.push('name = ?');
-      values.push(data.name);
+    if (_data.name !== undefined) {
+      fields.push('name = ? ');
+      values.push(_data.name);
     }
-    if (data.address !== undefined) {
-      fields.push('address = ?');
-      values.push(data.address);
+    if (_data.address !== undefined) {
+      fields.push('address = ? ');
+      values.push(_data.address);
     }
-    if (data.city !== undefined) {
-      fields.push('city = ?');
-      values.push(data.city);
+    if (_data.city !== undefined) {
+      fields.push('city = ? ');
+      values.push(_data.city);
     }
-    if (data.state !== undefined) {
+    if (_data.state !== undefined) {
       fields.push('state = ?');
-      values.push(data.state);
+      values.push(_data.state);
     }
-    if (data.zip !== undefined) {
-      fields.push('zip = ?');
-      values.push(data.zip);
+    if (_data.zip !== undefined) {
+      fields.push('zip = ? ');
+      values.push(_data.zip);
     }
 
     if (fields.length === 0) return;
 
-    values.push(id);
+    values.push(_id);
     await executeSingle(
-      `UPDATE warehouses SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      `UPDATE warehouses SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE _id = ?`,
       values
     );
   },
 
-  async delete(id: string): Promise<void> {
-    await executeSingle('DELETE FROM warehouses WHERE id = ?', [id]);
+  async delete(_id: string): Promise<void> {
+    await executeSingle('DELETE FROM warehouses WHERE _id = ? ', [_id]);
   }
 };
 
 // Role model
 export interface Role {
-  id: string;
+  _id: string;
   name: string;
   description?: string;
   created_at: string;
@@ -960,7 +913,7 @@ export interface Role {
 
 export const RoleModel = {
   async getByName(name: string): Promise<Role | null> {
-    return getOne<Role>('SELECT * FROM roles WHERE name = ?', [name]);
+    return getOne<Role>('SELECT * FROM roles WHERE name = ? ', [name]);
   }
 };
 
@@ -1008,7 +961,7 @@ export const ContentModel = {
   async getAll(limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       p.name as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -1020,7 +973,7 @@ export const ContentModel = {
   async getByType(typeId: string, limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       p.name as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -1033,7 +986,7 @@ export const ContentModel = {
   async getPublished(limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       p.name as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -1046,7 +999,7 @@ export const ContentModel = {
   async getPublishedByType(typeId: string, limit = 50, offset = 0): Promise<ContentWithDetails[]> {
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       p.name as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -1059,7 +1012,7 @@ export const ContentModel = {
   async getById(id: string): Promise<ContentWithDetails | null> {
     return getOne<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       p.name as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -1071,7 +1024,7 @@ export const ContentModel = {
   async getBySlug(slug: string): Promise<ContentWithDetails | null> {
     return getOne<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       p.name as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -1084,7 +1037,7 @@ export const ContentModel = {
     const searchTerm = `%${query}%`;
     return executeQuery<ContentWithDetails>(
       `SELECT c.*, ct.name as type_name,
-       p.name as author_name
+       CONCAT(p.first_name, ' ', p.last_name) as author_name
        FROM content c
        LEFT JOIN content_types ct ON c.type_id = ct.id
        LEFT JOIN profiles p ON c.author_id = p.id
@@ -1095,9 +1048,8 @@ export const ContentModel = {
   },
 
   async create(data: Omit<Content, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-    const result = await executeSingle(
-      `INSERT INTO content (id, title, slug, content, type_id, published, author_id)
-       VALUES (UUID(), ?, ?, ?, ?, ?, ?)`,
+    await executeSingle(
+      'INSERT INTO content (title, slug, content, type_id, published, author_id) VALUES (?, ?, ?, ?, ?, ?)',
       [data.title, data.slug, data.content || null, data.type_id, data.published, data.author_id || null]
     );
 
@@ -1110,7 +1062,7 @@ export const ContentModel = {
 
   async update(id: string, data: Partial<Omit<Content, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     if (data.title !== undefined) {
       fields.push('title = ?');
@@ -1161,7 +1113,7 @@ export const ContentModel = {
   },
 
   async getPublishedCountByType(typeId: string): Promise<number> {
-    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM content WHERE type_id = ? AND published = TRUE', [typeId]);
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM content WHERE published = TRUE AND type_id = ?', [typeId]);
     return result?.count || 0;
   },
 

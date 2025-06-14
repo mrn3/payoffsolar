@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Simple JWT verification for Edge Runtime
-function verifyJWT(token: string, secret: string): boolean {
+function verifyJWT(token: string, __secret: string): boolean {
   try {
     // Split the JWT into parts
     const parts = token.split('.');
@@ -25,8 +25,8 @@ function verifyJWT(token: string, secret: string): boolean {
     const isValid = payload.userId && payload.iat;
     console.log('🔍 Token structure valid:', isValid);
     return isValid;
-  } catch (error) {
-    console.log('❌ JWT parsing error:', error);
+  } catch (_error) {
+    console.log('❌ JWT parsing _error:', _error);
     return false;
   }
 }
@@ -46,8 +46,8 @@ export async function middleware(request: NextRequest) {
       const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
       isAuthenticated = verifyJWT(token, JWT_SECRET);
       console.log('✅ Token verification result:', isAuthenticated);
-    } catch (error) {
-      console.log('❌ Token verification failed:', error);
+    } catch (_error) {
+      console.log('❌ Token verification failed:', _error);
       isAuthenticated = false;
     }
   } else {

@@ -68,7 +68,7 @@ export const US_STATES: State[] = [
 
 /**
  * Get state name by code
- * @param code - The state code (e.g., 'CA')
+ * @param code - The state code (_e.g., 'CA')
  * @returns The state name or undefined if not found
  */
 export function getStateName(code: string): string | undefined {
@@ -78,7 +78,7 @@ export function getStateName(code: string): string | undefined {
 
 /**
  * Get state code by name
- * @param name - The state name (e.g., 'California')
+ * @param name - The state name (_e.g., 'California')
  * @returns The state code or undefined if not found
  */
 export function getStateCode(name: string): string | undefined {

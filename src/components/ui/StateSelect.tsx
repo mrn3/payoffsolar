@@ -6,8 +6,8 @@ import { US_STATES } from '@/lib/utils/states';
 interface StateSelectProps {
   name: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  onBlur?: (e: React.FocusEvent<HTMLSelectElement>) => void;
+  onChange: (_e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onBlur?: (_e: React.FocusEvent<HTMLSelectElement>) => void;
   className?: string;
   required?: boolean;
   error?: boolean;
@@ -20,7 +20,7 @@ export default function StateSelect({
   onBlur,
   className = '',
   required = false,
-  error = false
+  _error = false
 }: StateSelectProps) {
   return (
     <select

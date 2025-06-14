@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clearAuthCookie } from '@/lib/auth';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     await clearAuthCookie();
 
@@ -9,10 +9,10 @@ export async function POST(request: NextRequest) {
       { message: 'Signed out successfully' },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.error('Sign out error:', error);
+  } catch (_error: unknown) {
+    console.error('Sign out _error:', _error);
     return NextResponse.json(
-      { error: 'Failed to sign out' },
+      { _error: 'Failed to sign out' },
       { status: 500 }
     );
   }

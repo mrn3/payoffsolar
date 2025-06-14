@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { FaUpload, FaTrash, FaImage, FaSpinner } from 'react-icons/fa';
+import {FaImage, FaSpinner, FaTrash, FaUpload} from 'react-icons/fa';
 
 interface UploadedImage {
   originalName: string;
@@ -46,22 +46,22 @@ export default function ImageUpload({
 
     try {
       const formData = new FormData();
-      Array.from(files).forEach(file => {
-        formData.append('files', file);
+      Array.from(files).forEach(_file => {
+        formData.append('files', _file);
       });
 
-      const response = await fetch('/api/upload', {
+      const _response = await fetch('/api/upload', {
         method: 'POST',
         body: formData
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!_response.ok) {
+        const errorData = await _response.json();
         throw new Error(errorData.error || 'Upload failed');
       }
 
-      const data = await response.json();
-      onImagesUploaded(data.files);
+      const _data = await _response.json();
+      onImagesUploaded(_data.files);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
@@ -69,29 +69,29 @@ export default function ImageUpload({
     }
   };
 
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+  const handleDrag = (_e: React.DragEvent) => {
+    _e.preventDefault();
+    _e.stopPropagation();
+    if (_e.type === 'dragenter' || _e.type === 'dragover') {
       setDragActive(true);
-    } else if (e.type === 'dragleave') {
+    } else if (_e.type === 'dragleave') {
       setDragActive(false);
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDrop = (_e: React.DragEvent) => {
+    _e.preventDefault();
+    _e.stopPropagation();
     setDragActive(false);
 
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFiles(e.dataTransfer.files);
+    if (_e.dataTransfer.files && _e.dataTransfer.files.length > 0) {
+      handleFiles(_e.dataTransfer.files);
     }
   };
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFiles(e.target.files);
+  const handleFileInput = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    if (_e.target.files && _e.target.files.length > 0) {
+      handleFiles(_e.target.files);
     }
   };
 
@@ -158,16 +158,16 @@ export default function ImageUpload({
         <div className="mt-4">
           <h4 className="text-sm font-medium text-gray-700 mb-2">Current Images</h4>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {existingImages.map((imageUrl, index) => (
-              <div key={index} className="relative group">
+            {existingImages.map((imageUrl, _index) => (
+              <div key={_index} className="relative group">
                 <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
                   <img
                     src={imageUrl}
-                    alt={`Product image ${index + 1}`}
+                    alt={`Product image ${_index + 1}`}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling!.style.display = 'flex';
+                    onError={(_e) => {
+                      _e.currentTarget.style.display = 'none';
+                      _e.currentTarget.nextElementSibling!.style.display = 'flex';
                     }}
                   />
                   <div className="hidden w-full h-full items-center justify-center bg-gray-100">

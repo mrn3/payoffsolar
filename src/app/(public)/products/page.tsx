@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ProductWithFirstImage, ProductCategory } from '@/lib/models';
+import {ProductWithFirstImage, ProductCategory} from '@/lib/models';
 import ProductCard from '@/components/products/ProductCard';
 import ProductCardSkeleton from '@/components/products/ProductCardSkeleton';
 import ProductSearch from '@/components/products/ProductSearch';
 import Breadcrumb from '@/components/ui/Breadcrumb';
-import { FaSpinner } from 'react-icons/fa';
 
 interface ProductsResponse {
   products: ProductWithFirstImage[];
@@ -40,7 +39,7 @@ export default function ProductsPage() {
   // Fetch categories on component mount
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // Fetch products when search/filter parameters change
   useEffect(() => {
@@ -49,13 +48,13 @@ export default function ProductsPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/public/product-categories');
-      if (response.ok) {
-        const data: CategoriesResponse = await response.json();
-        setCategories(data.categories);
+      const _response = await fetch('/api/public/product-categories');
+      if (_response.ok) {
+        const _data: CategoriesResponse = await _response.json();
+        setCategories(_data.categories);
       }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
+    } catch (_error) {
+      console.error('Error fetching categories:', _error);
     }
   };
 
@@ -77,26 +76,26 @@ export default function ProductsPage() {
         params.append('sort', sortBy);
       }
 
-      const response = await fetch(`/api/public/products?${params}`);
-      if (response.ok) {
-        const data: ProductsResponse = await response.json();
-        setProducts(data.products);
-        setPagination(data.pagination);
+      const _response = await fetch(`/api/public/products?${params}`);
+      if (_response.ok) {
+        const _data: ProductsResponse = await _response.json();
+        setProducts(_data.products);
+        setPagination(_data.pagination);
       }
-    } catch (error) {
-      console.error('Error fetching products:', error);
+    } catch (_error) {
+      console.error('Error fetching products:', _error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
+  const handleSearchChange = (_query: string) => {
+    setSearchQuery(_query);
     setCurrentPage(1); // Reset to first page when searching
   };
 
-  const handleCategoryChange = (categoryId: string) => {
-    setSelectedCategory(categoryId);
+  const handleCategoryChange = (_categoryId: string) => {
+    setSelectedCategory(_categoryId);
     setCurrentPage(1); // Reset to first page when filtering
   };
 
@@ -166,7 +165,7 @@ export default function ProductsPage() {
                   <p className="text-gray-600">
                     Showing {products.length} of {pagination.total} products
                     {searchQuery && ` for "${searchQuery}"`}
-                    {selectedCategory && ` in ${categories.find(c => c.id === selectedCategory)?.name}`}
+                    {selectedCategory && ` in ${categories.find(c => c._id === selectedCategory)?.name}`}
                   </p>
                 </div>
 
@@ -219,7 +218,7 @@ export default function ProductsPage() {
                 <p className="text-gray-600 mb-4">
                   {searchQuery || selectedCategory
                     ? 'Try adjusting your search criteria or clearing filters.'
-                    : 'No products are currently available.'}
+                    : 'No products are currently available.' }
                 </p>
                 {(searchQuery || selectedCategory) && (
                   <button

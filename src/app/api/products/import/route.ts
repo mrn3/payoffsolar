@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, isAdmin } from '@/lib/auth';
-import { ProductModel, ProductCategoryModel } from '@/lib/models';
+import { requireAuth , isAdmin} from '@/lib/auth';
 
 interface ImportProduct {
   name: string;
@@ -13,18 +12,18 @@ interface ImportProduct {
   is_active?: boolean | string;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
     const { products } = await request.json();
 
     if (!Array.isArray(products) || products.length === 0) {
-      return NextResponse.json({ error: 'No products provided' }, { status: 400 });
+      return NextResponse.json({ _error: 'No products provided' }, { status: 400 });
     }
 
     let successCount = 0;
@@ -63,12 +62,11 @@ export async function POST(request: NextRequest) {
         }
 
         // Map category if provided
-        let categoryId = null;
-        if (product.category_name && product.category_name.toString().trim()) {
+                if (product.category_name && product.category_name.toString().trim()) {
           const categoryKey = product.category_name.toString().toLowerCase().trim();
-          categoryId = categoryMap.get(categoryKey) || null;
+          _categoryId = categoryMap.get(categoryKey) || null;
         } else if (product.category_id && product.category_id.toString().trim()) {
-          categoryId = categoryMap.get(product.category_id.toString().trim()) || null;
+          _categoryId = categoryMap.get(product.category_id.toString().trim()) || null;
         }
 
         // Parse is_active field
@@ -94,11 +92,11 @@ export async function POST(request: NextRequest) {
         });
 
         successCount++;
-      } catch (error) {
+      } catch (_error) {
         errorCount++;
-        const errorMessage = error instanceof Error ? error.message : `Row ${i + 1}: Unknown error`;
+        const errorMessage = error instanceof Error ? _error.message : `Row ${i + 1}: Unknown error`;
         errors.push(errorMessage);
-        console.error(`Error importing product at row ${i + 1}:`, error);
+        console.error(`Error importing product at row ${i + 1}:`, _error);
       }
     }
 
@@ -108,8 +106,8 @@ export async function POST(request: NextRequest) {
       errorDetails: errors
     });
 
-  } catch (error) {
-    console.error('Error in bulk product import:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error in bulk product import:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }

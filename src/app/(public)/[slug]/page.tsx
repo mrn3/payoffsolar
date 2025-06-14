@@ -1,15 +1,15 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { FaCalendar, FaUser, FaArrowLeft } from 'react-icons/fa';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import { FaArrowLeft, FaCalendar, FaUser } from 'react-icons/fa';
 
 interface ContentPageProps {
   params: Promise<{ slug: string }>;
 }
 
 interface ContentData {
-  id: string;
+  _id: string;
   title: string;
   slug: string;
   content?: string;
@@ -56,7 +56,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
   const getBreadcrumbItems = () => {
     const items = [];
     
-    // If it's a blog post, add blog to breadcrumb
+    // If it&apos;s a blog post, add blog to breadcrumb
     if (content.type_name === 'blog') {
       items.push({ label: 'Blog', href: '/blog' });
     }

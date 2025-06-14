@@ -1,5 +1,5 @@
 import React from 'react';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import { requireAuth , isAdmin} from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import InventoryForm from '@/components/InventoryForm';
 

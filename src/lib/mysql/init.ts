@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { config } from 'dotenv';
-import { executeQuery, testConnection } from './connection';
+import {testConnection} from './connection';
 
 // Load environment variables from .env.local
 config({ path: path.join(process.cwd(), '.env.local') });
@@ -42,8 +42,8 @@ export async function initializeDatabase() {
     
     console.log('✅ Database initialized successfully');
     return true;
-  } catch (error) {
-    console.error('❌ Database initialization failed:', error);
+  } catch (_error) {
+    console.error('❌ Database initialization failed:', _error);
     throw error;
   }
 }
@@ -55,7 +55,7 @@ export async function seedDatabase() {
   try {
     // Insert sample warehouses
     await executeQuery(`
-      INSERT IGNORE INTO warehouses (id, name, address, city, state, zip) VALUES
+      INSERT IGNORE INTO warehouses (_id, name, address, city, state, zip) VALUES
       (UUID(), 'Main Warehouse', '123 Industrial Blvd', 'Phoenix', 'AZ', '85001'),
       (UUID(), 'East Coast Warehouse', '456 Commerce St', 'Atlanta', 'GA', '30301'),
       (UUID(), 'West Coast Warehouse', '789 Pacific Ave', 'Los Angeles', 'CA', '90001')
@@ -63,7 +63,7 @@ export async function seedDatabase() {
     
     // Insert sample product categories
     await executeQuery(`
-      INSERT IGNORE INTO product_categories (id, name, description, slug) VALUES
+      INSERT IGNORE INTO product_categories (_id, name, description, slug) VALUES
       (UUID(), 'Solar Panels', 'High-efficiency solar panels', 'solar-panels'),
       (UUID(), 'Inverters', 'Power inverters and converters', 'inverters'),
       (UUID(), 'Batteries', 'Energy storage solutions', 'batteries'),
@@ -72,14 +72,14 @@ export async function seedDatabase() {
     
     // Get category IDs for products
     const categories = await executeQuery(`SELECT id, slug FROM product_categories`);
-    const categoryMap = categories.reduce((acc: any, cat: any) => {
+    const categoryMap = categories.reduce((acc: unknown, cat: unknown) => {
       acc[cat.slug] = cat.id;
       return acc;
     }, {});
     
     // Insert sample products
     await executeQuery(`
-      INSERT IGNORE INTO products (id, name, description, price, sku, category_id, is_active) VALUES
+      INSERT IGNORE INTO products (_id, name, description, price, sku, category_id, is_active) VALUES
       (UUID(), 'SolarMax 400W Panel', 'High-efficiency 400W monocrystalline solar panel', 299.99, 'SM-400W', ?, TRUE),
       (UUID(), 'PowerInvert 5000W', '5000W pure sine wave inverter', 899.99, 'PI-5000W', ?, TRUE),
       (UUID(), 'EnergyStore 10kWh', '10kWh lithium battery storage system', 4999.99, 'ES-10KWH', ?, TRUE),
@@ -93,8 +93,8 @@ export async function seedDatabase() {
     
     console.log('✅ Database seeded successfully');
     return true;
-  } catch (error) {
-    console.error('❌ Database seeding failed:', error);
+  } catch (_error) {
+    console.error('❌ Database seeding failed:', _error);
     throw error;
   }
 }
@@ -107,8 +107,8 @@ if (require.main === module) {
       console.log('🎉 Database setup complete!');
       process.exit(0);
     })
-    .catch((error) => {
-      console.error('💥 Database setup failed:', error);
+    .catch((_error) => {
+      console.error('💥 Database setup failed:', _error);
       process.exit(1);
     });
 }

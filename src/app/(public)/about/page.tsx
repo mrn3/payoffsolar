@@ -1,7 +1,6 @@
 import React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { FaSolarPanel, FaLeaf, FaMoneyBillWave } from 'react-icons/fa';
+import { FaLeaf, FaMoneyBillWave, FaSolarPanel } from 'react-icons/fa';
 
 export default function AboutPage() {
   return (
@@ -15,7 +14,7 @@ export default function AboutPage() {
               About Payoff Solar
             </h1>
             <p className="text-xl mb-8">
-              We're on a mission to make renewable energy accessible to everyone. Learn about our journey, our team, and our commitment to a sustainable future.
+              We&apos;re on a mission to make renewable energy accessible to everyone. Learn about our journey, our team, and our commitment to a sustainable future.
             </p>
           </div>
         </div>
@@ -34,7 +33,7 @@ export default function AboutPage() {
                 What started as a small team of passionate renewable energy advocates has grown into a full-service solar provider, offering everything from consultation and system design to installation and ongoing maintenance.
               </p>
               <p className="text-gray-600">
-                Over the years, we've helped thousands of customers reduce their energy bills and carbon footprint, contributing to a cleaner, more sustainable future for all.
+                Over the years, we&apos;ve helped thousands of customers reduce their energy bills and carbon footprint, contributing to a cleaner, more sustainable future for all.
               </p>
             </div>
             <div className="bg-gray-200 h-80 rounded-lg flex items-center justify-center">
@@ -69,7 +68,7 @@ export default function AboutPage() {
               </div>
               <h3 className="text-xl font-bold mb-2 text-center">Sustainability</h3>
               <p className="text-gray-600 text-center">
-                We're committed to reducing our environmental impact and helping our customers do the same through clean, renewable energy solutions.
+                We&apos;re committed to reducing our environmental impact and helping our customers do the same through clean, renewable energy solutions.
               </p>
             </div>
             <div className="bg-white p-8 rounded-lg shadow-sm">

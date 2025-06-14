@@ -1,10 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import {requireAuth, isAdmin} from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { InventoryModel, WarehouseModel } from '@/lib/models';
 import InventoryTable from '@/components/InventoryTable';
-import { FaPlus, FaSearch, FaExchangeAlt, FaExclamationTriangle } from 'react-icons/fa';
+import { FaExclamationTriangle, FaPlus } from 'react-icons/fa';
 
 interface InventoryPageProps {
   searchParams: Promise<{
@@ -22,7 +22,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
   }
 
   const params = await searchParams;
-  const page = parseInt(params.page || '1');
+  const page = parseInt(_params.page || '1');
   const search = params.search || '';
   const warehouseId = params.warehouseId || '';
   const limit = 50;
@@ -32,8 +32,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
   let warehouses = [];
   let lowStockItems = [];
   let total = 0;
-  let error = null;
-
+  
   try {
     // Load inventory data
     inventory = await InventoryModel.getAll(
@@ -53,8 +52,8 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
     // Load low stock items for alert
     lowStockItems = await InventoryModel.getLowStock(5);
   } catch (err) {
-    console.error('Error loading inventory data:', err);
-    error = 'Failed to load inventory data';
+    console.error('Error loading inventory _data:', err);
+    _error = 'Failed to load inventory data';
   }
 
   const totalPages = Math.ceil(total / limit);
@@ -96,7 +95,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
               <h3 className="text-sm font-medium text-yellow-800">Low Stock Alert</h3>
               <div className="mt-2 text-sm text-yellow-700">
                 <p>
-                  {lowStockItems.length} product{lowStockItems.length !== 1 ? 's are' : ' is'} below minimum stock level:
+                  {lowStockItems.length} product{lowStockItems.length !== 1 ? 's are' : ' is' } below minimum stock level:
                 </p>
                 <ul className="mt-1 list-disc list-inside">
                   {lowStockItems.slice(0, 3).map((item) => (

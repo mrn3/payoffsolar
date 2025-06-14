@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { FaImage, FaLock, FaArrowLeft } from 'react-icons/fa';
 import { useCart } from '@/contexts/CartContext';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import toast from 'react-hot-toast';
+import { FaArrowLeft, FaImage, FaLock } from 'react-icons/fa';
 
 interface CheckoutFormData {
   email: string;
@@ -61,12 +61,12 @@ export default function CheckoutPage() {
     return getTotalPrice() + calculateShipping() + calculateTax();
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (_e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (_e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Implement Stripe payment processing
     console.log('Checkout form submitted:', formData);

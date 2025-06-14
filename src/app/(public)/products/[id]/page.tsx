@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import {useParams} from 'next/navigation';
 import Link from 'next/link';
-import { Product, ProductCategory, ProductImage } from '@/lib/models';
+import {Product, ProductImage} from '@/lib/models';
 import ImageCarousel from '@/components/ui/ImageCarousel';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import RelatedProducts from '@/components/products/RelatedProducts';
-import { FaArrowLeft, FaImage, FaSpinner, FaShoppingCart, FaPlus, FaMinus } from 'react-icons/fa';
 import { useCart } from '@/contexts/CartContext';
+import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaSpinner} from 'react-icons/fa';
 
 interface ProductWithDetails extends Product {
   category_name?: string;
@@ -17,8 +17,7 @@ interface ProductWithDetails extends Product {
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const { addItem } = useCart();
+    const { addItem } = useCart();
 
   const [product, setProduct] = useState<ProductWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,12 +25,12 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    if (params.id) {
-      fetchProduct(params.id as string);
+    if (_params.id) {
+      fetchProduct(_params.id as string);
     }
   }, [params.id]);
 
-  const fetchProduct = async (id: string) => {
+  const fetchProduct = async (_id: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -49,8 +48,8 @@ export default function ProductDetailPage() {
 
       const productData = await productResponse.json();
       setProduct(productData.product);
-    } catch (error) {
-      console.error('Error fetching product:', error);
+    } catch (_error) {
+      console.error('Error fetching product:', _error);
       setError('Failed to load product');
     } finally {
       setLoading(false);
@@ -90,7 +89,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  if (error || !product) {
+  if (_error || !product) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -98,7 +97,7 @@ export default function ProductDetailPage() {
             {error || 'Product not found'}
           </h1>
           <p className="text-gray-600 mb-6">
-            The product you're looking for doesn't exist or has been removed.
+            The product you&apos;re looking for doesn&apos;t exist or has been removed.
           </p>
           <Link
             href="/products"
@@ -238,7 +237,7 @@ export default function ProductDetailPage() {
                       ? 'bg-green-100 text-green-800' 
                       : 'bg-red-100 text-red-800'
                   }`}>
-                    {product.is_active ? 'Available' : 'Unavailable'}
+                    {product.is_active ? 'Available' : 'Unavailable' }
                   </span>
                 </div>
               </div>
@@ -249,7 +248,7 @@ export default function ProductDetailPage() {
         {/* Related Products Section */}
         <RelatedProducts
           currentProductId={product.id}
-          categoryId={product.category_id}
+          _categoryId={product.category_id}
         />
       </div>
     </div>

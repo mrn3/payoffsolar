@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { FaTimes, FaUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
+import { FaTimes, FaUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 
 interface CSVRow {
   [key: string]: string;
@@ -96,8 +96,8 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
     onClose();
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileUpload = (_event: React.ChangeEvent<HTMLInputElement>) => {
+    const _file = event.target.files?.[0];
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith('.csv')) {
@@ -106,7 +106,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
     }
 
     setIsProcessing(true);
-    Papa.parse(file, {
+    Papa.parse(_file, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
@@ -116,10 +116,9 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
           return;
         }
 
-        const data = results.data as CSVRow[];
-        const headers = Object.keys(data[0] || {});
+                const headers = Object.keys(_data[0] || {});
         
-        setCsvData(data);
+        setCsvData(_data);
         setCsvHeaders(headers);
         
         // Initialize column mappings
@@ -132,8 +131,8 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
         setStep('mapping');
         setIsProcessing(false);
       },
-      error: (error) => {
-        toast.error('Error reading file: ' + error.message);
+      _error: (_error) => {
+        toast.error('Error reading file: ' + error instanceof Error ? error instanceof Error ? _error.message : String(_error) : String(_error));
         setIsProcessing(false);
       }
     });
@@ -181,7 +180,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
     }
 
     // Validate data
-    csvData.forEach((row, index) => {
+    csvData.forEach((row, _index) => {
       columnMappings.forEach(mapping => {
         if (mapping.orderField && mapping.orderField !== '') {
           const value = row[mapping.csvColumn]?.trim() || '';
@@ -189,7 +188,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
           // Validate required fields
           if ((mapping.orderField === 'quantity' || mapping.orderField === 'price') && !value) {
             errors.push({
-              row: index + 1,
+              row: _index + 1,
               field: mapping.orderField,
               message: `${mapping.orderField} is required`,
               value: value
@@ -201,7 +200,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
             const qty = parseInt(value);
             if (isNaN(qty) || qty <= 0) {
               errors.push({
-                row: index + 1,
+                row: _index + 1,
                 field: mapping.orderField,
                 message: 'Quantity must be a positive number',
                 value: value
@@ -214,7 +213,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
             const price = parseFloat(value);
             if (isNaN(price) || price < 0) {
               errors.push({
-                row: index + 1,
+                row: _index + 1,
                 field: mapping.orderField,
                 message: 'Price must be a non-negative number',
                 value: value
@@ -227,7 +226,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
             const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
             if (!dateRegex.test(value)) {
               errors.push({
-                row: index + 1,
+                row: _index + 1,
                 field: mapping.orderField,
                 message: 'Order date must be in YYYY-MM-DD format',
                 value: value
@@ -250,7 +249,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
     try {
       // Transform CSV data to order format
       const orderItems = csvData.map(row => {
-        const item: any = {};
+        const item: unknown = {};
         columnMappings.forEach(mapping => {
           if (mapping.orderField && mapping.orderField !== '') {
             item[mapping.orderField] = row[mapping.csvColumn]?.trim() || '';
@@ -259,7 +258,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
         return item;
       });
 
-      const response = await fetch('/api/orders/import', {
+      const _response = await fetch('/api/orders/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderItems })
@@ -269,11 +268,11 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.error || `Failed to import orders (HTTP ${response.status})`;
 
-        if (response.status === 401) {
+        if (_response.status === 401) {
           toast.error('Authentication required. Please log in as an admin user.');
           onClose();
           return;
-        } else if (response.status === 403) {
+        } else if (_response.status === 403) {
           toast.error('Admin access required for order import.');
           onClose();
           return;
@@ -282,12 +281,11 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
         throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      setImportResults(result);
+            setImportResults(result);
       setStep('complete');
 
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    } catch (_error) {
+      const errorMessage = error instanceof Error ? error instanceof Error ? error instanceof Error ? _error.message : String(_error) : String(_error) : 'Unknown error';
       toast.error(`Error importing orders: ${errorMessage}`);
       setStep('validation');
     } finally {
@@ -315,18 +313,17 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
         {/* Step indicator */}
         <div className="mb-6">
           <div className="flex items-center">
-            {['upload', 'mapping', 'validation', 'importing', 'complete'].map((stepName, index) => (
+            {['upload', 'mapping', 'validation', 'importing', 'complete'].map((stepName, _index) => (
               <React.Fragment key={stepName}>
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
                   step === stepName ? 'bg-green-600 text-white' :
-                  ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > index ? 'bg-green-600 text-white' :
-                  'bg-gray-300 text-gray-600'
+                  ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > _index ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-600'
                 }`}>
-                  {index + 1}
+                  {_index + 1}
                 </div>
-                {index < 4 && (
+                {_index < 4 && (
                   <div className={`flex-1 h-1 mx-2 ${
-                    ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > index ? 'bg-green-600' : 'bg-gray-300'
+                    ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > _index ? 'bg-green-600' : 'bg-gray-300'
                   }`} />
                 )}
               </React.Fragment>
@@ -362,7 +359,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
               disabled={isProcessing}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
             >
-              {isProcessing ? 'Processing...' : 'Choose CSV File'}
+              {isProcessing ? 'Processing...' : 'Choose CSV File' }
             </button>
             <div className="mt-4 text-xs text-gray-500">
               <p>Expected columns: Contact Email/Name, Product SKU/Name, Quantity, Price, Order Date (optional), Status (optional), Notes (optional)</p>
@@ -397,7 +394,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {columnMappings.map((mapping, index) => (
+                  {columnMappings.map((mapping, _index) => (
                     <tr key={mapping.csvColumn}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {mapping.csvColumn}
@@ -408,7 +405,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
                           value={mapping.orderField}
-                          onChange={(e) => updateColumnMapping(mapping.csvColumn, e.target.value)}
+                          onChange={(_e) => updateColumnMapping(mapping.csvColumn, _e.target.value)}
                           className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm"
                         >
                           {orderFields.map((field) => (
@@ -436,7 +433,7 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
                 disabled={isProcessing}
                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
               >
-                {isProcessing ? 'Validating...' : 'Continue'}
+                {isProcessing ? 'Validating...' : 'Continue' }
               </button>
             </div>
           </div>
@@ -489,12 +486,12 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {validationErrors.map((error, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{error.row}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{error.field}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">{error.message}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{error.value || '(empty)'}</td>
+                    {validationErrors.map((_error, _index) => (
+                      <tr key={_index}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{_error.row}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{_error.field}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">{_error.message}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{_error.value || '(empty)'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -562,14 +559,14 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
                   onClick={() => setShowFailedRecords(!showFailedRecords)}
                   className="text-sm text-blue-600 hover:text-blue-800"
                 >
-                  {showFailedRecords ? 'Hide' : 'Show'} failed records
+                  {showFailedRecords ? 'Hide' : 'Show' } failed records
                 </button>
 
                 {showFailedRecords && importResults.errorDetails && (
                   <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4 max-h-40 overflow-y-auto">
                     <ul className="text-sm text-red-700 space-y-1">
-                      {importResults.errorDetails.map((error, index) => (
-                        <li key={index}>{error}</li>
+                      {importResults.errorDetails.map((_error, _index) => (
+                        <li key={_index}>{_error}</li>
                       ))}
                     </ul>
                   </div>

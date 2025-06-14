@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useParams } from 'next/navigation';
-import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
+import {useParams, useRouter} from 'next/navigation';
 import { Order, OrderItem, Contact, Product } from '@/lib/models';
 import ContactAutocomplete from '@/components/ui/ContactAutocomplete';
+import {FaArrowLeft, FaPlus, FaTrash} from 'react-icons/fa';
 
 export default function EditOrderPage() {
   const router = useRouter();
@@ -50,24 +50,24 @@ export default function EditOrderPage() {
 
       if (orderRes.ok) {
         const orderData = await orderRes.json();
-        const order: Order = orderData.order;
+        const _order: Order = orderData.order;
 
         // Format order_date for HTML date input (YYYY-MM-DD)
         let formattedOrderDate = '';
-        if (order.order_date) {
-          const date = new Date(order.order_date);
+        if (_order.order_date) {
+          const date = new Date(_order.order_date);
           if (!isNaN(date.getTime())) {
             formattedOrderDate = date.toISOString().split('T')[0];
           }
         }
 
         setFormData({
-          contact_id: order.contact_id || '',
-          status: order.status,
+          contact_id: _order.contact_id || '',
+          status: _order.status,
           order_date: formattedOrderDate,
-          notes: order.notes || '',
-          items: order.items && order.items.length > 0
-            ? order.items.map(item => ({
+          notes: _order.notes || '',
+          items: _order.items && _order.items.length > 0
+            ? _order.items.map(item => ({
                 id: item.id,
                 product_id: item.product_id,
                 quantity: item.quantity,
@@ -79,20 +79,20 @@ export default function EditOrderPage() {
         setError('Failed to load order');
       }
     } catch (err) {
-      console.error('Error fetching data:', err);
+      console.error('Error fetching _data:', err);
       setError('Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (_e: React.FormEvent) => {
+    _e.preventDefault();
     setSubmitting(true);
     setError('');
 
     try {
-      const response = await fetch(`/api/orders/${orderId}`, {
+      const _response = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -100,10 +100,10 @@ export default function EditOrderPage() {
         body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
+      if (_response.ok) {
         router.push(`/dashboard/orders/${orderId}`);
       } else {
-        const errorData = await response.json();
+        const errorData = await _response.json();
         setError(errorData.error || 'Failed to update order');
       }
     } catch (err) {
@@ -121,29 +121,29 @@ export default function EditOrderPage() {
     }));
   };
 
-  const removeItem = (index: number) => {
+  const removeItem = (__index: number) => {
     if (formData.items.length > 1) {
       setFormData(prev => ({
         ...prev,
-        items: prev.items.filter((_, i) => i !== index)
+        items: prev.items.filter((_, i) => i !== __index)
       }));
     }
   };
 
-  const updateItem = (index: number, field: keyof OrderItem, value: string | number) => {
+  const updateItem = (__index: number, field: keyof OrderItem, value: string | number) => {
     setFormData(prev => ({
       ...prev,
-      items: prev.items.map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
+      items: prev.items.map((item, i) =>
+        i === __index ? { ...item, [field]: value } : item
       )
     }));
   };
 
-  const handleProductChange = (index: number, productId: string) => {
+  const handleProductChange = (__index: number, productId: string) => {
     const product = products.find(p => p.id === productId);
     if (product) {
-      updateItem(index, 'product_id', productId);
-      updateItem(index, 'price', product.price);
+      updateItem(__index, 'product_id', productId);
+      updateItem(__index, 'price', product.price);
     }
   };
 
@@ -197,7 +197,7 @@ export default function EditOrderPage() {
               </label>
               <ContactAutocomplete
                 value={formData.contact_id}
-                onChange={(contactId, contactName) => setFormData(prev => ({ ...prev, contact_id: contactId }))}
+                onChange={(contactId, _contactName) => setFormData(prev => ({ ...prev, contact_id: contactId }))}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
                 placeholder="Search for a contact..."
                 required
@@ -212,7 +212,7 @@ export default function EditOrderPage() {
                 id="status"
                 required
                 value={formData.status}
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
+                onChange={(_e) => setFormData(prev => ({ ...prev, status: _e.target.value }))}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
               >
                 <option value="pending">Pending</option>
@@ -232,7 +232,7 @@ export default function EditOrderPage() {
               id="order_date"
               required
               value={formData.order_date}
-              onChange={(e) => setFormData(prev => ({ ...prev, order_date: e.target.value }))}
+              onChange={(_e) => setFormData(prev => ({ ...prev, order_date: _e.target.value }))}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
             />
           </div>
@@ -245,7 +245,7 @@ export default function EditOrderPage() {
               id="notes"
               rows={3}
               value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              onChange={(_e) => setFormData(prev => ({ ...prev, notes: _e.target.value }))}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
               placeholder="Optional notes about this order..."
             />
@@ -266,8 +266,8 @@ export default function EditOrderPage() {
           </div>
 
           <div className="space-y-4">
-            {formData.items.map((item, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border border-gray-200 rounded-md">
+            {formData.items.map((item, _index) => (
+              <div key={_index} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border border-gray-200 rounded-md">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Product *
@@ -275,7 +275,7 @@ export default function EditOrderPage() {
                   <select
                     required
                     value={item.product_id}
-                    onChange={(e) => handleProductChange(index, e.target.value)}
+                    onChange={(_e) => handleProductChange(_index, _e.target.value)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
                   >
                     <option value="">Select a product</option>
@@ -296,7 +296,7 @@ export default function EditOrderPage() {
                     min="1"
                     required
                     value={item.quantity}
-                    onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                    onChange={(_e) => updateItem(_index, 'quantity', parseInt(_e.target.value) || 1)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
                   />
                 </div>
@@ -311,7 +311,7 @@ export default function EditOrderPage() {
                     step="0.01"
                     required
                     value={item.price}
-                    onChange={(e) => updateItem(index, 'price', parseFloat(e.target.value) || 0)}
+                    onChange={(_e) => updateItem(_index, 'price', parseFloat(_e.target.value) || 0)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
                   />
                 </div>
@@ -320,7 +320,7 @@ export default function EditOrderPage() {
                   {formData.items.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => removeItem(index)}
+                      onClick={() => removeItem(_index)}
                       className="w-full inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
                       <FaTrash className="h-4 w-4" />
@@ -352,7 +352,7 @@ export default function EditOrderPage() {
             disabled={submitting}
             className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
           >
-            {submitting ? 'Updating...' : 'Update Order'}
+            {submitting ? 'Updating...' : 'Update Order' }
           </button>
         </div>
       </form>

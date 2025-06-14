@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import { requireAuth , isAdmin} from '@/lib/auth';
 import { ContactModel } from '@/lib/models';
-import { isValidPhoneNumber } from '@/lib/utils/phone';
 import { getStateCode } from '@/lib/utils/states';
 
 interface ImportContact {
@@ -15,18 +14,18 @@ interface ImportContact {
   notes?: string;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { contacts } = await request.json();
+    const { _contacts } = await request.json();
 
-    if (!Array.isArray(contacts) || contacts.length === 0) {
-      return NextResponse.json({ error: 'No contacts provided' }, { status: 400 });
+    if (!Array.isArray(_contacts) || contacts.length === 0) {
+      return NextResponse.json({ _error: 'No contacts provided' }, { status: 400 });
     }
 
     let successCount = 0;
@@ -87,11 +86,11 @@ export async function POST(request: NextRequest) {
         });
 
         successCount++;
-      } catch (error) {
+      } catch (_error) {
         errorCount++;
-        const errorMessage = error instanceof Error ? error.message : `Row ${i + 1}: Unknown error`;
+        const errorMessage = error instanceof Error ? _error.message : `Row ${i + 1}: Unknown error`;
         errors.push(errorMessage);
-        console.error(`Error importing contact at row ${i + 1}:`, error);
+        console.error(`Error importing contact at row ${i + 1}:`, _error);
       }
     }
 
@@ -101,8 +100,8 @@ export async function POST(request: NextRequest) {
       errorDetails: errors
     });
 
-  } catch (error) {
-    console.error('Error in bulk contact import:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error in bulk contact import:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }

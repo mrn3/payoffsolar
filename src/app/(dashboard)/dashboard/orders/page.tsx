@@ -2,14 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FaPlus, FaEye, FaEdit, FaTrash, FaDownload, FaUpload } from 'react-icons/fa';
-import { format } from 'date-fns';
 import ImportOrdersModal from '@/components/orders/ImportOrdersModal';
 import DeleteAllOrdersModal from '@/components/orders/DeleteAllOrdersModal';
 import toast from 'react-hot-toast';
+import {FaDownload, FaEdit, FaEye, FaPlus, FaTrash, FaUpload} from 'react-icons/fa';
 
 interface Order {
-  id: string;
+  _id: string;
   contact_id: string;
   status: string;
   total: number | string;
@@ -21,7 +20,7 @@ interface Order {
 }
 
 interface UserProfile {
-  id: string;
+  _id: string;
   first_name: string | null;
   last_name: string | null;
   email: string | null;
@@ -41,7 +40,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     try {
@@ -64,7 +63,7 @@ export default function OrdersPage() {
         setError('Failed to load orders');
       }
     } catch (err) {
-      console.error('Error loading data:', err);
+      console.error('Error loading _data:', err);
       setError('Failed to load data');
     } finally {
       setLoading(false);
@@ -77,19 +76,19 @@ export default function OrdersPage() {
     }
 
     try {
-      const response = await fetch(`/api/orders/${orderId}`, {
+      const _response = await fetch(`/api/orders/${orderId}`, {
         method: 'DELETE',
       });
 
-      if (response.ok) {
+      if (_response.ok) {
         // Remove the order from the list
-        setOrders(prev => prev.filter(order => order.id !== orderId));
+        setOrders(prev => prev.filter(_order => _order.id !== orderId));
       } else {
-        const errorData = await response.json();
+        const errorData = await _response.json();
         toast.error(errorData.error || 'Failed to delete order');
       }
     } catch (err) {
-      console.error('Error deleting order:', err);
+      console.error('Error deleting _order:', err);
       toast.error('Failed to delete order');
     }
   };
@@ -112,7 +111,7 @@ export default function OrdersPage() {
     if (selectedOrders.size === orders.length) {
       setSelectedOrders(new Set());
     } else {
-      setSelectedOrders(new Set(orders.map(order => order.id)));
+      setSelectedOrders(new Set(orders.map(_order => _order.id)));
     }
   };
 
@@ -124,7 +123,7 @@ export default function OrdersPage() {
 
     setBulkUpdating(true);
     try {
-      const response = await fetch('/api/orders/bulk-update', {
+      const _response = await fetch('/api/orders/bulk-update', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -135,14 +134,14 @@ export default function OrdersPage() {
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        toast.success(data.message);
+      if (_response.ok) {
+        const _data = await _response.json();
+        toast.success(_data.message);
         setSelectedOrders(new Set());
         setBulkStatus('');
         fetchData(); // Refresh the orders list
       } else {
-        const errorData = await response.json();
+        const errorData = await _response.json();
         toast.error(errorData.error || 'Failed to update orders');
       }
     } catch (err) {
@@ -155,18 +154,18 @@ export default function OrdersPage() {
 
   const handleDeleteAllOrders = async () => {
     try {
-      const response = await fetch('/api/orders/delete-all', {
+      const _response = await fetch('/api/orders/delete-all', {
         method: 'DELETE',
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        toast.success(data.message);
+      if (_response.ok) {
+        const _data = await _response.json();
+        toast.success(_data.message);
         setSelectedOrders(new Set());
         setBulkStatus('');
         fetchData(); // Refresh the orders list
       } else {
-        const errorData = await response.json();
+        const errorData = await _response.json();
         toast.error(errorData.error || 'Failed to delete all orders');
       }
     } catch (err) {
@@ -211,7 +210,7 @@ export default function OrdersPage() {
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            {isContact(profile.role) ? 'My Orders' : 'Orders'}
+            {isContact(profile.role) ? 'My Orders' : 'Orders' }
           </h1>
           <p className="mt-2 text-sm text-gray-700">
             {isContact(profile.role)
@@ -272,7 +271,7 @@ export default function OrdersPage() {
                 <select
                   id="bulk-status"
                   value={bulkStatus}
-                  onChange={(e) => setBulkStatus(e.target.value)}
+                  onChange={(_e) => setBulkStatus(_e.target.value)}
                   className="rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm"
                 >
                   <option value="">Select status...</option>
@@ -289,7 +288,7 @@ export default function OrdersPage() {
                 disabled={!bulkStatus || bulkUpdating}
                 className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {bulkUpdating ? 'Updating...' : 'Update Status'}
+                {bulkUpdating ? 'Updating...' : 'Update Status' }
               </button>
               <button
                 onClick={() => setSelectedOrders(new Set())}
@@ -344,48 +343,48 @@ export default function OrdersPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {orders.length > 0 ? (
-                    orders.map((order) => (
-                      <tr key={order.id} className={selectedOrders.has(order.id) ? 'bg-gray-50' : ''}>
+                    orders.map((_order) => (
+                      <tr key={_order.id} className={selectedOrders.has(_order.id) ? 'bg-gray-50' : ''}>
                         {!isContact(profile.role) && (
                           <td className="relative w-12 px-6 sm:w-16 sm:px-8">
                             <input
                               type="checkbox"
                               className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-                              checked={selectedOrders.has(order.id)}
-                              onChange={() => handleSelectOrder(order.id)}
+                              checked={selectedOrders.has(_order.id)}
+                              onChange={() => handleSelectOrder(_order.id)}
                             />
                           </td>
                         )}
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          #{order.id.substring(0, 8)}
+                          #{_order.id.substring(0, 8)}
                         </td>
                         {!isContact(profile.role) && (
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {order.contact_name || 'Unknown Contact'}
+                            {_order.contact_name || 'Unknown Contact'}
                           </td>
                         )}
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                            {order.status}
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(_order.status)}`}>
+                            {_order.status}
                           </span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          ${Number(order.total).toFixed(2)}
+                          ${Number(_order.total).toFixed(2)}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {format(new Date(order.order_date), 'MMM d, yyyy')}
+                          {format(new Date(_order.order_date), 'MMM d, yyyy')}
                         </td>
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                           <div className="flex justify-end space-x-2">
                             <Link
-                              href={`/dashboard/orders/${order.id}`}
+                              href={`/dashboard/orders/${_order.id}`}
                               className="text-green-600 hover:text-green-900"
                               title="View order"
                             >
                               <FaEye className="h-4 w-4" />
                             </Link>
                             <Link
-                              href={`/api/orders/${order.id}/receipt`}
+                              href={`/api/orders/${_order.id}/receipt`}
                               className="text-blue-600 hover:text-blue-900"
                               title="Download receipt"
                             >
@@ -394,7 +393,7 @@ export default function OrdersPage() {
                             {!isContact(profile.role) && (
                               <>
                                 <Link
-                                  href={`/dashboard/orders/${order.id}/edit`}
+                                  href={`/dashboard/orders/${_order.id}/edit`}
                                   className="text-orange-600 hover:text-orange-900"
                                   title="Edit order"
                                 >
@@ -403,7 +402,7 @@ export default function OrdersPage() {
                                 <button
                                   className="text-red-600 hover:text-red-900"
                                   title="Delete order"
-                                  onClick={() => handleDeleteOrder(order.id)}
+                                  onClick={() => handleDeleteOrder(_order.id)}
                                 >
                                   <FaTrash className="h-4 w-4" />
                                 </button>
@@ -416,7 +415,7 @@ export default function OrdersPage() {
                   ) : (
                     <tr>
                       <td colSpan={isContact(profile.role) ? 5 : 7} className="px-6 py-4 text-center text-sm text-gray-500">
-                        {isContact(profile.role) ? 'You have no orders yet.' : 'No orders found.'}
+                        {isContact(profile.role) ? 'You have no orders yet.' : 'No orders found.' }
                       </td>
                     </tr>
                   )}

@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import { requireAuth , isAdmin} from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { WarehouseModel } from '@/lib/models';
 import WarehouseTable from '@/components/WarehouseTable';
@@ -14,13 +14,12 @@ export default async function WarehousesPage() {
   }
 
   let warehouses = [];
-  let error = null;
-
+  
   try {
     warehouses = await WarehouseModel.getAll();
   } catch (err) {
     console.error('Error loading warehouses:', err);
-    error = 'Failed to load warehouses';
+    _error = 'Failed to load warehouses';
   }
 
   return (

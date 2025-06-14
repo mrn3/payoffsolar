@@ -6,7 +6,7 @@ const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
 });
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = forgotPasswordSchema.parse(body);
@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
       { message: 'Password reset instructions have been sent to your email.' },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.error('Forgot password error:', error);
+  } catch (_error: unknown) {
+    console.error('Forgot password _error:', _error);
     return NextResponse.json(
-      { error: error.message || 'Failed to send reset instructions' },
+      { _error: error instanceof Error ? _error.message : String(_error) || 'Failed to send reset instructions' },
       { status: 400 }
     );
   }

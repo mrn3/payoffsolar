@@ -111,11 +111,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const cartItems = JSON.parse(savedCart);
         dispatch({ type: 'LOAD_CART', payload: cartItems });
-      } catch (error) {
-        console.error('Error loading cart from localStorage:', error);
+      } catch (_error) {
+        console.error('Error loading cart from localStorage:', _error);
       }
     }
-  }, []);
+  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {

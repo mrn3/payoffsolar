@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import Image from 'next/image';
-import { FaSolarPanel, FaBatteryFull, FaLeaf } from 'react-icons/fa';
+import { FaBatteryFull, FaLeaf, FaSolarPanel } from 'react-icons/fa';
 
 export default function HomePage() {
   return (

@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
+import { FaEnvelope, FaMapMarkerAlt, FaPhone } from 'react-icons/fa';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-
 
 const contactFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -38,18 +37,18 @@ export default function ContactPage() {
     },
   });
 
-  const onSubmit = async (data: ContactFormValues) => {
+  const onSubmit = async (_data: ContactFormValues) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
       // Submit to API route
-      const response = await fetch('/api/contact', {
+      const _response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(_data),
       });
 
       if (!response.ok) {
@@ -64,9 +63,9 @@ export default function ContactPage() {
       setTimeout(() => {
         setSubmitSuccess(false);
       }, 5000);
-    } catch (error: any) {
-      console.error('Error submitting contact form:', error);
-      setSubmitError(error.message || 'Failed to submit form. Please try again.');
+    } catch (_error: unknown) {
+      console.error('Error submitting contact form:', _error);
+      setSubmitError(_error instanceof Error ? _error.message : String(_error) || 'Failed to submit form. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -83,7 +82,7 @@ export default function ContactPage() {
               Contact Us
             </h1>
             <p className="text-xl mb-8">
-              Have questions about solar energy or our services? We're here to help. Reach out to our team for more information or to schedule a consultation.
+              Have questions about solar energy or our services? We&apos;re here to help. Reach out to our team for more information or to schedule a consultation.
             </p>
           </div>
         </div>
@@ -114,7 +113,7 @@ export default function ContactPage() {
                 info@payoffsolar.com
               </p>
               <p className="text-gray-600 mt-1">
-                We'll respond within 24 hours
+                We&apos;ll respond within 24 hours
               </p>
             </div>
             <div className="bg-gray-50 p-8 rounded-lg text-center">
@@ -145,7 +144,7 @@ export default function ContactPage() {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-green-800">
-                      Thank you for your message! We'll get back to you soon.
+                      Thank you for your message! We&apos;ll get back to you soon.
                     </p>
                   </div>
                 </div>
@@ -177,7 +176,7 @@ export default function ContactPage() {
                 <input
                   type="text"
                   id="name"
-                  className={`w-full px-4 py-2 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-md focus:ring-green-500 focus:border-green-500`}
+                  className={`w-full px-4 py-2 border ${errors.name ? 'border-red-300' : 'border-gray-300' } rounded-md focus:ring-green-500 focus:border-green-500`}
                   {...register('name')}
                 />
                 {errors.name && (
@@ -192,7 +191,7 @@ export default function ContactPage() {
                   <input
                     type="email"
                     id="email"
-                    className={`w-full px-4 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md focus:ring-green-500 focus:border-green-500`}
+                    className={`w-full px-4 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300' } rounded-md focus:ring-green-500 focus:border-green-500`}
                     {...register('email')}
                   />
                   {errors.email && (
@@ -206,7 +205,7 @@ export default function ContactPage() {
                   <input
                     type="tel"
                     id="phone"
-                    className={`w-full px-4 py-2 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-md focus:ring-green-500 focus:border-green-500`}
+                    className={`w-full px-4 py-2 border ${errors.phone ? 'border-red-300' : 'border-gray-300' } rounded-md focus:ring-green-500 focus:border-green-500`}
                     {...register('phone')}
                   />
                   {errors.phone && (
@@ -221,7 +220,7 @@ export default function ContactPage() {
                 <input
                   type="text"
                   id="subject"
-                  className={`w-full px-4 py-2 border ${errors.subject ? 'border-red-300' : 'border-gray-300'} rounded-md focus:ring-green-500 focus:border-green-500`}
+                  className={`w-full px-4 py-2 border ${errors.subject ? 'border-red-300' : 'border-gray-300' } rounded-md focus:ring-green-500 focus:border-green-500`}
                   {...register('subject')}
                 />
                 {errors.subject && (
@@ -235,7 +234,7 @@ export default function ContactPage() {
                 <textarea
                   id="message"
                   rows={6}
-                  className={`w-full px-4 py-2 border ${errors.message ? 'border-red-300' : 'border-gray-300'} rounded-md focus:ring-green-500 focus:border-green-500`}
+                  className={`w-full px-4 py-2 border ${errors.message ? 'border-red-300' : 'border-gray-300' } rounded-md focus:ring-green-500 focus:border-green-500`}
                   {...register('message')}
                 ></textarea>
                 {errors.message && (
@@ -248,7 +247,7 @@ export default function ContactPage() {
                   disabled={isSubmitting}
                   className="w-full bg-green-600 text-white py-3 px-4 rounded-md font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                  {isSubmitting ? 'Sending...' : 'Send Message' }
                 </button>
               </div>
             </form>

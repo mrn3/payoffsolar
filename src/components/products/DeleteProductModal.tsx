@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FaExclamationTriangle } from 'react-icons/fa';
 import { ProductWithCategory } from '@/lib/models';
+import { FaExclamationTriangle } from 'react-icons/fa';
 
 interface DeleteProductModalProps {
   isOpen: boolean;
@@ -19,8 +19,8 @@ export default function DeleteProductModal({ isOpen, onClose, onConfirm, product
     try {
       await onConfirm();
       onClose();
-    } catch (error) {
-      console.error('Error deleting product:', error);
+    } catch (_error) {
+      console.error('Error deleting product:', _error);
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export default function DeleteProductModal({ isOpen, onClose, onConfirm, product
               disabled={loading}
               className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
             >
-              {loading ? 'Deleting...' : 'Delete'}
+              {loading ? 'Deleting...' : 'Delete' }
             </button>
             <button
               type="button"

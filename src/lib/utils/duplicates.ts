@@ -1,8 +1,8 @@
 import { Contact } from '@/lib/models';
 
 export interface DuplicateGroup {
-  id: string;
-  contacts: Contact[];
+  _id: string;
+  _contacts: Contact[];
   similarityScore: number;
   matchType: 'email' | 'phone' | 'name' | 'multiple';
 }
@@ -147,35 +147,35 @@ export function calculateContactSimilarity(contact1: Contact, contact2: Contact)
 }
 
 // Find potential duplicates in a list of contacts
-export function findDuplicates(contacts: Contact[], threshold = 70): DuplicateGroup[] {
+export function findDuplicates(_contacts: Contact[], threshold = 70): DuplicateGroup[] {
   const duplicateGroups: DuplicateGroup[] = [];
   const processedContacts = new Set<string>();
 
   for (let i = 0; i < contacts.length; i++) {
-    if (processedContacts.has(contacts[i].id)) continue;
+    if (processedContacts.has(_contacts[i].id)) continue;
 
     const currentContact = contacts[i];
     const similarContacts: Contact[] = [currentContact];
     let maxSimilarity = 0;
-    let matchTypes = new Set<string>();
+    const matchTypes = new Set<string>();
 
     for (let j = i + 1; j < contacts.length; j++) {
-      if (processedContacts.has(contacts[j].id)) continue;
+      if (processedContacts.has(_contacts[j].id)) continue;
 
-      const similarity = calculateContactSimilarity(currentContact, contacts[j]);
+      const similarity = calculateContactSimilarity(currentContact, _contacts[j]);
       
       if (similarity.similarityScore >= threshold) {
-        similarContacts.push(contacts[j]);
+        similarContacts.push(_contacts[j]);
         maxSimilarity = Math.max(maxSimilarity, similarity.similarityScore);
         
         // Determine match type
-        if (similarity.matchReasons.some(reason => reason.includes('email'))) {
+        if (similarity.matchReasons.some(_reason => _reason.includes('email'))) {
           matchTypes.add('email');
         }
-        if (similarity.matchReasons.some(reason => reason.includes('phone'))) {
+        if (similarity.matchReasons.some(_reason => _reason.includes('phone'))) {
           matchTypes.add('phone');
         }
-        if (similarity.matchReasons.some(reason => reason.includes('name'))) {
+        if (similarity.matchReasons.some(_reason => _reason.includes('name'))) {
           matchTypes.add('name');
         }
       }
@@ -196,8 +196,8 @@ export function findDuplicates(contacts: Contact[], threshold = 70): DuplicateGr
       }
 
       duplicateGroups.push({
-        id: `group-${duplicateGroups.length + 1}`,
-        contacts: similarContacts,
+        _id: `group-${duplicateGroups.length + 1}`,
+        _contacts: similarContacts,
         similarityScore: maxSimilarity,
         matchType: primaryMatchType
       });

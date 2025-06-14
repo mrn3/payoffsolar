@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, isAdmin } from '@/lib/auth';
-import { OrderModel, OrderItemModel, ContactModel, ProductModel } from '@/lib/models';
+import {requireAuth, isAdmin} from '@/lib/auth';
+import {OrderItemModel, ContactModel, ProductModel} from '@/lib/models';
 
 interface ImportOrderItem {
   contact_email?: string;
@@ -28,7 +28,7 @@ interface ProcessedOrder {
   }>;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     console.log('Starting order import process...');
 
@@ -36,26 +36,26 @@ export async function POST(request: NextRequest) {
     let session;
     try {
       session = await requireAuth();
-    } catch (error) {
-      console.error('Authentication error in order import:', error);
+    } catch (_error) {
+      console.error('Authentication error in order import:', _error);
       return NextResponse.json({
-        error: 'Authentication required. Please log in as an admin user.'
+        _error: 'Authentication required. Please log in as an admin user.'
       }, { status: 401 });
     }
 
     if (!isAdmin(session.profile.role)) {
       console.error('Non-admin user attempted order import:', session.profile.role);
       return NextResponse.json({
-        error: 'Admin access required for order import.'
+        _error: 'Admin access required for order import.'
       }, { status: 403 });
     }
 
-    const { orderItems } = await request.json();
+    const { _orderItems } = await request.json();
     console.log(`Received ${orderItems?.length || 0} order items for import`);
 
     if (!Array.isArray(orderItems) || orderItems.length === 0) {
       return NextResponse.json({
-        error: 'Order items array is required and cannot be empty'
+        _error: 'Order items array is required and cannot be empty'
       }, { status: 400 });
     }
 
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
           if (!contact && item.contact_name) {
             // Try to find by name if email not found
             // Get all contacts to search through (no limit for import matching)
-            const contacts = await ContactModel.getAll(10000, 0); // Use a very high limit for import
+             // Use a very high limit for import
             contact = contacts.find(c =>
               c.name.toLowerCase() === item.contact_name.toLowerCase().trim()
             );
@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
           throw new Error(`Row ${i + 1}: Failed to create or find product`);
         }
 
-        // Create order group key (contact + status + order_date + notes + row index for uniqueness)
+        // Create order group key (contact + status + order_date + notes + row _index for uniqueness)
         const status = item.status?.trim() || 'pending';
         const notes = item.notes?.trim() || '';
 
@@ -270,12 +270,12 @@ export async function POST(request: NextRequest) {
           price: price
         });
 
-      } catch (error) {
+      } catch (_error) {
         errorCount++;
-        const errorMessage = error instanceof Error ? error.message : `Row ${i + 1}: Unknown error`;
+        const errorMessage = error instanceof Error ? _error.message : `Row ${i + 1}: Unknown error`;
         errors.push(errorMessage);
-        console.error(`Error processing order item at row ${i + 1}:`, error);
-        console.error(`Row ${i + 1} data:`, JSON.stringify(item, null, 2));
+        console.error(`Error processing order item at row ${i + 1}:`, _error);
+        console.error(`Row ${i + 1} _data:`, JSON.stringify(item, null, 2));
       }
     }
 
@@ -311,13 +311,13 @@ export async function POST(request: NextRequest) {
 
         successCount++;
         console.log(`Successfully created order ${orderId} with ${orderData.items.length} items`);
-      } catch (error) {
+      } catch (_error) {
         errorCount++;
-        const errorMessage = error instanceof Error ? error.message : `Order creation failed`;
+        const errorMessage = error instanceof Error ? _error.message : `Order creation failed`;
         const detailedError = `Order creation failed for key ${orderKey}: ${errorMessage}`;
         errors.push(detailedError);
-        console.error(`Error creating order for key ${orderKey}:`, error);
-        console.error(`Order data:`, JSON.stringify(orderData, null, 2));
+        console.error(`Error creating order for key ${orderKey}:`, _error);
+        console.error(`Order _data:`, JSON.stringify(orderData, null, 2));
       }
     }
 
@@ -330,11 +330,11 @@ export async function POST(request: NextRequest) {
       totalProcessed: orderItems.length
     });
 
-  } catch (error) {
-    console.error('Error importing orders:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+  } catch (_error) {
+    console.error('Error importing orders:', _error);
+    const errorMessage = error instanceof Error ? _error.message : 'Unknown error occurred';
     return NextResponse.json({
-      error: `Internal server error: ${errorMessage}`
+      _error: `Internal server _error: ${errorMessage}`
     }, { status: 500 });
   }
 }

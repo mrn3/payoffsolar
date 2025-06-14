@@ -23,63 +23,63 @@ export async function testConnection() {
     connection.release();
     console.log('✅ MySQL connection successful');
     return true;
-  } catch (error) {
-    console.error('❌ MySQL connection failed:', error);
+  } catch (_error) {
+    console.error('❌ MySQL connection failed:', _error);
     return false;
   }
 }
 
 // Execute query function
 export async function executeQuery<T = any>(
-  query: string,
-  params: any[] = []
+  _query: string,
+  params: unknown[] = []
 ): Promise<T[]> {
   try {
-    const [rows] = await pool.execute(query, params);
+    const [rows] = await pool.execute(_query, params);
     return rows as T[];
-  } catch (error) {
-    console.error('Database query error:', error);
-    throw error;
+  } catch (_error) {
+    console.error('Database query _error:', _error);
+    throw _error;
   }
 }
 
 // Execute single query (for INSERT, UPDATE, DELETE)
 export async function executeSingle(
-  query: string,
-  params: any[] = []
+  _query: string,
+  params: unknown[] = []
 ): Promise<mysql.ResultSetHeader> {
   try {
-    const [result] = await pool.execute(query, params);
+    const [result] = await pool.execute(_query, params);
     return result as mysql.ResultSetHeader;
-  } catch (error) {
-    console.error('Database query error:', error);
-    throw error;
+  } catch (_error) {
+    console.error('Database query _error:', _error);
+    throw _error;
   }
 }
 
 // Get single record
 export async function getOne<T = any>(
-  query: string,
-  params: any[] = []
+  _query: string,
+  params: unknown[] = []
 ): Promise<T | null> {
-  const results = await executeQuery<T>(query, params);
+  const results = await executeQuery<T>(_query, params);
   return results.length > 0 ? results[0] : null;
 }
 
 // Transaction helper
 export async function withTransaction<T>(
-  callback: (connection: mysql.PoolConnection) => Promise<T>
+  _callback: (connection: mysql.PoolConnection) => Promise<T>
 ): Promise<T> {
   const connection = await pool.getConnection();
-  
+
   try {
     await connection.beginTransaction();
-    const result = await callback(connection);
+    const result = await _callback(connection);
     await connection.commit();
     return result;
-  } catch (error) {
+  } catch (_error) {
     await connection.rollback();
-    throw error;
+    throw _error;
   } finally {
     connection.release();
   }

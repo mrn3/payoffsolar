@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { FaImage, FaPlus, FaMinus, FaTrash, FaShoppingCart, FaArrowLeft } from 'react-icons/fa';
 import { useCart } from '@/contexts/CartContext';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaTrash} from 'react-icons/fa';
 
 export default function CartPage() {
   const { state, removeItem, updateQuantity, clearCart, getTotalPrice } = useCart();
@@ -73,7 +73,7 @@ export default function CartPage() {
                   </button>
                 </div>
                 <p className="text-gray-600 mt-1">
-                  {state.items.length} {state.items.length === 1 ? 'item' : 'items'} in your cart
+                  {state.items.length} {state.items.length === 1 ? 'item' : 'items' } in your cart
                 </p>
               </div>
 

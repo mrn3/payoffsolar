@@ -1,0 +1,97 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path');
+
+// Function to recursively find all TypeScript/JavaScript files
+function findFiles(dir, extensions = ['.ts', '.tsx', '.js', '.jsx']) {
+  let results = [];
+  const list = fs.readdirSync(dir);
+  
+  list.forEach(file => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    
+    if (stat && stat.isDirectory() && !file.startsWith('.') && file !== 'node_modules') {
+      results = results.concat(findFiles(filePath, extensions));
+    } else if (extensions.some(ext => file.endsWith(ext))) {
+      results.push(filePath);
+    }
+  });
+  
+  return results;
+}
+
+// Function to fix all remaining issues
+function fixFile(filePath) {
+  let content = fs.readFileSync(filePath, 'utf8');
+  let modified = false;
+
+  // Fix all remaining broken quotes and entities
+  const fixes = [
+    // Fix any remaining &apos; and &quot; entities
+    [/&apos;/g, "'"],
+    [/&quot;/g, '"'],
+    
+    // Fix broken JSX attributes with id instead of _id
+    [/_id=/g, 'id='],
+    
+    // Fix any remaining broken string patterns
+    [/: '([^']*?)&apos;/g, ": '$1'"],
+    [/: "([^"]*?)&quot;/g, ': "$1"'],
+    [/'([^']*?)&apos;/g, "'$1'"],
+    [/"([^"]*?)&quot;/g, '"$1"'],
+    
+    // Fix broken array elements
+    [/\['([^']*?)&apos;\]/g, "['$1']"],
+    [/\["([^"]*?)&quot;\]/g, '["$1"]'],
+    
+    // Fix broken object properties
+    [/(\w+): '([^']*?)&apos;/g, "$1: '$2'"],
+    [/(\w+): "([^"]*?)&quot;/g, '$1: "$2"'],
+    
+    // Fix broken function calls
+    [/\('([^']*?)&apos;\)/g, "('$1')"],
+    [/\("([^"]*?)&quot;\)/g, '("$1")'],
+    
+    // Fix broken template literals
+    [/`([^`]*?)&apos;([^`]*?)`/g, "`$1'$2`"],
+    [/`([^`]*?)&quot;([^`]*?)`/g, '`$1"$2`'],
+    
+    // Fix broken ternary operators
+    [/\? '([^']*?)&apos; :/g, "? '$1' :"],
+    [/\? "([^"]*?)&quot; :/g, '? "$1" :'],
+    [/: '([^']*?)&apos; \}/g, ": '$1' }"],
+    [/: "([^"]*?)&quot; \}/g, ': "$1" }'],
+  ];
+
+  fixes.forEach(([pattern, replacement]) => {
+    if (pattern.test(content)) {
+      content = content.replace(pattern, replacement);
+      modified = true;
+    }
+  });
+
+  if (modified) {
+    fs.writeFileSync(filePath, content, 'utf8');
+    console.log(`Final cleanup applied to: ${filePath}`);
+    return true;
+  }
+  
+  return false;
+}
+
+// Main execution
+const srcDir = path.join(__dirname, 'src');
+const files = findFiles(srcDir);
+
+console.log(`Found ${files.length} files to check...`);
+
+let fixedCount = 0;
+files.forEach(file => {
+  if (fixFile(file)) {
+    fixedCount++;
+  }
+});
+
+console.log(`Applied final cleanup to ${fixedCount} files.`);

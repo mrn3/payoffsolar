@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface WarehouseFormData {
   name: string;
@@ -14,7 +13,7 @@ interface WarehouseFormData {
 interface WarehouseFormProps {
   initialData?: Partial<WarehouseFormData>;
   warehouseId?: string;
-  onSubmit?: (data: WarehouseFormData) => void;
+  onSubmit?: (_data: WarehouseFormData) => void;
   onCancel?: () => void;
 }
 
@@ -42,7 +41,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (_e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -59,7 +58,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
       const url = warehouseId ? `/api/warehouses/${warehouseId}` : '/api/warehouses';
       const method = warehouseId ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
+      const _response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -67,14 +66,14 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
         body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
+      if (_response.ok) {
         router.push('/dashboard/warehouses');
       } else {
         const errorData = await response.json();
         setErrors({ submit: errorData.error || 'An error occurred' });
       }
-    } catch (error) {
-      console.error('Error submitting form:', error);
+    } catch (_error) {
+      console.error('Error submitting form:', _error);
       setErrors({ submit: 'An error occurred while saving' });
     } finally {
       setLoading(false);
@@ -118,7 +117,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
           type="text"
           id="name"
           value={formData.name}
-          onChange={(e) => handleInputChange('name', e.target.value)}
+          onChange={(_e) => handleInputChange('name', _e.target.value)}
           onBlur={() => handleInputBlur('name')}
           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 ${
             errors.name ? 'border-red-300' : ''
@@ -136,7 +135,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
           type="text"
           id="address"
           value={formData.address}
-          onChange={(e) => handleInputChange('address', e.target.value)}
+          onChange={(_e) => handleInputChange('address', _e.target.value)}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
           placeholder="Enter street address"
         />
@@ -151,7 +150,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
             type="text"
             id="city"
             value={formData.city}
-            onChange={(e) => handleInputChange('city', e.target.value)}
+            onChange={(_e) => handleInputChange('city', _e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
             placeholder="Enter city"
           />
@@ -165,7 +164,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
             type="text"
             id="state"
             value={formData.state}
-            onChange={(e) => handleInputChange('state', e.target.value)}
+            onChange={(_e) => handleInputChange('state', _e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
             placeholder="Enter state"
           />
@@ -179,7 +178,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
             type="text"
             id="zip"
             value={formData.zip}
-            onChange={(e) => handleInputChange('zip', e.target.value)}
+            onChange={(_e) => handleInputChange('zip', _e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
             placeholder="Enter ZIP code"
           />
@@ -199,7 +198,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
           disabled={loading}
           className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
         >
-          {loading ? 'Saving...' : warehouseId ? 'Update Warehouse' : 'Add Warehouse'}
+          {loading ? 'Saving...' : warehouseId ? 'Update Warehouse' : 'Add Warehouse' }
         </button>
       </div>
     </form>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ContactModel, OrderModel } from '@/lib/models';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import {ContactModel} from '@/lib/models';
+import { requireAuth , isAdmin} from '@/lib/auth';
 import { executeSingle } from '@/lib/mysql/connection';
 
 interface MergeRequest {
@@ -18,23 +18,23 @@ interface MergeRequest {
   };
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
     const { primaryContactId, duplicateContactId, mergedData }: MergeRequest = await request.json();
 
     // Validate input
     if (!primaryContactId || !duplicateContactId || !mergedData) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ _error: 'Missing required fields' }, { status: 400 });
     }
 
     if (primaryContactId === duplicateContactId) {
-      return NextResponse.json({ error: 'Cannot merge a contact with itself' }, { status: 400 });
+      return NextResponse.json({ _error: 'Cannot merge a contact with itself' }, { status: 400 });
     }
 
     // Verify both contacts exist
@@ -42,14 +42,14 @@ export async function POST(request: NextRequest) {
     const duplicateContact = await ContactModel.getById(duplicateContactId);
 
     if (!primaryContact || !duplicateContact) {
-      return NextResponse.json({ error: 'One or both contacts not found' }, { status: 404 });
+      return NextResponse.json({ _error: 'One or both contacts not found' }, { status: 404 });
     }
 
     // Start transaction-like operations
     try {
       // 1. Update any orders that reference the duplicate contact to reference the primary contact
       await executeSingle(
-        'UPDATE orders SET contact_id = ? WHERE contact_id = ?',
+        'UPDATE orders SET contact_id = ? WHERE contact_id = ? ',
         [primaryContactId, duplicateContactId]
       );
 
@@ -80,12 +80,11 @@ export async function POST(request: NextRequest) {
     } catch (mergeError) {
       console.error('Error during merge operation:', mergeError);
       return NextResponse.json({ 
-        error: 'Failed to merge contacts. Please try again.' 
-      }, { status: 500 });
+        _error: 'Failed to merge contacts. Please try again.' }, { status: 500 });
     }
 
-  } catch (error) {
-    console.error('Error merging contacts:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (_error) {
+    console.error('Error merging _contacts:', _error);
+    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
   }
 }

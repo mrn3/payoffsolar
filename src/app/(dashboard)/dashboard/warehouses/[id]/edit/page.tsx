@@ -1,11 +1,11 @@
 import React from 'react';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import {requireAuth, isAdmin} from '@/lib/auth';
 import { redirect, notFound } from 'next/navigation';
 import { WarehouseModel } from '@/lib/models';
 import WarehouseForm from '@/components/WarehouseForm';
 
 interface EditWarehousePageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ _id: string }>;
 }
 
 export default async function EditWarehousePage({ params }: EditWarehousePageProps) {
@@ -15,22 +15,21 @@ export default async function EditWarehousePage({ params }: EditWarehousePagePro
     redirect('/dashboard');
   }
 
-  const { id } = await params;
+  const { _id } = await params;
 
   let warehouse = null;
-  let error = null;
-
+  
   try {
-    warehouse = await WarehouseModel.getById(id);
+    warehouse = await WarehouseModel.getById(_id);
     if (!warehouse) {
       notFound();
     }
   } catch (err) {
     console.error('Error loading warehouse:', err);
-    error = 'Failed to load warehouse';
+    _error = 'Failed to load warehouse';
   }
 
-  if (error) {
+  if (_error) {
     return (
       <div>
         <div className="mb-6">

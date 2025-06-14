@@ -1,16 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface Product {
-  id: string;
+  _id: string;
   name: string;
   sku: string;
 }
 
 interface Warehouse {
-  id: string;
+  _id: string;
   name: string;
 }
 
@@ -24,7 +23,7 @@ interface InventoryFormData {
 interface InventoryFormProps {
   initialData?: InventoryFormData;
   inventoryId?: string;
-  onSubmit?: (data: InventoryFormData) => void;
+  onSubmit?: (_data: InventoryFormData) => void;
   onCancel?: () => void;
 }
 
@@ -45,29 +44,27 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
   useEffect(() => {
     loadProducts();
     loadWarehouses();
-  }, []);
+  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   const loadProducts = async () => {
     try {
-      const response = await fetch('/api/products?includeInactive=false&limit=1000');
-      if (response.ok) {
-        const data = await response.json();
-        setProducts(data.products || []);
+      const _response = await fetch('/api/products?includeInactive=false&limit=1000');
+      if (_response.ok) {
+                setProducts(_data.products || []);
       }
-    } catch (error) {
-      console.error('Error loading products:', error);
+    } catch (_error) {
+      console.error('Error loading products:', _error);
     }
   };
 
   const loadWarehouses = async () => {
     try {
-      const response = await fetch('/api/warehouses');
-      if (response.ok) {
-        const data = await response.json();
-        setWarehouses(data.warehouses || []);
+      const _response = await fetch('/api/warehouses');
+      if (_response.ok) {
+                setWarehouses(_data.warehouses || []);
       }
-    } catch (error) {
-      console.error('Error loading warehouses:', error);
+    } catch (_error) {
+      console.error('Error loading warehouses:', _error);
     }
   };
 
@@ -91,7 +88,7 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (_e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -108,7 +105,7 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
       const url = inventoryId ? `/api/inventory/${inventoryId}` : '/api/inventory';
       const method = inventoryId ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
+      const _response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -116,14 +113,14 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
         body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
+      if (_response.ok) {
         router.push('/dashboard/inventory');
       } else {
         const errorData = await response.json();
         setErrors({ submit: errorData.error || 'An error occurred' });
       }
-    } catch (error) {
-      console.error('Error submitting form:', error);
+    } catch (_error) {
+      console.error('Error submitting form:', _error);
       setErrors({ submit: 'An error occurred while saving' });
     } finally {
       setLoading(false);
@@ -160,8 +157,8 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
         <select
           id="product_id"
           value={formData.product_id}
-          onChange={(e) => handleInputChange('product_id', e.target.value)}
-          disabled={!!inventoryId} // Don't allow changing product for existing inventory
+          onChange={(_e) => handleInputChange('product_id', _e.target.value)}
+          disabled={!!inventoryId} // Don&apos;t allow changing product for existing inventory
           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 ${
             errors.product_id ? 'border-red-300' : ''
           }`}
@@ -183,8 +180,8 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
         <select
           id="warehouse_id"
           value={formData.warehouse_id}
-          onChange={(e) => handleInputChange('warehouse_id', e.target.value)}
-          disabled={!!inventoryId} // Don't allow changing warehouse for existing inventory
+          onChange={(_e) => handleInputChange('warehouse_id', _e.target.value)}
+          disabled={!!inventoryId} // Don&apos;t allow changing warehouse for existing inventory
           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 ${
             errors.warehouse_id ? 'border-red-300' : ''
           }`}
@@ -208,7 +205,7 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
           id="quantity"
           min="0"
           value={formData.quantity}
-          onChange={(e) => handleInputChange('quantity', parseInt(e.target.value) || 0)}
+          onChange={(_e) => handleInputChange('quantity', parseInt(_e.target.value) || 0)}
           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 ${
             errors.quantity ? 'border-red-300' : ''
           }`}
@@ -225,7 +222,7 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
           id="min_quantity"
           min="0"
           value={formData.min_quantity}
-          onChange={(e) => handleInputChange('min_quantity', parseInt(e.target.value) || 0)}
+          onChange={(_e) => handleInputChange('min_quantity', parseInt(_e.target.value) || 0)}
           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 ${
             errors.min_quantity ? 'border-red-300' : ''
           }`}
@@ -246,7 +243,7 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
           disabled={loading}
           className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
         >
-          {loading ? 'Saving...' : inventoryId ? 'Update Inventory' : 'Add Inventory'}
+          {loading ? 'Saving...' : inventoryId ? 'Update Inventory' : 'Add Inventory' }
         </button>
       </div>
     </form>

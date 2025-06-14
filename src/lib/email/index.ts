@@ -44,10 +44,10 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     await sgMail.send(msg);
     console.log('✅ Email sent successfully to:', options.to);
     return true;
-  } catch (error: any) {
-    console.error('❌ Failed to send email:', error);
-    if (error.response) {
-      console.error('SendGrid error response:', error.response.body);
+  } catch (_error: unknown) {
+    console.error('❌ Failed to send email:', _error);
+    if (_error.response) {
+      console.error('SendGrid error response:', _error.response.body);
     }
     return false;
   }
@@ -196,11 +196,11 @@ function generatePasswordResetEmailHtml(resetUrl: string): string {
           <a href="${resetUrl}" class="button">Reset Password</a>
         </div>
         
-        <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+        <p>If the button doesn&apos;t work, you can copy and paste this link into your browser:</p>
         <p style="word-break: break-all; color: #6b7280; font-size: 14px;">${resetUrl}</p>
         
         <div class="warning">
-          <strong>Security Notice:</strong> This link will expire in 1 hour for your security. If you didn't request this password reset, you can safely ignore this email.
+          <strong>Security Notice:</strong> This link will expire in 1 hour for your security. If you didn&apos;t request this password reset, you can safely ignore this email.
         </div>
         
         <div class="footer">
@@ -227,7 +227,7 @@ ${resetUrl}
 
 This link will expire in 1 hour for your security.
 
-If you didn't request this password reset, you can safely ignore this email.
+If you didn&apos;t request this password reset, you can safely ignore this email.
 
 If you have any questions, please contact our support team.
 
@@ -320,7 +320,7 @@ function generateWelcomeEmailHtml(firstName: string, loginUrl: string): string {
           <h1>Welcome to Payoff Solar, ${firstName}!</h1>
         </div>
 
-        <p>Thank you for joining Payoff Solar! We're excited to help you on your solar energy journey.</p>
+        <p>Thank you for joining Payoff Solar! We&apos;re excited to help you on your solar energy journey.</p>
 
         <p>Your account has been successfully created. You can now:</p>
         <ul>
@@ -353,7 +353,7 @@ function generateWelcomeEmailText(firstName: string, loginUrl: string): string {
   return `
 Welcome to Payoff Solar, ${firstName}!
 
-Thank you for joining Payoff Solar! We're excited to help you on your solar energy journey.
+Thank you for joining Payoff Solar! We&apos;re excited to help you on your solar energy journey.
 
 Your account has been successfully created. You can now:
 - Browse our solar products and solutions

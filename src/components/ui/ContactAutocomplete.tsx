@@ -5,7 +5,7 @@ import { Contact } from '@/lib/models';
 
 interface ContactAutocompleteProps {
   value: string;
-  onChange: (contactId: string, contactName: string) => void;
+  onChange: (contactId: string, _contactName: string) => void;
   onBlur?: () => void;
   className?: string;
   placeholder?: string;
@@ -20,7 +20,7 @@ export default function ContactAutocomplete({
   className = '',
   placeholder = 'Search for a contact...',
   required = false,
-  error = false
+  _error = false
 }: ContactAutocompleteProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -34,12 +34,12 @@ export default function ContactAutocomplete({
   // Fetch all contacts on component mount
   useEffect(() => {
     fetchContacts();
-  }, []);
+  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // Set initial selected contact when value changes
   useEffect(() => {
     if (value && contacts.length > 0) {
-      const contact = contacts.find(c => c.id === value);
+      const contact = contacts.find(c => c._id === value);
       if (contact) {
         setSelectedContact(contact);
         setSearchTerm(contact.name);
@@ -67,23 +67,23 @@ export default function ContactAutocomplete({
   const fetchContacts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/contacts?limit=1000');
-      if (response.ok) {
-        const data = await response.json();
-        setContacts(data.contacts || []);
+      const _response = await fetch('/api/contacts?limit=1000');
+      if (_response.ok) {
+        const _data = await _response.json();
+        setContacts(_data.contacts || []);
       }
-    } catch (error) {
-      console.error('Error fetching contacts:', error);
+    } catch (_error) {
+      console.error('Error fetching _contacts:', _error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newSearchTerm = e.target.value;
+  const handleInputChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSearchTerm = _e.target.value;
     setSearchTerm(newSearchTerm);
     setIsOpen(true);
-    
+
     // If user clears the input, clear the selection
     if (newSearchTerm === '') {
       setSelectedContact(null);
@@ -113,8 +113,8 @@ export default function ContactAutocomplete({
     }, 200);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
+  const handleKeyDown = (_e: React.KeyboardEvent) => {
+    if (_e.key === 'Escape') {
       setIsOpen(false);
       inputRef.current?.blur();
     }
@@ -122,12 +122,12 @@ export default function ContactAutocomplete({
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (_event: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
+        !dropdownRef.current.contains(_event.target as Node) &&
         inputRef.current &&
-        !inputRef.current.contains(event.target as Node)
+        !inputRef.current.contains(_event.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -137,7 +137,7 @@ export default function ContactAutocomplete({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   return (
     <div className="relative">
@@ -180,7 +180,7 @@ export default function ContactAutocomplete({
             ))
           ) : (
             <div className="px-4 py-2 text-sm text-gray-500">
-              {searchTerm ? 'No contacts found' : 'Start typing to search contacts'}
+              {searchTerm ? 'No contacts found' : 'Start typing to search contacts' }
             </div>
           )}
         </div>

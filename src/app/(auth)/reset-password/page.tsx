@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import {useState, useEffect} from 'react';
+import {useSearchParams} from 'next/navigation';
 import { FaSun } from 'react-icons/fa';
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -12,7 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 const resetPasswordSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
-}).refine(data => data.password === data.confirmPassword, {
+}).refine(_data => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
 });
@@ -21,7 +21,7 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const _searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -44,13 +44,13 @@ export default function ResetPasswordPage() {
     if (tokenParam) {
       setToken(tokenParam);
     } else {
-      setError('Invalid or missing reset token. Please request a new password reset.');
+      setError('Invalid or missing reset token. Please _request a new password reset.');
     }
   }, [searchParams]);
 
-  const onSubmit = async (data: ResetPasswordFormValues) => {
+  const onSubmit = async (_data: ResetPasswordFormValues) => {
     if (!token) {
-      setError('Invalid or missing reset token. Please request a new password reset.');
+      setError('Invalid or missing reset token. Please _request a new password reset.');
       return;
     }
 
@@ -59,7 +59,7 @@ export default function ResetPasswordPage() {
     setSuccess(null);
 
     try {
-      const response = await fetch('/api/auth/reset-password', {
+      const _response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,8 +70,7 @@ export default function ResetPasswordPage() {
         }),
       });
 
-      const result = await response.json();
-
+      
       if (!response.ok) {
         throw new Error(result.error || 'Failed to reset password');
       }
@@ -82,9 +81,9 @@ export default function ResetPasswordPage() {
       setTimeout(() => {
         router.push('/login');
       }, 3000);
-    } catch (error: any) {
-      console.error('Password reset error:', error);
-      setError(error.message || 'Failed to reset password. Please try again.');
+    } catch (_error: unknown) {
+      console.error('Password reset _error:', _error);
+      setError(_error instanceof Error ? _error.message : 'Failed to reset password. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -177,7 +176,7 @@ export default function ResetPasswordPage() {
                 disabled={isLoading}
                 className="flex w-full justify-center rounded-md border border-transparent bg-green-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
               >
-                {isLoading ? 'Resetting password...' : 'Reset password'}
+                {isLoading ? 'Resetting password...' : 'Reset password' }
               </button>
             </div>
           </form>

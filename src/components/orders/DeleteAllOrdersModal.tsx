@@ -29,8 +29,8 @@ export default function DeleteAllOrdersModal({
       await onConfirm();
       onClose();
       setConfirmText('');
-    } catch (error) {
-      console.error('Error deleting all orders:', error);
+    } catch (_error) {
+      console.error('Error deleting all orders:', _error);
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ export default function DeleteAllOrdersModal({
                   <input
                     type="text"
                     value={confirmText}
-                    onChange={(e) => setConfirmText(e.target.value)}
+                    onChange={(_e) => setConfirmText(_e.target.value)}
                     placeholder="DELETE ALL ORDERS"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                   />
@@ -86,7 +86,7 @@ export default function DeleteAllOrdersModal({
               disabled={loading || !isConfirmValid}
               className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Deleting...' : 'Delete All Orders'}
+              {loading ? 'Deleting...' : 'Delete All Orders' }
             </button>
             <button
               type="button"

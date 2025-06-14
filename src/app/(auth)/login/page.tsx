@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { FaSun } from 'react-icons/fa';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { FaSun } from 'react-icons/fa';
 
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -18,8 +17,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -35,13 +33,13 @@ export default function LoginPage() {
     },
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
+  const onSubmit = async (_data: LoginFormValues) => {
     setIsLoading(true);
     setError(null);
 
     try {
       console.log('🔐 Starting login process...');
-      const response = await fetch('/api/auth/signin', {
+      const _response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,8 +50,8 @@ export default function LoginPage() {
         }),
       });
 
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response ok:', response.ok);
+      console.log('📡 Response status:', _response.status);
+      console.log('📡 Response ok:', _response.ok);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -68,9 +66,9 @@ export default function LoginPage() {
       console.log('🔄 Redirecting to dashboard...');
       // Use window.location to ensure cookies are sent with the request
       window.location.href = '/dashboard';
-    } catch (error: any) {
-      console.error('❌ Login error:', error);
-      setError(error.message || 'Failed to sign in. Please check your credentials.');
+    } catch (_error: unknown) {
+      console.error('❌ Login _error:', _error);
+      setError(_error instanceof Error ? _error.message : 'Failed to sign in. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -173,7 +171,7 @@ export default function LoginPage() {
                 disabled={isLoading}
                 className="flex w-full justify-center rounded-md border border-transparent bg-green-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
               >
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading ? 'Signing in...' : 'Sign in' }
               </button>
             </div>
           </form>

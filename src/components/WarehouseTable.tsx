@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FaEdit, FaTrash, FaMapMarkerAlt } from 'react-icons/fa';
+import {FaEdit, FaMapMarkerAlt, FaTrash} from 'react-icons/fa';
 
 interface Warehouse {
   id: string;
@@ -21,23 +21,23 @@ interface WarehouseTableProps {
 }
 
 export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
-  const router = useRouter();
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const router = useRouter();
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (_id: string) => {
     try {
-      const response = await fetch(`/api/warehouses/${id}`, {
+      const _response = await fetch(`/api/warehouses/${_id}`, {
         method: 'DELETE',
       });
 
-      if (response.ok) {
+      if (_response.ok) {
         router.refresh();
         setDeleteConfirm(null);
       } else {
         console.error('Failed to delete warehouse');
       }
-    } catch (error) {
-      console.error('Error deleting warehouse:', error);
+    } catch (_error) {
+      console.error('Error deleting warehouse: ', _error);
     }
   };
 

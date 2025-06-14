@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { FaSun, FaBars, FaTimes, FaUser, FaSignOutAlt, FaChevronDown } from 'react-icons/fa';
+import {usePathname, useRouter} from 'next/navigation';
+import { FaBars, FaChevronDown, FaSignOutAlt, FaSun, FaTimes, FaUser } from 'react-icons/fa';
 import { UserProfile } from '@/lib/auth';
 import CartIcon from '@/components/cart/CartIcon';
 
@@ -32,16 +32,16 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
 
   const handleSignOut = async () => {
     try {
-      const response = await fetch('/api/auth/signout', {
+      const _response = await fetch('/api/auth/signout', {
         method: 'POST',
       });
 
-      if (response.ok) {
+      if (_response.ok) {
         router.push('/login');
         router.refresh();
       }
-    } catch (error) {
-      console.error('Error signing out:', error);
+    } catch (_error) {
+      console.error('Error signing out:', _error);
     }
   };
 
@@ -149,7 +149,7 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
       </div>
 
       {/* Mobile Navigation */}
-      <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+      <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden' }`}>
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
           {navItems.map((item) => (
             <Link

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FaCalendar, FaUser, FaArrowRight } from 'react-icons/fa';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import { FaCalendar, FaUser, FaArrowRight } from 'react-icons/fa';
 
 interface BlogPost {
   id: string;
@@ -41,15 +41,15 @@ export default function BlogPage() {
   const fetchPosts = async (page: number = 1) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/public/content?type=blog&page=${page}&limit=10`);
+      const _response = await fetch(`/api/public/content?type=blog&page=${page}&limit=10`);
       
-      if (!response.ok) {
+      if (!_response.ok) {
         throw new Error('Failed to fetch blog posts');
       }
 
-      const data: BlogResponse = await response.json();
-      setPosts(data.content);
-      setPagination(data.pagination);
+      const _data: BlogResponse = await _response.json();
+      setPosts(_data.content);
+      setPagination(_data.pagination);
     } catch (err) {
       console.error('Error fetching blog posts:', err);
       setError('Failed to load blog posts');

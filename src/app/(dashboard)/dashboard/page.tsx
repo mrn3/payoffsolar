@@ -1,9 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
-import { FaUsers, FaBoxes, FaShoppingCart, FaWarehouse, FaEdit, FaArrowUp, FaArrowDown } from 'react-icons/fa';
-import { getUserProfile, isAdmin, isContact } from '@/lib/auth';
-import { ContactModel, ProductModel, OrderModel, InventoryModel } from '@/lib/models';
-import { formatDistanceToNow, format } from 'date-fns';
+import { getUserProfile, isContact } from '@/lib/auth';
+import {ContactModel, ProductModel, InventoryModel, OrderModel} from '@/lib/models';
+import { formatDistanceToNow } from 'date-fns';
+import { FaUsers, FaBoxes, FaShoppingCart, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 
 async function getStats(userId?: string, userRole?: string) {
   try {
@@ -44,13 +44,13 @@ async function getStats(userId?: string, userRole?: string) {
   }
 }
 
-async function getRecentActivity(userId?: string, userRole?: string) {
+async function getRecentActivity(_userId?: string, userRole?: string) {
   try {
     console.log('📈 Getting recent activity...');
 
     if (userRole === 'contact' && userId) {
       // Contact users only see their own data
-      const recentOrders = await OrderModel.getRecentByUser(userId, 3);
+      const recentOrders = await OrderModel.getRecentByUser(_userId, 3);
       console.log('🛒 User recent orders:', recentOrders?.length || 0);
 
       return {
@@ -64,7 +64,7 @@ async function getRecentActivity(userId?: string, userRole?: string) {
       console.log('🛒 Recent orders:', recentOrders?.length || 0);
 
       const recentContacts = await ContactModel.getAll(3, 0);
-      console.log('👥 Recent contacts:', recentContacts?.length || 0);
+      console.log('👥 Recent _contacts:', recentContacts?.length || 0);
 
       const lowStockItems = await InventoryModel.getLowStock(3);
       console.log('📦 Low stock items:', lowStockItems?.length || 0);
@@ -75,8 +75,8 @@ async function getRecentActivity(userId?: string, userRole?: string) {
         lowStockItems: lowStockItems || []
       };
     }
-  } catch (error) {
-    console.error('❌ Error getting recent activity:', error);
+  } catch (_error) {
+    console.error('❌ Error getting recent activity:', _error);
     return {
       recentOrders: [],
       recentContacts: [],
@@ -98,8 +98,8 @@ export default async function DashboardPage() {
     activity = await getRecentActivity(profile?.id, profile?.role || undefined);
 
     console.log('✅ Dashboard data loaded successfully');
-  } catch (error) {
-    console.error('❌ Error loading dashboard:', error);
+  } catch (_error) {
+    console.error('❌ Error loading dashboard:', _error);
     // Return a simple error page
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -113,20 +113,20 @@ export default async function DashboardPage() {
 
   // Combine recent activities and sort by date
   const allActivities = [
-    ...activity.recentOrders.map(order => ({
+    ...activity.recentOrders.map(_order => ({
       type: 'order',
-      id: order.id,
-      title: `${isContact(profile?.role) ? 'Order' : 'New Order'} #${order.id.substring(0, 8)}`,
+      _id: order.id,
+      title: `${isContact(profile?.role) ? 'Order' : 'New Order' } #${order.id.substring(0, 8)}`,
       status: order.status,
       name: order.contact_first_name && order.contact_last_name
         ? `${order.contact_first_name} ${order.contact_last_name}`
         : 'Unknown Contact',
-      date: new Date(order.created_at),
+      date: new Date(_order.created_at),
       statusColor: order.status === 'completed' ? 'green' : 'blue'
     })),
     ...activity.recentContacts.map(contact => ({
       type: 'contact',
-      id: contact.id,
+      _id: contact.id,
       title: 'New Contact Registration',
       status: 'new',
       name: `${contact.first_name} ${contact.last_name}`,
@@ -135,7 +135,7 @@ export default async function DashboardPage() {
     })),
     ...activity.lowStockItems.map(item => ({
       type: 'inventory',
-      id: item.id,
+      _id: item.id,
       title: 'Inventory Alert',
       status: 'alert',
       name: `${item.product_name || 'Unknown Product'} - Low Stock (${item.quantity}/${item.min_quantity})`,
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
         Welcome{profile ? `, ${profile.first_name}` : ''} to your Payoff Solar dashboard.
         {isContact(profile?.role)
           ? "Here's an overview of your orders."
-          : "Here's an overview of your business."
+          : "Here&apos;s an overview of your business."
         }
       </p>
 
@@ -225,7 +225,7 @@ export default async function DashboardPage() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    {isContact(profile?.role) ? 'My Orders' : 'Total Orders'}
+                    {isContact(profile?.role) ? 'My Orders' : 'Total Orders' }
                   </dt>
                   <dd>
                     <div className="text-lg font-medium text-gray-900">{stats.orderCount.toLocaleString()}</div>
@@ -237,12 +237,11 @@ export default async function DashboardPage() {
           <div className="bg-gray-50 px-4 py-4 sm:px-6">
             <div className="text-sm">
               <Link href="/dashboard/orders" className="font-medium text-purple-600 hover:text-purple-500">
-                {isContact(profile?.role) ? 'View my orders' : 'View all orders'}
+                {isContact(profile?.role) ? 'View my orders' : 'View all orders' }
               </Link>
             </div>
           </div>
         </div>
-
 
       </div>
 

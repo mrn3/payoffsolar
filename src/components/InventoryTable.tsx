@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { FaSearch, FaEdit, FaTrash, FaExchangeAlt } from 'react-icons/fa';
+import {useSearchParams} from 'next/navigation';
+import {FaEdit, FaExchangeAlt, FaSearch, FaTrash} from 'react-icons/fa';
 
 interface InventoryItem {
-  id: string;
+  _id: string;
   product_id: string;
   warehouse_id: string;
   quantity: number;
@@ -19,7 +19,7 @@ interface InventoryItem {
 }
 
 interface Warehouse {
-  id: string;
+  _id: string;
   name: string;
 }
 
@@ -43,13 +43,13 @@ export default function InventoryTable({
   total
 }: InventoryTableProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const _searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(currentSearch);
   const [selectedWarehouse, setSelectedWarehouse] = useState(currentWarehouseId);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const updateURL = (newSearch?: string, newWarehouse?: string, newPage?: number) => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(_searchParams);
     
     if (newSearch !== undefined) {
       if (newSearch) {
@@ -78,7 +78,7 @@ export default function InventoryTable({
     router.push(`/dashboard/inventory?${params.toString()}`);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (_e: React.FormEvent) => {
     e.preventDefault();
     updateURL(searchTerm, selectedWarehouse, 1);
   };
@@ -88,20 +88,20 @@ export default function InventoryTable({
     updateURL(searchTerm, warehouseId, 1);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (_id: string) => {
     try {
-      const response = await fetch(`/api/inventory/${id}`, {
+      const _response = await fetch(`/api/inventory/${id}`, {
         method: 'DELETE',
       });
 
-      if (response.ok) {
+      if (_response.ok) {
         router.refresh();
         setDeleteConfirm(null);
       } else {
         console.error('Failed to delete inventory item');
       }
-    } catch (error) {
-      console.error('Error deleting inventory item:', error);
+    } catch (_error) {
+      console.error('Error deleting inventory item:', _error);
     }
   };
 
@@ -137,7 +137,7 @@ export default function InventoryTable({
         <div className="sm:w-64">
           <select
             value={selectedWarehouse}
-            onChange={(e) => handleWarehouseChange(e.target.value)}
+            onChange={(_e) => handleWarehouseChange(_e.target.value)}
             className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
           >
             <option value="">All Warehouses</option>
@@ -156,7 +156,7 @@ export default function InventoryTable({
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(_e) => setSearchTerm(_e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
             placeholder="Search by product name or SKU"
           />

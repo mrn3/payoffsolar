@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { FaCheck, FaSolarPanel, FaBolt, FaHome, FaIndustry } from 'react-icons/fa';
+import { FaHome, FaSolarPanel, FaBolt, FaIndustry, FaCheck } from 'react-icons/fa';
 
 export default function PricingPage() {
   const packages = [
     {
-      id: 'small',
+      _id: 'small',
       name: 'Small Package',
       icon: <FaHome className="h-8 w-8" />,
       price: '$8,999',
@@ -27,7 +27,7 @@ export default function PricingPage() {
       popular: false
     },
     {
-      id: 'medium',
+      _id: 'medium',
       name: 'Medium Package',
       icon: <FaSolarPanel className="h-8 w-8" />,
       price: '$15,999',
@@ -52,7 +52,7 @@ export default function PricingPage() {
       popular: true
     },
     {
-      id: 'large',
+      _id: 'large',
       name: 'Large Package',
       icon: <FaBolt className="h-8 w-8" />,
       price: '$24,999',
@@ -79,7 +79,7 @@ export default function PricingPage() {
       popular: false
     },
     {
-      id: 'extra-large',
+      _id: 'extra-large',
       name: 'Extra Large Package',
       icon: <FaIndustry className="h-8 w-8" />,
       price: '$39,999',
@@ -143,8 +143,8 @@ export default function PricingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {packages.map((pkg) => (
               <div
-                key={pkg.id}
-                id={pkg.id}
+                key={pkg._id}
+                id={pkg._id}
                 className={`relative bg-white rounded-lg shadow-lg overflow-hidden ${
                   pkg.popular ? 'ring-2 ring-green-500 transform scale-105' : ''
                 }`}
@@ -187,8 +187,8 @@ export default function PricingPage() {
                   </div>
 
                   <ul className="space-y-2 mb-8">
-                    {pkg.features.map((feature, index) => (
-                      <li key={index} className="flex items-start">
+                    {pkg.features.map((feature, _index) => (
+                      <li key={_index} className="flex items-start">
                         <FaCheck className="h-4 w-4 text-green-500 mt-1 mr-2 flex-shrink-0" />
                         <span className="text-sm text-gray-700">{feature}</span>
                       </li>

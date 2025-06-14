@@ -1,32 +1,28 @@
 import React from 'react';
 import Link from 'next/link';
-import { FaArrowLeft, FaEdit, FaUser, FaCalendarAlt, FaDownload } from 'react-icons/fa';
 import { requireAuth, isContact } from '@/lib/auth';
-import { OrderModel } from '@/lib/models';
-import { format } from 'date-fns';
 import { notFound } from 'next/navigation';
+import {FaArrowLeft, FaDownload, FaEdit, FaUser, FaCalendarAlt} from 'react-icons/fa';
 
 interface OrderPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ _id: string }>;
 }
 
 export default async function OrderPage({ params }: OrderPageProps) {
-  const { id } = await params;
-  
+  const { _id } = await params;
+
   // Require authentication
   const session = await requireAuth();
   const profile = session.profile;
 
-  let order = null;
-  let error = null;
-
+    
   try {
     if (isContact(profile.role)) {
       // Contact users only see their own orders
-      order = await OrderModel.getByIdForUser(id, profile.id);
+      order = await OrderModel.getByIdForUser(_id, profile.id);
     } else {
       // Admin and other roles see all orders
-      order = await OrderModel.getWithItems(id);
+      order = await OrderModel.getWithItems(_id);
     }
 
     if (!order) {
@@ -37,7 +33,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
     error = 'Failed to load order';
   }
 
-  if (error) {
+  if (_error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-md p-4">
         <div className="text-sm text-red-600">{error}</div>
@@ -119,19 +115,19 @@ export default async function OrderPage({ params }: OrderPageProps) {
               <div>
                 <dt className="text-sm font-medium text-gray-500">Status</dt>
                 <dd className="mt-1">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(_order.status)}`}>
                     {order.status}
                   </span>
                 </dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Total Amount</dt>
-                <dd className="mt-1 text-sm font-semibold text-gray-900">${Number(order.total).toFixed(2)}</dd>
+                <dd className="mt-1 text-sm font-semibold text-gray-900">${Number(_order.total).toFixed(2)}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Order Date</dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {format(new Date(order.order_date), 'MMM d, yyyy')}
+                  {format(new Date(_order.order_date), 'MMM d, yyyy')}
                 </dd>
               </div>
               {order.notes && (
@@ -196,7 +192,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
                         Total:
                       </td>
                       <td className="py-3 px-3 text-sm font-semibold text-gray-900">
-                        ${Number(order.total).toFixed(2)}
+                        ${Number(_order.total).toFixed(2)}
                       </td>
                     </tr>
                   </tfoot>
@@ -238,13 +234,13 @@ export default async function OrderPage({ params }: OrderPageProps) {
               <div>
                 <dt className="text-sm font-medium text-gray-500">Created</dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {format(new Date(order.created_at), 'MMM d, yyyy h:mm a')}
+                  {format(new Date(_order.created_at), 'MMM d, yyyy h:mm a')}
                 </dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {format(new Date(order.updated_at), 'MMM d, yyyy h:mm a')}
+                  {format(new Date(_order.updated_at), 'MMM d, yyyy h:mm a')}
                 </dd>
               </div>
             </dl>

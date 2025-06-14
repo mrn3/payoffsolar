@@ -1,13 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaImage, FaEye, FaUpload, FaTrashAlt } from 'react-icons/fa';
 import { ProductWithFirstImage } from '@/lib/models';
 import DeleteProductModal from '@/components/products/DeleteProductModal';
 import DeleteAllProductsModal from '@/components/products/DeleteAllProductsModal';
 import ImportProductsModal from '@/components/products/ImportProductsModal';
-import { format } from 'date-fns';
+import {FaEdit, FaEye, FaImage, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload} from 'react-icons/fa';
 
 interface ProductsResponse {
   products: ProductWithFirstImage[];
@@ -44,18 +42,18 @@ export default function ProductsPage() {
         params.append('search', search);
       }
 
-      const response = await fetch(`/api/products?${params}`);
+      const _response = await fetch(`/api/products?${params}`);
       if (!response.ok) {
         throw new Error('Failed to fetch products');
       }
 
-      const data: ProductsResponse = await response.json();
-      setProducts(data.products);
-      setCurrentPage(data.pagination.page);
-      setTotalPages(data.pagination.totalPages);
-      setTotal(data.pagination.total);
-    } catch (error) {
-      console.error('Error fetching products:', error);
+      const _data: ProductsResponse = await response.json();
+      setProducts(_data.products);
+      setCurrentPage(_data.pagination.page);
+      setTotalPages(_data.pagination.totalPages);
+      setTotal(_data.pagination.total);
+    } catch (_error) {
+      console.error('Error fetching products:', _error);
     } finally {
       setLoading(false);
     }
@@ -65,8 +63,8 @@ export default function ProductsPage() {
     fetchProducts(1, searchQuery);
   }, [searchQuery]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleSearch = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(_e.target.value);
     setCurrentPage(1);
   };
 
@@ -82,7 +80,7 @@ export default function ProductsPage() {
     if (!selectedProduct) return;
 
     try {
-      const response = await fetch(`/api/products/${selectedProduct.id}`, {
+      const _response = await fetch(`/api/products/${selectedProduct.id}`, {
         method: 'DELETE'
       });
 
@@ -102,7 +100,7 @@ export default function ProductsPage() {
 
   const handleDeleteAllProducts = async () => {
     try {
-      const response = await fetch('/api/products/bulk-delete', {
+      const _response = await fetch('/api/products/bulk-delete', {
         method: 'DELETE'
       });
 
@@ -219,7 +217,7 @@ export default function ProductsPage() {
           <FaImage className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
           <p className="mt-1 text-sm text-gray-500">
-            {searchQuery ? 'Try adjusting your search terms.' : 'Get started by creating a new product.'}
+            {searchQuery ? 'Try adjusting your search terms.' : 'Get started by creating a new product.' }
           </p>
           {!searchQuery && (
             <div className="mt-6">
@@ -250,9 +248,9 @@ export default function ProductsPage() {
                     src={product.first_image_url || product.image_url}
                     alt={product.name}
                     className="h-full w-full object-cover hover:opacity-90 transition-opacity duration-200"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling!.style.display = 'flex';
+                    onError={(_e) => {
+                      _e.currentTarget.style.display = 'none';
+                      _e.currentTarget.nextElementSibling!.style.display = 'flex';
                     }}
                   />
                 ) : null}
@@ -281,7 +279,7 @@ export default function ProductsPage() {
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
                   }`}>
-                    {product.is_active ? 'Active' : 'Inactive'}
+                    {product.is_active ? 'Active' : 'Inactive' }
                   </span>
                 </div>
                 <div className="mt-4 flex items-center justify-between">

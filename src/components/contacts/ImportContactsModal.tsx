@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { FaTimes, FaUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
+import { FaTimes, FaUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 
 interface ImportContactsModalProps {
   isOpen: boolean;
@@ -75,17 +75,17 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
     onClose();
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = (_event: React.ChangeEvent<HTMLInputElement>) => {
+    const _file = _event.target.files?.[0];
+    if (!_file) return;
 
-    if (!file.name.toLowerCase().endsWith('.csv')) {
+    if (!_file.name.toLowerCase().endsWith('.csv')) {
       toast.error('Please select a CSV file');
       return;
     }
 
     setIsProcessing(true);
-    Papa.parse(file, {
+    Papa.parse(_file, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
@@ -95,10 +95,10 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
           return;
         }
 
-        const data = results.data as CSVRow[];
-        const headers = Object.keys(data[0] || {});
-        
-        setCsvData(data);
+                const _data = results.data as CSVRow[];
+        const headers = Object.keys(_data[0] || {});
+
+        setCsvData(_data);
         setCsvHeaders(headers);
         
         // Initialize column mappings
@@ -111,8 +111,8 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
         setStep('mapping');
         setIsProcessing(false);
       },
-      error: (error) => {
-        toast.error('Error reading file: ' + error.message);
+      error: (_error) => {
+        toast.error('Error reading file: ' + (_error instanceof Error ? _error.message : String(_error)));
         setIsProcessing(false);
       }
     });
@@ -164,7 +164,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
     setIsProcessing(true);
     const errors: ValidationError[] = [];
 
-    csvData.forEach((row, index) => {
+    csvData.forEach((row, _index) => {
       columnMappings.forEach(mapping => {
         if (mapping.contactField === '') return;
 
@@ -173,7 +173,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
         // Check required fields
         if (mapping.contactField === 'name' && !value) {
           errors.push({
-            row: index + 1,
+            row: _index + 1,
             field: mapping.contactField,
             message: 'This field is required',
             value
@@ -185,7 +185,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(value)) {
             errors.push({
-              row: index + 1,
+              row: _index + 1,
               field: 'email',
               message: 'Invalid email format',
               value
@@ -198,7 +198,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
           const phoneDigits = value.replace(/\D/g, '');
           if (phoneDigits.length < 10 || (phoneDigits.length === 11 && !phoneDigits.startsWith('1')) || phoneDigits.length > 11) {
             errors.push({
-              row: index + 1,
+              row: _index + 1,
               field: 'phone',
               message: 'Phone number must be 10 digits or 11 digits starting with 1',
               value
@@ -229,22 +229,22 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
         return contact;
       });
 
-      const response = await fetch('/api/contacts/import', {
+      const _response = await fetch('/api/contacts/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contacts })
       });
 
-      if (!response.ok) {
+      if (!_response.ok) {
         throw new Error('Failed to import contacts');
       }
 
-      const result = await response.json();
+      const result = await _response.json();
       setImportResults(result);
       setStep('complete');
 
-    } catch (error) {
-      toast.error('Error importing contacts: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } catch (_error) {
+      toast.error('Error importing contacts: ' + (_error instanceof Error ? _error.message : 'Unknown error'));
       setStep('validation');
     } finally {
       setIsProcessing(false);
@@ -271,18 +271,17 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
         {/* Step indicator */}
         <div className="mb-6">
           <div className="flex items-center">
-            {['upload', 'mapping', 'validation', 'importing', 'complete'].map((stepName, index) => (
+            {['upload', 'mapping', 'validation', 'importing', 'complete'].map((stepName, _index) => (
               <React.Fragment key={stepName}>
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
                   step === stepName ? 'bg-green-600 text-white' :
-                  ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > index ? 'bg-green-600 text-white' :
-                  'bg-gray-300 text-gray-600'
+                  ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > _index ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-600'
                 }`}>
-                  {index + 1}
+                  {_index + 1}
                 </div>
-                {index < 4 && (
+                {_index < 4 && (
                   <div className={`flex-1 h-1 mx-2 ${
-                    ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > index ? 'bg-green-600' : 'bg-gray-300'
+                    ['upload', 'mapping', 'validation', 'importing', 'complete'].indexOf(step) > _index ? 'bg-green-600' : 'bg-gray-300'
                   }`} />
                 )}
               </React.Fragment>
@@ -317,7 +316,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
               disabled={isProcessing}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
             >
-              {isProcessing ? 'Processing...' : 'Choose CSV File'}
+              {isProcessing ? 'Processing...' : 'Choose CSV File' }
             </button>
           </div>
         )}
@@ -337,8 +336,8 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
                 <table className="min-w-full divide-y divide-gray-300 border border-gray-300">
                   <thead className="bg-gray-50">
                     <tr>
-                      {csvHeaders.map((header, index) => (
-                        <th key={index} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
+                      {csvHeaders.map((header, _index) => (
+                        <th key={_index} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-300">
                           {header}
                         </th>
                       ))}
@@ -362,8 +361,8 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
             {/* Column mapping */}
             <div className="space-y-4">
               <h5 className="text-sm font-medium text-gray-900">Column Mapping:</h5>
-              {columnMappings.map((mapping, index) => (
-                <div key={index} className="flex items-center space-x-4">
+              {columnMappings.map((mapping, _index) => (
+                <div key={_index} className="flex items-center space-x-4">
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
                       CSV Column: <span className="font-normal">{mapping.csvColumn}</span>
@@ -372,7 +371,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
                   <div className="flex-1">
                     <select
                       value={mapping.contactField}
-                      onChange={(e) => updateColumnMapping(mapping.csvColumn, e.target.value)}
+                      onChange={(_e) => updateColumnMapping(mapping.csvColumn, _e.target.value)}
                       className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
                     >
                       {CONTACT_FIELDS.map((field) => (
@@ -398,7 +397,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
                 disabled={isProcessing}
                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
               >
-                {isProcessing ? 'Validating...' : 'Continue'}
+                {isProcessing ? 'Validating...' : 'Continue' }
               </button>
             </div>
           </div>
@@ -451,12 +450,12 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {validationErrors.map((error, index) => (
-                      <tr key={index}>
-                        <td className="px-3 py-2 text-sm text-gray-900">{error.row}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{error.field}</td>
-                        <td className="px-3 py-2 text-sm text-red-600">{error.message}</td>
-                        <td className="px-3 py-2 text-sm text-gray-500">{error.value || '(empty)'}</td>
+                    {validationErrors.map((_error, _index) => (
+                      <tr key={_index}>
+                        <td className="px-3 py-2 text-sm text-gray-900">{_error.row}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{_error.field}</td>
+                        <td className="px-3 py-2 text-sm text-red-600">{_error.message}</td>
+                        <td className="px-3 py-2 text-sm text-gray-500">{_error.value || '(empty)'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -532,7 +531,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
                       onClick={() => setShowFailedRecords(!showFailedRecords)}
                       className="text-sm text-red-600 hover:text-red-800 font-medium"
                     >
-                      {showFailedRecords ? 'Hide Details' : 'Show Details'}
+                      {showFailedRecords ? 'Hide Details' : 'Show Details' }
                     </button>
                   </div>
                 </div>
@@ -546,9 +545,9 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {importResults.errorDetails.map((error, index) => (
-                          <tr key={index}>
-                            <td className="px-3 py-2 text-sm text-red-600">{error}</td>
+                        {importResults.errorDetails.map((_error, _index) => (
+                          <tr key={_index}>
+                            <td className="px-3 py-2 text-sm text-red-600">{_error}</td>
                           </tr>
                         ))}
                       </tbody>

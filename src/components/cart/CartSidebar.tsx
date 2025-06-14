@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { FaTimes, FaPlus, FaMinus, FaTrash, FaImage } from 'react-icons/fa';
 import { useCart } from '@/contexts/CartContext';
+import {FaImage, FaMinus, FaPlus, FaTimes, FaTrash} from 'react-icons/fa';
 
 export default function CartSidebar() {
   const { state, removeItem, updateQuantity, closeCart, getTotalPrice } = useCart();
