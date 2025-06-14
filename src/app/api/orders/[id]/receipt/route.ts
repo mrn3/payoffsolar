@@ -1,48 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isContact } from '@/lib/auth';
+import { OrderModel } from '@/lib/models';
+import { format } from 'date-fns';
 
 export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ _id: string }> }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require authentication
     const session = await requireAuth();
     const profile = session.profile;
 
-    const { _id } = await params;
-    
+    const { id } = await params;
+
     let order;
     if (isContact(profile.role)) {
       // Contact users can only download their own order receipts
-      _order = await OrderModel.getByIdForUser(_id, profile.id);
+      order = await OrderModel.getByIdForUser(id, profile.id);
     } else {
       // Admin and other roles can download all order receipts
-      _order = await OrderModel.getWithItems(_id);
+      order = await OrderModel.getWithItems(id);
     }
 
     if (!order) {
-      return NextResponse.json({ _error: 'Order not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
     // Generate simple HTML for the order receipt
-    const html = generateOrderReceiptHTML(_order);
+    const html = generateOrderReceiptHTML(order);
 
-    // For now, return HTML. In a production app, you&apos;d want to use a PDF library like puppeteer or jsPDF
+    // For now, return HTML. In a production app, you'd want to use a PDF library like puppeteer or jsPDF
     return new NextResponse(html, {
       headers: {
         'Content-Type': 'text/html',
         'Content-Disposition': `inline; filename="order-receipt-${order.id.substring(0, 8)}.html"`
       }
     });
-  } catch (_error) {
-    console.error('Error generating order receipt download:', _error);
-    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
+  } catch (error) {
+    console.error('Error generating order receipt download:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-function generateOrderReceiptHTML(_order: unknown): string {
-  const orderDate = format(new Date(_order.order_date), 'MMMM d, yyyy');
+function generateOrderReceiptHTML(order: any): string {
+  const orderDate = format(new Date(order.order_date), 'MMMM d, yyyy');
+  const contactName = order.contact_name;
     
   return `
 <!DOCTYPE html>
@@ -204,7 +207,7 @@ function generateOrderReceiptHTML(_order: unknown): string {
             </tr>
         </thead>
         <tbody>
-            ${order.items?.map((item: unknown) => `
+            ${order.items?.map((item: any) => `
                 <tr>
                     <td>${item.product_name || 'Unknown Product'}</td>
                     <td>${item.product_sku || 'N/A'}</td>
@@ -219,7 +222,7 @@ function generateOrderReceiptHTML(_order: unknown): string {
     <div class="total-section">
         <div class="total-row">
             <div class="total-label">Order Total:</div>
-            <div class="total-amount">$${Number(_order.total).toFixed(2)}</div>
+            <div class="total-amount">$${Number(order.total).toFixed(2)}</div>
         </div>
     </div>
 

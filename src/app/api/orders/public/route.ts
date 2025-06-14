@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {OrderItemModel, ContactModel} from '@/lib/models';
+import {OrderModel, OrderItemModel, ContactModel} from '@/lib/models';
 import stripe from '@/lib/stripe';
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { paymentIntentId, customerInfo, items, shipping } = body;
@@ -10,17 +10,17 @@ export async function POST(_request: NextRequest) {
     // Validate required fields
     if (!paymentIntentId || !customerInfo || !items || !Array.isArray(items)) {
       return NextResponse.json(
-        { _error: 'Missing required fields' },
+        { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
     // Verify payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    
+
     if (paymentIntent.status !== 'succeeded') {
       return NextResponse.json(
-        { _error: 'Payment not completed' },
+        { error: 'Payment not completed' },
         { status: 400 }
       );
     }
@@ -47,7 +47,7 @@ export async function POST(_request: NextRequest) {
 
     if (!contact) {
       return NextResponse.json(
-        { _error: 'Failed to create contact' },
+        { error: 'Failed to create contact' },
         { status: 500 }
       );
     }
@@ -76,15 +76,15 @@ export async function POST(_request: NextRequest) {
     // Get the complete order with items
     const newOrder = await OrderModel.getWithItems(orderId);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      _order: newOrder,
+      order: newOrder,
       message: 'Order created successfully'
     }, { status: 201 });
-  } catch (_error) {
-    console.error('Error creating _order:', _error);
+  } catch (error) {
+    console.error('Error creating order:', error);
     return NextResponse.json(
-      { _error: 'Failed to create order' },
+      { error: 'Failed to create order' },
       { status: 500 }
     );
   }

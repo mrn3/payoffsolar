@@ -44,13 +44,13 @@ async function getStats(userId?: string, userRole?: string) {
   }
 }
 
-async function getRecentActivity(_userId?: string, userRole?: string) {
+async function getRecentActivity(userId?: string, userRole?: string) {
   try {
     console.log('📈 Getting recent activity...');
 
     if (userRole === 'contact' && userId) {
       // Contact users only see their own data
-      const recentOrders = await OrderModel.getRecentByUser(_userId, 3);
+      const recentOrders = await OrderModel.getRecentByUser(userId, 3);
       console.log('🛒 User recent orders:', recentOrders?.length || 0);
 
       return {
@@ -64,7 +64,7 @@ async function getRecentActivity(_userId?: string, userRole?: string) {
       console.log('🛒 Recent orders:', recentOrders?.length || 0);
 
       const recentContacts = await ContactModel.getAll(3, 0);
-      console.log('👥 Recent _contacts:', recentContacts?.length || 0);
+      console.log('👥 Recent contacts:', recentContacts?.length || 0);
 
       const lowStockItems = await InventoryModel.getLowStock(3);
       console.log('📦 Low stock items:', lowStockItems?.length || 0);
@@ -75,8 +75,8 @@ async function getRecentActivity(_userId?: string, userRole?: string) {
         lowStockItems: lowStockItems || []
       };
     }
-  } catch (_error) {
-    console.error('❌ Error getting recent activity:', _error);
+  } catch (error) {
+    console.error('❌ Error getting recent activity:', error);
     return {
       recentOrders: [],
       recentContacts: [],
@@ -98,8 +98,8 @@ export default async function DashboardPage() {
     activity = await getRecentActivity(profile?.id, profile?.role || undefined);
 
     console.log('✅ Dashboard data loaded successfully');
-  } catch (_error) {
-    console.error('❌ Error loading dashboard:', _error);
+  } catch (error) {
+    console.error('❌ Error loading dashboard:', error);
     // Return a simple error page
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -113,29 +113,27 @@ export default async function DashboardPage() {
 
   // Combine recent activities and sort by date
   const allActivities = [
-    ...activity.recentOrders.map(_order => ({
+    ...activity.recentOrders.map(order => ({
       type: 'order',
-      _id: order.id,
+      id: order.id,
       title: `${isContact(profile?.role) ? 'Order' : 'New Order' } #${order.id.substring(0, 8)}`,
       status: order.status,
-      name: order.contact_first_name && order.contact_last_name
-        ? `${order.contact_first_name} ${order.contact_last_name}`
-        : 'Unknown Contact',
-      date: new Date(_order.created_at),
+      name: order.contact_name || 'Unknown Contact',
+      date: new Date(order.created_at),
       statusColor: order.status === 'completed' ? 'green' : 'blue'
     })),
     ...activity.recentContacts.map(contact => ({
       type: 'contact',
-      _id: contact.id,
+      id: contact.id,
       title: 'New Contact Registration',
       status: 'new',
-      name: `${contact.first_name} ${contact.last_name}`,
+      name: contact.name || `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown Contact',
       date: new Date(contact.created_at),
       statusColor: 'blue'
     })),
     ...activity.lowStockItems.map(item => ({
       type: 'inventory',
-      _id: item.id,
+      id: item.id,
       title: 'Inventory Alert',
       status: 'alert',
       name: `${item.product_name || 'Unknown Product'} - Low Stock (${item.quantity}/${item.min_quantity})`,
