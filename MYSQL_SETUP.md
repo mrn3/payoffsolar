@@ -15,7 +15,7 @@ This project has been migrated from Supabase to use a local MySQL database. Foll
 
 ### 1. Install Dependencies
 ```bash
-npm install
+yarn install
 ```
 
 ### 2. Start MySQL Service
@@ -60,7 +60,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 ### 5. Initialize Database
 Run the automated setup script:
 ```bash
-npm run setup-db
+yarn setup-db
 ```
 
 Or manually:
@@ -69,12 +69,12 @@ Or manually:
 mysql -u root -p < src/lib/mysql/schema.sql
 
 # Seed with initial data
-npm run init-db
+yarn init-db
 ```
 
 ### 6. Start Development Server
 ```bash
-npm run dev
+yarn dev
 ```
 
 ## Database Schema
@@ -114,7 +114,7 @@ FLUSH PRIVILEGES;
 To completely reset the database:
 ```bash
 mysql -u root -p -e "DROP DATABASE IF EXISTS payoffsolar;"
-npm run setup-db
+yarn setup-db
 ```
 
 ## Migration Notes
