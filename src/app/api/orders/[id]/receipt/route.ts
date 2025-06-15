@@ -154,11 +154,12 @@ function generateOrderReceiptHTML(order: any): string {
             font-weight: bold;
             text-transform: uppercase;
         }
-        .status-pending { background-color: #fef3c7; color: #92400e; }
-        .status-processing { background-color: #dbeafe; color: #1e40af; }
-        .status-shipped { background-color: #d1fae5; color: #065f46; }
-        .status-delivered { background-color: #d1fae5; color: #065f46; }
+        .status-proposed { background-color: #fef3c7; color: #92400e; }
+        .status-scheduled { background-color: #dbeafe; color: #1e40af; }
+        .status-complete { background-color: #d1fae5; color: #065f46; }
+        .status-paid { background-color: #d1fae5; color: #065f46; }
         .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+        .status-followed-up { background-color: #f3e8ff; color: #7c3aed; }
         
         @media print {
             body { margin: 0; }
@@ -177,7 +178,7 @@ function generateOrderReceiptHTML(order: any): string {
             <h3>Order Information</h3>
             <p><strong>Order ID:</strong> #${order.id.substring(0, 8)}</p>
             <p><strong>Order Date:</strong> ${orderDate}</p>
-            <p><strong>Status:</strong> <span class="status-badge status-${order.status}">${order.status}</span></p>
+            <p><strong>Status:</strong> <span class="status-badge status-${order.status.replace(/\s+/g, '-')}">${order.status}</span></p>
         </div>
         
         <div class="info-section">

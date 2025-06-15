@@ -244,7 +244,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create order group key (contact + status + order_date + notes + row index for uniqueness)
-        const status = item.status?.trim() || 'pending';
+        const status = item.status?.trim() || 'proposed';
         const notes = item.notes?.trim() || '';
 
         // If notes are provided (like order reference), use them to group orders

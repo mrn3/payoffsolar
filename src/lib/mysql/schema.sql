@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS inventory (
 CREATE TABLE IF NOT EXISTS orders (
   id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
   contact_id VARCHAR(36) NOT NULL,
-  status VARCHAR(50) NOT NULL DEFAULT 'pending',
+  status VARCHAR(50) NOT NULL DEFAULT 'proposed',
   total DECIMAL(10, 2) NOT NULL,
   order_date DATE NOT NULL,
   notes TEXT,

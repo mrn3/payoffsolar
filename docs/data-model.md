@@ -123,7 +123,7 @@ erDiagram
     ORDERS {
         varchar id PK "UUID"
         varchar customer_id FK
-        varchar status "pending, confirmed, shipped, delivered, cancelled"
+        varchar status "cancelled, complete, followed up, paid, proposed, scheduled"
         decimal total "10,2"
         text notes
         timestamp created_at

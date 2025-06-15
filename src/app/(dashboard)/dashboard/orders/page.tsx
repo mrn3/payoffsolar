@@ -177,14 +177,18 @@ export default function OrdersPage() {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'completed':
+      case 'complete':
         return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+      case 'paid':
+        return 'bg-green-100 text-green-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
-      case 'processing':
+      case 'proposed':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'scheduled':
         return 'bg-blue-100 text-blue-800';
+      case 'followed up':
+        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -276,10 +280,12 @@ export default function OrdersPage() {
                   className="rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm"
                 >
                   <option value="">Select status...</option>
-                  <option value="pending">Pending</option>
-                  <option value="processing">Processing</option>
-                  <option value="completed">Completed</option>
                   <option value="cancelled">Cancelled</option>
+                  <option value="complete">Complete</option>
+                  <option value="followed up">Followed Up</option>
+                  <option value="paid">Paid</option>
+                  <option value="proposed">Proposed</option>
+                  <option value="scheduled">Scheduled</option>
                 </select>
               </div>
             </div>

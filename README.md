@@ -80,6 +80,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 1. Install mariadb
     ```
     sudo apt-get install mariadb-server
+    sudo systemctl start mariadb.service
     ```
 1. Configure mariadb
     ```
