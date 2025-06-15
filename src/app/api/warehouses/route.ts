@@ -26,7 +26,8 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
-    
+    const data = await _request.json();
+
     // Validate required fields
     if (!data.name || !data.name.trim()) {
       return NextResponse.json({ 

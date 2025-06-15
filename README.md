@@ -32,23 +32,79 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 ## Server Setup
 
 1. Create Lighsail instance using Node.js template
-1. Clone the repo to /opt/bitnami/projects
+1. SSH to instance
+1. Update packages
+    ```
+    sudo apt-get update
+    sudo apt-get upgrade
+    ```
+1. Make directory
+    ```
+    sudo mkdir /opt/bitnami/projects
+    sudo chown $USER /opt/bitnami/projects
+    ```
+1. Change to projects directory
+    ```
+    cd /opt/bitnami/projects
+    ```
+1. Clone the repo
+    ```
+    git clone https://github.com/payoffsolar/payoffsolar.git
+    ```
 1. Configure environment variables using .env
-1. Install dependencies `yarn install`
-1. Build the project `yarn build`
-1. Install pm2 `npm install -g pm2`
-1. Set up as daemon in pm2 `pm2 start "yarn start" --name "payoffsolar"`
-1. Set up pm2 to run on boot `pm2 startup`
+    ```
+    vi .env
+    ```
+1. Install dependencies
+    ```
+    yarn install
+    ```
+1. Build the project
+    ```
+    yarn build
+    ```
+1. Install pm2
+    ```
+    npm install -g pm2
+    ```
+1. Set up as daemon in pm2
+    ```
+    pm2 start "yarn start" --name "payoffsolar"
+    ```
+1. Set up pm2 to run on boot
+    ```
+    pm2 startup
+    ```
 1. Set up apache - https://docs.bitnami.com/general/infrastructure/nodejs/get-started/get-started/
 1. Set up SSL - https://docs.bitnami.com/general/faq/administration/generate-configure-certificate-letsencrypt/
-1. Install mariadb `sudo apt-get install mariadb-server`
-1. Configure mariadb `sudo mysql_secure_installation`
-1. Install mysql2 `yarn add mysql2`
-1. Set up database - https://github.com/payoffsolar/payoffsolar/blob/main/MYSQL_SETUP.md
+1. Install mariadb
+    ```
+    sudo apt-get install mariadb-server
+    ```
+1. Configure mariadb
+    ```
+    sudo mysql_secure_installation
+    ```
 
 ## Deploy
 
-1. Pull latest changes `git pull`
-1. Install dependencies `yarn install`
-1. Build the project `yarn build`
-1. Restart pm2 `pm2 restart payoffsolar`
+1. Get to directory
+    ```
+    cd /opt/bitnami/projects/payoffsolar
+    ```
+1. Pull latest changes
+    ```
+    git pull
+    ```
+1. Install dependencies
+    ```
+    yarn install
+    ```
+1. Build the project
+    ```
+    yarn build
+    ```
+1. Restart pm2
+    ```
+    pm2 restart payoffsolar
+    ```

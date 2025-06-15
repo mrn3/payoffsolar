@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface WarehouseFormData {
   name: string;
@@ -41,7 +42,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (_e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -58,7 +59,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
       const url = warehouseId ? `/api/warehouses/${warehouseId}` : '/api/warehouses';
       const method = warehouseId ? 'PUT' : 'POST';
 
-      const _response = await fetch(url, {
+      const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +67,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
         body: JSON.stringify(formData),
       });
 
-      if (_response.ok) {
+      if (response.ok) {
         router.push('/dashboard/warehouses');
       } else {
         const errorData = await response.json();
@@ -117,7 +118,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
           type="text"
           id="name"
           value={formData.name}
-          onChange={(_e) => handleInputChange('name', _e.target.value)}
+          onChange={(e) => handleInputChange('name', e.target.value)}
           onBlur={() => handleInputBlur('name')}
           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 ${
             errors.name ? 'border-red-300' : ''
@@ -135,7 +136,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
           type="text"
           id="address"
           value={formData.address}
-          onChange={(_e) => handleInputChange('address', _e.target.value)}
+          onChange={(e) => handleInputChange('address', e.target.value)}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
           placeholder="Enter street address"
         />
@@ -150,7 +151,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
             type="text"
             id="city"
             value={formData.city}
-            onChange={(_e) => handleInputChange('city', _e.target.value)}
+            onChange={(e) => handleInputChange('city', e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
             placeholder="Enter city"
           />
@@ -164,7 +165,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
             type="text"
             id="state"
             value={formData.state}
-            onChange={(_e) => handleInputChange('state', _e.target.value)}
+            onChange={(e) => handleInputChange('state', e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
             placeholder="Enter state"
           />
@@ -178,7 +179,7 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
             type="text"
             id="zip"
             value={formData.zip}
-            onChange={(_e) => handleInputChange('zip', _e.target.value)}
+            onChange={(e) => handleInputChange('zip', e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
             placeholder="Enter ZIP code"
           />

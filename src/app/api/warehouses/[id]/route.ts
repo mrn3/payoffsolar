@@ -38,7 +38,8 @@ export async function PUT(
     }
 
     const { _id } = await params;
-    
+    const data = await _request.json();
+
     // Check if warehouse exists
     const existingWarehouse = await WarehouseModel.getById(_id);
     if (!existingWarehouse) {
@@ -46,7 +47,7 @@ export async function PUT(
     }
 
     // Validate name if provided
-    if (_data.name !== undefined && (!data.name || !data.name.trim())) {
+    if (data.name !== undefined && (!data.name || !data.name.trim())) {
       return NextResponse.json({ _error: 'Warehouse name cannot be empty' }, { status: 400 });
     }
 

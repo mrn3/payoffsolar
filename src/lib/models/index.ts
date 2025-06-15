@@ -847,23 +847,27 @@ export interface Warehouse {
 
 export const WarehouseModel = {
   async getAll(): Promise<Warehouse[]> {
-    return executeQuery<Warehouse>('SELECT * FROM warehouses ORDER BY name');
+    return executeQuery<Warehouse>('SELECT id as _id, name, address, city, state, zip, created_at, updated_at FROM warehouses ORDER BY name');
   },
 
   async getById(_id: string): Promise<Warehouse | null> {
-    return getOne<Warehouse>('SELECT * FROM warehouses WHERE id = ?', [_id]);
+    return getOne<Warehouse>('SELECT id as _id, name, address, city, state, zip, created_at, updated_at FROM warehouses WHERE id = ?', [_id]);
   },
 
-  async create(_data: Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+  async create(_data: Omit<Warehouse, '_id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO warehouses (name, address, city, state, zip) VALUES (?, ?, ?, ?, ?)',
+      [_data.name, _data.address || null, _data.city || null, _data.state || null, _data.zip || null]
+    );
 
-    const warehouse = await getOne<{ _id: string }>(
+    const warehouse = await getOne<{ id: string }>(
       'SELECT id FROM warehouses WHERE name = ? ORDER BY created_at DESC LIMIT 1',
       [_data.name]
     );
     return warehouse!.id;
   },
 
-  async update(_id: string, _data: Partial<Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+  async update(_id: string, _data: Partial<Omit<Warehouse, '_id' | 'created_at' | 'updated_at'>>): Promise<void> {
     const fields: string[] = [];
     const values: unknown[] = [];
 
@@ -892,13 +896,13 @@ export const WarehouseModel = {
 
     values.push(_id);
     await executeSingle(
-      `UPDATE warehouses SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE _id = ?`,
+      `UPDATE warehouses SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       values
     );
   },
 
   async delete(_id: string): Promise<void> {
-    await executeSingle('DELETE FROM warehouses WHERE _id = ? ', [_id]);
+    await executeSingle('DELETE FROM warehouses WHERE id = ?', [_id]);
   }
 };
 

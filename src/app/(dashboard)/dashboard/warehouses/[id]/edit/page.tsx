@@ -18,7 +18,8 @@ export default async function EditWarehousePage({ params }: EditWarehousePagePro
   const { _id } = await params;
 
   let warehouse = null;
-  
+  let error = '';
+
   try {
     warehouse = await WarehouseModel.getById(_id);
     if (!warehouse) {
@@ -26,10 +27,10 @@ export default async function EditWarehousePage({ params }: EditWarehousePagePro
     }
   } catch (err) {
     console.error('Error loading warehouse:', err);
-    _error = 'Failed to load warehouse';
+    error = 'Failed to load warehouse';
   }
 
-  if (_error) {
+  if (error) {
     return (
       <div>
         <div className="mb-6">
@@ -53,7 +54,7 @@ export default async function EditWarehousePage({ params }: EditWarehousePagePro
 
       <div className="bg-white shadow rounded-lg p-6">
         <WarehouseForm
-          warehouseId={id}
+          warehouseId={_id}
           initialData={{
             name: warehouse!.name,
             address: warehouse!.address || '',

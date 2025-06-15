@@ -18,7 +18,8 @@ export default async function EditInventoryPage({ params }: EditInventoryPagePro
   const { _id } = await params;
 
   let inventory = null;
-  
+  let error = '';
+
   try {
     inventory = await InventoryModel.getById(_id);
     if (!inventory) {
@@ -26,10 +27,10 @@ export default async function EditInventoryPage({ params }: EditInventoryPagePro
     }
   } catch (err) {
     console.error('Error loading inventory:', err);
-    _error = 'Failed to load inventory item';
+    error = 'Failed to load inventory item';
   }
 
-  if (_error) {
+  if (error) {
     return (
       <div>
         <div className="mb-6">
@@ -53,7 +54,7 @@ export default async function EditInventoryPage({ params }: EditInventoryPagePro
 
       <div className="bg-white shadow rounded-lg p-6">
         <InventoryForm
-          inventoryId={id}
+          inventoryId={_id}
           initialData={{
             product_id: inventory!.product_id,
             warehouse_id: inventory!.warehouse_id,

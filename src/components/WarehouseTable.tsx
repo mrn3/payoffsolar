@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {FaEdit, FaMapMarkerAlt, FaTrash} from 'react-icons/fa';
 
 interface Warehouse {
-  id: string;
+  _id: string;
   name: string;
   address?: string;
   city?: string;
@@ -77,7 +77,7 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
                   </tr>
                 ) : (
                   warehouses.map((warehouse) => (
-                    <tr key={warehouse.id}>
+                    <tr key={warehouse._id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         <div className="flex items-center">
                           <FaMapMarkerAlt className="mr-2 h-4 w-4 text-gray-400" />
@@ -95,15 +95,15 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <div className="flex justify-end space-x-2">
                           <Link
-                            href={`/dashboard/warehouses/${warehouse.id}/edit`}
+                            href={`/dashboard/warehouses/${warehouse._id}/edit`}
                             className="text-green-600 hover:text-green-900"
                           >
                             <FaEdit className="h-4 w-4" />
                           </Link>
-                          {deleteConfirm === warehouse.id ? (
+                          {deleteConfirm === warehouse._id ? (
                             <div className="flex space-x-1">
                               <button
-                                onClick={() => handleDelete(warehouse.id)}
+                                onClick={() => handleDelete(warehouse._id)}
                                 className="text-red-600 hover:text-red-900 text-xs"
                               >
                                 Confirm
@@ -117,7 +117,7 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
                             </div>
                           ) : (
                             <button
-                              onClick={() => setDeleteConfirm(warehouse.id)}
+                              onClick={() => setDeleteConfirm(warehouse._id)}
                               className="text-red-600 hover:text-red-900"
                             >
                               <FaTrash className="h-4 w-4" />
