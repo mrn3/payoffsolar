@@ -29,8 +29,21 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Server Setup
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Create Lighsail instance using Node.js template
+1. Clone the repo to /opt/bitnami/projects
+1. Configure environment variables using .env
+1. Install dependencies `yarn install`
+1. Build the project `yarn build`
+1. Install pm2 `npm install -g pm2`
+1. Set up as daemon in pm2 `pm2 start "yarn start" --name "payoffsolar"`
+1. Set up apache - https://docs.bitnami.com/general/infrastructure/nodejs/get-started/get-started/
+1. Set up SSL - https://docs.bitnami.com/general/faq/administration/generate-configure-certificate-letsencrypt/
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploy
+
+1. Pull latest changes `git pull`
+1. Install dependencies `yarn install`
+1. Build the project `yarn build`
+1. Restart pm2 `pm2 restart payoffsolar`

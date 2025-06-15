@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import {useSearchParams} from 'next/navigation';
-import {FaEdit, FaExchangeAlt, FaSearch, FaTrash} from 'react-icons/fa';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { FaEdit, FaExchangeAlt, FaSearch, FaTrash } from 'react-icons/fa';
 
 interface InventoryItem {
   _id: string;
@@ -43,13 +43,13 @@ export default function InventoryTable({
   total
 }: InventoryTableProps) {
   const router = useRouter();
-  const _searchParams = useSearchParams();
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(currentSearch);
   const [selectedWarehouse, setSelectedWarehouse] = useState(currentWarehouseId);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const updateURL = (newSearch?: string, newWarehouse?: string, newPage?: number) => {
-    const params = new URLSearchParams(_searchParams);
+    const params = new URLSearchParams(searchParams);
     
     if (newSearch !== undefined) {
       if (newSearch) {
@@ -78,7 +78,7 @@ export default function InventoryTable({
     router.push(`/dashboard/inventory?${params.toString()}`);
   };
 
-  const handleSearch = (_e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     updateURL(searchTerm, selectedWarehouse, 1);
   };
@@ -88,20 +88,20 @@ export default function InventoryTable({
     updateURL(searchTerm, warehouseId, 1);
   };
 
-  const handleDelete = async (_id: string) => {
+  const handleDelete = async (id: string) => {
     try {
-      const _response = await fetch(`/api/inventory/${id}`, {
+      const response = await fetch(`/api/inventory/${id}`, {
         method: 'DELETE',
       });
 
-      if (_response.ok) {
+      if (response.ok) {
         router.refresh();
         setDeleteConfirm(null);
       } else {
         console.error('Failed to delete inventory item');
       }
-    } catch (_error) {
-      console.error('Error deleting inventory item:', _error);
+    } catch (error) {
+      console.error('Error deleting inventory item:', error);
     }
   };
 
@@ -137,12 +137,12 @@ export default function InventoryTable({
         <div className="sm:w-64">
           <select
             value={selectedWarehouse}
-            onChange={(_e) => handleWarehouseChange(_e.target.value)}
+            onChange={(e) => handleWarehouseChange(e.target.value)}
             className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
           >
             <option value="">All Warehouses</option>
             {warehouses.map((warehouse) => (
-              <option key={warehouse.id} value={warehouse.id}>
+              <option key={warehouse._id} value={warehouse._id}>
                 {warehouse.name}
               </option>
             ))}
@@ -156,7 +156,7 @@ export default function InventoryTable({
           <input
             type="text"
             value={searchTerm}
-            onChange={(_e) => setSearchTerm(_e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
             placeholder="Search by product name or SKU"
           />
@@ -214,7 +214,7 @@ export default function InventoryTable({
                     </tr>
                   ) : (
                     inventory.map((item) => (
-                      <tr key={item.id}>
+                      <tr key={item._id}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                           {item.product_name || 'Unknown Product'}
                         </td>
@@ -236,15 +236,15 @@ export default function InventoryTable({
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                           <div className="flex justify-end space-x-2">
                             <Link
-                              href={`/dashboard/inventory/${item.id}/edit`}
+                              href={`/dashboard/inventory/${item._id}/edit`}
                               className="text-green-600 hover:text-green-900"
                             >
                               <FaEdit className="h-4 w-4" />
                             </Link>
-                            {deleteConfirm === item.id ? (
+                            {deleteConfirm === item._id ? (
                               <div className="flex space-x-1">
                                 <button
-                                  onClick={() => handleDelete(item.id)}
+                                  onClick={() => handleDelete(item._id)}
                                   className="text-red-600 hover:text-red-900 text-xs"
                                 >
                                   Confirm
@@ -258,7 +258,7 @@ export default function InventoryTable({
                               </div>
                             ) : (
                               <button
-                                onClick={() => setDeleteConfirm(item.id)}
+                                onClick={() => setDeleteConfirm(item._id)}
                                 className="text-red-600 hover:text-red-900"
                               >
                                 <FaTrash className="h-4 w-4" />
