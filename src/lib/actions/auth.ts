@@ -28,9 +28,9 @@ export async function signInAction(formData: FormData) {
     await signIn(validatedData.email, validatedData.password);
     
     redirect('/dashboard');
-  } catch (_error: unknown) {
-    console.error('Sign in _error:', _error);
-    throw new Error(_error instanceof Error ? _error.message : String(_error) || 'Failed to sign in');
+  } catch (error: unknown) {
+    console.error('Sign in error:', error);
+    throw new Error(error instanceof Error ? error.message : String(error) || 'Failed to sign in');
   }
 }
 
@@ -53,9 +53,9 @@ export async function signUpAction(formData: FormData) {
     );
     
     redirect('/dashboard');
-  } catch (_error: unknown) {
-    console.error('Sign up _error:', _error);
-    throw new Error(_error instanceof Error ? _error.message : String(_error) || 'Failed to create account');
+  } catch (error: unknown) {
+    console.error('Sign up error:', error);
+    throw new Error(error instanceof Error ? error.message : String(error) || 'Failed to create account');
   }
 }
 

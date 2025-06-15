@@ -7,9 +7,9 @@ const signInSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    console.log('🔐 API Sign in _request received');
+    console.log('🔐 API Sign in request received');
     console.log('Environment check:', {
       MYSQL_HOST: process.env.MYSQL_HOST,
       MYSQL_USER: process.env.MYSQL_USER,
@@ -30,7 +30,7 @@ export async function POST(_request: NextRequest) {
     const cookieString = generateCookieString(token);
     console.log('🍪 Generated cookie string:', cookieString);
 
-    const _response = NextResponse.json(
+    const response = NextResponse.json(
       { message: 'Signed in successfully', user: session.user },
       { status: 200 }
     );
@@ -40,10 +40,10 @@ export async function POST(_request: NextRequest) {
     console.log('🍪 Cookie set in response headers');
 
     return response;
-  } catch (_error: unknown) {
-    console.error('❌ Sign in _error:', _error);
+  } catch (error: unknown) {
+    console.error('❌ Sign in error:', error);
     return NextResponse.json(
-      { _error: error instanceof Error ? _error.message : String(_error) || 'Failed to sign in' },
+      { error: error instanceof Error ? error.message : String(error) || 'Failed to sign in' },
       { status: 401 }
     );
   }

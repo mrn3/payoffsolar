@@ -39,7 +39,7 @@ export default function LoginPage() {
 
     try {
       console.log('🔐 Starting login process...');
-      const _response = await fetch('/api/auth/signin', {
+      const response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,8 +50,8 @@ export default function LoginPage() {
         }),
       });
 
-      console.log('📡 Response status:', _response.status);
-      console.log('📡 Response ok:', _response.ok);
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response ok:', response.ok);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -66,9 +66,9 @@ export default function LoginPage() {
       console.log('🔄 Redirecting to dashboard...');
       // Use window.location to ensure cookies are sent with the request
       window.location.href = '/dashboard';
-    } catch (_error: unknown) {
-      console.error('❌ Login _error:', _error);
-      setError(_error instanceof Error ? _error.message : 'Failed to sign in. Please check your credentials.');
+    } catch (error: unknown) {
+      console.error('❌ Login error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to sign in. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }

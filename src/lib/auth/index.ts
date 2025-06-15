@@ -8,14 +8,14 @@ import crypto from 'crypto';
 export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'contact';
 
 export interface User {
-  _id: string;
+  id: string;
   email: string;
   email_verified: boolean;
   created_at: string;
 }
 
 export interface UserProfile {
-  _id: string;
+  id: string;
   email: string;
   first_name: string | null;
   last_name: string | null;
@@ -42,7 +42,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 // Generate JWT token
-export function generateToken(_userId: string): string {
+export function generateToken(userId: string): string {
   return jwt.sign(
     { userId, iat: Math.floor(Date.now() / 1000) },
     JWT_SECRET,
@@ -51,11 +51,11 @@ export function generateToken(_userId: string): string {
 }
 
 // Verify JWT token
-export function verifyToken(token: string): { _userId: string } | null {
+export function verifyToken(token: string): { userId: string } | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { _userId: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
     return decoded;
-  } catch (_error) {
+  } catch (error) {
     return null;
   }
 }
@@ -131,15 +131,15 @@ export async function getSession(): Promise<AuthSession | null> {
     return {
       user,
       profile: {
-        _id: profile.id,
+        id: profile.id,
         email: profile.email || user.email,
         first_name: profile.first_name,
         last_name: profile.last_name,
         role: profile.role_name as UserRole || null,
       },
     };
-  } catch (_error) {
-    console.error('Error getting session:', _error);
+  } catch (error) {
+    console.error('Error getting session:', error);
     return null;
   }
 }
@@ -195,13 +195,13 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
 
   return {
     user: {
-      _id: user.id,
+      id: user.id,
       email: user.email,
       email_verified: user.email_verified,
       created_at: user.created_at,
     },
     profile: {
-      _id: profile?.id || user.id,
+      id: profile?.id || user.id,
       email: profile?.email || user.email,
       first_name: profile?.first_name || null,
       last_name: profile?.last_name || null,
@@ -228,11 +228,12 @@ export async function signUp(
   }
 
   // Hash password
-  
+  const hashedPassword = await hashPassword(password);
+
   // Get contact role ID
-  const contactRole = await getOne<{ _id: string }>(
+  const contactRole = await getOne<{ id: string }>(
     'SELECT id FROM roles WHERE name = ? ',
-    ['6579']
+    ['contact']
   );
 
   if (!contactRole) {
@@ -241,7 +242,11 @@ export async function signUp(
 
   try {
     // Create user
-    
+    await executeSingle(
+      'INSERT INTO users (email, password_hash) VALUES (?, ?)',
+      [email, hashedPassword]
+    );
+
     // Get the created user
     const user = await getOne<User>(
       'SELECT id, email, email_verified, created_at FROM users WHERE email = ? ',
@@ -254,7 +259,7 @@ export async function signUp(
 
     // Create profile
     await executeSingle(
-      'INSERT INTO profiles (_id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO profiles (id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
       [user.id, firstName, lastName, email, contactRole.id]
     );
 
@@ -265,15 +270,15 @@ export async function signUp(
     return {
       user,
       profile: {
-        _id: user.id,
+        id: user.id,
         email: user.email,
         first_name: firstName,
         last_name: lastName,
         role: 'contact',
       },
     };
-  } catch (_error) {
-    console.error('Error creating user:', _error);
+  } catch (error) {
+    console.error('Error creating user:', error);
     throw new Error('Failed to create user account');
   }
 }
@@ -339,11 +344,12 @@ export async function createAdminUser(
   }
 
   // Hash password
-  
+  const hashedPassword = await hashPassword(password);
+
   // Get admin role ID
-  const adminRole = await getOne<{ _id: string }>(
+  const adminRole = await getOne<{ id: string }>(
     'SELECT id FROM roles WHERE name = ? ',
-    ['9536']
+    ['admin']
   );
 
   if (!adminRole) {
@@ -352,7 +358,11 @@ export async function createAdminUser(
 
   try {
     // Create user
-    
+    await executeSingle(
+      'INSERT INTO users (email, password_hash) VALUES (?, ?)',
+      [email, hashedPassword]
+    );
+
     // Get the created user
     const user = await getOne<User>(
       'SELECT id, email, email_verified, created_at FROM users WHERE email = ? ',
@@ -365,22 +375,22 @@ export async function createAdminUser(
 
     // Create profile
     await executeSingle(
-      'INSERT INTO profiles (_id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO profiles (id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
       [user.id, firstName, lastName, email, adminRole.id]
     );
 
     return {
       user,
       profile: {
-        _id: user.id,
+        id: user.id,
         email: user.email,
         first_name: firstName,
         last_name: lastName,
         role: 'admin',
       },
     };
-  } catch (_error) {
-    console.error('Error creating admin user:', _error);
+  } catch (error) {
+    console.error('Error creating admin user:', error);
     throw new Error('Failed to create admin user account');
   }
 }
@@ -468,8 +478,8 @@ export async function resetPassword(email: string): Promise<boolean> {
 }
 
 // Update password
-export async function updatePassword(_userId: string, _newPassword: string): Promise<boolean> {
-  
-  
+export async function updatePassword(userId: string, newPassword: string): Promise<boolean> {
+  const hashedPassword = await hashPassword(newPassword);
+  const result = await executeSingle('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, userId]);
   return result.affectedRows > 0;
 }

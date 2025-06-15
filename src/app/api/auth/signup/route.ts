@@ -9,26 +9,26 @@ const signUpSchema = z.object({
   lastName: z.string().optional(),
 });
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = signUpSchema.parse(body);
-    
+
     const session = await signUp(
       validatedData.email,
       validatedData.password,
       validatedData.firstName,
       validatedData.lastName
     );
-    
+
     return NextResponse.json(
       { message: 'Account created successfully', user: session.user },
       { status: 201 }
     );
-  } catch (_error: unknown) {
-    console.error('Sign up _error:', _error);
+  } catch (error: unknown) {
+    console.error('Sign up error:', error);
     return NextResponse.json(
-      { _error: error instanceof Error ? _error.message : String(_error) || 'Failed to create account' },
+      { error: error instanceof Error ? error.message : String(error) || 'Failed to create account' },
       { status: 400 }
     );
   }
