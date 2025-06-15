@@ -32,16 +32,16 @@ export const ContactModel = {
     return getOne<Contact>('SELECT * FROM contacts WHERE email = ?', [email]);
   },
 
-  async create(_data: Omit<Contact, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-    
-    // Look up by name and email to find the correct contact
-    let contact;
-    if (_data.email && data.email.trim() !== '') {
-      contact = await getOne<{ _id: string }>('SELECT id FROM contacts WHERE email = ? ORDER BY created_at DESC LIMIT 1', [data.email]);
-    } else {
-      // If no email, look up by name and creation time
-      contact = await getOne<{ id: string }>('SELECT id FROM contacts WHERE name = ? AND email = ? ORDER BY created_at DESC LIMIT 1', [data.name, data.email]);
-    }
+  async create(data: Omit<Contact, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO contacts (name, email, phone, address, city, state, zip, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.name, data.email || '', data.phone || '', data.address || '', data.city || '', data.state || '', data.zip || '', data.notes || null, data.user_id || null]
+    );
+
+    const contact = await getOne<{ id: string }>(
+      'SELECT id FROM contacts WHERE name = ? AND email = ? ORDER BY created_at DESC LIMIT 1',
+      [data.name, data.email || '']
+    );
     return contact!.id;
   },
 
@@ -267,10 +267,16 @@ export const ProductModel = {
     return getOne<Product>('SELECT * FROM products WHERE sku = ?', [sku]);
   },
 
-  async create(_data: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-    
-    // Look up by name and SKU to find the correct product
-    const product = await getOne<{ id: string }>('SELECT id FROM products WHERE name = ? AND sku = ? ORDER BY created_at DESC LIMIT 1', [_data.name, _data.sku]);
+  async create(data: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO products (name, description, price, image_url, category_id, sku, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [data.name, data.description, data.price, data.image_url || null, data.category_id || null, data.sku, data.is_active]
+    );
+
+    const product = await getOne<{ id: string }>(
+      'SELECT id FROM products WHERE name = ? AND sku = ? ORDER BY created_at DESC LIMIT 1',
+      [data.name, data.sku]
+    );
     return product!.id;
   },
 
@@ -408,11 +414,15 @@ export const ProductImageModel = {
     );
   },
 
-  async create(_data: Omit<ProductImage, 'id' | 'created_at'>): Promise<string> {
+  async create(data: Omit<ProductImage, 'id' | 'created_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO product_images (product_id, image_url, alt_text, sort_order) VALUES (?, ?, ?, ?)',
+      [data.product_id, data.image_url, data.alt_text || null, data.sort_order]
+    );
 
-    const image = await getOne<{ _id: string }>(
+    const image = await getOne<{ id: string }>(
       'SELECT id FROM product_images WHERE product_id = ? AND image_url = ? ORDER BY created_at DESC LIMIT 1',
-      [_data.product_id, _data.image_url]
+      [data.product_id, data.image_url]
     );
     return image!.id;
   },
@@ -568,11 +578,15 @@ export const OrderModel = {
     return { ...order, items };
   },
 
-  async create(_data: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+  async create(data: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO orders (contact_id, status, total, order_date, notes) VALUES (?, ?, ?, ?, ?)',
+      [data.contact_id, data.status, data.total, data.order_date, data.notes || null]
+    );
 
-    const order = await getOne<{ _id: string }>(
+    const order = await getOne<{ id: string }>(
       'SELECT id FROM orders WHERE contact_id = ? AND total = ? ORDER BY created_at DESC LIMIT 1',
-      [_data.contact_id, _data.total]
+      [data.contact_id, data.total]
     );
     return order!.id;
   },
@@ -653,11 +667,15 @@ export const OrderItemModel = {
     );
   },
 
-  async create(_data: Omit<OrderItem, 'id' | 'created_at'>): Promise<string> {
+  async create(data: Omit<OrderItem, 'id' | 'created_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
+      [data.order_id, data.product_id, data.quantity, data.price]
+    );
 
-    const item = await getOne<{ _id: string }>(
+    const item = await getOne<{ id: string }>(
       'SELECT id FROM order_items WHERE order_id = ? AND product_id = ? ORDER BY created_at DESC LIMIT 1',
-      [_data.order_id, _data.product_id]
+      [data.order_id, data.product_id]
     );
     return item!.id;
   },
@@ -778,11 +796,15 @@ export const InventoryModel = {
     );
   },
 
-  async create(_data: Omit<Inventory, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+  async create(data: Omit<Inventory, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO inventory (product_id, warehouse_id, quantity, min_quantity) VALUES (?, ?, ?, ?)',
+      [data.product_id, data.warehouse_id, data.quantity, data.min_quantity]
+    );
 
-    const inventory = await getOne<{ _id: string }>(
+    const inventory = await getOne<{ id: string }>(
       'SELECT id FROM inventory WHERE product_id = ? AND warehouse_id = ? ORDER BY created_at DESC LIMIT 1',
-      [_data.product_id, _data.warehouse_id]
+      [data.product_id, data.warehouse_id]
     );
     return inventory!.id;
   },

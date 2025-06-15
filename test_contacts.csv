@@ -1,0 +1,4 @@
+name,email,phone,address,city,state,zip,notes
+John Smith,john@example.com,555-123-4567,123 Main St,Anytown,CA,12345,Test contact 1
+Jane Doe,jane@example.com,555-987-6543,456 Oak Ave,Somewhere,NY,67890,Test contact 2
+Bob Johnson,bob@example.com,555-555-5555,789 Pine Rd,Elsewhere,TX,54321,Test contact 3
