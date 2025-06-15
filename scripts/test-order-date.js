@@ -1,17 +1,28 @@
 #!/usr/bin/env node
 
+// Load environment variables first
+require('dotenv').config({ path: '.env.local' });
+
 const mysql = require('mysql2/promise');
 
 async function testOrderDate() {
   let connection;
-  
+
   try {
+    console.log('🔍 Environment variables loaded:');
+    console.log('  MYSQL_HOST:', process.env.MYSQL_HOST || 'localhost');
+    console.log('  MYSQL_PORT:', process.env.MYSQL_PORT || 3306);
+    console.log('  MYSQL_USER:', process.env.MYSQL_USER || 'root');
+    console.log('  MYSQL_PASSWORD:', process.env.MYSQL_PASSWORD ? '***' : 'NOT SET');
+    console.log('  MYSQL_DATABASE:', process.env.MYSQL_DATABASE || 'payoffsolar');
+
     // Create connection
     connection = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: 'password',
-      database: 'payoffsolar'
+      host: process.env.MYSQL_HOST || 'localhost',
+      port: process.env.MYSQL_PORT || 3306,
+      user: process.env.MYSQL_USER || 'root',
+      password: process.env.MYSQL_PASSWORD || '',
+      database: process.env.MYSQL_DATABASE || 'payoffsolar'
     });
 
     console.log('Connected to MySQL database');

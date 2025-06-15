@@ -1,12 +1,21 @@
+// Load environment variables first, before anything else
+require('dotenv').config({ path: '.env.local' });
+
 const mysql = require('mysql2/promise');
 const fs = require('fs').promises;
 const path = require('path');
 
 async function setupDatabase() {
   let connection;
-  
+
   try {
     console.log('🔧 Setting up MySQL database...');
+    console.log('🔍 Environment variables loaded:');
+    console.log('  MYSQL_HOST:', process.env.MYSQL_HOST || 'localhost');
+    console.log('  MYSQL_PORT:', process.env.MYSQL_PORT || 3306);
+    console.log('  MYSQL_USER:', process.env.MYSQL_USER || 'root');
+    console.log('  MYSQL_PASSWORD:', process.env.MYSQL_PASSWORD ? '***' : 'NOT SET');
+    console.log('  MYSQL_DATABASE:', process.env.MYSQL_DATABASE || 'payoffsolar');
     
     // First, connect without specifying a database to create it
     connection = await mysql.createConnection({
@@ -60,8 +69,5 @@ async function setupDatabase() {
     }
   }
 }
-
-// Load environment variables
-require('dotenv').config({ path: '.env.local' });
 
 setupDatabase();
