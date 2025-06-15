@@ -22,7 +22,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
   }
 
   const params = await searchParams;
-  const page = parseInt(_params.page || '1');
+  const page = parseInt(params.page || '1');
   const search = params.search || '';
   const warehouseId = params.warehouseId || '';
   const limit = 50;
@@ -32,6 +32,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
   let warehouses = [];
   let lowStockItems = [];
   let total = 0;
+  let error = '';
   
   try {
     // Load inventory data
@@ -52,8 +53,8 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
     // Load low stock items for alert
     lowStockItems = await InventoryModel.getLowStock(5);
   } catch (err) {
-    console.error('Error loading inventory _data:', err);
-    _error = 'Failed to load inventory data';
+    console.error('Error loading inventory data:', err);
+    error = 'Failed to load inventory data';
   }
 
   const totalPages = Math.ceil(total / limit);
