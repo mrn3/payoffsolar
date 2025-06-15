@@ -37,21 +37,21 @@ export default function EditContactPage() {
   const fetchContact = async () => {
     try {
       setLoading(true);
-      const _response = await fetch(`/api/contacts/${contactId}`);
+      const response = await fetch(`/api/contacts/${contactId}`);
 
-      if (!_response.ok) {
-        if (_response.status === 404) {
+      if (!response.ok) {
+        if (response.status === 404) {
           setError('Contact not found');
           return;
         }
         throw new Error('Failed to fetch contact');
       }
 
-      const _data = await _response.json();
-      setContact(_data.contact);
+      const data = await response.json();
+      setContact(data.contact);
 
       // Normalize state value - convert full state name to code if needed
-      let normalizedState = _data.contact.state || '';
+      let normalizedState = data.contact.state || '';
       if (normalizedState && normalizedState.length > 2) {
         // If it's longer than 2 characters, try to convert to state code
         const stateCode = getStateCode(normalizedState);
@@ -61,14 +61,14 @@ export default function EditContactPage() {
       }
 
       setFormData({
-        name: _data.contact.name || '',
-        email: _data.contact.email || '',
-        phone: formatPhoneNumber(_data.contact.phone || ''),
-        address: _data.contact.address || '',
-        city: _data.contact.city || '',
+        name: data.contact.name || '',
+        email: data.contact.email || '',
+        phone: formatPhoneNumber(data.contact.phone || ''),
+        address: data.contact.address || '',
+        city: data.contact.city || '',
         state: normalizedState,
-        zip: _data.contact.zip || '',
-        notes: _data.contact.notes || ''
+        zip: data.contact.zip || '',
+        notes: data.contact.notes || ''
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -97,21 +97,21 @@ export default function EditContactPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (_e: React.FormEvent) => {
-    _e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     if (!validateForm()) return;
 
     setSaving(true);
     try {
-      const _response = await fetch(`/api/contacts/${contactId}`, {
+      const response = await fetch(`/api/contacts/${contactId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
-      if (!_response.ok) {
-        const errorData = await _response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to update contact');
       }
 
@@ -123,16 +123,16 @@ export default function EditContactPage() {
     }
   };
 
-  const handleChange = (_e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = _e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const handlePhoneBlur = (_e: React.FocusEvent<HTMLInputElement>) => {
-    const { value } = _e.target;
+  const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { value } = e.target;
     if (value.trim() && !isValidPhoneNumber(value)) {
       setErrors(prev => ({ ...prev, phone: 'Phone number must be 10 digits or 11 digits with +1' }));
     } else if (errors.phone) {

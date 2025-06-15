@@ -37,22 +37,22 @@ export default function ContactPage() {
     },
   });
 
-  const onSubmit = async (_data: ContactFormValues) => {
+  const onSubmit = async (data: ContactFormValues) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
       // Submit to API route
-      const _response = await fetch('/api/contact', {
+      const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(_data),
+        body: JSON.stringify(data),
       });
 
-      if (!_response.ok) {
-        const errorData = await _response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to submit form');
       }
 
@@ -63,9 +63,9 @@ export default function ContactPage() {
       setTimeout(() => {
         setSubmitSuccess(false);
       }, 5000);
-    } catch (_error: unknown) {
-      console.error('Error submitting contact form:', _error);
-      setSubmitError(_error instanceof Error ? _error.message : String(_error) || 'Failed to submit form. Please try again.');
+    } catch (error: unknown) {
+      console.error('Error submitting contact form:', error);
+      setSubmitError(error instanceof Error ? error.message : String(error) || 'Failed to submit form. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

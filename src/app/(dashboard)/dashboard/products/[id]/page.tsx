@@ -25,24 +25,25 @@ export default function ProductDetailPage() {
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const _response = await fetch(`/api/products/${productId}`);
-      
+      const response = await fetch(`/api/products/${productId}`);
+
       if (!response.ok) {
-        if (_response.status === 404) {
+        if (response.status === 404) {
           setError('Product not found');
           return;
         }
         throw new Error('Failed to fetch product');
       }
 
-            setProduct(_data.product);
+      const data = await response.json();
+      setProduct(data.product);
 
       // Fetch category if product has one
-      if (_data.product.category_id) {
-        fetchCategory(_data.product.category_id);
+      if (data.product.category_id) {
+        fetchCategory(data.product.category_id);
       }
-    } catch (_error) {
-      console.error('Error fetching product:', _error);
+    } catch (error) {
+      console.error('Error fetching product:', error);
       setError('Failed to load product');
     } finally {
       setLoading(false);
@@ -51,24 +52,26 @@ export default function ProductDetailPage() {
 
   const fetchProductImages = async () => {
     try {
-      const _response = await fetch(`/api/products/${productId}/images`);
-      if (_response.ok) {
-                setProductImages(_data.images);
+      const response = await fetch(`/api/products/${productId}/images`);
+      if (response.ok) {
+        const data = await response.json();
+        setProductImages(data.images);
       }
-    } catch (_error) {
-      console.error('Error fetching product images:', _error);
+    } catch (error) {
+      console.error('Error fetching product images:', error);
     }
   };
 
-  const fetchCategory = async (_categoryId: string) => {
+  const fetchCategory = async (categoryId: string) => {
     try {
-      const _response = await fetch('/api/product-categories');
-      if (_response.ok) {
-                const foundCategory = data.categories.find((cat: ProductCategory) => cat._id === categoryId);
+      const response = await fetch('/api/product-categories');
+      if (response.ok) {
+        const data = await response.json();
+        const foundCategory = data.categories.find((cat: ProductCategory) => cat.id === categoryId);
         setCategory(foundCategory || null);
       }
-    } catch (_error) {
-      console.error('Error fetching category:', _error);
+    } catch (error) {
+      console.error('Error fetching category:', error);
     }
   };
 

@@ -41,15 +41,15 @@ export default function BlogPage() {
   const fetchPosts = async (page: number = 1) => {
     try {
       setLoading(true);
-      const _response = await fetch(`/api/public/content?type=blog&page=${page}&limit=10`);
-      
-      if (!_response.ok) {
+      const response = await fetch(`/api/public/content?type=blog&page=${page}&limit=10`);
+
+      if (!response.ok) {
         throw new Error('Failed to fetch blog posts');
       }
 
-      const _data: BlogResponse = await _response.json();
-      setPosts(_data.content);
-      setPagination(_data.pagination);
+      const data: BlogResponse = await response.json();
+      setPosts(data.content);
+      setPagination(data.pagination);
     } catch (err) {
       console.error('Error fetching blog posts:', err);
       setError('Failed to load blog posts');
