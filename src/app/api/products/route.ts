@@ -2,17 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ProductModel } from '@/lib/models';
 import { requireAuth , isAdmin} from '@/lib/auth';
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { _searchParams } = new URL(_request.url);
-    const page = parseInt(_searchParams.get('page') || '1');
-    const limit = parseInt(_searchParams.get('limit') || '50');
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '50');
     const search = searchParams.get('search') || '';
     const includeInactive = searchParams.get('includeInactive') === 'true';
     const offset = (page - 1) * limit;
@@ -42,61 +42,62 @@ export async function GET(_request: NextRequest) {
         totalPages
       }
     });
-  } catch (_error) {
-    console.error('Error fetching products:', _error);
-    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     // Require admin access
     const session = await requireAuth();
     if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    
+    const data = await request.json();
+
     // Validate required fields
     if (!data.name || !data.sku || data.price === undefined) {
-      return NextResponse.json({ 
-        _error: 'Name, SKU, and price are required' }, { status: 400 });
+      return NextResponse.json({
+        error: 'Name, SKU, and price are required' }, { status: 400 });
     }
 
     // Validate price is a positive number
-    if (isNaN(_data.price) || data.price < 0) {
-      return NextResponse.json({ 
-        _error: 'Price must be a valid positive number' }, { status: 400 });
+    if (isNaN(data.price) || data.price < 0) {
+      return NextResponse.json({
+        error: 'Price must be a valid positive number' }, { status: 400 });
     }
 
     // Validate SKU format (alphanumeric, hyphens, underscores)
     const skuRegex = /^[A-Za-z0-9_-]+$/;
-    if (!skuRegex.test(_data.sku)) {
-      return NextResponse.json({ 
-        _error: 'SKU can only contain letters, numbers, hyphens, and underscores' }, { status: 400 });
+    if (!skuRegex.test(data.sku)) {
+      return NextResponse.json({
+        error: 'SKU can only contain letters, numbers, hyphens, and underscores' }, { status: 400 });
     }
 
     // Check if SKU already exists
-    const existingProduct = await ProductModel.getBySku(_data.sku);
+    const existingProduct = await ProductModel.getBySku(data.sku);
     if (existingProduct) {
-      return NextResponse.json({ 
-        _error: 'A product with this SKU already exists' }, { status: 400 });
+      return NextResponse.json({
+        error: 'A product with this SKU already exists' }, { status: 400 });
     }
 
     // Validate image URL if provided
-    if (_data.image_url && data.image_url.trim()) {
+    if (data.image_url && data.image_url.trim()) {
       try {
-        new URL(_data.image_url);
+        new URL(data.image_url);
       } catch {
-        return NextResponse.json({ 
-          _error: 'Invalid image URL format' }, { status: 400 });
+        return NextResponse.json({
+          error: 'Invalid image URL format' }, { status: 400 });
       }
     }
 
     const productId = await ProductModel.create({
       name: data.name,
       description: data.description || '',
-      price: parseFloat(_data.price),
+      price: parseFloat(data.price),
       image_url: data.image_url || null,
       category_id: data.category_id || null,
       sku: data.sku,
@@ -105,8 +106,8 @@ export async function POST(_request: NextRequest) {
 
     const newProduct = await ProductModel.getById(productId);
     return NextResponse.json({ product: newProduct }, { status: 201 });
-  } catch (_error) {
-    console.error('Error creating product:', _error);
-    return NextResponse.json({ _error: 'Internal server error' }, { status: 500 });
+  } catch (error) {
+    console.error('Error creating product:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
