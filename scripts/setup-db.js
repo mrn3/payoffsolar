@@ -1,8 +1,19 @@
 // Load environment variables first, before anything else
-require('dotenv').config({ path: '.env.local' });
+// Try .env.local first (for local development), then .env (for server deployment)
+const fs = require('fs');
+
+if (fs.existsSync('.env.local')) {
+  require('dotenv').config({ path: '.env.local' });
+  console.log('📄 Loaded environment from .env.local');
+} else if (fs.existsSync('.env')) {
+  require('dotenv').config({ path: '.env' });
+  console.log('📄 Loaded environment from .env');
+} else {
+  console.log('⚠️  No .env.local or .env file found, using system environment variables');
+}
 
 const mysql = require('mysql2/promise');
-const fs = require('fs').promises;
+const fsPromises = require('fs').promises;
 const path = require('path');
 
 async function setupDatabase() {
@@ -38,7 +49,7 @@ async function setupDatabase() {
 
     // Read and execute schema
     const schemaPath = path.join(__dirname, '..', 'src', 'lib', 'mysql', 'schema.sql');
-    const schema = await fs.readFile(schemaPath, 'utf8');
+    const schema = await fsPromises.readFile(schemaPath, 'utf8');
     
     // Split schema into individual statements and execute them
     const statements = schema

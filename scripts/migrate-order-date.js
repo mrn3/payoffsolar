@@ -1,7 +1,18 @@
 #!/usr/bin/env node
 
 // Load environment variables first
-require('dotenv').config({ path: '.env.local' });
+// Try .env.local first (for local development), then .env (for server deployment)
+const fs = require('fs');
+
+if (fs.existsSync('.env.local')) {
+  require('dotenv').config({ path: '.env.local' });
+  console.log('📄 Loaded environment from .env.local');
+} else if (fs.existsSync('.env')) {
+  require('dotenv').config({ path: '.env' });
+  console.log('📄 Loaded environment from .env');
+} else {
+  console.log('⚠️  No .env.local or .env file found, using system environment variables');
+}
 
 const mysql = require('mysql2/promise');
 
