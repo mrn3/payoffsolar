@@ -86,6 +86,10 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
     ```
     sudo mysql_secure_installation
     ```
+1. Set up database
+    ```
+    node ./scripts/setup-db.js
+    ```
 
 ## Deploy
 
