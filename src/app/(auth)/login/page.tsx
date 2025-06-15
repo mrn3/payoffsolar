@@ -33,7 +33,7 @@ export default function LoginPage() {
     },
   });
 
-  const onSubmit = async (_data: LoginFormValues) => {
+  const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     setError(null);
 
@@ -44,6 +44,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           email: data.email,
           password: data.password,
