@@ -44,11 +44,11 @@ export default function ProductsPage() {
       }
 
       const _response = await fetch(`/api/products?${params}`);
-      if (!response.ok) {
+      if (!_response.ok) {
         throw new Error('Failed to fetch products');
       }
 
-      const _data: ProductsResponse = await response.json();
+      const _data: ProductsResponse = await _response.json();
       setProducts(_data.products);
       setCurrentPage(_data.pagination.page);
       setTotalPages(_data.pagination.totalPages);
@@ -85,8 +85,8 @@ export default function ProductsPage() {
         method: 'DELETE'
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!_response.ok) {
+        const errorData = await _response.json();
         throw new Error(errorData.error || 'Failed to delete product');
       }
 
@@ -105,8 +105,8 @@ export default function ProductsPage() {
         method: 'DELETE'
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!_response.ok) {
+        const errorData = await _response.json();
         throw new Error(errorData.error || 'Failed to delete all products');
       }
 
