@@ -1,10 +1,14 @@
 'use client';
 
 import {useState, useEffect} from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { ContentType } from '@/lib/models';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
 export default function CreateContentPage() {
   const router = useRouter();
@@ -25,13 +29,13 @@ export default function CreateContentPage() {
 
   const fetchContentTypes = async () => {
     try {
-      const _response = await fetch('/api/content-types');
-      if (_response.ok) {
-        const _data = await response.json();
-        setContentTypes(_data.contentTypes);
+      const response = await fetch('/api/content-types');
+      if (response.ok) {
+        const data = await response.json();
+        setContentTypes(data.contentTypes);
       }
-    } catch (_error) {
-      console.error('Error fetching content types:', _error);
+    } catch (error) {
+      console.error('Error fetching content types:', error);
     }
   };
 
@@ -44,7 +48,7 @@ export default function CreateContentPage() {
       .trim();
   };
 
-  const handleTitleChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const title = e.target.value;
     setFormData(prev => ({
       ...prev,
@@ -56,15 +60,15 @@ export default function CreateContentPage() {
     }
   };
 
-  const handleSlugChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
-    const slug = generateSlug(_e.target.value);
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const slug = generateSlug(e.target.value);
     setFormData(prev => ({ ...prev, slug }));
     if (errors.slug) {
       setErrors(prev => ({ ...prev, slug: '' }));
     }
   };
 
-  const handleSubmit = async (_e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate form
@@ -86,7 +90,7 @@ export default function CreateContentPage() {
 
     setLoading(true);
     try {
-      const _response = await fetch('/api/content', {
+      const response = await fetch('/api/content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,19 +98,19 @@ export default function CreateContentPage() {
         body: JSON.stringify(formData),
       });
 
-      if (_response.ok) {
-        const _data = await response.json();
+      if (response.ok) {
+        const data = await response.json();
         router.push(`/dashboard/cms/${data.content.id}`);
       } else {
         const errorData = await response.json();
-        if (errorData._error === 'Slug already exists') {
+        if (errorData.error === 'Slug already exists') {
           setErrors({ slug: 'This slug is already in use' });
         } else {
           toast.error(errorData.error || 'Failed to create content');
         }
       }
-    } catch (_error) {
-      console.error('Error creating content:', _error);
+    } catch (error) {
+      console.error('Error creating content:', error);
       toast.error('Failed to create content');
     } finally {
       setLoading(false);
@@ -163,7 +167,7 @@ export default function CreateContentPage() {
               <select
                 id="type_id"
                 value={formData.type_id}
-                onChange={(_e) => {
+                onChange={(e) => {
                   setFormData(prev => ({ ...prev, type_id: e.target.value }));
                   if (errors.type_id) {
                     setErrors(prev => ({ ...prev, type_id: '' }));
@@ -215,7 +219,7 @@ export default function CreateContentPage() {
                 id="content"
                 rows={12}
                 value={formData.content}
-                onChange={(_e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
                 placeholder="Enter your content here..."
               />
@@ -227,7 +231,7 @@ export default function CreateContentPage() {
                   id="published"
                   type="checkbox"
                   checked={formData.published}
-                  onChange={(_e) => setFormData(prev => ({ ...prev, published: e.target.checked }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, published: e.target.checked }))}
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                 />
                 <label htmlFor="published" className="ml-2 block text-sm text-gray-900">

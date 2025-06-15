@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import {useState, useEffect} from 'react';
+import {useState, useEffect, Suspense} from 'react';
 import {useSearchParams} from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FaSun } from 'react-icons/fa';
 
 import { useForm } from 'react-hook-form';
@@ -12,16 +13,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 const resetPasswordSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
-}).refine(_data => data.password === data.confirmPassword, {
+}).refine(data => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
 });
 
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter();
-  const _searchParams = useSearchParams();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -44,13 +45,13 @@ export default function ResetPasswordPage() {
     if (tokenParam) {
       setToken(tokenParam);
     } else {
-      setError('Invalid or missing reset token. Please _request a new password reset.');
+      setError('Invalid or missing reset token. Please request a new password reset.');
     }
   }, [searchParams]);
 
-  const onSubmit = async (_data: ResetPasswordFormValues) => {
+  const onSubmit = async (data: ResetPasswordFormValues) => {
     if (!token) {
-      setError('Invalid or missing reset token. Please _request a new password reset.');
+      setError('Invalid or missing reset token. Please request a new password reset.');
       return;
     }
 
@@ -59,7 +60,7 @@ export default function ResetPasswordPage() {
     setSuccess(null);
 
     try {
-      const _response = await fetch('/api/auth/reset-password', {
+      const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,7 +71,8 @@ export default function ResetPasswordPage() {
         }),
       });
 
-      
+      const result = await response.json();
+
       if (!response.ok) {
         throw new Error(result.error || 'Failed to reset password');
       }
@@ -81,9 +83,9 @@ export default function ResetPasswordPage() {
       setTimeout(() => {
         router.push('/login');
       }, 3000);
-    } catch (_error: unknown) {
-      console.error('Password reset _error:', _error);
-      setError(_error instanceof Error ? _error.message : 'Failed to reset password. Please try again.');
+    } catch (error: unknown) {
+      console.error('Password reset error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to reset password. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -189,5 +191,25 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2">
+              <FaSun className="h-8 w-8 text-green-500" />
+              <span className="text-2xl font-bold text-gray-900">Payoff Solar</span>
+            </div>
+            <h2 className="mt-6 text-3xl font-bold text-gray-900">Loading...</h2>
+          </div>
+        </div>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

@@ -1,8 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { FaArrowLeft } from 'react-icons/fa';
+
+interface ProductCategory {
+  id: string;
+  name: string;
+}
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -27,17 +33,18 @@ export default function NewProductPage() {
 
   const fetchCategories = async () => {
     try {
-      const _response = await fetch('/api/product-categories');
-      if (_response.ok) {
-                setCategories(_data.categories);
+      const response = await fetch('/api/product-categories');
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories);
       }
-    } catch (_error) {
-      console.error('Error fetching categories:', _error);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
   };
 
-  const handleImagesUploaded = (uploadedFiles: unknown[]) => {
-    const imageUrls = uploadedFiles.map(_file => file.url);
+  const handleImagesUploaded = (uploadedFiles: { url: string }[]) => {
+    const imageUrls = uploadedFiles.map(file => file.url);
     setUploadedImages(prev => [...prev, ...imageUrls]);
   };
 
@@ -74,11 +81,11 @@ export default function NewProductPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (_e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
-      const checked = (_e.target as HTMLInputElement).checked;
+      const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -90,7 +97,7 @@ export default function NewProductPage() {
     }
   };
 
-  const handleBlur = (_e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name } = e.target;
     
     // Validate individual field on blur
@@ -125,7 +132,7 @@ export default function NewProductPage() {
     setErrors(newErrors);
   };
 
-  const handleSubmit = async (_e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
@@ -133,7 +140,7 @@ export default function NewProductPage() {
     setLoading(true);
     try {
       // Create the product first
-      const _response = await fetch('/api/products', {
+      const response = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { FaSun } from 'react-icons/fa';
 
 import { useForm } from 'react-hook-form';
@@ -17,7 +18,7 @@ const registerSchema = z.object({
   terms: z.boolean().refine(val => val === true, {
     message: 'You must agree to the terms and conditions',
   }),
-}).refine(_data => data.password === data.confirmPassword, {
+}).refine(data => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
 });
@@ -46,13 +47,13 @@ export default function RegisterPage() {
     },
   });
 
-  const onSubmit = async (_data: RegisterFormValues) => {
+  const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const _response = await fetch('/api/auth/signup', {
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,9 +77,9 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push('/dashboard');
       }, 2000);
-    } catch (_error: unknown) {
-      console.error('Registration _error:', _error);
-      setError(_error instanceof Error ? _error.message : 'Failed to register. Please try again.');
+    } catch (error: unknown) {
+      console.error('Registration error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to register. Please try again.');
     } finally {
       setIsLoading(false);
     }

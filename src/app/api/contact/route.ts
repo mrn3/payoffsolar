@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ContactModel } from '@/lib/models';
 import { z } from 'zod';
+import { isValidPhoneNumber } from '@/lib/utils/phone';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),

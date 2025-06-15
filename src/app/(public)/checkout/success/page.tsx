@@ -1,13 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import {FaExclamationTriangle, FaCheckCircle, FaSpinner} from 'react-icons/fa';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 interface OrderData {
-  _id: string;
+  id: string;
   total: number;
   status: string;
   created_at: string;
@@ -20,8 +23,8 @@ interface OrderData {
   }>;
 }
 
-export default function CheckoutSuccessPage() {
-  const _searchParams = useSearchParams();
+function CheckoutSuccessContent() {
+  const searchParams = useSearchParams();
   const { clearCart } = useCart();
   const [order] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +57,7 @@ export default function CheckoutSuccessPage() {
     );
   }
 
-  if (_error) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md">
@@ -156,5 +159,20 @@ export default function CheckoutSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FaSpinner className="h-12 w-12 text-green-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }

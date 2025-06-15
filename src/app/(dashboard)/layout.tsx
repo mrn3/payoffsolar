@@ -4,6 +4,9 @@ import { getUserProfile } from '@/lib/auth';
 import DashboardNavigation from '@/components/dashboard/DashboardNavigation';
 import { FaSun, FaUser } from 'react-icons/fa';
 
+// Force dynamic rendering for all dashboard pages
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {

@@ -6,6 +6,9 @@ import { CartProvider } from '@/contexts/CartContext';
 import CartSidebar from '@/components/cart/CartSidebar';
 import { FaFacebook, FaInstagram, FaLinkedin, FaSun, FaTwitter } from 'react-icons/fa';
 
+// Force dynamic rendering for public pages that use cookies
+export const dynamic = 'force-dynamic';
+
 export default async function PublicLayout({
   children,
 }: {
