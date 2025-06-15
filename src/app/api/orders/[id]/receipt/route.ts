@@ -157,7 +157,7 @@ function generateOrderReceiptHTML(order: any): string {
         .status-proposed { background-color: #fef3c7; color: #92400e; }
         .status-scheduled { background-color: #dbeafe; color: #1e40af; }
         .status-complete { background-color: #d1fae5; color: #065f46; }
-        .status-paid { background-color: #d1fae5; color: #065f46; }
+        .status-paid { background-color: #f3e8ff; color: #7c3aed; }
         .status-cancelled { background-color: #fee2e2; color: #991b1b; }
         .status-followed-up { background-color: #f3e8ff; color: #7c3aed; }
         
