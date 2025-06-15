@@ -14,12 +14,13 @@ export default async function WarehousesPage() {
   }
 
   let warehouses = [];
-  
+  let error = '';
+
   try {
     warehouses = await WarehouseModel.getAll();
   } catch (err) {
     console.error('Error loading warehouses:', err);
-    _error = 'Failed to load warehouses';
+    error = 'Failed to load warehouses';
   }
 
   return (

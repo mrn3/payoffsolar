@@ -506,7 +506,7 @@ export const OrderModel = {
       `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
-       WHERE o._id = ? AND c.user_id = ?`,
+       WHERE o.id = ? AND c.user_id = ?`,
       [_id, _userId]
     );
   },
@@ -550,7 +550,7 @@ export const OrderModel = {
       `SELECT o.*, c.name as contact_name
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
-       WHERE o._id = ?`,
+       WHERE o.id = ?`,
       [_id]
     );
 

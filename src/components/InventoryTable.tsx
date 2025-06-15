@@ -320,7 +320,7 @@ export default function InventoryTable({
                   const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
                   return (
                     <button
-                      key={pageNum}
+                      key={`page-${pageNum}`}
                       onClick={() => updateURL(undefined, undefined, pageNum)}
                       className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                         pageNum === currentPage

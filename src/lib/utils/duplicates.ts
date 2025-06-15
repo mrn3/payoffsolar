@@ -151,15 +151,15 @@ export function findDuplicates(_contacts: Contact[], threshold = 70): DuplicateG
   const duplicateGroups: DuplicateGroup[] = [];
   const processedContacts = new Set<string>();
 
-  for (let i = 0; i < contacts.length; i++) {
+  for (let i = 0; i < _contacts.length; i++) {
     if (processedContacts.has(_contacts[i].id)) continue;
 
-    const currentContact = contacts[i];
+    const currentContact = _contacts[i];
     const similarContacts: Contact[] = [currentContact];
     let maxSimilarity = 0;
     const matchTypes = new Set<string>();
 
-    for (let j = i + 1; j < contacts.length; j++) {
+    for (let j = i + 1; j < _contacts.length; j++) {
       if (processedContacts.has(_contacts[j].id)) continue;
 
       const similarity = calculateContactSimilarity(currentContact, _contacts[j]);

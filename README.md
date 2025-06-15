@@ -38,8 +38,13 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 1. Build the project `yarn build`
 1. Install pm2 `npm install -g pm2`
 1. Set up as daemon in pm2 `pm2 start "yarn start" --name "payoffsolar"`
+1. Set up pm2 to run on boot `pm2 startup`
 1. Set up apache - https://docs.bitnami.com/general/infrastructure/nodejs/get-started/get-started/
 1. Set up SSL - https://docs.bitnami.com/general/faq/administration/generate-configure-certificate-letsencrypt/
+1. Install mariadb `sudo apt-get install mariadb-server`
+1. Configure mariadb `sudo mysql_secure_installation`
+1. Install mysql2 `yarn add mysql2`
+1. Set up database - https://github.com/payoffsolar/payoffsolar/blob/main/MYSQL_SETUP.md
 
 ## Deploy
 
