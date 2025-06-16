@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import {FaDownload, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaUpload} from 'react-icons/fa';
 
 interface Order {
-  _id: string;
+  id: string;
   contact_id: string;
   status: string;
   total: number | string;
@@ -21,7 +21,7 @@ interface Order {
 }
 
 interface UserProfile {
-  _id: string;
+  id: string;
   first_name: string | null;
   last_name: string | null;
   email: string | null;

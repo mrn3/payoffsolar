@@ -38,17 +38,24 @@ export default function ContactAutocomplete({
 
   // Set initial selected contact when value changes
   useEffect(() => {
+    // Don't try to set initial contact if we're still loading contacts
+    if (loading) return;
+
     if (value && contacts.length > 0) {
       const contact = contacts.find(c => c.id === value);
       if (contact) {
         setSelectedContact(contact);
         setSearchTerm(contact.name);
+      } else {
+        // Contact ID provided but contact not found in the list
+        // Try to fetch the specific contact by ID
+        fetchContactById(value);
       }
     } else if (!value) {
       setSelectedContact(null);
       setSearchTerm('');
     }
-  }, [value, contacts]);
+  }, [value, contacts, loading]);
 
   // Filter contacts based on search term
   useEffect(() => {
@@ -76,6 +83,36 @@ export default function ContactAutocomplete({
       console.error('Error fetching _contacts:', _error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchContactById = async (contactId: string) => {
+    try {
+      const response = await fetch(`/api/contacts/${contactId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const contact = data.contact;
+        if (contact) {
+          setSelectedContact(contact);
+          setSearchTerm(contact.name);
+          // Add the contact to the contacts list if it's not already there
+          setContacts(prev => {
+            const exists = prev.find(c => c.id === contact.id);
+            if (!exists) {
+              return [...prev, contact];
+            }
+            return prev;
+          });
+        }
+      } else {
+        console.warn(`Contact with ID ${contactId} not found`);
+        setSelectedContact(null);
+        setSearchTerm('');
+      }
+    } catch (error) {
+      console.error('Error fetching contact by ID:', error);
+      setSelectedContact(null);
+      setSearchTerm('');
     }
   };
 
