@@ -22,9 +22,9 @@ export default function PhoneInput({
   className = '',
   placeholder = '+1 (555) 123-4567',
   required = false,
-  _error = false
+  error = false
 }: PhoneInputProps) {
-  const handleChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     const formattedValue = formatPhoneNumber(inputValue);
 
@@ -41,10 +41,10 @@ export default function PhoneInput({
     onChange(formattedEvent as React.ChangeEvent<HTMLInputElement>);
   };
 
-  const handleBlur = (_e: React.FocusEvent<HTMLInputElement>) => {
-    // Call the parent&apos;s onBlur handler if provided
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Call the parent's onBlur handler if provided
     if (onBlur) {
-      onBlur(_e);
+      onBlur(e);
     }
   };
 
