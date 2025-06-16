@@ -280,12 +280,12 @@ export default function OrdersPage() {
                   className="rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm"
                 >
                   <option value="">Select status...</option>
-                  <option value="cancelled">Cancelled</option>
-                  <option value="complete">Complete</option>
-                  <option value="followed up">Followed Up</option>
-                  <option value="paid">Paid</option>
-                  <option value="proposed">Proposed</option>
-                  <option value="scheduled">Scheduled</option>
+                  <option value="Cancelled">Cancelled</option>
+                  <option value="Complete">Complete</option>
+                  <option value="Followed Up">Followed Up</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Proposed">Proposed</option>
+                  <option value="Scheduled">Scheduled</option>
                 </select>
               </div>
             </div>

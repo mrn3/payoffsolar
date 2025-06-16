@@ -39,7 +39,7 @@ export default function ContactAutocomplete({
   // Set initial selected contact when value changes
   useEffect(() => {
     if (value && contacts.length > 0) {
-      const contact = contacts.find(c => c._id === value);
+      const contact = contacts.find(c => c.id === value);
       if (contact) {
         setSelectedContact(contact);
         setSearchTerm(contact.name);

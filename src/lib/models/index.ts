@@ -2,7 +2,7 @@ import {getOne, executeSingle, executeQuery} from '../mysql/connection';
 
 // Contact model
 export interface Contact {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   phone: string;
@@ -63,13 +63,13 @@ export const ContactModel = {
 
     values.push(_id);
     await executeSingle(
-      `UPDATE contacts SET ${fields.join(', ')} WHERE _id = ?`,
+      `UPDATE contacts SET ${fields.join(', ')} WHERE id = ?`,
       values
     );
   },
 
   async delete(_id: string): Promise<void> {
-    await executeSingle('DELETE FROM contacts WHERE _id = ? ', [_id]);
+    await executeSingle('DELETE FROM contacts WHERE id = ? ', [_id]);
   },
 
   async deleteAll(): Promise<number> {
@@ -442,7 +442,7 @@ export const ProductImageModel = {
 
 // Order model
 export interface Order {
-  _id: string;
+  id: string;
   contact_id: string;
   status: string;
   total: number | string;
@@ -458,7 +458,7 @@ export interface OrderWithContact extends Order {
 
 // Order Item model
 export interface OrderItem {
-  _id: string;
+  id: string;
   order_id: string;
   product_id: string;
   quantity: number;
@@ -620,13 +620,13 @@ export const OrderModel = {
 
     values.push(_id);
     await executeSingle(
-      `UPDATE orders SET ${fields.join(', ')} WHERE _id = ?`,
+      `UPDATE orders SET ${fields.join(', ')} WHERE id = ?`,
       values
     );
   },
 
   async delete(_id: string): Promise<void> {
-    await executeSingle('DELETE FROM orders WHERE _id = ? ', [_id]);
+    await executeSingle('DELETE FROM orders WHERE id = ? ', [_id]);
   },
 
   async bulkUpdateStatus(orderIds: string[], status: string): Promise<void> {
@@ -701,13 +701,13 @@ export const OrderItemModel = {
 
     values.push(_id);
     await executeSingle(
-      `UPDATE order_items SET ${fields.join(', ')} WHERE _id = ?`,
+      `UPDATE order_items SET ${fields.join(', ')} WHERE id = ?`,
       values
     );
   },
 
   async delete(_id: string): Promise<void> {
-    await executeSingle('DELETE FROM order_items WHERE _id = ? ', [_id]);
+    await executeSingle('DELETE FROM order_items WHERE id = ? ', [_id]);
   },
 
   async deleteByOrderId(orderId: string): Promise<void> {

@@ -17,7 +17,7 @@ export default function NewOrderPage() {
 
   const [formData, setFormData] = useState({
     contact_id: '',
-    status: 'proposed',
+    status: 'Proposed',
     order_date: new Date().toISOString().split('T')[0], // Default to today
     notes: '',
     items: [{ product_id: '', quantity: 1, price: 0 }] as OrderItem[]
@@ -181,12 +181,12 @@ export default function NewOrderPage() {
                 onChange={(_e) => setFormData(prev => ({ ...prev, status: _e.target.value }))}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
               >
-                <option value="cancelled">Cancelled</option>
-                <option value="complete">Complete</option>
-                <option value="followed up">Followed Up</option>
-                <option value="paid">Paid</option>
-                <option value="proposed">Proposed</option>
-                <option value="scheduled">Scheduled</option>
+                <option value="Cancelled">Cancelled</option>
+                <option value="Complete">Complete</option>
+                <option value="Followed Up">Followed Up</option>
+                <option value="Paid">Paid</option>
+                <option value="Proposed">Proposed</option>
+                <option value="Scheduled">Scheduled</option>
               </select>
             </div>
           </div>
