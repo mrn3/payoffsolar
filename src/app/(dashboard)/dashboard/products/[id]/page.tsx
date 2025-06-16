@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {useParams} from 'next/navigation';
-import {Product, ProductImage} from '@/lib/models';
+import {useParams, useRouter} from 'next/navigation';
+import {Product, ProductImage, ProductCategory} from '@/lib/models';
 import ImageCarousel from '@/components/ui/ImageCarousel';
 import {FaArrowLeft, FaEdit} from 'react-icons/fa';
 
@@ -20,7 +20,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     fetchProduct();
     fetchProductImages();
-  }, [productId, fetchProduct, fetchProductImages]);
+  }, [productId]);
 
   const fetchProduct = async () => {
     try {
