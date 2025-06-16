@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {FaCopy, FaEdit, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload} from 'react-icons/fa';
+import {FaCopy, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload} from 'react-icons/fa';
 import { format } from 'date-fns';
 import { Contact } from '@/lib/models';
 import DeleteContactModal from '@/components/contacts/DeleteContactModal';
@@ -272,6 +272,15 @@ export default function ContactsPage() {
                           <div className="flex items-center justify-end space-x-3">
                             <button
                               type="button"
+                              onClick={() => router.push(`/dashboard/contacts/${contact.id}`)}
+                              className="text-green-600 hover:text-green-900"
+                              title="View contact"
+                            >
+                              <FaEye className="h-4 w-4" />
+                              <span className="sr-only">View</span>
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => navigateToEdit(contact)}
                               className="text-blue-600 hover:text-blue-900"
                               title="Edit contact"
@@ -343,6 +352,15 @@ export default function ContactsPage() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-3 ml-4">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/dashboard/contacts/${contact.id}`)}
+                      className="text-green-600 hover:text-green-900 p-2"
+                      title="View contact"
+                    >
+                      <FaEye className="h-5 w-5" />
+                      <span className="sr-only">View</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => navigateToEdit(contact)}

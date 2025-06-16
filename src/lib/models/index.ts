@@ -627,6 +627,25 @@ export const OrderModel = {
     );
   },
 
+  async getByContactId(contactId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*, c.name as contact_name
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE o.contact_id = ?
+       ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
+      [contactId, limit, offset]
+    );
+  },
+
+  async getCountByContactId(contactId: string): Promise<number> {
+    const result = await getOne<{ count: number }>(
+      'SELECT COUNT(*) as count FROM orders WHERE contact_id = ?',
+      [contactId]
+    );
+    return result?.count || 0;
+  },
+
   async getWithItems(_id: string): Promise<OrderWithItems | null> {
     const order = await getOne<OrderWithContact>(
       `SELECT o.*, c.name as contact_name
