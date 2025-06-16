@@ -110,7 +110,7 @@ export const ContactModel = {
 
 // Product Category model
 export interface ProductCategory {
-  _id: string;
+  id: string;
   name: string;
   description?: string;
   slug: string;
@@ -127,13 +127,13 @@ export const ProductCategoryModel = {
   },
 
   async getById(_id: string): Promise<ProductCategory | null> {
-    return getOne<ProductCategory>('SELECT * FROM product_categories WHERE _id = ? ', [_id]);
+    return getOne<ProductCategory>('SELECT * FROM product_categories WHERE id = ? ', [_id]);
   }
 };
 
 // Product model
 export interface Product {
-  _id: string;
+  id: string;
   name: string;
   description: string;
   price: number;
@@ -151,7 +151,7 @@ export interface ProductWithCategory extends Product {
 
 // Product image model
 export interface ProductImage {
-  _id: string;
+  id: string;
   product_id: string;
   image_url: string;
   alt_text?: string;
@@ -280,50 +280,50 @@ export const ProductModel = {
     return product!.id;
   },
 
-  async update(_id: string, _data: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+  async update(id: string, data: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
     const fields = [];
     const values = [];
 
-    if (_data.name !== undefined) {
-      fields.push('name = ? ');
-      values.push(_data.name);
+    if (data.name !== undefined) {
+      fields.push('name = ?');
+      values.push(data.name);
     }
-    if (_data.description !== undefined) {
-      fields.push('description = ? ');
-      values.push(_data.description);
+    if (data.description !== undefined) {
+      fields.push('description = ?');
+      values.push(data.description);
     }
-    if (_data.price !== undefined) {
-      fields.push('price = ? ');
-      values.push(_data.price);
+    if (data.price !== undefined) {
+      fields.push('price = ?');
+      values.push(data.price);
     }
-    if (_data.image_url !== undefined) {
-      fields.push('image_url = ? ');
-      values.push(_data.image_url);
+    if (data.image_url !== undefined) {
+      fields.push('image_url = ?');
+      values.push(data.image_url);
     }
-    if (_data.category_id !== undefined) {
-      fields.push('category_id = ? ');
-      values.push(_data.category_id);
+    if (data.category_id !== undefined) {
+      fields.push('category_id = ?');
+      values.push(data.category_id);
     }
-    if (_data.sku !== undefined) {
+    if (data.sku !== undefined) {
       fields.push('sku = ?');
-      values.push(_data.sku);
+      values.push(data.sku);
     }
-    if (_data.is_active !== undefined) {
-      fields.push('is_active = ? ');
-      values.push(_data.is_active);
+    if (data.is_active !== undefined) {
+      fields.push('is_active = ?');
+      values.push(data.is_active);
     }
 
     if (fields.length === 0) return;
 
-    values.push(_id);
+    values.push(id);
     await executeSingle(
-      `UPDATE products SET ${fields.join(', ')} WHERE _id = ?`,
+      `UPDATE products SET ${fields.join(', ')} WHERE id = ?`,
       values
     );
   },
 
   async delete(_id: string): Promise<void> {
-    await executeSingle('DELETE FROM products WHERE _id = ? ', [_id]);
+    await executeSingle('DELETE FROM products WHERE id = ? ', [_id]);
   },
 
   async deleteAll(): Promise<number> {
@@ -393,7 +393,7 @@ export const ProductModel = {
        LEFT JOIN product_categories pc ON p.category_id = pc.id
        WHERE p.is_active = TRUE AND p.category_id = ?
        ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
-      [categoryId, limit, offset]
+      [_categoryId, limit, offset]
     );
   },
 
@@ -428,7 +428,7 @@ export const ProductImageModel = {
   },
 
   async delete(_id: string): Promise<void> {
-    await executeSingle('DELETE FROM product_images WHERE _id = ? ', [_id]);
+    await executeSingle('DELETE FROM product_images WHERE id = ? ', [_id]);
   },
 
   async deleteByProductId(productId: string): Promise<void> {
@@ -436,7 +436,7 @@ export const ProductImageModel = {
   },
 
   async updateSortOrder(_id: string, sortOrder: number): Promise<void> {
-    await executeSingle('UPDATE product_images SET sort_order = ? WHERE _id = ? ', [sortOrder, _id]);
+    await executeSingle('UPDATE product_images SET sort_order = ? WHERE id = ? ', [sortOrder, _id]);
   }
 };
 
@@ -741,7 +741,7 @@ export const OrderItemModel = {
 
 // Inventory model
 export interface Inventory {
-  _id: string;
+  id: string;
   product_id: string;
   warehouse_id: string;
   quantity: number;
@@ -808,7 +808,7 @@ export const InventoryModel = {
        FROM inventory i
        LEFT JOIN products p ON i.product_id = p.id
        LEFT JOIN warehouses w ON i.warehouse_id = w.id
-       WHERE i._id = ?`,
+       WHERE i.id = ?`,
       [_id]
     );
   },
@@ -850,13 +850,13 @@ export const InventoryModel = {
 
     values.push(_id);
     await executeSingle(
-      `UPDATE inventory SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE _id = ?`,
+      `UPDATE inventory SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       values
     );
   },
 
   async delete(_id: string): Promise<void> {
-    await executeSingle('DELETE FROM inventory WHERE _id = ? ', [_id]);
+    await executeSingle('DELETE FROM inventory WHERE id = ? ', [_id]);
   },
 
   async getLowStock(limit = 10): Promise<InventoryWithDetails[]> {
@@ -873,7 +873,7 @@ export const InventoryModel = {
 
   async adjustQuantity(_id: string, adjustment: number, _reason?: string): Promise<void> {
     await executeSingle(
-      'UPDATE inventory SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE _id = ? ',
+      'UPDATE inventory SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? ',
       [adjustment, _id]
     );
   }
@@ -881,7 +881,7 @@ export const InventoryModel = {
 
 // Warehouse model
 export interface Warehouse {
-  _id: string;
+  id: string;
   name: string;
   address?: string;
   city?: string;
@@ -893,14 +893,14 @@ export interface Warehouse {
 
 export const WarehouseModel = {
   async getAll(): Promise<Warehouse[]> {
-    return executeQuery<Warehouse>('SELECT id as _id, name, address, city, state, zip, created_at, updated_at FROM warehouses ORDER BY name');
+    return executeQuery<Warehouse>('SELECT * FROM warehouses ORDER BY name');
   },
 
   async getById(_id: string): Promise<Warehouse | null> {
-    return getOne<Warehouse>('SELECT id as _id, name, address, city, state, zip, created_at, updated_at FROM warehouses WHERE id = ?', [_id]);
+    return getOne<Warehouse>('SELECT * FROM warehouses WHERE id = ?', [_id]);
   },
 
-  async create(_data: Omit<Warehouse, '_id' | 'created_at' | 'updated_at'>): Promise<string> {
+  async create(_data: Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     await executeSingle(
       'INSERT INTO warehouses (name, address, city, state, zip) VALUES (?, ?, ?, ?, ?)',
       [_data.name, _data.address || null, _data.city || null, _data.state || null, _data.zip || null]
@@ -913,7 +913,7 @@ export const WarehouseModel = {
     return warehouse!.id;
   },
 
-  async update(_id: string, _data: Partial<Omit<Warehouse, '_id' | 'created_at' | 'updated_at'>>): Promise<void> {
+  async update(_id: string, _data: Partial<Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
     const fields: string[] = [];
     const values: unknown[] = [];
 
@@ -954,7 +954,7 @@ export const WarehouseModel = {
 
 // Role model
 export interface Role {
-  _id: string;
+  id: string;
   name: string;
   description?: string;
   created_at: string;
