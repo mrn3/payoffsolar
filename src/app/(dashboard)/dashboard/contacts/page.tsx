@@ -27,9 +27,11 @@ export default function ContactsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [total, setTotal] = useState(0);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 50,
+    limit: 10,
     total: 0,
     totalPages: 0
   });
@@ -46,7 +48,7 @@ export default function ContactsPage() {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '50',
+        limit: '10',
         ...(search && { search })
       });
 
@@ -58,7 +60,9 @@ export default function ContactsPage() {
       const _data: ContactsResponse = await _response.json();
       setContacts(_data.contacts);
       setPagination(_data.pagination);
-      setCurrentPage(page);
+      setCurrentPage(_data.pagination.page);
+      setTotalPages(_data.pagination.totalPages);
+      setTotal(_data.pagination.total);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -372,28 +376,66 @@ export default function ContactsPage() {
       </div>
 
       {/* Pagination */}
-      {pagination.total > 0 && (
-        <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">{((currentPage - 1) * pagination.limit) + 1}</span> to{' '}
-            <span className="font-medium">{Math.min(currentPage * pagination.limit, pagination.total)}</span> of{' '}
-            <span className="font-medium">{pagination.total}</span> results
-          </div>
-          <div className="flex space-x-2">
+      {!loading && contacts.length > 0 && totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-between">
+          <div className="flex-1 flex justify-between sm:hidden">
             <button
-              onClick={() => fetchContacts(currentPage - 1, searchQuery)}
+              onClick={() => currentPage > 1 && fetchContacts(currentPage - 1, searchQuery)}
               disabled={currentPage <= 1}
-              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
-              onClick={() => fetchContacts(currentPage + 1, searchQuery)}
-              disabled={currentPage >= pagination.totalPages}
-              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => currentPage < totalPages && fetchContacts(currentPage + 1, searchQuery)}
+              disabled={currentPage >= totalPages}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{((currentPage - 1) * 10) + 1}</span> to{' '}
+                <span className="font-medium">{Math.min(currentPage * 10, total)}</span> of{' '}
+                <span className="font-medium">{total}</span> results
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  onClick={() => currentPage > 1 && fetchContacts(currentPage - 1, searchQuery)}
+                  disabled={currentPage <= 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const page = i + 1;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => fetchContacts(page, searchQuery)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        page === currentPage
+                          ? 'bg-green-50 border-green-500 text-green-600'
+                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => currentPage < totalPages && fetchContacts(currentPage + 1, searchQuery)}
+                  disabled={currentPage >= totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </nav>
+            </div>
           </div>
         </div>
       )}
