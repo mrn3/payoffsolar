@@ -90,11 +90,17 @@ export default function EditProductPage() {
     }
   }, [productId]);
 
-  const handleImagesUploaded = async (uploadedFiles: unknown[]) => {
+  const handleImagesUploaded = async (uploadedFiles: Array<{
+    originalName: string;
+    filename: string;
+    url: string;
+    size: number;
+    type: string;
+  }>) => {
     try {
       // Add each uploaded image to the product
       for (const file of uploadedFiles) {
-        await fetch(`/api/products/${productId}/images`, {
+        const response = await fetch(`/api/products/${productId}/images`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -102,13 +108,18 @@ export default function EditProductPage() {
             alt_text: file.originalName
           })
         });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to add image');
+        }
       }
 
       // Refresh the images list
       await fetchProductImages();
     } catch (error) {
       console.error('Error adding images to product:', error);
-      setError('Failed to add images to product');
+      setError(error instanceof Error ? error.message : 'Failed to add images to product');
     }
   };
 
