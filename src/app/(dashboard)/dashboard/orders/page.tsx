@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import ImportOrdersModal from '@/components/orders/ImportOrdersModal';
 import DeleteAllOrdersModal from '@/components/orders/DeleteAllOrdersModal';
 import toast from 'react-hot-toast';
-import {FaDownload, FaEdit, FaEye, FaPlus, FaTrash, FaUpload} from 'react-icons/fa';
+import {FaDownload, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaUpload} from 'react-icons/fa';
 
 interface Order {
   _id: string;
@@ -33,6 +33,7 @@ export default function OrdersPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState('');
@@ -41,7 +42,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchData();
-  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     try {
@@ -55,8 +56,12 @@ export default function OrdersPage() {
       const profileData = await profileRes.json();
       setProfile(profileData.profile);
 
-      // Then get orders (fetch all orders by setting a high limit)
-      const ordersRes = await fetch('/api/orders?limit=1000');
+      // Then get orders with search parameter
+      const params = new URLSearchParams({
+        limit: '1000',
+        ...(searchQuery && { search: searchQuery })
+      });
+      const ordersRes = await fetch(`/api/orders?${params}`);
       if (ordersRes.ok) {
         const ordersData = await ordersRes.json();
         setOrders(ordersData.orders || []);
@@ -64,11 +69,15 @@ export default function OrdersPage() {
         setError('Failed to load orders');
       }
     } catch (err) {
-      console.error('Error loading _data:', err);
+      console.error('Error loading data:', err);
       setError('Failed to load data');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
   const handleDeleteOrder = async (orderId: string) => {
@@ -261,6 +270,24 @@ export default function OrdersPage() {
         </div>
       )}
 
+      {/* Search */}
+      {!isContact(profile.role) && (
+        <div className="mt-6 flex flex-col sm:flex-row">
+          <div className="relative flex-grow">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearch}
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+              placeholder="Search orders by contact name"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Bulk Actions Toolbar */}
       {!isContact(profile.role) && selectedOrders.size > 0 && (
         <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
@@ -422,7 +449,12 @@ export default function OrdersPage() {
                   ) : (
                     <tr>
                       <td colSpan={isContact(profile.role) ? 5 : 7} className="px-6 py-4 text-center text-sm text-gray-500">
-                        {isContact(profile.role) ? 'You have no orders yet.' : 'No orders found.' }
+                        {isContact(profile.role)
+                          ? 'You have no orders yet.'
+                          : searchQuery
+                            ? 'No orders found matching your search.'
+                            : 'No orders found.'
+                        }
                       </td>
                     </tr>
                   )}

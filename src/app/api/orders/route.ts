@@ -13,13 +13,22 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const search = searchParams.get('search') || '';
     const offset = (page - 1) * limit;
 
-    const orders = await OrderModel.getAll(limit, offset);
-    const total = await OrderModel.getCount();
+    let orders;
+    let total;
 
-    return NextResponse.json({ 
-      orders, 
+    if (search) {
+      orders = await OrderModel.search(search, limit, offset);
+      total = await OrderModel.getSearchCount(search);
+    } else {
+      orders = await OrderModel.getAll(limit, offset);
+      total = await OrderModel.getCount();
+    }
+
+    return NextResponse.json({
+      orders,
       pagination: {
         page,
         limit,

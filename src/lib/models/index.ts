@@ -496,6 +496,30 @@ export const OrderModel = {
     );
   },
 
+  async search(query: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
+    const searchTerm = `%${query}%`;
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*, c.name as contact_name
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE c.name LIKE ?
+       ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
+      [searchTerm, limit, offset]
+    );
+  },
+
+  async getSearchCount(query: string): Promise<number> {
+    const searchTerm = `%${query}%`;
+    const result = await getOne<{ count: number }>(
+      `SELECT COUNT(*) as count
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE c.name LIKE ?`,
+      [searchTerm]
+    );
+    return result?.count || 0;
+  },
+
   async getAllByUser(_userId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT o.*, c.name as contact_name
