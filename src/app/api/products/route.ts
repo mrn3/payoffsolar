@@ -21,8 +21,13 @@ export async function GET(request: NextRequest) {
     let total;
 
     if (search) {
-      products = await ProductModel.search(search, limit, offset);
-      total = await ProductModel.getSearchCount(search);
+      if (includeInactive) {
+        products = await ProductModel.searchIncludingInactive(search, limit, offset);
+        total = await ProductModel.getSearchCountIncludingInactive(search);
+      } else {
+        products = await ProductModel.search(search, limit, offset);
+        total = await ProductModel.getSearchCount(search);
+      }
     } else if (includeInactive) {
       products = await ProductModel.getAllIncludingInactive(limit, offset);
       total = await ProductModel.getTotalCount();

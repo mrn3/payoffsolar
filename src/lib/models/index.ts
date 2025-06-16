@@ -259,6 +259,45 @@ export const ProductModel = {
     );
   },
 
+  async searchIncludingInactive(query: string, limit = 50, offset = 0, sort = ''): Promise<ProductWithFirstImage[]> {
+    const searchTerm = `%${query}%`;
+    let orderBy = 'p.created_at DESC'; // default sort
+
+    switch (sort) {
+      case 'name_asc':
+        orderBy = 'p.name ASC';
+        break;
+      case 'name_desc':
+        orderBy = 'p.name DESC';
+        break;
+      case 'price_asc':
+        orderBy = 'p.price ASC';
+        break;
+      case 'price_desc':
+        orderBy = 'p.price DESC';
+        break;
+      case 'newest':
+        orderBy = 'p.created_at DESC';
+        break;
+      case 'oldest':
+        orderBy = 'p.created_at ASC';
+        break;
+    }
+
+    return executeQuery<ProductWithFirstImage>(
+      `SELECT p.*, pc.name as category_name,
+       (SELECT pi.image_url FROM product_images pi
+        WHERE pi.product_id = p.id
+        ORDER BY pi.sort_order ASC, pi.created_at ASC
+        LIMIT 1) as first_image_url
+       FROM products p
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       WHERE (p.name LIKE ? OR p.description LIKE ? OR p.sku LIKE ?)
+       ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+      [searchTerm, searchTerm, searchTerm, limit, offset]
+    );
+  },
+
   async getById(_id: string): Promise<Product | null> {
     return getOne<Product>('SELECT * FROM products WHERE id = ?', [_id]);
   },
@@ -354,6 +393,15 @@ export const ProductModel = {
     const searchTerm = `%${query}%`;
     const result = await getOne<{ count: number }>(
       'SELECT COUNT(*) as count FROM products WHERE is_active = TRUE AND (name LIKE ? OR description LIKE ? OR sku LIKE ?)',
+      [searchTerm, searchTerm, searchTerm]
+    );
+    return result?.count || 0;
+  },
+
+  async getSearchCountIncludingInactive(query: string): Promise<number> {
+    const searchTerm = `%${query}%`;
+    const result = await getOne<{ count: number }>(
+      'SELECT COUNT(*) as count FROM products WHERE (name LIKE ? OR description LIKE ? OR sku LIKE ?)',
       [searchTerm, searchTerm, searchTerm]
     );
     return result?.count || 0;

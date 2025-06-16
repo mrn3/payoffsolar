@@ -33,8 +33,9 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<ProductWithFirstImage | null>(null);
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [includeInactive, setIncludeInactive] = useState(false);
 
-  const fetchProducts = async (page: number, search: string = '') => {
+  const fetchProducts = async (page: number, search: string = '', includeInactiveProducts: boolean = false) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -44,6 +45,10 @@ export default function ProductsPage() {
 
       if (search) {
         params.append('search', search);
+      }
+
+      if (includeInactiveProducts) {
+        params.append('includeInactive', 'true');
       }
 
       const _response = await fetch(`/api/products?${params}`);
@@ -64,11 +69,16 @@ export default function ProductsPage() {
   };
 
   useEffect(() => {
-    fetchProducts(1, searchQuery);
-  }, [searchQuery]);
+    fetchProducts(1, searchQuery, includeInactive);
+  }, [searchQuery, includeInactive]);
 
   const handleSearch = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(_e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleIncludeInactiveChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    setIncludeInactive(_e.target.checked);
     setCurrentPage(1);
   };
 
@@ -77,7 +87,7 @@ export default function ProductsPage() {
   };
 
   const handleImportComplete = () => {
-    fetchProducts(currentPage, searchQuery);
+    fetchProducts(currentPage, searchQuery, includeInactive);
   };
 
   const handleDeleteProduct = async () => {
@@ -93,7 +103,7 @@ export default function ProductsPage() {
         throw new Error(errorData.error || 'Failed to delete product');
       }
 
-      await fetchProducts(currentPage, searchQuery);
+      await fetchProducts(currentPage, searchQuery, includeInactive);
       setIsDeleteModalOpen(false);
       setSelectedProduct(null);
     } catch (err) {
@@ -113,7 +123,7 @@ export default function ProductsPage() {
         throw new Error(errorData.error || 'Failed to delete all products');
       }
 
-      await fetchProducts(1, '');
+      await fetchProducts(1, '', includeInactive);
       setSearchQuery('');
       setCurrentPage(1);
       setIsDeleteAllModalOpen(false);
@@ -181,7 +191,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Search and filters */}
-      <div className="mt-6 flex flex-col sm:flex-row">
+      <div className="mt-6 flex flex-col sm:flex-row sm:items-center">
         <div className="relative flex-grow">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <FaSearch className="h-5 w-5 text-gray-400" />
@@ -204,6 +214,17 @@ export default function ProductsPage() {
             <option>Inverters</option>
             <option>Accessories</option>
           </select>
+        </div>
+        <div className="mt-4 sm:mt-0 sm:ml-4">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={includeInactive}
+              onChange={handleIncludeInactiveChange}
+              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+            />
+            <span className="ml-2 text-sm text-gray-700">Include inactive products</span>
+          </label>
         </div>
       </div>
 
@@ -242,7 +263,7 @@ export default function ProductsPage() {
       {!loading && products.length > 0 && (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
-            <div key={product.id} className="bg-white overflow-hidden shadow rounded-lg">
+            <div key={product.id} className={`bg-white overflow-hidden shadow rounded-lg ${!product.is_active ? 'opacity-75' : ''}`}>
               <button
                 onClick={() => router.push(`/dashboard/products/${product.id}`)}
                 className="w-full h-48 bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
@@ -328,14 +349,14 @@ export default function ProductsPage() {
         <div className="mt-8 flex items-center justify-between">
           <div className="flex-1 flex justify-between sm:hidden">
             <button
-              onClick={() => currentPage > 1 && fetchProducts(currentPage - 1, searchQuery)}
+              onClick={() => currentPage > 1 && fetchProducts(currentPage - 1, searchQuery, includeInactive)}
               disabled={currentPage <= 1}
               className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
-              onClick={() => currentPage < totalPages && fetchProducts(currentPage + 1, searchQuery)}
+              onClick={() => currentPage < totalPages && fetchProducts(currentPage + 1, searchQuery, includeInactive)}
               disabled={currentPage >= totalPages}
               className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -353,7 +374,7 @@ export default function ProductsPage() {
             <div>
               <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                 <button
-                  onClick={() => currentPage > 1 && fetchProducts(currentPage - 1, searchQuery)}
+                  onClick={() => currentPage > 1 && fetchProducts(currentPage - 1, searchQuery, includeInactive)}
                   disabled={currentPage <= 1}
                   className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -364,7 +385,7 @@ export default function ProductsPage() {
                   return (
                     <button
                       key={page}
-                      onClick={() => fetchProducts(page, searchQuery)}
+                      onClick={() => fetchProducts(page, searchQuery, includeInactive)}
                       className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                         page === currentPage
                           ? 'bg-green-50 border-green-500 text-green-600'
@@ -376,7 +397,7 @@ export default function ProductsPage() {
                   );
                 })}
                 <button
-                  onClick={() => currentPage < totalPages && fetchProducts(currentPage + 1, searchQuery)}
+                  onClick={() => currentPage < totalPages && fetchProducts(currentPage + 1, searchQuery, includeInactive)}
                   disabled={currentPage >= totalPages}
                   className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
