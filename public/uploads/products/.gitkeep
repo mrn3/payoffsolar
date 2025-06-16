@@ -1,0 +1,2 @@
+# This file ensures the products upload directory is preserved in git
+# while actual uploaded product images are ignored

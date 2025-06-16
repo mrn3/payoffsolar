@@ -53,6 +53,14 @@ else
     exit 1
 fi
 
+# Setup upload directories
+echo "🗂️  Setting up upload directories..."
+if node scripts/setup-uploads.js; then
+    echo "✅ Upload directories setup successful"
+else
+    echo "⚠️  Upload directories setup had issues, but continuing..."
+fi
+
 # Build the application
 echo "🏗️  Building application..."
 yarn build

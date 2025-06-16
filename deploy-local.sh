@@ -75,7 +75,7 @@ install_dependencies() {
 # Function to run database setup
 setup_database() {
     print_status "Setting up database..."
-    
+
     # Check if MySQL is running
     if command_exists mysql; then
         print_status "MySQL found, running database setup..."
@@ -88,6 +88,18 @@ setup_database() {
     else
         print_warning "MySQL not found. Please install and configure MySQL first."
         print_status "You can install MySQL using: brew install mysql (on macOS)"
+    fi
+}
+
+# Function to setup upload directories
+setup_uploads() {
+    print_status "Setting up upload directories..."
+
+    if [ -f "scripts/setup-uploads.js" ]; then
+        node scripts/setup-uploads.js
+        print_success "Upload directories setup completed"
+    else
+        print_warning "Upload setup script not found"
     fi
 }
 
@@ -132,7 +144,8 @@ main() {
     # Run setup steps
     check_prerequisites
     install_dependencies
-    
+    setup_uploads
+
     if [ "$MODE" = "development" ]; then
         setup_database
         run_development
