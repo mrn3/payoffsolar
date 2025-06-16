@@ -28,12 +28,25 @@ interface UserProfile {
   role: string | null;
 }
 
+interface OrdersResponse {
+  orders: Order[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState('');
@@ -41,11 +54,13 @@ export default function OrdersPage() {
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
 
   useEffect(() => {
-    fetchData();
+    fetchOrders(1, searchQuery);
   }, [searchQuery]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
-  const fetchData = async () => {
+  const fetchOrders = async (page: number, search: string = '') => {
     try {
+      setLoading(true);
+
       // First get user profile
       const profileRes = await fetch('/api/auth/profile');
       if (!profileRes.ok) {
@@ -56,15 +71,23 @@ export default function OrdersPage() {
       const profileData = await profileRes.json();
       setProfile(profileData.profile);
 
-      // Then get orders with search parameter
+      // Then get orders with pagination and search parameters
       const params = new URLSearchParams({
-        limit: '1000',
-        ...(searchQuery && { search: searchQuery })
+        page: page.toString(),
+        limit: '10'
       });
+
+      if (search) {
+        params.append('search', search);
+      }
+
       const ordersRes = await fetch(`/api/orders?${params}`);
       if (ordersRes.ok) {
-        const ordersData = await ordersRes.json();
+        const ordersData: OrdersResponse = await ordersRes.json();
         setOrders(ordersData.orders || []);
+        setCurrentPage(ordersData.pagination.page);
+        setTotalPages(ordersData.pagination.totalPages);
+        setTotal(ordersData.pagination.total);
       } else {
         setError('Failed to load orders');
       }
@@ -78,6 +101,7 @@ export default function OrdersPage() {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    setCurrentPage(1);
   };
 
   const handleDeleteOrder = async (orderId: string) => {
@@ -91,8 +115,8 @@ export default function OrdersPage() {
       });
 
       if (_response.ok) {
-        // Remove the order from the list
-        setOrders(prev => prev.filter(_order => _order.id !== orderId));
+        // Refresh the orders list
+        fetchOrders(currentPage, searchQuery);
       } else {
         const errorData = await _response.json();
         toast.error(errorData.error || 'Failed to delete order');
@@ -149,7 +173,7 @@ export default function OrdersPage() {
         toast.success(_data.message);
         setSelectedOrders(new Set());
         setBulkStatus('');
-        fetchData(); // Refresh the orders list
+        fetchOrders(currentPage, searchQuery); // Refresh the orders list
       } else {
         const errorData = await _response.json();
         toast.error(errorData.error || 'Failed to update orders');
@@ -173,7 +197,7 @@ export default function OrdersPage() {
         toast.success(_data.message);
         setSelectedOrders(new Set());
         setBulkStatus('');
-        fetchData(); // Refresh the orders list
+        fetchOrders(1, searchQuery); // Refresh the orders list
       } else {
         const errorData = await _response.json();
         toast.error(errorData.error || 'Failed to delete all orders');
@@ -243,7 +267,7 @@ export default function OrdersPage() {
                 <FaUpload className="mr-2 h-4 w-4" />
                 Import
               </button>
-              {orders.length > 0 && (
+              {total > 0 && (
                 <button
                   onClick={() => setShowDeleteAllModal(true)}
                   className="inline-flex items-center justify-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
@@ -465,20 +489,79 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      {/* Pagination placeholder */}
-      {orders.length > 0 && (
-        <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">{orders.length}</span> of{' '}
-            <span className="font-medium">{orders.length}</span> results
-          </div>
-          <div className="flex space-x-2">
-            <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+      {/* Pagination */}
+      {!loading && orders.length > 0 && totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-between">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => currentPage > 1 && fetchOrders(currentPage - 1, searchQuery)}
+              disabled={currentPage <= 1}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Previous
             </button>
-            <button className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+            <button
+              onClick={() => currentPage < totalPages && fetchOrders(currentPage + 1, searchQuery)}
+              disabled={currentPage >= totalPages}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Next
             </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{((currentPage - 1) * 10) + 1}</span> to{' '}
+                <span className="font-medium">{Math.min(currentPage * 10, total)}</span> of{' '}
+                <span className="font-medium">{total}</span> results
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  onClick={() => currentPage > 1 && fetchOrders(currentPage - 1, searchQuery)}
+                  disabled={currentPage <= 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                {(() => {
+                  const pages = [];
+                  const maxVisiblePages = 5;
+                  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                  // Adjust start page if we're near the end
+                  if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                  }
+
+                  for (let page = startPage; page <= endPage; page++) {
+                    pages.push(
+                      <button
+                        key={page}
+                        onClick={() => fetchOrders(page, searchQuery)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          page === currentPage
+                            ? 'bg-green-50 border-green-500 text-green-600'
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  }
+                  return pages;
+                })()}
+                <button
+                  onClick={() => currentPage < totalPages && fetchOrders(currentPage + 1, searchQuery)}
+                  disabled={currentPage >= totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </nav>
+            </div>
           </div>
         </div>
       )}
@@ -489,7 +572,7 @@ export default function OrdersPage() {
         onClose={() => setShowImportModal(false)}
         onImportComplete={() => {
           setShowImportModal(false);
-          fetchData(); // Refresh the orders list
+          fetchOrders(currentPage, searchQuery); // Refresh the orders list
         }}
       />
 
@@ -498,7 +581,7 @@ export default function OrdersPage() {
         isOpen={showDeleteAllModal}
         onClose={() => setShowDeleteAllModal(false)}
         onConfirm={handleDeleteAllOrders}
-        orderCount={orders.length}
+        orderCount={total}
       />
     </div>
   );
