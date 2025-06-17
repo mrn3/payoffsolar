@@ -424,7 +424,12 @@ export default function OrdersPage() {
                           </td>
                         )}
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          #{_order.id.substring(0, 8)}
+                          <Link
+                            href={`/dashboard/orders/${_order.id}`}
+                            className="text-green-600 hover:text-green-900 hover:underline"
+                          >
+                            #{_order.id.substring(0, 8)}
+                          </Link>
                         </td>
                         {!isContact(profile.role) && (
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
