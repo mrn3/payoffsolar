@@ -311,6 +311,14 @@ export default function ViewContactPage() {
                                 <span className="sr-only">View</span>
                               </Link>
                               <Link
+                                href={`/dashboard/orders/${order.id}/edit`}
+                                className="text-orange-600 hover:text-orange-900"
+                                title="Edit order"
+                              >
+                                <FaEdit className="h-4 w-4" />
+                                <span className="sr-only">Edit</span>
+                              </Link>
+                              <Link
                                 href={`/api/orders/${order.id}/receipt`}
                                 className="text-green-600 hover:text-green-900"
                                 title="Download receipt"
@@ -358,6 +366,14 @@ export default function ViewContactPage() {
                         >
                           <FaEye className="h-5 w-5" />
                           <span className="sr-only">View</span>
+                        </Link>
+                        <Link
+                          href={`/dashboard/orders/${order.id}/edit`}
+                          className="text-orange-600 hover:text-orange-900 p-2"
+                          title="Edit order"
+                        >
+                          <FaEdit className="h-5 w-5" />
+                          <span className="sr-only">Edit</span>
                         </Link>
                         <Link
                           href={`/api/orders/${order.id}/receipt`}
