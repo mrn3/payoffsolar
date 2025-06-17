@@ -646,6 +646,33 @@ export const OrderModel = {
     return result?.count || 0;
   },
 
+  async getRevenueByMonth(months = 12): Promise<Array<{ month: string; revenue: number; count: number }>> {
+    return executeQuery<{ month: string; revenue: number; count: number }>(
+      `SELECT
+         DATE_FORMAT(order_date, '%Y-%m') as month,
+         SUM(CAST(total AS DECIMAL(10,2))) as revenue,
+         COUNT(*) as count
+       FROM orders
+       WHERE status = 'complete'
+         AND order_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+       GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+       ORDER BY month ASC`,
+      [months]
+    );
+  },
+
+  async getOrdersByMonth(month: string): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*, c.name as contact_name
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE status = 'complete'
+         AND DATE_FORMAT(o.order_date, '%Y-%m') = ?
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      [month]
+    );
+  },
+
   async getWithItems(_id: string): Promise<OrderWithItems | null> {
     const order = await getOne<OrderWithContact>(
       `SELECT o.*, c.name as contact_name

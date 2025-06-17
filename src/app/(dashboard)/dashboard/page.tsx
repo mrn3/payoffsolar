@@ -4,6 +4,7 @@ import { getUserProfile, isContact } from '@/lib/auth';
 import {ContactModel, ProductModel, InventoryModel, OrderModel} from '@/lib/models';
 import { formatDistanceToNow } from 'date-fns';
 import { FaUsers, FaBoxes, FaShoppingCart, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import RevenueChart from '@/components/dashboard/RevenueChart';
 
 async function getStats(userId?: string, userRole?: string) {
   try {
@@ -85,10 +86,28 @@ async function getRecentActivity(userId?: string, userRole?: string) {
   }
 }
 
+async function getRevenueData(userRole?: string) {
+  try {
+    console.log('💰 Getting revenue data...');
+
+    // Only show revenue data to admin/staff users
+    if (userRole === 'contact') {
+      return [];
+    }
+
+    const revenueData = await OrderModel.getRevenueByMonth(12);
+    console.log('💰 Revenue data:', revenueData?.length || 0, 'months');
+    return revenueData || [];
+  } catch (error) {
+    console.error('❌ Error getting revenue data:', error);
+    return [];
+  }
+}
+
 export default async function DashboardPage() {
   console.log('🏠 Loading dashboard page...');
 
-  let profile, stats, activity;
+  let profile, stats, activity, revenueData;
 
   try {
     profile = await getUserProfile();
@@ -96,6 +115,7 @@ export default async function DashboardPage() {
 
     stats = await getStats(profile?.id, profile?.role || undefined);
     activity = await getRecentActivity(profile?.id, profile?.role || undefined);
+    revenueData = await getRevenueData(profile?.role || undefined);
 
     console.log('✅ Dashboard data loaded successfully');
   } catch (error) {
@@ -142,6 +162,24 @@ export default async function DashboardPage() {
     })),
 
   ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
+
+  // Calculate current month revenue and growth
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+  const currentMonthData = revenueData.find(item => item.month === currentMonth);
+  const currentMonthRevenue = currentMonthData?.revenue || 0;
+
+  // Calculate previous month for comparison
+  const prevMonth = new Date();
+  prevMonth.setMonth(prevMonth.getMonth() - 1);
+  const prevMonthStr = prevMonth.toISOString().slice(0, 7);
+  const prevMonthData = revenueData.find(item => item.month === prevMonthStr);
+  const prevMonthRevenue = prevMonthData?.revenue || 0;
+
+  // Calculate growth percentage
+  const growthPercentage = prevMonthRevenue > 0
+    ? ((currentMonthRevenue - prevMonthRevenue) / prevMonthRevenue * 100)
+    : 0;
+  const isPositiveGrowth = growthPercentage >= 0;
 
   return (
     <div>
@@ -285,47 +323,55 @@ export default async function DashboardPage() {
       </div>
 
       {/* Sales Overview */}
-      <h2 className="mt-8 text-lg font-medium text-gray-900">Sales Overview</h2>
-      <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Monthly Revenue</h3>
-            <div className="mt-2 flex items-center">
-              <div className="text-3xl font-semibold text-gray-900">$24,567</div>
-              <div className="ml-2 flex items-baseline text-sm font-semibold text-green-600">
-                <FaArrowUp className="self-center flex-shrink-0 h-4 w-4 text-green-500" />
-                <span className="ml-1">12%</span>
-                <span className="ml-1 text-gray-500">from last month</span>
+      {!isContact(profile?.role) && (
+        <>
+          <h2 className="mt-8 text-lg font-medium text-gray-900">Sales Overview</h2>
+          <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Monthly Revenue (Complete Orders)</h3>
+                <div className="mt-2 flex items-center">
+                  <div className="text-3xl font-semibold text-gray-900">
+                    ${currentMonthRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </div>
+                  {prevMonthRevenue > 0 && (
+                    <div className={`ml-2 flex items-baseline text-sm font-semibold ${isPositiveGrowth ? 'text-green-600' : 'text-red-600'}`}>
+                      {isPositiveGrowth ? (
+                        <FaArrowUp className="self-center flex-shrink-0 h-4 w-4 text-green-500" />
+                      ) : (
+                        <FaArrowDown className="self-center flex-shrink-0 h-4 w-4 text-red-500" />
+                      )}
+                      <span className="ml-1">{Math.abs(growthPercentage).toFixed(1)}%</span>
+                      <span className="ml-1 text-gray-500">from last month</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4">
+                  <RevenueChart data={revenueData} />
+                </div>
               </div>
             </div>
-            <div className="mt-4 h-24 bg-gray-100 rounded-md">
-              {/* Placeholder for chart */}
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                Revenue Chart Placeholder
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Complete Orders This Month</h3>
+                <div className="mt-2 flex items-center">
+                  <div className="text-3xl font-semibold text-gray-900">
+                    {currentMonthData?.count || 0}
+                  </div>
+                  <div className="ml-2 flex items-baseline text-sm font-semibold text-gray-600">
+                    <span className="text-gray-500">orders completed</span>
+                  </div>
+                </div>
+                <div className="mt-4 h-24 bg-gray-100 rounded-md flex items-center justify-center">
+                  <div className="text-gray-400 text-sm">
+                    Click chart bars above to view order details
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Orders This Month</h3>
-            <div className="mt-2 flex items-center">
-              <div className="text-3xl font-semibold text-gray-900">156</div>
-              <div className="ml-2 flex items-baseline text-sm font-semibold text-red-600">
-                <FaArrowDown className="self-center flex-shrink-0 h-4 w-4 text-red-500" />
-                <span className="ml-1">4%</span>
-                <span className="ml-1 text-gray-500">from last month</span>
-              </div>
-            </div>
-            <div className="mt-4 h-24 bg-gray-100 rounded-md">
-              {/* Placeholder for chart */}
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                Orders Chart Placeholder
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }
