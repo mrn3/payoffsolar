@@ -63,10 +63,10 @@ export async function PUT(
 
     // Validate SKU format if provided
     if (data.sku !== undefined) {
-      const skuRegex = /^[A-Za-z0-9_*-]+$/;
+      const skuRegex = /^[A-Za-z0-9_*\-+./\s]+$/;
       if (!skuRegex.test(data.sku)) {
         return NextResponse.json({
-          error: 'SKU can only contain letters, numbers, hyphens, underscores, and asterisks' }, { status: 400 });
+          error: 'SKU can only contain letters, numbers, hyphens, underscores, asterisks, periods, plus signs, forward slashes, and spaces' }, { status: 400 });
       }
 
       // Check if SKU already exists for a different product

@@ -62,9 +62,9 @@ export default function NewProductPage() {
     if (!formData.sku.trim()) {
       newErrors.sku = 'SKU is required';
     } else {
-      const skuRegex = /^[A-Za-z0-9_*-]+$/;
+      const skuRegex = /^[A-Za-z0-9_*\-+./\s]+$/;
       if (!skuRegex.test(formData.sku)) {
-        newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, and asterisks';
+        newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, asterisks, periods, plus signs, forward slashes, and spaces';
       }
     }
 
@@ -109,9 +109,9 @@ export default function NewProductPage() {
       if (!formData.sku.trim()) {
         newErrors.sku = 'SKU is required';
       } else {
-        const skuRegex = /^[A-Za-z0-9_*-]+$/;
+        const skuRegex = /^[A-Za-z0-9_*\-+./\s]+$/;
         if (!skuRegex.test(formData.sku)) {
-          newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, and asterisks';
+          newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, asterisks, periods, plus signs, forward slashes, and spaces';
         } else {
           delete newErrors.sku;
         }
@@ -237,7 +237,7 @@ export default function NewProductPage() {
                 className={`mt-1 block w-full border rounded-md px-3 py-2 ${
                   errors.sku ? 'border-red-300' : 'border-gray-300'
                 } focus:outline-none focus:ring-green-500 focus:border-green-500`}
-                placeholder="e.g., SP-001, SP*001"
+                placeholder="e.g., SP-001, Q.Peak DUO BLK ML-G10+/t 395"
               />
               {errors.sku && <p className="mt-1 text-sm text-red-600">{errors.sku}</p>}
             </div>
