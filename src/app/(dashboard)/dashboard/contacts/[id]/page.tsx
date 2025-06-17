@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
-import { FaArrowLeft, FaEdit, FaEye, FaDownload, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaStickyNote } from 'react-icons/fa';
+import { FaArrowLeft, FaEdit, FaEye, FaDownload, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaStickyNote, FaPlus } from 'react-icons/fa';
 import { Contact } from '@/lib/models';
 
 interface Order {
@@ -241,10 +241,17 @@ export default function ViewContactPage() {
 
       {/* Orders Section */}
       <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-lg font-medium text-gray-900">
             Order History ({total} {total === 1 ? 'order' : 'orders'})
           </h2>
+          <Link
+            href={`/dashboard/orders/new?contact_id=${contact.id}`}
+            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            <FaPlus className="h-4 w-4 mr-2" />
+            Add Order
+          </Link>
         </div>
         <div className="px-6 py-4">
           {ordersLoading ? (

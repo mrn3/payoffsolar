@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { OrderItem, Contact, Product } from '@/lib/models';
 import ContactAutocomplete from '@/components/ui/ContactAutocomplete';
 import {FaArrowLeft, FaPlus, FaTrash} from 'react-icons/fa';
 
 export default function NewOrderPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +27,17 @@ export default function NewOrderPage() {
   useEffect(() => {
     fetchData();
   }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
+
+  // Handle URL parameters for pre-populating contact
+  useEffect(() => {
+    const contactId = searchParams.get('contact_id');
+    if (contactId && contacts.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        contact_id: contactId
+      }));
+    }
+  }, [searchParams, contacts]);
 
   const fetchData = async () => {
     try {
