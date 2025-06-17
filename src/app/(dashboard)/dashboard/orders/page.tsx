@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import ImportOrdersModal from '@/components/orders/ImportOrdersModal';
 import DeleteAllOrdersModal from '@/components/orders/DeleteAllOrdersModal';
+import DuplicateOrdersModal from '@/components/orders/DuplicateOrdersModal';
+import BulkMergeOrdersModal from '@/components/orders/BulkMergeOrdersModal';
 import toast from 'react-hot-toast';
-import {FaDownload, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaUpload} from 'react-icons/fa';
+import {FaDownload, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaUpload, FaCopy} from 'react-icons/fa';
 
 interface Order {
   id: string;
@@ -53,6 +55,8 @@ export default function OrdersPage() {
   const [bulkStatus, setBulkStatus] = useState('');
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [isDuplicatesModalOpen, setIsDuplicatesModalOpen] = useState(false);
+  const [showBulkMergeModal, setShowBulkMergeModal] = useState(false);
 
   // Debounce search input
   useEffect(() => {
@@ -135,6 +139,16 @@ export default function OrdersPage() {
       console.error('Error deleting _order:', err);
       toast.error('Failed to delete order');
     }
+  };
+
+  const handleDuplicatesComplete = () => {
+    fetchOrders(currentPage, searchQuery);
+  };
+
+  const handleBulkMergeComplete = () => {
+    setSelectedOrders(new Set());
+    setShowBulkMergeModal(false);
+    fetchOrders(currentPage, searchQuery);
   };
 
   const isContact = (role: string | null) => {
@@ -271,6 +285,14 @@ export default function OrdersPage() {
           <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
             <div className="flex space-x-3">
               <button
+                type="button"
+                onClick={() => setIsDuplicatesModalOpen(true)}
+                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
+              >
+                <FaCopy className="mr-2 h-4 w-4" />
+                Find Duplicates
+              </button>
+              <button
                 onClick={() => setShowImportModal(true)}
                 className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto"
               >
@@ -351,6 +373,14 @@ export default function OrdersPage() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowBulkMergeModal(true)}
+                disabled={selectedOrders.size < 2}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FaCopy className="mr-1 h-3 w-3" />
+                Merge Duplicates
+              </button>
               <button
                 onClick={handleBulkStatusUpdate}
                 disabled={!bulkStatus || bulkUpdating}
@@ -606,6 +636,21 @@ export default function OrdersPage() {
         onClose={() => setShowDeleteAllModal(false)}
         onConfirm={handleDeleteAllOrders}
         orderCount={total}
+      />
+
+      {/* Duplicate Orders Modal */}
+      <DuplicateOrdersModal
+        isOpen={isDuplicatesModalOpen}
+        onClose={() => setIsDuplicatesModalOpen(false)}
+        onMergeComplete={handleDuplicatesComplete}
+      />
+
+      {/* Bulk Merge Orders Modal */}
+      <BulkMergeOrdersModal
+        isOpen={showBulkMergeModal}
+        onClose={() => setShowBulkMergeModal(false)}
+        selectedOrderIds={Array.from(selectedOrders)}
+        onComplete={handleBulkMergeComplete}
       />
     </div>
   );

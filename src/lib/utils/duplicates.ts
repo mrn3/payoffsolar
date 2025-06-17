@@ -1,4 +1,4 @@
-import { Contact } from '@/lib/models';
+import { Contact, OrderWithContact, OrderWithItems } from '@/lib/models';
 
 export interface DuplicateGroup {
   id: string;
@@ -10,6 +10,20 @@ export interface DuplicateGroup {
 export interface ContactSimilarity {
   contact1: Contact;
   contact2: Contact;
+  similarityScore: number;
+  matchReasons: string[];
+}
+
+export interface OrderDuplicateGroup {
+  id: string;
+  orders: OrderWithContact[];
+  similarityScore: number;
+  matchType: 'total' | 'contact' | 'date' | 'status' | 'multiple';
+}
+
+export interface OrderSimilarity {
+  order1: OrderWithContact;
+  order2: OrderWithContact;
   similarityScore: number;
   matchReasons: string[];
 }
@@ -198,6 +212,168 @@ export function findDuplicates(_contacts: Contact[], threshold = 70): DuplicateG
       duplicateGroups.push({
         id: `group-${duplicateGroups.length + 1}`,
         contacts: similarContacts,
+        similarityScore: maxSimilarity,
+        matchType: primaryMatchType
+      });
+    }
+  }
+
+  // Sort by similarity score (highest first)
+  return duplicateGroups.sort((a, b) => b.similarityScore - a.similarityScore);
+}
+
+// Calculate similarity between two orders
+export function calculateOrderSimilarity(order1: OrderWithContact, order2: OrderWithContact): OrderSimilarity {
+  const matchReasons: string[] = [];
+  let totalScore = 0;
+  let scoreCount = 0;
+
+  // Total amount match (highest priority)
+  const total1 = Number(order1.total);
+  const total2 = Number(order2.total);
+  if (total1 === total2) {
+    matchReasons.push('Exact total match');
+    totalScore += 100;
+    scoreCount++;
+  } else if (Math.abs(total1 - total2) <= 0.01) {
+    matchReasons.push('Very similar total');
+    totalScore += 95;
+    scoreCount++;
+  } else {
+    // Calculate percentage difference
+    const avgTotal = (total1 + total2) / 2;
+    const percentDiff = Math.abs(total1 - total2) / avgTotal * 100;
+    if (percentDiff <= 5) {
+      matchReasons.push('Similar total');
+      totalScore += 85;
+      scoreCount++;
+    } else if (percentDiff <= 10) {
+      matchReasons.push('Somewhat similar total');
+      totalScore += 70;
+      scoreCount++;
+    }
+  }
+
+  // Contact name match (high priority)
+  const contactName1 = order1.contact_name || '';
+  const contactName2 = order2.contact_name || '';
+  if (contactName1 && contactName2) {
+    const nameSimilarity = stringSimilarity(contactName1, contactName2);
+    if (nameSimilarity === 100) {
+      matchReasons.push('Exact contact name match');
+      totalScore += 90;
+    } else if (nameSimilarity > 85) {
+      matchReasons.push('Very similar contact name');
+      totalScore += nameSimilarity * 0.85;
+    } else if (nameSimilarity > 70) {
+      matchReasons.push('Similar contact name');
+      totalScore += nameSimilarity * 0.7;
+    }
+    scoreCount++;
+  }
+
+  // Order date match (medium priority)
+  const date1 = new Date(order1.order_date);
+  const date2 = new Date(order2.order_date);
+  const daysDiff = Math.abs(date1.getTime() - date2.getTime()) / (1000 * 60 * 60 * 24);
+
+  if (daysDiff === 0) {
+    matchReasons.push('Same order date');
+    totalScore += 80;
+  } else if (daysDiff <= 1) {
+    matchReasons.push('Order dates within 1 day');
+    totalScore += 70;
+  } else if (daysDiff <= 7) {
+    matchReasons.push('Order dates within 1 week');
+    totalScore += 60;
+  } else if (daysDiff <= 30) {
+    matchReasons.push('Order dates within 1 month');
+    totalScore += 40;
+  }
+  scoreCount++;
+
+  // Status match (lower priority)
+  if (order1.status && order2.status) {
+    const statusSimilarity = stringSimilarity(order1.status, order2.status);
+    if (statusSimilarity === 100) {
+      matchReasons.push('Same status');
+      totalScore += 60;
+    } else if (statusSimilarity > 80) {
+      matchReasons.push('Similar status');
+      totalScore += statusSimilarity * 0.5;
+    }
+    scoreCount++;
+  }
+
+  const averageScore = scoreCount > 0 ? totalScore / scoreCount : 0;
+
+  return {
+    order1,
+    order2,
+    similarityScore: Math.round(averageScore),
+    matchReasons
+  };
+}
+
+// Find potential duplicate orders in a list of orders
+export function findOrderDuplicates(orders: OrderWithContact[], threshold = 70): OrderDuplicateGroup[] {
+  const duplicateGroups: OrderDuplicateGroup[] = [];
+  const processedOrders = new Set<string>();
+
+  for (let i = 0; i < orders.length; i++) {
+    if (processedOrders.has(orders[i].id)) continue;
+
+    const currentOrder = orders[i];
+    const similarOrders: OrderWithContact[] = [currentOrder];
+    let maxSimilarity = 0;
+    const matchTypes = new Set<string>();
+
+    for (let j = i + 1; j < orders.length; j++) {
+      if (processedOrders.has(orders[j].id)) continue;
+
+      const similarity = calculateOrderSimilarity(currentOrder, orders[j]);
+
+      if (similarity.similarityScore >= threshold) {
+        similarOrders.push(orders[j]);
+        maxSimilarity = Math.max(maxSimilarity, similarity.similarityScore);
+
+        // Determine match type
+        if (similarity.matchReasons.some(reason => reason.includes('total'))) {
+          matchTypes.add('total');
+        }
+        if (similarity.matchReasons.some(reason => reason.includes('contact'))) {
+          matchTypes.add('contact');
+        }
+        if (similarity.matchReasons.some(reason => reason.includes('date'))) {
+          matchTypes.add('date');
+        }
+        if (similarity.matchReasons.some(reason => reason.includes('status'))) {
+          matchTypes.add('status');
+        }
+      }
+    }
+
+    if (similarOrders.length > 1) {
+      // Mark all orders in this group as processed
+      similarOrders.forEach(order => processedOrders.add(order.id));
+
+      // Determine primary match type
+      let primaryMatchType: 'total' | 'contact' | 'date' | 'status' | 'multiple' = 'total';
+      if (matchTypes.size > 1) {
+        primaryMatchType = 'multiple';
+      } else if (matchTypes.has('total')) {
+        primaryMatchType = 'total';
+      } else if (matchTypes.has('contact')) {
+        primaryMatchType = 'contact';
+      } else if (matchTypes.has('date')) {
+        primaryMatchType = 'date';
+      } else if (matchTypes.has('status')) {
+        primaryMatchType = 'status';
+      }
+
+      duplicateGroups.push({
+        id: `group-${duplicateGroups.length + 1}`,
+        orders: similarOrders,
         similarityScore: maxSimilarity,
         matchType: primaryMatchType
       });
