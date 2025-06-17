@@ -244,7 +244,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                             <h4 className="font-medium text-gray-900">
                               {contact.name}
                             </h4>
-                            <div className="mt-1 text-sm text-gray-600 space-y-1">
+                            <div className="mt-1 text-sm text-gray-900 space-y-1">
                               {contact.email && <p>Email: {contact.email}</p>}
                               {contact.phone && <p>Phone: {contact.phone}</p>}
                               {contact.address && (
@@ -288,7 +288,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                     Will be kept
                   </span>
                 </div>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-sm text-gray-900">
                   <p><strong>Name:</strong> {primaryContact.name}</p>
                   <p><strong>Email:</strong> {primaryContact.email || 'N/A'}</p>
                   <p><strong>Phone:</strong> {primaryContact.phone || 'N/A'}</p>
@@ -305,7 +305,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                     Will be deleted
                   </span>
                 </div>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-sm text-gray-900">
                   <p><strong>Name:</strong> {duplicateContact.name}</p>
                   <p><strong>Email:</strong> {duplicateContact.email || 'N/A'}</p>
                   <p><strong>Phone:</strong> {duplicateContact.phone || 'N/A'}</p>
