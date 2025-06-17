@@ -7,19 +7,27 @@
  * 2. Show before/after statistics
  */
 
+// Load environment variables from multiple possible files
+require('dotenv').config({ path: '.env' });
 require('dotenv').config({ path: '.env.local' });
 const mysql = require('mysql2/promise');
-const fs = require('fs').promises;
-const path = require('path');
 
-// Database configuration
+// Database configuration with better defaults for Bitnami
 const dbConfig = {
   host: process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost',
   user: process.env.MYSQL_USER || process.env.DB_USER || 'root',
-  password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || 'password',
+  password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
   database: process.env.MYSQL_DATABASE || process.env.DB_NAME || 'payoffsolar',
-  port: process.env.MYSQL_PORT || process.env.DB_PORT || 3306
+  port: parseInt(process.env.MYSQL_PORT || process.env.DB_PORT || '3306')
 };
+
+console.log('🔧 Database configuration:');
+console.log(`   Host: ${dbConfig.host}`);
+console.log(`   Port: ${dbConfig.port}`);
+console.log(`   User: ${dbConfig.user}`);
+console.log(`   Database: ${dbConfig.database}`);
+console.log(`   Password: ${dbConfig.password ? '[SET]' : '[NOT SET]'}`);
+console.log('');
 
 async function runMigration() {
   let connection;
@@ -103,6 +111,20 @@ async function runMigration() {
     
   } catch (error) {
     console.error('❌ Migration failed:', error.message);
+
+    if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+      console.error('\n💡 Database connection tips for Bitnami servers:');
+      console.error('   1. Check if MySQL password is set correctly in .env file');
+      console.error('   2. On Bitnami, try using the bitnami user instead of root');
+      console.error('   3. Check MySQL credentials with: sudo cat /opt/bitnami/mysql/conf/my.cnf');
+      console.error('   4. Or try: mysql -u root -p (to test connection manually)');
+      console.error('\n   Example .env configuration for Bitnami:');
+      console.error('   MYSQL_HOST=localhost');
+      console.error('   MYSQL_USER=root');
+      console.error('   MYSQL_PASSWORD=your_actual_mysql_password');
+      console.error('   MYSQL_DATABASE=payoffsolar');
+    }
+
     process.exit(1);
   } finally {
     if (connection) {
