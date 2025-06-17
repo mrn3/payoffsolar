@@ -75,11 +75,11 @@ export async function POST(request: NextRequest) {
         error: 'Price must be a valid positive number' }, { status: 400 });
     }
 
-    // Validate SKU format (alphanumeric, hyphens, underscores)
-    const skuRegex = /^[A-Za-z0-9_-]+$/;
+    // Validate SKU format (alphanumeric, hyphens, underscores, asterisks)
+    const skuRegex = /^[A-Za-z0-9_-*]+$/;
     if (!skuRegex.test(data.sku)) {
       return NextResponse.json({
-        error: 'SKU can only contain letters, numbers, hyphens, and underscores' }, { status: 400 });
+        error: 'SKU can only contain letters, numbers, hyphens, underscores, and asterisks' }, { status: 400 });
     }
 
     // Check if SKU already exists

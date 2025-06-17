@@ -155,9 +155,9 @@ export default function EditProductPage() {
     if (!formData.sku.trim()) {
       newErrors.sku = 'SKU is required';
     } else {
-      const skuRegex = /^[A-Za-z0-9_-]+$/;
+      const skuRegex = /^[A-Za-z0-9_-*]+$/;
       if (!skuRegex.test(formData.sku)) {
-        newErrors.sku = 'SKU can only contain letters, numbers, hyphens, and underscores';
+        newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, and asterisks';
       }
     }
 
@@ -202,9 +202,9 @@ export default function EditProductPage() {
       if (!formData.sku.trim()) {
         newErrors.sku = 'SKU is required';
       } else {
-        const skuRegex = /^[A-Za-z0-9_-]+$/;
+        const skuRegex = /^[A-Za-z0-9_-*]+$/;
         if (!skuRegex.test(formData.sku)) {
-          newErrors.sku = 'SKU can only contain letters, numbers, hyphens, and underscores';
+          newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, and asterisks';
         } else {
           delete newErrors.sku;
         }
@@ -336,7 +336,7 @@ export default function EditProductPage() {
                 className={`mt-1 block w-full border rounded-md px-3 py-2 ${
                   errors.sku ? 'border-red-300' : 'border-gray-300'
                 } focus:outline-none focus:ring-green-500 focus:border-green-500`}
-                placeholder="e.g., SP-001"
+                placeholder="e.g., SP-001, SP*001"
               />
               {errors.sku && <p className="mt-1 text-sm text-red-600">{errors.sku}</p>}
             </div>
