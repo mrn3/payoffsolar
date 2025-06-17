@@ -62,7 +62,7 @@ export default function NewProductPage() {
     if (!formData.sku.trim()) {
       newErrors.sku = 'SKU is required';
     } else {
-      const skuRegex = /^[A-Za-z0-9_-*]+$/;
+      const skuRegex = /^[A-Za-z0-9_*-]+$/;
       if (!skuRegex.test(formData.sku)) {
         newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, and asterisks';
       }
@@ -109,7 +109,7 @@ export default function NewProductPage() {
       if (!formData.sku.trim()) {
         newErrors.sku = 'SKU is required';
       } else {
-        const skuRegex = /^[A-Za-z0-9_-*]+$/;
+        const skuRegex = /^[A-Za-z0-9_*-]+$/;
         if (!skuRegex.test(formData.sku)) {
           newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, and asterisks';
         } else {

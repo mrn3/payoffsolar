@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate SKU format (alphanumeric, hyphens, underscores, asterisks)
-    const skuRegex = /^[A-Za-z0-9_-*]+$/;
+    const skuRegex = /^[A-Za-z0-9_*-]+$/;
     if (!skuRegex.test(data.sku)) {
       return NextResponse.json({
         error: 'SKU can only contain letters, numbers, hyphens, underscores, and asterisks' }, { status: 400 });
