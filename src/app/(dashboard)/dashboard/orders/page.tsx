@@ -433,7 +433,16 @@ export default function OrdersPage() {
                         </td>
                         {!isContact(profile.role) && (
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {_order.contact_name || 'Unknown Contact'}
+                            {_order.contact_id ? (
+                              <Link
+                                href={`/dashboard/contacts/${_order.contact_id}`}
+                                className="text-green-600 hover:text-green-900 hover:underline"
+                              >
+                                {_order.contact_name || 'Unknown Contact'}
+                              </Link>
+                            ) : (
+                              _order.contact_name || 'Unknown Contact'
+                            )}
                           </td>
                         )}
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
