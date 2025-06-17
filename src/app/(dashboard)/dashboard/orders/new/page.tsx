@@ -195,7 +195,6 @@ export default function NewOrderPage() {
               >
                 <option value="Cancelled">Cancelled</option>
                 <option value="Complete">Complete</option>
-                <option value="Followed Up">Followed Up</option>
                 <option value="Paid">Paid</option>
                 <option value="Proposed">Proposed</option>
                 <option value="Scheduled">Scheduled</option>

@@ -244,8 +244,6 @@ export default function OrdersPage() {
         return 'bg-yellow-100 text-yellow-800';
       case 'scheduled':
         return 'bg-blue-100 text-blue-800';
-      case 'followed up':
-        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -365,7 +363,6 @@ export default function OrdersPage() {
                   <option value="">Select status...</option>
                   <option value="Cancelled">Cancelled</option>
                   <option value="Complete">Complete</option>
-                  <option value="Followed Up">Followed Up</option>
                   <option value="Paid">Paid</option>
                   <option value="Proposed">Proposed</option>
                   <option value="Scheduled">Scheduled</option>
