@@ -9,6 +9,7 @@ import DeleteContactModal from '@/components/contacts/DeleteContactModal';
 import DeleteAllContactsModal from '@/components/contacts/DeleteAllContactsModal';
 import ImportContactsModal from '@/components/contacts/ImportContactsModal';
 import DuplicateContactsModal from '@/components/contacts/DuplicateContactsModal';
+import BulkActionsToolbar from '@/components/contacts/BulkActionsToolbar';
 
 interface ContactsResponse {
   contacts: Contact[];
@@ -43,6 +44,10 @@ export default function ContactsPage() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDuplicatesModalOpen, setIsDuplicatesModalOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+
+  // Bulk selection state
+  const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
+  const [isSelectAllChecked, setIsSelectAllChecked] = useState(false);
 
   const fetchContacts = async (page = 1, search = '') => {
     try {
@@ -154,6 +159,40 @@ export default function ContactsPage() {
     fetchContacts(currentPage, searchQuery);
   };
 
+  // Bulk selection functions
+  const handleSelectContact = (contactId: string, checked: boolean) => {
+    const newSelected = new Set(selectedContactIds);
+    if (checked) {
+      newSelected.add(contactId);
+    } else {
+      newSelected.delete(contactId);
+    }
+    setSelectedContactIds(newSelected);
+
+    // Update select all checkbox state
+    setIsSelectAllChecked(newSelected.size === contacts.length && contacts.length > 0);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(contacts.map(contact => contact.id));
+      setSelectedContactIds(allIds);
+    } else {
+      setSelectedContactIds(new Set());
+    }
+    setIsSelectAllChecked(checked);
+  };
+
+  const clearSelection = () => {
+    setSelectedContactIds(new Set());
+    setIsSelectAllChecked(false);
+  };
+
+  // Clear selection when contacts change (e.g., after pagination)
+  useEffect(() => {
+    clearSelection();
+  }, [contacts]);
+
   return (
     <div>
       <div className="sm:flex sm:items-center sm:justify-between">
@@ -226,6 +265,19 @@ export default function ContactsPage() {
         </div>
       )}
 
+      {/* Bulk Actions Toolbar */}
+      {selectedContactIds.size > 0 && (
+        <BulkActionsToolbar
+          selectedCount={selectedContactIds.size}
+          selectedContactIds={Array.from(selectedContactIds)}
+          onClearSelection={clearSelection}
+          onBulkComplete={() => {
+            clearSelection();
+            fetchContacts(currentPage, searchQuery);
+          }}
+        />
+      )}
+
       {/* Contacts table - Desktop */}
       <div className="mt-8 hidden sm:flex sm:flex-col">
         <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -234,6 +286,14 @@ export default function ContactsPage() {
               <table className="min-w-full divide-y divide-gray-300">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th scope="col" className="relative w-12 px-6 sm:w-16 sm:px-8">
+                      <input
+                        type="checkbox"
+                        checked={isSelectAllChecked}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 sm:left-6"
+                      />
+                    </th>
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
                       Name
                     </th>
@@ -257,13 +317,21 @@ export default function ContactsPage() {
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                      <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
                         Loading contacts...
                       </td>
                     </tr>
                   ) : contacts.length > 0 ? (
                     contacts.map((contact) => (
                       <tr key={contact.id}>
+                        <td className="relative w-12 px-6 sm:w-16 sm:px-8">
+                          <input
+                            type="checkbox"
+                            checked={selectedContactIds.has(contact.id)}
+                            onChange={(e) => handleSelectContact(contact.id, e.target.checked)}
+                            className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 sm:left-6"
+                          />
+                        </td>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                           {contact.name}
                         </td>
@@ -314,7 +382,7 @@ export default function ContactsPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                      <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
                         {searchQuery ? 'No contacts found matching your search.' : 'No contacts found.' }
                       </td>
                     </tr>
@@ -334,10 +402,31 @@ export default function ContactsPage() {
           </div>
         ) : contacts.length > 0 ? (
           <div className="space-y-4">
+            {/* Mobile Select All */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={isSelectAllChecked}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  Select all contacts
+                </span>
+              </label>
+            </div>
             {contacts.map((contact) => (
               <div key={contact.id} className="bg-white shadow rounded-lg border border-gray-200 p-4">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
+                  <div className="flex items-start space-x-3 flex-1 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={selectedContactIds.has(contact.id)}
+                      onChange={(e) => handleSelectContact(contact.id, e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    />
+                    <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-medium text-gray-900 truncate">
                       {contact.name}
                     </h3>
@@ -361,6 +450,7 @@ export default function ContactsPage() {
                         <span className="font-medium">Created:</span> {format(new Date(contact.created_at), 'MMM d, yyyy')}
                       </p>
                     </div>
+                  </div>
                   </div>
                   <div className="flex items-center space-x-3 ml-4">
                     <button
