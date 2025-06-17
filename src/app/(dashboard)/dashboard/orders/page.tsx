@@ -44,6 +44,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -52,6 +53,15 @@ export default function OrdersPage() {
   const [bulkStatus, setBulkStatus] = useState('');
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(localSearchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [localSearchQuery]);
 
   useEffect(() => {
     fetchOrders(1, searchQuery);
@@ -100,7 +110,7 @@ export default function OrdersPage() {
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    setLocalSearchQuery(e.target.value);
     setCurrentPage(1);
   };
 
@@ -303,7 +313,7 @@ export default function OrdersPage() {
             </div>
             <input
               type="text"
-              value={searchQuery}
+              value={localSearchQuery}
               onChange={handleSearch}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
               placeholder="Search orders by contact name"

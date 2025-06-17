@@ -11,9 +11,19 @@ export default function CMSPage() {
   const [contentTypes, setContentTypes] = useState<ContentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(localSearchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [localSearchTerm]);
 
   const fetchContent = useCallback(async () => {
     try {
@@ -131,8 +141,8 @@ export default function CMSPage() {
           </div>
           <input
             type="text"
-            value={searchTerm}
-            onChange={(_e) => setSearchTerm(_e.target.value)}
+            value={localSearchTerm}
+            onChange={(_e) => setLocalSearchTerm(_e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
             placeholder="Search content"
           />
