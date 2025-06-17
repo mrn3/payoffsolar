@@ -1,8 +1,8 @@
 import { Contact } from '@/lib/models';
 
 export interface DuplicateGroup {
-  _id: string;
-  _contacts: Contact[];
+  id: string;
+  contacts: Contact[];
   similarityScore: number;
   matchType: 'email' | 'phone' | 'name' | 'multiple';
 }
@@ -196,8 +196,8 @@ export function findDuplicates(_contacts: Contact[], threshold = 70): DuplicateG
       }
 
       duplicateGroups.push({
-        _id: `group-${duplicateGroups.length + 1}`,
-        _contacts: similarContacts,
+        id: `group-${duplicateGroups.length + 1}`,
+        contacts: similarContacts,
         similarityScore: maxSimilarity,
         matchType: primaryMatchType
       });
