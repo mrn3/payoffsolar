@@ -28,6 +28,7 @@
 public/uploads/*
 !public/uploads/.gitkeep
 !public/uploads/products/
+public/uploads/products/*
 !public/uploads/products/.gitkeep
 
 # debug

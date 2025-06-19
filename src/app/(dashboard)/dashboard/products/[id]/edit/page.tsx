@@ -37,7 +37,9 @@ export default function EditProductPage() {
   const fetchProduct = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/products/${productId}`);
+      const response = await fetch(`/api/products/${productId}`, {
+        credentials: 'include'
+      });
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -68,7 +70,9 @@ export default function EditProductPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/product-categories');
+      const response = await fetch('/api/product-categories', {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setCategories(data.categories);
@@ -80,7 +84,9 @@ export default function EditProductPage() {
 
   const fetchProductImages = useCallback(async () => {
     try {
-      const response = await fetch(`/api/products/${productId}/images`);
+      const response = await fetch(`/api/products/${productId}/images`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setProductImages(data.images);
@@ -103,6 +109,7 @@ export default function EditProductPage() {
         const response = await fetch(`/api/products/${productId}/images`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             image_url: file.url,
             alt_text: file.originalName
@@ -130,7 +137,8 @@ export default function EditProductPage() {
       if (!imageToRemove) return;
 
       const response = await fetch(`/api/products/${productId}/images?imageId=${imageToRemove.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -235,6 +243,7 @@ export default function EditProductPage() {
       const response = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           ...formData,
           price: parseFloat(formData.price),

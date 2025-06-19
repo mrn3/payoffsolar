@@ -52,7 +52,9 @@ export default function ProductsPage() {
         params.append('includeInactive', 'true');
       }
 
-      const _response = await fetch(`/api/products?${params}`);
+      const _response = await fetch(`/api/products?${params}`, {
+        credentials: 'include'
+      });
       if (!_response.ok) {
         throw new Error('Failed to fetch products');
       }

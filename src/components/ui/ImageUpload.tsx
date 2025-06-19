@@ -52,6 +52,7 @@ export default function ImageUpload({
 
       const _response = await fetch('/api/upload', {
         method: 'POST',
+        credentials: 'include',
         body: formData
       });
 

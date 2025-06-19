@@ -74,7 +74,9 @@ export default function ContactAutocomplete({
   const fetchContacts = async () => {
     try {
       setLoading(true);
-      const _response = await fetch('/api/contacts?limit=1000');
+      const _response = await fetch('/api/contacts?limit=1000', {
+        credentials: 'include'
+      });
       if (_response.ok) {
         const _data = await _response.json();
         setContacts(_data.contacts || []);
@@ -88,7 +90,9 @@ export default function ContactAutocomplete({
 
   const fetchContactById = async (contactId: string) => {
     try {
-      const response = await fetch(`/api/contacts/${contactId}`);
+      const response = await fetch(`/api/contacts/${contactId}`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         const contact = data.contact;

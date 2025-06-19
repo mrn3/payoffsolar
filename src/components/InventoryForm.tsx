@@ -48,7 +48,9 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
 
   const loadProducts = async () => {
     try {
-      const _response = await fetch('/api/products?includeInactive=false&limit=1000');
+      const _response = await fetch('/api/products?includeInactive=false&limit=1000', {
+        credentials: 'include'
+      });
       if (_response.ok) {
                 setProducts(_data.products || []);
       }
@@ -59,7 +61,9 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
 
   const loadWarehouses = async () => {
     try {
-      const _response = await fetch('/api/warehouses');
+      const _response = await fetch('/api/warehouses', {
+        credentials: 'include'
+      });
       if (_response.ok) {
                 setWarehouses(_data.warehouses || []);
       }
