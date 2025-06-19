@@ -5,6 +5,7 @@ import {ContactModel, ProductModel, InventoryModel, OrderModel} from '@/lib/mode
 import { formatDistanceToNow } from 'date-fns';
 import { FaUsers, FaBoxes, FaShoppingCart, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import RevenueChart from '@/components/dashboard/RevenueChart';
+import OrderCountsChart from '@/components/dashboard/OrderCountsChart';
 
 async function getStats(userId?: string, userRole?: string) {
   try {
@@ -104,10 +105,28 @@ async function getRevenueData(userRole?: string) {
   }
 }
 
+async function getOrderCountsData(userRole?: string) {
+  try {
+    console.log('📊 Getting order counts data...');
+
+    // Only show order counts data to admin/staff users
+    if (userRole === 'contact') {
+      return [];
+    }
+
+    const orderCountsData = await OrderModel.getOrderCountsByStatusAndMonth(12);
+    console.log('📊 Order counts data:', orderCountsData?.length || 0, 'records');
+    return orderCountsData || [];
+  } catch (error) {
+    console.error('❌ Error getting order counts data:', error);
+    return [];
+  }
+}
+
 export default async function DashboardPage() {
   console.log('🏠 Loading dashboard page...');
 
-  let profile, stats, activity, revenueData;
+  let profile, stats, activity, revenueData, orderCountsData;
 
   try {
     profile = await getUserProfile();
@@ -116,6 +135,7 @@ export default async function DashboardPage() {
     stats = await getStats(profile?.id, profile?.role || undefined);
     activity = await getRecentActivity(profile?.id, profile?.role || undefined);
     revenueData = await getRevenueData(profile?.role || undefined);
+    orderCountsData = await getOrderCountsData(profile?.role || undefined);
 
     console.log('✅ Dashboard data loaded successfully');
   } catch (error) {
@@ -353,19 +373,9 @@ export default async function DashboardPage() {
             </div>
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">Complete Orders This Month</h3>
-                <div className="mt-2 flex items-center">
-                  <div className="text-3xl font-semibold text-gray-900">
-                    {currentMonthData?.count || 0}
-                  </div>
-                  <div className="ml-2 flex items-baseline text-sm font-semibold text-gray-600">
-                    <span className="text-gray-500">orders completed</span>
-                  </div>
-                </div>
-                <div className="mt-4 h-24 bg-gray-100 rounded-md flex items-center justify-center">
-                  <div className="text-gray-400 text-sm">
-                    Click chart bars above to view order details
-                  </div>
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Order Count by Status</h3>
+                <div className="mt-4">
+                  <OrderCountsChart data={orderCountsData} />
                 </div>
               </div>
             </div>
