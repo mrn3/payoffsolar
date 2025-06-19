@@ -7,6 +7,14 @@ import { Order, OrderItem, Contact, Product } from '@/lib/models';
 import ContactAutocomplete from '@/components/ui/ContactAutocomplete';
 import {FaArrowLeft, FaPlus, FaTrash} from 'react-icons/fa';
 
+// Local interface for form state that allows quantity to be string during editing
+interface FormOrderItem {
+  id?: string;
+  product_id: string;
+  quantity: number | string;
+  price: number | string;
+}
+
 export default function EditOrderPage() {
   const router = useRouter();
   const params = useParams();
@@ -23,7 +31,7 @@ export default function EditOrderPage() {
     status: 'Proposed',
     order_date: '',
     notes: '',
-    items: [{ product_id: '', quantity: 1, price: 0 }] as OrderItem[]
+    items: [{ product_id: '', quantity: 1, price: 0 }] as FormOrderItem[]
   });
 
   useEffect(() => {
@@ -130,7 +138,7 @@ export default function EditOrderPage() {
     }
   };
 
-  const updateItem = (__index: number, field: keyof OrderItem, value: string | number) => {
+  const updateItem = (__index: number, field: keyof FormOrderItem, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       items: prev.items.map((item, i) =>
@@ -149,7 +157,9 @@ export default function EditOrderPage() {
 
   const calculateTotal = () => {
     return formData.items.reduce((total, item) => {
-      return total + (item.price * item.quantity);
+      const price = typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price;
+      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) || 0 : item.quantity;
+      return total + (price * quantity);
     }, 0);
   };
 
@@ -297,7 +307,25 @@ export default function EditOrderPage() {
                     min="1"
                     required
                     value={item.quantity}
-                    onChange={(_e) => updateItem(_index, 'quantity', parseInt(_e.target.value) || 1)}
+                    onChange={(_e) => {
+                      const value = _e.target.value;
+                      // Allow empty string during editing, convert to number on blur
+                      if (value === '') {
+                        updateItem(_index, 'quantity', '');
+                      } else {
+                        const numValue = parseInt(value);
+                        if (!isNaN(numValue) && numValue > 0) {
+                          updateItem(_index, 'quantity', numValue);
+                        }
+                      }
+                    }}
+                    onBlur={(_e) => {
+                      // Ensure we have a valid number when field loses focus
+                      const value = _e.target.value;
+                      if (value === '' || parseInt(value) < 1) {
+                        updateItem(_index, 'quantity', 1);
+                      }
+                    }}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
                   />
                 </div>
