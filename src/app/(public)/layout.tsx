@@ -121,13 +121,13 @@ export default async function PublicLayout({
               <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Contact</h3>
               <ul className="mt-4 space-y-2">
                 <li className="text-sm text-gray-700">
-                  123 Solar Street, Sunshine City, CA 90210
+                  11483 S Wexford Way, South Jordan, UT 84009
                 </li>
                 <li className="text-sm text-gray-700">
-                  info@payoffsolar.com
+                  matt@payoffsolar.com
                 </li>
                 <li className="text-sm text-gray-700">
-                  (555) 123-4567
+                  (801) 448-6396
                 </li>
                 <li className="mt-4">
                   <Link

@@ -98,7 +98,7 @@ export default function ContactPage() {
               </div>
               <h3 className="text-xl font-bold mb-2">Phone</h3>
               <p className="text-gray-600">
-                (555) 123-4567
+                (801) 448-6396
               </p>
               <p className="text-gray-600 mt-1">
                 Monday - Friday: 9am - 5pm
@@ -110,7 +110,7 @@ export default function ContactPage() {
               </div>
               <h3 className="text-xl font-bold mb-2">Email</h3>
               <p className="text-gray-600">
-                info@payoffsolar.com
+                matt@payoffsolar.com
               </p>
               <p className="text-gray-600 mt-1">
                 We&apos;ll respond within 24 hours
@@ -122,10 +122,10 @@ export default function ContactPage() {
               </div>
               <h3 className="text-xl font-bold mb-2">Office</h3>
               <p className="text-gray-600">
-                123 Solar Street
+                11483 S Wexford Way
               </p>
               <p className="text-gray-600 mt-1">
-                Sunshine City, CA 90210
+                South Jordan, UT 84009
               </p>
             </div>
           </div>
