@@ -31,9 +31,9 @@ export default function ImageCarousel({
   // Helper function to get alt text
   const getAltText = (image: string | ProductImage, __index: number): string => {
     if (typeof image === 'string') {
-      return `${alt} ${index + 1}`;
+      return `${alt} ${__index + 1}`;
     }
-    return image.alt_text || `${alt} ${index + 1}`;
+    return image.alt_text || `${alt} ${__index + 1}`;
   };
 
   // Auto-play functionality
@@ -58,7 +58,7 @@ export default function ImageCarousel({
   };
 
   const goToSlide = (__index: number) => {
-    setCurrentIndex(_index);
+    setCurrentIndex(__index);
   };
 
   if (!images || images.length === 0) {
@@ -77,7 +77,7 @@ export default function ImageCarousel({
             src={getImageUrl(images[0])}
             alt={getAltText(images[0], 0)}
             className="w-full h-full object-cover rounded-lg"
-            onError={(_e) => {
+            onError={(e) => {
               e.currentTarget.style.display = 'none';
               e.currentTarget.nextElementSibling!.style.display = 'flex';
             }}
@@ -98,7 +98,7 @@ export default function ImageCarousel({
           src={getImageUrl(images[currentIndex])}
           alt={getAltText(images[currentIndex], currentIndex)}
           className="w-full h-full object-cover rounded-lg"
-          onError={(_e) => {
+          onError={(e) => {
             e.currentTarget.style.display = 'none';
             e.currentTarget.nextElementSibling!.style.display = 'flex';
           }}
@@ -130,9 +130,9 @@ export default function ImageCarousel({
               key={_index}
               onClick={() => goToSlide(_index)}
               className={`w-2 h-2 rounded-full transition-colors ${
-                index === currentIndex ? 'bg-white' : 'bg-white bg-opacity-50'
+                _index === currentIndex ? 'bg-white' : 'bg-white bg-opacity-50'
               }`}
-              aria-label={`Go to image ${index + 1}`}
+              aria-label={`Go to image ${_index + 1}`}
             />
           ))}
         </div>
@@ -148,10 +148,10 @@ export default function ImageCarousel({
         <div className="mt-4 flex space-x-2 overflow-x-auto pb-2">
           {images.map((image, _index) => (
             <button
-              key={typeof image === 'string' ? __index : image.id}
+              key={typeof image === 'string' ? _index : image.id}
               onClick={() => goToSlide(_index)}
               className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
-                index === currentIndex
+                _index === currentIndex
                   ? 'border-green-500'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
@@ -160,7 +160,7 @@ export default function ImageCarousel({
                 src={getImageUrl(image)}
                 alt={getAltText(image, _index)}
                 className="w-full h-full object-cover"
-                onError={(_e) => {
+                onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   e.currentTarget.nextElementSibling!.style.display = 'flex';
                 }}

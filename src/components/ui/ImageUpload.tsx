@@ -166,9 +166,9 @@ export default function ImageUpload({
                     src={imageUrl}
                     alt={`Product image ${_index + 1}`}
                     className="w-full h-full object-cover"
-                    onError={(_e) => {
-                      _e.currentTarget.style.display = 'none';
-                      _e.currentTarget.nextElementSibling!.style.display = 'flex';
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling!.style.display = 'flex';
                     }}
                   />
                   <div className="hidden w-full h-full items-center justify-center bg-gray-100">

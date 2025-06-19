@@ -25,8 +25,8 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    if (_params.id) {
-      fetchProduct(_params.id as string);
+    if (params.id) {
+      fetchProduct(params.id as string);
     }
   }, [params.id]);
 
@@ -36,7 +36,7 @@ export default function ProductDetailPage() {
       setError(null);
 
       // Fetch product details
-      const productResponse = await fetch(`/api/public/products/${id}`);
+      const productResponse = await fetch(`/api/public/products/${_id}`);
       if (!productResponse.ok) {
         if (productResponse.status === 404) {
           setError('Product not found');
@@ -89,7 +89,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  if (_error || !product) {
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -248,7 +248,7 @@ export default function ProductDetailPage() {
         {/* Related Products Section */}
         <RelatedProducts
           currentProductId={product.id}
-          _categoryId={product.category_id}
+          categoryId={product.category_id}
         />
       </div>
     </div>

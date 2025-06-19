@@ -8,7 +8,7 @@ interface RelatedProductsProps {
   categoryId?: string;
 }
 
-export default function RelatedProducts({ currentProductId, _categoryId }: RelatedProductsProps) {
+export default function RelatedProducts({ currentProductId, categoryId }: RelatedProductsProps) {
   const [products, setProducts] = useState<ProductWithFirstImage[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,13 +26,14 @@ export default function RelatedProducts({ currentProductId, _categoryId }: Relat
       });
 
       // If we have a category, filter by it, otherwise get random products
-      if (_categoryId) {
-        params.append('category', _categoryId);
+      if (categoryId) {
+        params.append('categoryId', categoryId);
       }
 
       const _response = await fetch(`/api/public/products?${params}`);
       if (_response.ok) {
-                // Filter out the current product
+        const data = await _response.json();
+        // Filter out the current product
         const filteredProducts = data.products.filter(
           (product: ProductWithFirstImage) => product.id !== currentProductId
         );
@@ -65,7 +66,7 @@ export default function RelatedProducts({ currentProductId, _categoryId }: Relat
   return (
     <div className="mt-12">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
-        {categoryId ? 'Related Products' : 'Other Products' }
+        {categoryId ? 'Related Products' : 'Other Products'}
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {products.map((product) => (
