@@ -151,6 +151,7 @@ export default function EditOrderPage() {
       ...prev,
       items: [...prev.items, { product_id: '', quantity: 1, price: 0 }]
     }));
+    // Note: No need to recalculate here since the new item has no product selected yet
   };
 
   const removeItem = (__index: number) => {
@@ -159,6 +160,11 @@ export default function EditOrderPage() {
         ...prev,
         items: prev.items.filter((_, i) => i !== __index)
       }));
+
+      // Trigger cost breakdown recalculation after a short delay to allow state to update
+      setTimeout(() => {
+        recalculateCostBreakdown();
+      }, 100);
     }
   };
 
@@ -169,6 +175,11 @@ export default function EditOrderPage() {
         i === __index ? { ...item, [field]: value } : item
       )
     }));
+
+    // Trigger cost breakdown recalculation after a short delay to allow state to update
+    setTimeout(() => {
+      recalculateCostBreakdown();
+    }, 100);
   };
 
   const handleProductChange = (__index: number, productId: string) => {
@@ -176,6 +187,7 @@ export default function EditOrderPage() {
     if (product) {
       updateItem(__index, 'product_id', productId);
       updateItem(__index, 'price', product.price);
+      // Cost breakdown will be recalculated by updateItem
     }
   };
 
@@ -200,6 +212,128 @@ export default function EditOrderPage() {
         i === index ? { ...item, [field]: value } : item
       )
     }));
+  };
+
+  const recalculateCostBreakdown = async () => {
+    try {
+      // Only recalculate if we have valid items with products and quantities
+      const validItems = formData.items.filter(item =>
+        item.product_id &&
+        item.quantity &&
+        typeof item.quantity === 'number' &&
+        item.quantity > 0 &&
+        item.price !== undefined &&
+        typeof item.price === 'number'
+      );
+
+      if (validItems.length === 0) {
+        return; // No valid items to calculate from
+      }
+
+      // Calculate cost items from product defaults
+      const allCostItems = [];
+      for (const item of validItems) {
+        try {
+          const response = await fetch(`/api/products/${item.product_id}/cost-breakdowns`, {
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const costBreakdowns = data.costBreakdowns || [];
+
+            // Calculate cost items for this product
+            for (const breakdown of costBreakdowns) {
+              let amount = 0;
+              if (breakdown.calculation_type === 'percentage') {
+                // Calculate percentage of total line item value (quantity * unit price)
+                amount = (item.price * item.quantity * breakdown.value) / 100;
+              } else {
+                // Fixed amount per unit, multiplied by quantity
+                amount = breakdown.value * item.quantity;
+              }
+
+              allCostItems.push({
+                category_id: breakdown.category_id,
+                amount: Math.round(amount * 100) / 100, // Round to 2 decimal places
+                description: breakdown.description || `Auto-generated from ${breakdown.category_name || 'product default'}`
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching cost breakdowns for product:', item.product_id, error);
+        }
+      }
+
+      // Merge cost items by category (sum amounts for same category)
+      const mergedCostItems = new Map();
+      for (const costItem of allCostItems) {
+        const key = costItem.category_id;
+        if (mergedCostItems.has(key)) {
+          const existing = mergedCostItems.get(key);
+          existing.amount += costItem.amount;
+        } else {
+          mergedCostItems.set(key, { ...costItem });
+        }
+      }
+
+      // Update the form with the calculated cost items
+      const newCostItems = Array.from(mergedCostItems.values()).map(item => ({
+        category_id: item.category_id,
+        description: item.description,
+        amount: item.amount
+      }));
+
+      setFormData(prev => ({
+        ...prev,
+        costItems: newCostItems
+      }));
+
+    } catch (error) {
+      console.error('Error recalculating cost breakdown:', error);
+    }
+  };
+
+  const regenerateCostBreakdown = async () => {
+    try {
+      // Submit the order with items but without cost items to trigger auto-generation
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contact_id: formData.contact_id,
+          status: formData.status,
+          order_date: formData.order_date,
+          notes: formData.notes,
+          items: formData.items
+          // Explicitly not including costItems to trigger auto-generation
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update the form with the regenerated cost items
+        if (data.order.costItems) {
+          setFormData(prev => ({
+            ...prev,
+            costItems: data.order.costItems.map((item: any) => ({
+              id: item.id,
+              category_id: item.category_id,
+              description: item.description || '',
+              amount: item.amount
+            }))
+          }));
+        }
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to regenerate cost breakdown');
+      }
+    } catch (err) {
+      console.error('Error regenerating cost breakdown:', err);
+      setError('Failed to regenerate cost breakdown');
+    }
   };
 
   const calculateItemsTotal = () => {
@@ -433,14 +567,23 @@ export default function EditOrderPage() {
               <h2 className="text-lg font-medium text-gray-900">Cost Breakdown</h2>
               <p className="text-sm text-gray-500">Internal cost tracking (does not affect order total)</p>
             </div>
-            <button
-              type="button"
-              onClick={addCostItem}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <FaPlus className="mr-2 h-4 w-4" />
-              Add Cost Item
-            </button>
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                onClick={regenerateCostBreakdown}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                Auto-Generate from Products
+              </button>
+              <button
+                type="button"
+                onClick={addCostItem}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <FaPlus className="mr-2 h-4 w-4" />
+                Add Cost Item
+              </button>
+            </div>
           </div>
 
           {formData.costItems.length > 0 ? (

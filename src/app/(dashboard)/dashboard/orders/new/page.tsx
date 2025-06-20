@@ -132,6 +132,8 @@ export default function NewOrderPage() {
     }
   };
 
+
+
   const calculateTotal = () => {
     return formData.items.reduce((total, item) => {
       const price = typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price;

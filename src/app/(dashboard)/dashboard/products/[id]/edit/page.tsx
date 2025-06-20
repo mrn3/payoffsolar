@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Product, ProductImage, ProductCategory } from '@/lib/models';
+import { Product, ProductImage, ProductCategory, ProductCostBreakdownWithCategory, CostCategory } from '@/lib/models';
 import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
-import { FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -22,6 +22,9 @@ export default function EditProductPage() {
     is_active: true
   });
   const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [costCategories, setCostCategories] = useState<CostCategory[]>([]);
+  const [costBreakdowns, setCostBreakdowns] = useState<ProductCostBreakdownWithCategory[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<ProductImage[]>([]);
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -31,7 +34,9 @@ export default function EditProductPage() {
   useEffect(() => {
     fetchProduct();
     fetchCategories();
+    fetchCostCategories();
     fetchProductImages();
+    fetchCostBreakdowns();
   }, [productId]);
 
   const fetchProduct = useCallback(async () => {
@@ -81,6 +86,34 @@ export default function EditProductPage() {
       console.error('Error fetching categories:', error);
     }
   };
+
+  const fetchCostCategories = async () => {
+    try {
+      const response = await fetch('/api/cost-categories', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCostCategories(data.categories);
+      }
+    } catch (error) {
+      console.error('Error fetching cost categories:', error);
+    }
+  };
+
+  const fetchCostBreakdowns = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/products/${productId}/cost-breakdowns`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCostBreakdowns(data.costBreakdowns);
+      }
+    } catch (error) {
+      console.error('Error fetching cost breakdowns:', error);
+    }
+  }, [productId]);
 
   const fetchProductImages = useCallback(async () => {
     try {
@@ -156,6 +189,75 @@ export default function EditProductPage() {
   const handleImageReordered = (reorderedImages: ProductImage[]) => {
     // Update the local state immediately for responsive UI
     setProductImages(reorderedImages);
+  };
+
+  const addCostBreakdown = async () => {
+    try {
+      const response = await fetch(`/api/products/${productId}/cost-breakdowns`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          category_id: costCategories[0]?.id || '',
+          calculation_type: 'percentage',
+          value: 0,
+          description: ''
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCostBreakdowns(data.costBreakdowns);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to add cost breakdown');
+      }
+    } catch (error) {
+      console.error('Error adding cost breakdown:', error);
+      setError('Failed to add cost breakdown');
+    }
+  };
+
+  const updateCostBreakdown = async (breakdownId: string, updates: Partial<ProductCostBreakdownWithCategory>) => {
+    try {
+      const response = await fetch(`/api/products/${productId}/cost-breakdowns/${breakdownId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(updates)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCostBreakdowns(data.costBreakdowns);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to update cost breakdown');
+      }
+    } catch (error) {
+      console.error('Error updating cost breakdown:', error);
+      setError('Failed to update cost breakdown');
+    }
+  };
+
+  const removeCostBreakdown = async (breakdownId: string) => {
+    try {
+      const response = await fetch(`/api/products/${productId}/cost-breakdowns/${breakdownId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCostBreakdowns(data.costBreakdowns);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to remove cost breakdown');
+      }
+    } catch (error) {
+      console.error('Error removing cost breakdown:', error);
+      setError('Failed to remove cost breakdown');
+    }
   };
 
   const validateForm = () => {
@@ -434,6 +536,125 @@ export default function EditProductPage() {
                 </label>
               </div>
             </div>
+          </div>
+
+          {/* Cost Breakdown Section */}
+          <div className="mt-8 border-t border-gray-200 pt-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Default Cost Breakdown</h3>
+                <p className="text-sm text-gray-500">
+                  Define default cost categories that will be automatically applied to orders containing this product.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={addCostBreakdown}
+                disabled={costCategories.length === 0}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+              >
+                <FaPlus className="mr-2 h-4 w-4" />
+                Add Cost Category
+              </button>
+            </div>
+
+            {costBreakdowns.length > 0 ? (
+              <div className="space-y-4">
+                {costBreakdowns.map((breakdown) => (
+                  <div key={breakdown.id} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border border-gray-200 rounded-md">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Category *
+                      </label>
+                      <select
+                        value={breakdown.category_id}
+                        onChange={(e) => updateCostBreakdown(breakdown.id, { category_id: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
+                      >
+                        <option value="">Select category</option>
+                        {costCategories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Type *
+                      </label>
+                      <select
+                        value={breakdown.calculation_type}
+                        onChange={(e) => updateCostBreakdown(breakdown.id, { calculation_type: e.target.value as 'percentage' | 'fixed_amount' })}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
+                      >
+                        <option value="percentage">Percentage</option>
+                        <option value="fixed_amount">Fixed Amount</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Value *
+                      </label>
+                      <div className="mt-1 relative rounded-md shadow-sm">
+                        {breakdown.calculation_type === 'percentage' && (
+                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500 sm:text-sm">%</span>
+                          </div>
+                        )}
+                        {breakdown.calculation_type === 'fixed_amount' && (
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500 sm:text-sm">$</span>
+                          </div>
+                        )}
+                        <input
+                          type="number"
+                          min="0"
+                          step={breakdown.calculation_type === 'percentage' ? '0.01' : '0.01'}
+                          max={breakdown.calculation_type === 'percentage' ? '100' : undefined}
+                          value={breakdown.value}
+                          onChange={(e) => updateCostBreakdown(breakdown.id, { value: parseFloat(e.target.value) || 0 })}
+                          className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 ${
+                            breakdown.calculation_type === 'fixed_amount' ? 'pl-7' : 'pr-7'
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Description
+                      </label>
+                      <input
+                        type="text"
+                        value={breakdown.description || ''}
+                        onChange={(e) => updateCostBreakdown(breakdown.id, { description: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
+                        placeholder="Optional description..."
+                      />
+                    </div>
+
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={() => removeCostBreakdown(breakdown.id)}
+                        className="inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        <FaTrash className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">
+                  No cost breakdown categories defined. Click "Add Cost Category" to get started.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 flex items-center justify-end space-x-3">

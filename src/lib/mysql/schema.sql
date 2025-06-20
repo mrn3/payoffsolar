@@ -183,6 +183,21 @@ CREATE TABLE IF NOT EXISTS cost_items (
   FOREIGN KEY (category_id) REFERENCES cost_categories(id)
 );
 
+-- Create product cost breakdowns table
+CREATE TABLE IF NOT EXISTS product_cost_breakdowns (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  product_id VARCHAR(36) NOT NULL,
+  category_id VARCHAR(36) NOT NULL,
+  calculation_type ENUM('percentage', 'fixed_amount') NOT NULL DEFAULT 'percentage',
+  value DECIMAL(10, 4) NOT NULL,
+  description VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  FOREIGN KEY (category_id) REFERENCES cost_categories(id),
+  UNIQUE KEY unique_product_category (product_id, category_id)
+);
+
 
 
 -- Create services table
@@ -259,6 +274,8 @@ CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id);
 CREATE INDEX IF NOT EXISTS idx_cost_items_order ON cost_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_cost_items_category ON cost_items(category_id);
 CREATE INDEX IF NOT EXISTS idx_cost_categories_active ON cost_categories(is_active);
+CREATE INDEX IF NOT EXISTS idx_product_cost_breakdowns_product ON product_cost_breakdowns(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_cost_breakdowns_category ON product_cost_breakdowns(category_id);
 
 CREATE INDEX IF NOT EXISTS idx_content_type ON content(type_id);
 CREATE INDEX IF NOT EXISTS idx_content_author ON content(author_id);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {OrderModel, OrderItemModel, ContactModel, ProductModel} from '@/lib/models';
+import {OrderModel, OrderItemModel, ContactModel, ProductModel, ProductCostBreakdownModel, CostItemModel} from '@/lib/models';
 import { requireAuth , isAdmin} from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -113,6 +113,39 @@ export async function POST(request: NextRequest) {
         product_id: item.product_id,
         quantity: parseInt(item.quantity),
         price: parseFloat(item.price)
+      });
+    }
+
+    // Generate cost items from product default cost breakdowns
+    const allCostItems = [];
+    for (const item of data.items) {
+      const productCostItems = await ProductCostBreakdownModel.calculateCostItems(
+        item.product_id,
+        parseInt(item.quantity),
+        parseFloat(item.price)
+      );
+      allCostItems.push(...productCostItems);
+    }
+
+    // Merge cost items by category (sum amounts for same category)
+    const mergedCostItems = new Map();
+    for (const costItem of allCostItems) {
+      const key = costItem.category_id;
+      if (mergedCostItems.has(key)) {
+        const existing = mergedCostItems.get(key);
+        existing.amount += costItem.amount;
+      } else {
+        mergedCostItems.set(key, { ...costItem });
+      }
+    }
+
+    // Create the merged cost items
+    for (const costItem of mergedCostItems.values()) {
+      await CostItemModel.create({
+        order_id: orderId,
+        category_id: costItem.category_id,
+        description: costItem.description,
+        amount: costItem.amount
       });
     }
 

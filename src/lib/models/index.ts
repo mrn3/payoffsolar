@@ -549,6 +549,22 @@ export interface CostItemWithCategory extends CostItem {
   category_name?: string;
 }
 
+// Product Cost Breakdown model
+export interface ProductCostBreakdown {
+  id: string;
+  product_id: string;
+  category_id: string;
+  calculation_type: 'percentage' | 'fixed_amount';
+  value: number;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductCostBreakdownWithCategory extends ProductCostBreakdown {
+  category_name?: string;
+}
+
 // Cart item interface for frontend cart management
 export interface CartItem {
   product_id: string;
@@ -1024,6 +1040,95 @@ export const CostItemModel = {
 
   async deleteByOrderId(orderId: string): Promise<void> {
     await executeSingle('DELETE FROM cost_items WHERE order_id = ?', [orderId]);
+  }
+};
+
+// Product Cost Breakdown model
+export const ProductCostBreakdownModel = {
+  async getByProductId(productId: string): Promise<ProductCostBreakdownWithCategory[]> {
+    return executeQuery<ProductCostBreakdownWithCategory>(
+      `SELECT pcb.*, cc.name as category_name
+       FROM product_cost_breakdowns pcb
+       LEFT JOIN cost_categories cc ON pcb.category_id = cc.id
+       WHERE pcb.product_id = ?
+       ORDER BY pcb.created_at ASC`,
+      [productId]
+    );
+  },
+
+  async create(data: Omit<ProductCostBreakdown, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO product_cost_breakdowns (product_id, category_id, calculation_type, value, description) VALUES (?, ?, ?, ?, ?)',
+      [data.product_id, data.category_id, data.calculation_type, data.value, data.description || null]
+    );
+
+    const breakdown = await getOne<{ id: string }>(
+      'SELECT id FROM product_cost_breakdowns WHERE product_id = ? AND category_id = ? ORDER BY created_at DESC LIMIT 1',
+      [data.product_id, data.category_id]
+    );
+    return breakdown!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<ProductCostBreakdown, 'id' | 'product_id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.category_id !== undefined) {
+      fields.push('category_id = ?');
+      values.push(data.category_id);
+    }
+    if (data.calculation_type !== undefined) {
+      fields.push('calculation_type = ?');
+      values.push(data.calculation_type);
+    }
+    if (data.value !== undefined) {
+      fields.push('value = ?');
+      values.push(data.value);
+    }
+    if (data.description !== undefined) {
+      fields.push('description = ?');
+      values.push(data.description || null);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE product_cost_breakdowns SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM product_cost_breakdowns WHERE id = ?', [id]);
+  },
+
+  async deleteByProductId(productId: string): Promise<void> {
+    await executeSingle('DELETE FROM product_cost_breakdowns WHERE product_id = ?', [productId]);
+  },
+
+  async calculateCostItems(productId: string, quantity: number, unitPrice: number): Promise<Array<{category_id: string, amount: number, description?: string}>> {
+    const breakdowns = await this.getByProductId(productId);
+    const costItems = [];
+
+    for (const breakdown of breakdowns) {
+      let amount = 0;
+      if (breakdown.calculation_type === 'percentage') {
+        // Calculate percentage of total line item value (quantity * unit price)
+        amount = (unitPrice * quantity * breakdown.value) / 100;
+      } else {
+        // Fixed amount per unit, multiplied by quantity
+        amount = breakdown.value * quantity;
+      }
+
+      costItems.push({
+        category_id: breakdown.category_id,
+        amount: Math.round(amount * 100) / 100, // Round to 2 decimal places
+        description: breakdown.description || `Auto-generated from ${breakdown.category_name || 'product default'}`
+      });
+    }
+
+    return costItems;
   }
 };
 
