@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Product, ProductImage, ProductCategory } from '@/lib/models';
-import ImageUpload from '@/components/ui/ImageUpload';
+import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
 import { FaArrowLeft } from 'react-icons/fa';
 
 export default function EditProductPage() {
@@ -151,6 +151,11 @@ export default function EditProductPage() {
       console.error('Error removing image:', error);
       setError('Failed to remove image');
     }
+  };
+
+  const handleImageReordered = (reorderedImages: ProductImage[]) => {
+    // Update the local state immediately for responsive UI
+    setProductImages(reorderedImages);
   };
 
   const validateForm = () => {
@@ -392,12 +397,14 @@ export default function EditProductPage() {
 
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-              <ImageUpload
+              <DragDropImageUpload
                 onImagesUploaded={handleImagesUploaded}
                 onImageRemoved={handleImageRemoved}
-                existingImages={productImages.map(img => img.image_url)}
+                onImageReordered={handleImageReordered}
+                existingImages={productImages}
                 maxImages={10}
                 className="w-full"
+                productId={productId}
               />
             </div>
 

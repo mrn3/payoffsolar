@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import ImageUpload from '@/components/ui/ImageUpload';
+import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
 import { FaArrowLeft } from 'react-icons/fa';
+import { ProductImage } from '@/lib/models';
 
 interface ProductCategory {
   id: string;
@@ -22,7 +23,7 @@ export default function NewProductPage() {
     is_active: true
   });
   const [categories, setCategories] = useState<ProductCategory[]>([]);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<ProductImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -43,13 +44,24 @@ export default function NewProductPage() {
     }
   };
 
-  const handleImagesUploaded = (uploadedFiles: { url: string }[]) => {
-    const imageUrls = uploadedFiles.map(file => file.url);
-    setUploadedImages(prev => [...prev, ...imageUrls]);
+  const handleImagesUploaded = (uploadedFiles: { url: string; originalName: string }[]) => {
+    const newImages = uploadedFiles.map((file, index) => ({
+      id: `temp-${Date.now()}-${index}`, // Temporary ID for new images
+      product_id: '',
+      image_url: file.url,
+      alt_text: file.originalName,
+      sort_order: uploadedImages.length + index,
+      created_at: new Date().toISOString()
+    }));
+    setUploadedImages(prev => [...prev, ...newImages]);
   };
 
   const handleImageRemoved = (imageUrl: string) => {
-    setUploadedImages(prev => prev.filter(url => url !== imageUrl));
+    setUploadedImages(prev => prev.filter(img => img.image_url !== imageUrl));
+  };
+
+  const handleImageReordered = (reorderedImages: ProductImage[]) => {
+    setUploadedImages(reorderedImages);
   };
 
   const validateForm = () => {
@@ -166,8 +178,8 @@ export default function NewProductPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              image_url: uploadedImages[i],
-              alt_text: formData.name,
+              image_url: uploadedImages[i].image_url,
+              alt_text: uploadedImages[i].alt_text || formData.name,
               sort_order: i
             })
           });
@@ -284,9 +296,10 @@ export default function NewProductPage() {
 
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-              <ImageUpload
+              <DragDropImageUpload
                 onImagesUploaded={handleImagesUploaded}
                 onImageRemoved={handleImageRemoved}
+                onImageReordered={handleImageReordered}
                 existingImages={uploadedImages}
                 maxImages={10}
                 className="w-full"

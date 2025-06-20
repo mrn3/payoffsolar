@@ -76,6 +76,51 @@ export async function POST(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Require admin access
+    const session = await requireAuth();
+    if (!isAdmin(session.profile.role)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const { id } = await params;
+    const { imageOrders } = await request.json();
+
+    // Validate input
+    if (!Array.isArray(imageOrders) || imageOrders.length === 0) {
+      return NextResponse.json({
+        error: 'Image orders array is required and must not be empty'
+      }, { status: 400 });
+    }
+
+    // Check if product exists
+    const product = await ProductModel.getById(id);
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    // Update sort order for each image
+    for (const { imageId, sortOrder } of imageOrders) {
+      if (!imageId || typeof sortOrder !== 'number') {
+        return NextResponse.json({
+          error: 'Each image order must have imageId and sortOrder'
+        }, { status: 400 });
+      }
+      await ProductImageModel.updateSortOrder(imageId, sortOrder);
+    }
+
+    return NextResponse.json({ message: 'Image order updated successfully' });
+
+  } catch (error) {
+    console.error('Error updating image order:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
