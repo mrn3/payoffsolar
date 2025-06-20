@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import {FaImage, FaSpinner, FaTrash, FaUpload} from 'react-icons/fa';
+import { resizeImages } from '@/lib/utils/imageResize';
 
 interface UploadedImage {
   originalName: string;
@@ -18,6 +19,8 @@ interface ImageUploadProps {
   maxImages?: number;
   className?: string;
 }
+
+
 
 export default function ImageUpload({
   onImagesUploaded,
@@ -46,7 +49,16 @@ export default function ImageUpload({
 
     try {
       const formData = new FormData();
-      Array.from(files).forEach(_file => {
+
+      // Resize images before uploading
+      const resizedFiles = await resizeImages(Array.from(files), {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.8
+      });
+
+      // Add resized files to form data
+      resizedFiles.forEach(_file => {
         formData.append('files', _file);
       });
 
@@ -129,7 +141,7 @@ export default function ImageUpload({
         {uploading ? (
           <div className="flex flex-col items-center">
             <FaSpinner className="h-8 w-8 text-green-500 animate-spin mb-2" />
-            <p className="text-sm text-gray-600">Uploading images...</p>
+            <p className="text-sm text-gray-600">Resizing and uploading images...</p>
           </div>
         ) : (
           <div className="flex flex-col items-center">
@@ -142,6 +154,8 @@ export default function ImageUpload({
             </p>
             <p className="text-xs text-gray-500">
               PNG, JPG, WebP up to 5MB each (max {maxImages} images)
+              <br />
+              Images will be automatically resized for web
             </p>
           </div>
         )}
