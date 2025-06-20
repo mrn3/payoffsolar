@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {useParams, useRouter} from 'next/navigation';
-import { Order, OrderItem, Contact, Product } from '@/lib/models';
+import { Order, OrderItem, Contact, Product, CostCategory, CostItem } from '@/lib/models';
 import ContactAutocomplete from '@/components/ui/ContactAutocomplete';
 import {FaArrowLeft, FaPlus, FaTrash} from 'react-icons/fa';
 
@@ -15,6 +15,14 @@ interface FormOrderItem {
   price: number | string;
 }
 
+// Local interface for cost items in form state
+interface FormCostItem {
+  id?: string;
+  category_id: string;
+  description?: string;
+  amount: number | string;
+}
+
 export default function EditOrderPage() {
   const router = useRouter();
   const params = useParams();
@@ -22,6 +30,7 @@ export default function EditOrderPage() {
   
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [costCategories, setCostCategories] = useState<CostCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -31,7 +40,8 @@ export default function EditOrderPage() {
     status: 'Proposed',
     order_date: '',
     notes: '',
-    items: [{ product_id: '', quantity: 1, price: 0 }] as FormOrderItem[]
+    items: [{ product_id: '', quantity: 1, price: 0 }] as FormOrderItem[],
+    costItems: [] as FormCostItem[]
   });
 
   useEffect(() => {
@@ -40,9 +50,10 @@ export default function EditOrderPage() {
 
   const fetchData = async () => {
     try {
-      const [contactsRes, productsRes, orderRes] = await Promise.all([
+      const [contactsRes, productsRes, costCategoriesRes, orderRes] = await Promise.all([
         fetch('/api/contacts'),
         fetch('/api/products'),
+        fetch('/api/cost-categories'),
         fetch(`/api/orders/${orderId}`)
       ]);
 
@@ -54,6 +65,11 @@ export default function EditOrderPage() {
       if (productsRes.ok) {
         const productsData = await productsRes.json();
         setProducts(productsData.products || []);
+      }
+
+      if (costCategoriesRes.ok) {
+        const costCategoriesData = await costCategoriesRes.json();
+        setCostCategories(costCategoriesData.categories || []);
       }
 
       if (orderRes.ok) {
@@ -81,7 +97,15 @@ export default function EditOrderPage() {
                 quantity: item.quantity,
                 price: Number(item.price)
               }))
-            : [{ product_id: '', quantity: 1, price: 0 }]
+            : [{ product_id: '', quantity: 1, price: 0 }],
+          costItems: _order.costItems && _order.costItems.length > 0
+            ? _order.costItems.map(costItem => ({
+                id: costItem.id,
+                category_id: costItem.category_id,
+                description: costItem.description,
+                amount: Number(costItem.amount)
+              }))
+            : []
         });
       } else {
         setError('Failed to load order');
@@ -155,12 +179,46 @@ export default function EditOrderPage() {
     }
   };
 
-  const calculateTotal = () => {
+  const addCostItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      costItems: [...prev.costItems, { category_id: '', description: '', amount: 0 }]
+    }));
+  };
+
+  const removeCostItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      costItems: prev.costItems.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateCostItem = (index: number, field: keyof FormCostItem, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      costItems: prev.costItems.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      )
+    }));
+  };
+
+  const calculateItemsTotal = () => {
     return formData.items.reduce((total, item) => {
       const price = typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price;
       const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) || 0 : item.quantity;
       return total + (price * quantity);
     }, 0);
+  };
+
+  const calculateCostItemsTotal = () => {
+    return formData.costItems.reduce((total, item) => {
+      const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount;
+      return total + amount;
+    }, 0);
+  };
+
+  const calculateTotal = () => {
+    return calculateItemsTotal(); // Cost breakdown doesn't affect order total
   };
 
   if (loading) {
@@ -363,7 +421,115 @@ export default function EditOrderPage() {
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="flex justify-end">
               <div className="text-lg font-semibold text-gray-900">
-                Total: ${calculateTotal().toFixed(2)}
+                Order Total: ${calculateTotal().toFixed(2)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-lg font-medium text-gray-900">Cost Breakdown</h2>
+              <p className="text-sm text-gray-500">Internal cost tracking (does not affect order total)</p>
+            </div>
+            <button
+              type="button"
+              onClick={addCostItem}
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <FaPlus className="mr-2 h-4 w-4" />
+              Add Cost Item
+            </button>
+          </div>
+
+          {formData.costItems.length > 0 ? (
+            <div className="space-y-4">
+              {formData.costItems.map((costItem, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border border-gray-200 rounded-md">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Category *
+                    </label>
+                    <select
+                      required
+                      value={costItem.category_id}
+                      onChange={(e) => updateCostItem(index, 'category_id', e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
+                    >
+                      <option value="">Select a category</option>
+                      {costCategories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      value={costItem.description || ''}
+                      onChange={(e) => updateCostItem(index, 'description', e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
+                      placeholder="Enter description..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Amount *
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      required
+                      value={costItem.amount}
+                      onChange={(e) => updateCostItem(index, 'amount', parseFloat(e.target.value) || 0)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
+                    />
+                  </div>
+
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      onClick={() => removeCostItem(index)}
+                      className="w-full inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                      <FaTrash className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No cost items added yet. Click "Add Cost Item" to get started.
+            </div>
+          )}
+
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="flex justify-end">
+              <div className="text-lg font-semibold text-gray-700">
+                Internal Cost Total: ${calculateCostItemsTotal().toFixed(2)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-medium text-gray-900">Order Summary</h2>
+            <div className="text-right">
+              <div className="text-xl font-bold text-gray-900">
+                Order Total: ${calculateTotal().toFixed(2)}
+              </div>
+              <div className="text-sm text-gray-500 mt-1">
+                Cost Breakdown (${calculateCostItemsTotal().toFixed(2)}) is for internal tracking only
               </div>
             </div>
           </div>

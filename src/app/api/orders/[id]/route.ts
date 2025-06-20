@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {OrderModel, OrderItemModel, ContactModel, ProductModel} from '@/lib/models';
+import {OrderModel, OrderItemModel, ContactModel, ProductModel, CostItemModel, CostCategoryModel} from '@/lib/models';
 import {requireAuth, isAdmin} from '@/lib/auth';
 
 export async function GET(
@@ -103,8 +103,44 @@ export async function PUT(
         });
       }
 
-      // Update total
+      // Update total with items
       data.total = total;
+    }
+
+    // Handle cost items if provided
+    if (data.costItems !== undefined) {
+      if (!Array.isArray(data.costItems)) {
+        return NextResponse.json({
+          error: 'Cost items must be an array' }, { status: 400 });
+      }
+
+      // Validate cost items (but don't include in order total)
+      for (const costItem of data.costItems) {
+        if (!costItem.category_id || costItem.amount === undefined) {
+          return NextResponse.json({
+            error: 'Each cost item must have category_id and amount' }, { status: 400 });
+        }
+
+        // Validate category exists
+        const category = await CostCategoryModel.getById(costItem.category_id);
+        if (!category) {
+          return NextResponse.json({
+            error: `Cost category with ID ${costItem.category_id} not found`
+          }, { status: 404 });
+        }
+      }
+
+      // Delete existing cost items and create new ones
+      await CostItemModel.deleteByOrderId(id);
+
+      for (const costItem of data.costItems) {
+        await CostItemModel.create({
+          order_id: id,
+          category_id: costItem.category_id,
+          description: costItem.description || undefined,
+          amount: parseFloat(costItem.amount)
+        });
+      }
     }
 
     // Update order

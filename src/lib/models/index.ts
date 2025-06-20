@@ -521,6 +521,32 @@ export interface OrderItemWithProduct extends OrderItem {
 
 export interface OrderWithItems extends OrderWithContact {
   items?: OrderItemWithProduct[];
+  costItems?: CostItemWithCategory[];
+}
+
+// Cost Category model
+export interface CostCategory {
+  id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Cost Item model
+export interface CostItem {
+  id: string;
+  order_id: string;
+  category_id: string;
+  description?: string;
+  amount: number | string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CostItemWithCategory extends CostItem {
+  category_name?: string;
 }
 
 // Cart item interface for frontend cart management
@@ -719,7 +745,16 @@ export const OrderModel = {
       [_id]
     );
 
-    return { ...order, items };
+    const costItems = await executeQuery<CostItemWithCategory>(
+      `SELECT ci.*, cc.name as category_name
+       FROM cost_items ci
+       LEFT JOIN cost_categories cc ON ci.category_id = cc.id
+       WHERE ci.order_id = ?
+       ORDER BY ci.created_at ASC`,
+      [_id]
+    );
+
+    return { ...order, items, costItems };
   },
 
   async create(data: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
@@ -856,6 +891,139 @@ export const OrderItemModel = {
 
   async deleteByOrderId(orderId: string): Promise<void> {
     await executeSingle('DELETE FROM order_items WHERE order_id = ? ', [orderId]);
+  }
+};
+
+// Cost Category model
+export const CostCategoryModel = {
+  async getAll(): Promise<CostCategory[]> {
+    return executeQuery<CostCategory>(
+      'SELECT * FROM cost_categories WHERE is_active = TRUE ORDER BY name ASC'
+    );
+  },
+
+  async getAllIncludingInactive(): Promise<CostCategory[]> {
+    return executeQuery<CostCategory>(
+      'SELECT * FROM cost_categories ORDER BY is_active DESC, name ASC'
+    );
+  },
+
+  async getById(_id: string): Promise<CostCategory | null> {
+    return getOne<CostCategory>('SELECT * FROM cost_categories WHERE id = ?', [_id]);
+  },
+
+  async create(data: Omit<CostCategory, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO cost_categories (name, description, is_active) VALUES (?, ?, ?)',
+      [data.name, data.description || null, data.is_active]
+    );
+
+    const category = await getOne<{ id: string }>(
+      'SELECT id FROM cost_categories WHERE name = ? ORDER BY created_at DESC LIMIT 1',
+      [data.name]
+    );
+    return category!.id;
+  },
+
+  async update(_id: string, _data: Partial<Omit<CostCategory, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (_data.name !== undefined) {
+      fields.push('name = ?');
+      values.push(_data.name);
+    }
+    if (_data.description !== undefined) {
+      fields.push('description = ?');
+      values.push(_data.description);
+    }
+    if (_data.is_active !== undefined) {
+      fields.push('is_active = ?');
+      values.push(_data.is_active);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(_id);
+    await executeSingle(
+      `UPDATE cost_categories SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(_id: string): Promise<void> {
+    await executeSingle('DELETE FROM cost_categories WHERE id = ?', [_id]);
+  },
+
+  async getUsageStats(): Promise<Array<{ id: string; name: string; usage_count: number }>> {
+    return executeQuery<{ id: string; name: string; usage_count: number }>(
+      `SELECT cc.id, cc.name, COUNT(ci.id) as usage_count
+       FROM cost_categories cc
+       LEFT JOIN cost_items ci ON cc.id = ci.category_id
+       GROUP BY cc.id, cc.name
+       ORDER BY cc.name ASC`
+    );
+  }
+};
+
+// Cost Item model
+export const CostItemModel = {
+  async getByOrderId(orderId: string): Promise<CostItemWithCategory[]> {
+    return executeQuery<CostItemWithCategory>(
+      `SELECT ci.*, cc.name as category_name
+       FROM cost_items ci
+       LEFT JOIN cost_categories cc ON ci.category_id = cc.id
+       WHERE ci.order_id = ?
+       ORDER BY ci.created_at ASC`,
+      [orderId]
+    );
+  },
+
+  async create(data: Omit<CostItem, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO cost_items (order_id, category_id, description, amount) VALUES (?, ?, ?, ?)',
+      [data.order_id, data.category_id, data.description || null, data.amount]
+    );
+
+    const item = await getOne<{ id: string }>(
+      'SELECT id FROM cost_items WHERE order_id = ? AND category_id = ? AND amount = ? ORDER BY created_at DESC LIMIT 1',
+      [data.order_id, data.category_id, data.amount]
+    );
+    return item!.id;
+  },
+
+  async update(_id: string, _data: Partial<Omit<CostItem, 'id' | 'order_id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (_data.category_id !== undefined) {
+      fields.push('category_id = ?');
+      values.push(_data.category_id);
+    }
+    if (_data.description !== undefined) {
+      fields.push('description = ?');
+      values.push(_data.description || null);
+    }
+    if (_data.amount !== undefined) {
+      fields.push('amount = ?');
+      values.push(_data.amount);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(_id);
+    await executeSingle(
+      `UPDATE cost_items SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(_id: string): Promise<void> {
+    await executeSingle('DELETE FROM cost_items WHERE id = ?', [_id]);
+  },
+
+  async deleteByOrderId(orderId: string): Promise<void> {
+    await executeSingle('DELETE FROM cost_items WHERE order_id = ?', [orderId]);
   }
 };
 

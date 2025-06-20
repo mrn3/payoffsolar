@@ -160,6 +160,29 @@ CREATE TABLE IF NOT EXISTS order_items (
   FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
+-- Create cost categories table
+CREATE TABLE IF NOT EXISTS cost_categories (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Create cost items table
+CREATE TABLE IF NOT EXISTS cost_items (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  order_id VARCHAR(36) NOT NULL,
+  category_id VARCHAR(36) NOT NULL,
+  description VARCHAR(255),
+  amount DECIMAL(10, 2) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  FOREIGN KEY (category_id) REFERENCES cost_categories(id)
+);
+
 
 
 -- Create services table
@@ -180,6 +203,17 @@ INSERT IGNORE INTO services (id, name, description, price, duration, is_active) 
   (UUID(), 'System Maintenance', 'Regular maintenance of solar power systems', 150.00, 120, TRUE),
   (UUID(), 'Energy Consultation', 'Professional consultation on energy efficiency', 100.00, 60, TRUE),
   (UUID(), 'System Upgrade', 'Upgrade existing solar power systems', 800.00, 240, TRUE);
+
+-- Insert default cost categories
+INSERT IGNORE INTO cost_categories (id, name, description, is_active) VALUES
+  (UUID(), 'Labor', 'Labor costs for installation and services', TRUE),
+  (UUID(), 'Materials', 'Material costs for equipment and supplies', TRUE),
+  (UUID(), 'Permits', 'Permit and licensing fees', TRUE),
+  (UUID(), 'Transportation', 'Transportation and delivery costs', TRUE),
+  (UUID(), 'Equipment Rental', 'Equipment rental and tool costs', TRUE),
+  (UUID(), 'Subcontractor', 'Subcontractor and third-party services', TRUE),
+  (UUID(), 'Overhead', 'General overhead and administrative costs', TRUE),
+  (UUID(), 'Other', 'Miscellaneous costs', TRUE);
 
 -- Create content types table
 CREATE TABLE IF NOT EXISTS content_types (
@@ -222,6 +256,9 @@ CREATE INDEX IF NOT EXISTS idx_orders_contact ON orders(contact_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_cost_items_order ON cost_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_cost_items_category ON cost_items(category_id);
+CREATE INDEX IF NOT EXISTS idx_cost_categories_active ON cost_categories(is_active);
 
 CREATE INDEX IF NOT EXISTS idx_content_type ON content(type_id);
 CREATE INDEX IF NOT EXISTS idx_content_author ON content(author_id);

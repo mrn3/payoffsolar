@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { UserRole } from '@/lib/auth';
-import {FaTachometerAlt, FaShoppingCart, FaUsers, FaBoxes, FaWarehouse, FaBuilding, FaSun, FaUser, FaSignOutAlt, FaBars, FaTimes, FaEdit} from 'react-icons/fa';
+import {FaTachometerAlt, FaShoppingCart, FaUsers, FaBoxes, FaWarehouse, FaBuilding, FaSun, FaUser, FaSignOutAlt, FaBars, FaTimes, FaEdit, FaTags} from 'react-icons/fa';
 
 interface NavigationProps {
   userProfile: {
@@ -66,6 +66,7 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
       { href: '/dashboard/orders', icon: <FaShoppingCart className="mr-3 h-5 w-5" />, label: 'Orders' },
       { href: '/dashboard/inventory', icon: <FaWarehouse className="mr-3 h-5 w-5" />, label: 'Inventory' },
       { href: '/dashboard/warehouses', icon: <FaBuilding className="mr-3 h-5 w-5" />, label: 'Warehouses' },
+      { href: '/dashboard/cost-categories', icon: <FaTags className="mr-3 h-5 w-5" />, label: 'Cost Categories' },
       { href: '/dashboard/cms', icon: <FaEdit className="mr-3 h-5 w-5" />, label: 'CMS' },
     ];
   };
