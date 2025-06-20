@@ -39,9 +39,12 @@ export const resizeImage = (
     
     img.onload = () => {
       try {
+        // Clean up object URL
+        URL.revokeObjectURL(objectUrl);
+
         // Calculate new dimensions while maintaining aspect ratio
         let { width, height } = img;
-        
+
         // Only resize if image is larger than target dimensions
         if (width <= maxWidth && height <= maxHeight) {
           resolve(file); // Return original file if already small enough
@@ -91,18 +94,13 @@ export const resizeImage = (
     
     img.onerror = (error) => {
       console.warn('Error loading image for resize:', error);
+      URL.revokeObjectURL(objectUrl);
       resolve(file); // Fallback to original file
     };
-    
+
     // Create object URL for the image
     const objectUrl = URL.createObjectURL(file);
     img.src = objectUrl;
-    
-    // Clean up object URL after image loads
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      img.onload(); // Call the original onload
-    };
   });
 };
 
