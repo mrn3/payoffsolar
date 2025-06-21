@@ -148,7 +148,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
           {/* Order Items */}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Order Items</h2>
-            
+
             {order.items && order.items.length > 0 ? (
               <div className="overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-300">
@@ -210,6 +210,65 @@ export default async function OrderPage({ params }: OrderPageProps) {
               </div>
             )}
           </div>
+
+          {/* Cost Breakdown - Only visible to admin users */}
+          {!isContact(profile.role) && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Cost Breakdown</h2>
+
+              {order.costItems && order.costItems.length > 0 ? (
+                <div className="overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-300">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                          Category
+                        </th>
+                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                          Description
+                        </th>
+                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                          Amount
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {order.costItems.map((costItem) => (
+                        <tr key={costItem.id}>
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                            {costItem.category_name || 'Unknown Category'}
+                          </td>
+                          <td className="px-3 py-4 text-sm text-gray-500">
+                            {costItem.description || 'N/A'}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            ${Number(costItem.amount).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-gray-50">
+                      <tr>
+                        <td colSpan={2} className="py-3 pl-4 pr-3 text-sm font-semibold text-gray-900 sm:pl-6 text-right">
+                          Total Internal Cost:
+                        </td>
+                        <td className="py-3 px-3 text-sm font-semibold text-gray-900">
+                          ${order.costItems.reduce((total, item) => total + Number(item.amount), 0).toFixed(2)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                  <div className="mt-3 text-xs text-gray-500">
+                    * Cost breakdown is for internal tracking only and does not affect the order total.
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-500">No cost breakdown items found for this order.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Customer Information */}
