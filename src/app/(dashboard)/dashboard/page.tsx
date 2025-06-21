@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { FaUsers, FaBoxes, FaShoppingCart, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import RevenueChart from '@/components/dashboard/RevenueChart';
 import OrderCountsChart from '@/components/dashboard/OrderCountsChart';
+import CostBreakdownChart from '@/components/dashboard/CostBreakdownChart';
 
 async function getStats(userId?: string, userRole?: string) {
   try {
@@ -123,10 +124,28 @@ async function getOrderCountsData(userRole?: string) {
   }
 }
 
+async function getCostBreakdownData(userRole?: string) {
+  try {
+    console.log('📊 Getting cost breakdown data...');
+
+    // Only show cost breakdown data to admin/staff users
+    if (userRole === 'contact') {
+      return [];
+    }
+
+    const costBreakdownData = await OrderModel.getCostBreakdownByMonth(12);
+    console.log('📊 Cost breakdown data:', costBreakdownData?.length || 0, 'records');
+    return costBreakdownData || [];
+  } catch (error) {
+    console.error('❌ Error getting cost breakdown data:', error);
+    return [];
+  }
+}
+
 export default async function DashboardPage() {
   console.log('🏠 Loading dashboard page...');
 
-  let profile, stats, activity, revenueData, orderCountsData;
+  let profile, stats, activity, revenueData, orderCountsData, costBreakdownData;
 
   try {
     profile = await getUserProfile();
@@ -136,6 +155,7 @@ export default async function DashboardPage() {
     activity = await getRecentActivity(profile?.id, profile?.role || undefined);
     revenueData = await getRevenueData(profile?.role || undefined);
     orderCountsData = await getOrderCountsData(profile?.role || undefined);
+    costBreakdownData = await getCostBreakdownData(profile?.role || undefined);
 
     console.log('✅ Dashboard data loaded successfully');
   } catch (error) {
@@ -376,6 +396,18 @@ export default async function DashboardPage() {
                 <h3 className="text-lg leading-6 font-medium text-gray-900">Order Count by Status</h3>
                 <div className="mt-4">
                   <OrderCountsChart data={orderCountsData} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cost Breakdown Chart */}
+          <div className="mt-5">
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Cost Breakdown by Month (Complete Orders)</h3>
+                <div className="mt-4">
+                  <CostBreakdownChart data={costBreakdownData} />
                 </div>
               </div>
             </div>

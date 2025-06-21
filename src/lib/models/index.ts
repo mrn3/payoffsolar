@@ -822,6 +822,23 @@ export const OrderModel = {
     );
   },
 
+  async getCostBreakdownByMonth(months = 12): Promise<Array<{ month: string; category_name: string; total_amount: number }>> {
+    return executeQuery<{ month: string; category_name: string; total_amount: number }>(
+      `SELECT
+         DATE_FORMAT(o.order_date, '%Y-%m') as month,
+         cc.name as category_name,
+         SUM(ci.amount) as total_amount
+       FROM orders o
+       INNER JOIN cost_items ci ON o.id = ci.order_id
+       INNER JOIN cost_categories cc ON ci.category_id = cc.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+       GROUP BY DATE_FORMAT(o.order_date, '%Y-%m'), cc.id, cc.name
+       ORDER BY month ASC, cc.name ASC`,
+      [months]
+    );
+  },
+
   async getOrdersByMonthAndStatus(month: string, status: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT o.*, c.name as contact_name
