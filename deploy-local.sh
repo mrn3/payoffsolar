@@ -113,7 +113,7 @@ build_application() {
 # Function to start the application
 start_application() {
     print_status "Starting the application..."
-    print_status "The application will start on http://localhost:6660"
+    print_status "The application will start on http://localhost:3000"
     print_status "Press Ctrl+C to stop the application"
     
     # Start the application
@@ -123,7 +123,7 @@ start_application() {
 # Function to run in development mode
 run_development() {
     print_status "Starting development server..."
-    print_status "The development server will start on http://localhost:6660"
+    print_status "The development server will start on http://localhost:3000"
     print_status "Press Ctrl+C to stop the development server"
     
     # Start development server
@@ -166,7 +166,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "  ./deploy-local.sh development  # Start in development mode"
     echo "  ./deploy-local.sh --help       # Show this help"
     echo ""
-    echo "The application will be available at http://localhost:6660"
+    echo "The application will be available at http://localhost:3000"
     exit 0
 fi
 

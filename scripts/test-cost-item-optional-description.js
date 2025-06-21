@@ -7,7 +7,7 @@
 const http = require('http');
 const https = require('https');
 
-const BASE_URL = 'http://localhost:6660';
+const BASE_URL = 'http://localhost:3000';
 const TEST_EMAIL = 'matt@payoffsolar.com';
 const TEST_PASSWORD = 'admin123';
 

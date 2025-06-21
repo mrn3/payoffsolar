@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:6660';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 const TEST_EMAIL = 'matt@payoffsolar.com';
 const TEST_PASSWORD = 'admin123';
 

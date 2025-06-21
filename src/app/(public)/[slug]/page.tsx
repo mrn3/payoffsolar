@@ -21,7 +21,7 @@ interface ContentData {
 
 async function getContent(slug: string): Promise<ContentData | null> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:6660'}/api/public/content/${slug}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/public/content/${slug}`, {
       cache: 'no-store' // Ensure fresh data
     });
 

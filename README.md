@@ -14,7 +14,7 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:6660](http://localhost:6660) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
@@ -75,7 +75,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
     ```
     pm2 startup
     ```
-1. Set up apache - https://docs.bitnami.com/general/infrastructure/nodejs/get-started/get-started/
+1. Set up Apache - https://docs.bitnami.com/general/infrastructure/nodejs/get-started/get-started/
 1. Set up SSL - https://docs.bitnami.com/general/faq/administration/generate-configure-certificate-letsencrypt/
 1. Install mariadb
     ```

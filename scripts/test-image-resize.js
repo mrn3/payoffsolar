@@ -301,7 +301,7 @@ try {
     fs.writeFileSync(testFilePath, testHtml);
     console.log('✅ Test file created successfully!');
     console.log('📁 Location:', testFilePath);
-    console.log('🌐 Open in browser: http://localhost:6660/test-image-resize.html');
+    console.log('🌐 Open in browser: http://localhost:3000/test-image-resize.html');
     console.log('');
     console.log('Instructions:');
     console.log('1. Start the development server: yarn dev');

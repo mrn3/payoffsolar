@@ -57,7 +57,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
  * Send password reset email
  */
 export async function sendPasswordResetEmail(email: string, resetToken: string): Promise<boolean> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:6660';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const resetUrl = `${siteUrl}/reset-password?token=${resetToken}`;
 
   const html = generatePasswordResetEmailHtml(resetUrl);
@@ -75,7 +75,7 @@ export async function sendPasswordResetEmail(email: string, resetToken: string):
  * Send welcome email to new users
  */
 export async function sendWelcomeEmail(email: string, firstName: string): Promise<boolean> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:6660';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const loginUrl = `${siteUrl}/login`;
 
   const html = generateWelcomeEmailHtml(firstName, loginUrl);

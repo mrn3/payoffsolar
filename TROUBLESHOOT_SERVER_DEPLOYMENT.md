@@ -48,13 +48,13 @@ Test the API endpoint directly on the server:
 # First, get a valid auth token by logging in
 curl -c /tmp/cookies.txt -X POST -H "Content-Type: application/json" \
   -d '{"email":"matt@payoffsolar.com","password":"admin123"}' \
-  http://localhost:6660/api/auth/signin
+  http://localhost:3000/api/auth/signin
 
 # Test the products API to get a valid product ID
-curl -b /tmp/cookies.txt http://localhost:6660/api/products | jq '.products[0].id'
+curl -b /tmp/cookies.txt http://localhost:3000/api/products | jq '.products[0].id'
 
 # Test the images API with a valid product ID (replace PRODUCT_ID)
-curl -b /tmp/cookies.txt http://localhost:6660/api/products/PRODUCT_ID/images
+curl -b /tmp/cookies.txt http://localhost:3000/api/products/PRODUCT_ID/images
 ```
 
 ### Step 5: Force Rebuild and Restart
@@ -126,16 +126,16 @@ node scripts/test-db-connection.js
 ### Issue: Product ID not found
 **Solution**: 
 1. Check if the product ID in the URL exists in database
-2. Use the debug API to list products: `curl http://localhost:6660/api/debug/products`
+2. Use the debug API to list products: `curl http://localhost:3000/api/debug/products`
 
 ## Quick Debug Commands
 
 ```bash
 # Check if server is responding
-curl -I http://localhost:6660
+curl -I http://localhost:3000
 
 # Check if API routes are working
-curl http://localhost:6660/api/debug/products
+curl http://localhost:3000/api/debug/products
 
 # Check PM2 status
 pm2 status
@@ -167,5 +167,5 @@ free -h
 
 3. **Contact support**: If the issue persists, provide the output of:
    - `pm2 logs payoffsolar --lines 50`
-   - `curl -I http://localhost:6660/api/products`
+   - `curl -I http://localhost:3000/api/products`
    - `git log --oneline -5`
