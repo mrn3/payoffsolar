@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --port 6660",
+    "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start --port 6660",
+    "start": "next start",
     "lint": "next lint",
     "setup-db": "node scripts/setup-db.js",
     "setup-uploads": "node scripts/setup-uploads.js",

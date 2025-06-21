@@ -126,8 +126,96 @@ export const ProductCategoryModel = {
     );
   },
 
-  async getById(_id: string): Promise<ProductCategory | null> {
-    return getOne<ProductCategory>('SELECT * FROM product_categories WHERE id = ? ', [_id]);
+  async getById(id: string): Promise<ProductCategory | null> {
+    return getOne<ProductCategory>('SELECT * FROM product_categories WHERE id = ?', [id]);
+  },
+
+  async create(data: Omit<ProductCategory, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    // Generate slug from name if not provided
+    const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    await executeSingle(
+      'INSERT INTO product_categories (name, description, slug, parent_id) VALUES (?, ?, ?, ?)',
+      [data.name, data.description || null, slug, data.parent_id || null]
+    );
+
+    const category = await getOne<{ id: string }>(
+      'SELECT id FROM product_categories WHERE slug = ? ORDER BY created_at DESC LIMIT 1',
+      [slug]
+    );
+    return category!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<ProductCategory, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const updates: string[] = [];
+    const values: any[] = [];
+
+    if (data.name !== undefined) {
+      updates.push('name = ?');
+      values.push(data.name);
+    }
+    if (data.description !== undefined) {
+      updates.push('description = ?');
+      values.push(data.description);
+    }
+    if (data.slug !== undefined) {
+      updates.push('slug = ?');
+      values.push(data.slug);
+    }
+    if (data.parent_id !== undefined) {
+      updates.push('parent_id = ?');
+      values.push(data.parent_id);
+    }
+
+    if (updates.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE product_categories SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    // Check if category is being used by products
+    const productCount = await getOne<{ count: number }>(
+      'SELECT COUNT(*) as count FROM products WHERE category_id = ?',
+      [id]
+    );
+
+    if (productCount && productCount.count > 0) {
+      throw new Error(`Cannot delete category: ${productCount.count} products are using this category`);
+    }
+
+    // Check if category has subcategories
+    const subcategoryCount = await getOne<{ count: number }>(
+      'SELECT COUNT(*) as count FROM product_categories WHERE parent_id = ?',
+      [id]
+    );
+
+    if (subcategoryCount && subcategoryCount.count > 0) {
+      throw new Error(`Cannot delete category: ${subcategoryCount.count} subcategories exist`);
+    }
+
+    await executeSingle('DELETE FROM product_categories WHERE id = ?', [id]);
+  },
+
+  async getUsageStats(): Promise<(ProductCategory & { product_count: number })[]> {
+    return executeQuery<ProductCategory & { product_count: number }>(
+      `SELECT pc.*, COALESCE(p.product_count, 0) as product_count
+       FROM product_categories pc
+       LEFT JOIN (
+         SELECT category_id, COUNT(*) as product_count
+         FROM products
+         WHERE category_id IS NOT NULL
+         GROUP BY category_id
+       ) p ON pc.id = p.category_id
+       ORDER BY pc.name`
+    );
+  },
+
+  async getBySlug(slug: string): Promise<ProductCategory | null> {
+    return getOne<ProductCategory>('SELECT * FROM product_categories WHERE slug = ?', [slug]);
   }
 };
 
