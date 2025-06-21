@@ -180,95 +180,163 @@ export default function CostCategoriesPage() {
               </div>
             </div>
           ) : (
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Usage
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="relative px-6 py-3">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {categories.map((category) => (
-                    <tr key={category.id} className={!category.is_active ? 'bg-gray-50' : ''}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {category.name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-500">
-                          {category.description || '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {usageStats[category.id] || 0} items
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => handleToggleActive(category.id, category.is_active)}
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            category.is_active
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {category.is_active ? (
-                            <>
-                              <FaEye className="mr-1 h-3 w-3" />
-                              Active
-                            </>
-                          ) : (
-                            <>
-                              <FaEyeSlash className="mr-1 h-3 w-3" />
-                              Inactive
-                            </>
-                          )}
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(category.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Link
-                            href={`/dashboard/cost-categories/${category.id}/edit`}
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            <FaEdit className="h-4 w-4" />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(category.id)}
-                            disabled={deletingId === category.id}
-                            className="text-red-600 hover:text-red-900 disabled:opacity-50"
-                          >
-                            <FaTrash className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
+            <>
+              {/* Desktop table */}
+              <div className="hidden sm:block overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                <table className="min-w-full divide-y divide-gray-300">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Description
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Usage
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="relative px-6 py-3">
+                        <span className="sr-only">Actions</span>
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {categories.map((category) => (
+                      <tr key={category.id} className={!category.is_active ? 'bg-gray-50' : ''}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {category.name}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-500">
+                            {category.description || '-'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {usageStats[category.id] || 0} items
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => handleToggleActive(category.id, category.is_active)}
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              category.is_active
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {category.is_active ? (
+                              <>
+                                <FaEye className="mr-1 h-3 w-3" />
+                                Active
+                              </>
+                            ) : (
+                              <>
+                                <FaEyeSlash className="mr-1 h-3 w-3" />
+                                Inactive
+                              </>
+                            )}
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(category.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end space-x-2">
+                            <Link
+                              href={`/dashboard/cost-categories/${category.id}/edit`}
+                              className="text-green-600 hover:text-green-900"
+                            >
+                              <FaEdit className="h-4 w-4" />
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(category.id)}
+                              disabled={deletingId === category.id}
+                              className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                            >
+                              <FaTrash className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="sm:hidden space-y-4">
+                {categories.map((category) => (
+                  <div key={category.id} className={`bg-white border border-gray-200 rounded-lg p-4 ${!category.is_active ? 'bg-gray-50' : ''}`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-medium text-gray-900 truncate">
+                          {category.name}
+                        </h3>
+                        <div className="mt-2 space-y-2">
+                          {category.description && (
+                            <p className="text-sm text-gray-600">
+                              {category.description}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-500">
+                              Usage: {usageStats[category.id] || 0} items
+                            </span>
+                            <button
+                              onClick={() => handleToggleActive(category.id, category.is_active)}
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                category.is_active
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {category.is_active ? (
+                                <>
+                                  <FaEye className="mr-1 h-3 w-3" />
+                                  Active
+                                </>
+                              ) : (
+                                <>
+                                  <FaEyeSlash className="mr-1 h-3 w-3" />
+                                  Inactive
+                                </>
+                              )}
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            Created: {new Date(category.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="ml-4 flex items-center space-x-2">
+                        <Link
+                          href={`/dashboard/cost-categories/${category.id}/edit`}
+                          className="text-green-600 hover:text-green-900 p-1"
+                        >
+                          <FaEdit className="h-4 w-4" />
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(category.id)}
+                          disabled={deletingId === category.id}
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50 p-1"
+                        >
+                          <FaTrash className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
