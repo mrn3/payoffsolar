@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Product, ProductImage, ProductCategory, ProductCostBreakdownWithCategory, CostCategory } from '@/lib/models';
 import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
+import PDFUpload from '@/components/ui/PDFUpload';
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
 
 export default function EditProductPage() {
@@ -17,6 +18,7 @@ export default function EditProductPage() {
     description: '',
     price: '',
     image_url: '',
+    data_sheet_url: '',
     category_id: '',
     sku: '',
     is_active: true
@@ -61,6 +63,7 @@ export default function EditProductPage() {
         description: data.product.description || '',
         price: data.product.price?.toString() || '',
         image_url: data.product.image_url || '',
+        data_sheet_url: data.product.data_sheet_url || '',
         category_id: data.product.category_id || '',
         sku: data.product.sku || '',
         is_active: data.product.is_active
@@ -189,6 +192,14 @@ export default function EditProductPage() {
   const handleImageReordered = (reorderedImages: ProductImage[]) => {
     // Update the local state immediately for responsive UI
     setProductImages(reorderedImages);
+  };
+
+  const handlePDFUploaded = (file: { url: string; originalName: string }) => {
+    setFormData(prev => ({ ...prev, data_sheet_url: file.url }));
+  };
+
+  const handlePDFRemoved = () => {
+    setFormData(prev => ({ ...prev, data_sheet_url: '' }));
   };
 
   const addCostBreakdown = async () => {
@@ -355,7 +366,8 @@ export default function EditProductPage() {
           ...formData,
           price: parseFloat(formData.price),
           category_id: formData.category_id || null,
-          image_url: formData.image_url || null
+          image_url: formData.image_url || null,
+          data_sheet_url: formData.data_sheet_url || null
         })
       });
 
@@ -507,6 +519,15 @@ export default function EditProductPage() {
                 maxImages={10}
                 className="w-full"
                 productId={productId}
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <PDFUpload
+                onPDFUploaded={handlePDFUploaded}
+                onPDFRemoved={handlePDFRemoved}
+                existingPDF={formData.data_sheet_url}
+                className="w-full"
               />
             </div>
 

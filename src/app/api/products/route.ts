@@ -104,6 +104,7 @@ export async function POST(request: NextRequest) {
       description: data.description || '',
       price: parseFloat(data.price),
       image_url: data.image_url || null,
+      data_sheet_url: data.data_sheet_url || null,
       category_id: data.category_id || null,
       sku: data.sku,
       is_active: data.is_active !== undefined ? data.is_active : true

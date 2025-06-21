@@ -92,6 +92,7 @@ export async function PUT(
       description: data.description,
       price: data.price !== undefined ? parseFloat(data.price) : undefined,
       image_url: data.image_url,
+      data_sheet_url: data.data_sheet_url,
       category_id: data.category_id,
       sku: data.sku,
       is_active: data.is_active

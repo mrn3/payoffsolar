@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS products (
   description TEXT,
   price DECIMAL(10, 2) NOT NULL,
   image_url VARCHAR(500),
+  data_sheet_url VARCHAR(500),
   category_id VARCHAR(36),
   sku VARCHAR(100) UNIQUE NOT NULL,
   is_active BOOLEAN DEFAULT TRUE,

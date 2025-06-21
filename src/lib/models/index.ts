@@ -226,6 +226,7 @@ export interface Product {
   description: string;
   price: number;
   image_url?: string;
+  data_sheet_url?: string;
   category_id?: string;
   sku: string;
   is_active: boolean;
@@ -396,8 +397,8 @@ export const ProductModel = {
 
   async create(data: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     await executeSingle(
-      'INSERT INTO products (name, description, price, image_url, category_id, sku, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [data.name, data.description, data.price, data.image_url || null, data.category_id || null, data.sku, data.is_active]
+      'INSERT INTO products (name, description, price, image_url, data_sheet_url, category_id, sku, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.name, data.description, data.price, data.image_url || null, data.data_sheet_url || null, data.category_id || null, data.sku, data.is_active]
     );
 
     const product = await getOne<{ id: string }>(
@@ -426,6 +427,10 @@ export const ProductModel = {
     if (data.image_url !== undefined) {
       fields.push('image_url = ?');
       values.push(data.image_url);
+    }
+    if (data.data_sheet_url !== undefined) {
+      fields.push('data_sheet_url = ?');
+      values.push(data.data_sheet_url);
     }
     if (data.category_id !== undefined) {
       fields.push('category_id = ?');

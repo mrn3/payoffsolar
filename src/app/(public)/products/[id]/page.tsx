@@ -8,7 +8,7 @@ import ImageCarousel from '@/components/ui/ImageCarousel';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import RelatedProducts from '@/components/products/RelatedProducts';
 import { useCart } from '@/contexts/CartContext';
-import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaSpinner} from 'react-icons/fa';
+import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaSpinner, FaFilePdf, FaDownload} from 'react-icons/fa';
 
 interface ProductWithDetails extends Product {
   category_name?: string;
@@ -174,6 +174,44 @@ export default function ProductDetailPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Data Sheet Section */}
+              {product.data_sheet_url && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Data Sheet</h3>
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <FaFilePdf className="text-red-500 text-xl" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Product Data Sheet
+                          </p>
+                          <p className="text-xs text-gray-500">PDF Document</p>
+                        </div>
+                      </div>
+                      <a
+                        href={product.data_sheet_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                      >
+                        <FaDownload className="mr-2 h-4 w-4" />
+                        Download
+                      </a>
+                    </div>
+
+                    {/* PDF Viewer */}
+                    <div className="w-full h-96 border border-gray-300 rounded-md overflow-hidden">
+                      <iframe
+                        src={`${product.data_sheet_url}#toolbar=1&navpanes=0&scrollbar=1`}
+                        className="w-full h-full"
+                        title="Product Data Sheet"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Quantity and Add to Cart */}
               <div className="space-y-4">

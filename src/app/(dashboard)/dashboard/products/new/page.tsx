@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
+import PDFUpload from '@/components/ui/PDFUpload';
 import { FaArrowLeft } from 'react-icons/fa';
 import { ProductImage } from '@/lib/models';
 
@@ -18,6 +19,7 @@ export default function NewProductPage() {
     description: '',
     price: '',
     image_url: '',
+    data_sheet_url: '',
     category_id: '',
     sku: '',
     is_active: true
@@ -62,6 +64,14 @@ export default function NewProductPage() {
 
   const handleImageReordered = (reorderedImages: ProductImage[]) => {
     setUploadedImages(reorderedImages);
+  };
+
+  const handlePDFUploaded = (file: { url: string; originalName: string }) => {
+    setFormData(prev => ({ ...prev, data_sheet_url: file.url }));
+  };
+
+  const handlePDFRemoved = () => {
+    setFormData(prev => ({ ...prev, data_sheet_url: '' }));
   };
 
   const validateForm = () => {
@@ -159,7 +169,8 @@ export default function NewProductPage() {
           ...formData,
           price: parseFloat(formData.price),
           category_id: formData.category_id || null,
-          image_url: formData.image_url || null
+          image_url: formData.image_url || null,
+          data_sheet_url: formData.data_sheet_url || null
         })
       });
 
@@ -302,6 +313,15 @@ export default function NewProductPage() {
                 onImageReordered={handleImageReordered}
                 existingImages={uploadedImages}
                 maxImages={10}
+                className="w-full"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <PDFUpload
+                onPDFUploaded={handlePDFUploaded}
+                onPDFRemoved={handlePDFRemoved}
+                existingPDF={formData.data_sheet_url}
                 className="w-full"
               />
             </div>

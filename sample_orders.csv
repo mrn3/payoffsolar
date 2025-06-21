@@ -1,6 +1,0 @@
-Contact Email,Contact First Name,Contact Last Name,Product SKU,Product Name,Quantity,Price,Status,Notes
-john@example.com,John,Doe,SP-300W,Gstar Solar Panel 300W,2,299.99,pending,First order for John
-jane@example.com,Jane,Smith,INV-5KW,Inverter 5kW,1,899.99,pending,Jane's inverter order
-bob@example.com,Bob,Johnson,BP-10KWH,Battery Pack 10kWh,1,4999.99,confirmed,Battery for Bob's system
-alice@example.com,Alice,Brown,SP-300W,Gstar Solar Panel 300W,3,299.99,pending,Solar panels for Alice
-john@example.com,John,Doe,BP-10KWH,Battery Pack 10kWh,1,4999.99,pending,Additional battery for John

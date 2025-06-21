@@ -1,0 +1,2 @@
+# This file ensures the datasheets upload directory is preserved in git
+# while actual uploaded PDF files are ignored

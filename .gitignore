@@ -30,6 +30,9 @@ public/uploads/*
 !public/uploads/products/
 public/uploads/products/*
 !public/uploads/products/.gitkeep
+!public/uploads/datasheets/
+public/uploads/datasheets/*
+!public/uploads/datasheets/.gitkeep
 
 # debug
 npm-debug.log*
