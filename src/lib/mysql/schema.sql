@@ -194,8 +194,7 @@ CREATE TABLE IF NOT EXISTS product_cost_breakdowns (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-  FOREIGN KEY (category_id) REFERENCES cost_categories(id),
-  UNIQUE KEY unique_product_category (product_id, category_id)
+  FOREIGN KEY (category_id) REFERENCES cost_categories(id)
 );
 
 

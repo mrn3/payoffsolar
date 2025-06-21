@@ -90,9 +90,6 @@ export async function POST(
     return NextResponse.json({ costBreakdowns }, { status: 201 });
   } catch (error) {
     console.error('Error creating product cost breakdown:', error);
-    if (error instanceof Error && error.message.includes('Duplicate entry')) {
-      return NextResponse.json({ error: 'A cost breakdown for this category already exists for this product' }, { status: 409 });
-    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

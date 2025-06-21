@@ -62,9 +62,6 @@ export async function PUT(
     return NextResponse.json({ costBreakdowns });
   } catch (error) {
     console.error('Error updating product cost breakdown:', error);
-    if (error instanceof Error && error.message.includes('Duplicate entry')) {
-      return NextResponse.json({ error: 'A cost breakdown for this category already exists for this product' }, { status: 409 });
-    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
