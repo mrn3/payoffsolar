@@ -219,16 +219,7 @@ INSERT IGNORE INTO services (id, name, description, price, duration, is_active) 
   (UUID(), 'Energy Consultation', 'Professional consultation on energy efficiency', 100.00, 60, TRUE),
   (UUID(), 'System Upgrade', 'Upgrade existing solar power systems', 800.00, 240, TRUE);
 
--- Insert default cost categories
-INSERT IGNORE INTO cost_categories (id, name, description, is_active) VALUES
-  (UUID(), 'Labor', 'Labor costs for installation and services', TRUE),
-  (UUID(), 'Materials', 'Material costs for equipment and supplies', TRUE),
-  (UUID(), 'Permits', 'Permit and licensing fees', TRUE),
-  (UUID(), 'Transportation', 'Transportation and delivery costs', TRUE),
-  (UUID(), 'Equipment Rental', 'Equipment rental and tool costs', TRUE),
-  (UUID(), 'Subcontractor', 'Subcontractor and third-party services', TRUE),
-  (UUID(), 'Overhead', 'General overhead and administrative costs', TRUE),
-  (UUID(), 'Other', 'Miscellaneous costs', TRUE);
+
 
 -- Create content types table
 CREATE TABLE IF NOT EXISTS content_types (
