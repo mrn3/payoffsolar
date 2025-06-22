@@ -1,4 +1,4 @@
-import { Contact, OrderWithContact, OrderWithItems } from '@/lib/models';
+import { Contact, OrderWithContact, OrderWithItems, ProductWithFirstImage } from '@/lib/models';
 
 export interface DuplicateGroup {
   id: string;
@@ -24,6 +24,20 @@ export interface OrderDuplicateGroup {
 export interface OrderSimilarity {
   order1: OrderWithContact;
   order2: OrderWithContact;
+  similarityScore: number;
+  matchReasons: string[];
+}
+
+export interface ProductDuplicateGroup {
+  id: string;
+  products: ProductWithFirstImage[];
+  similarityScore: number;
+  matchType: 'name' | 'sku' | 'price' | 'description' | 'multiple';
+}
+
+export interface ProductSimilarity {
+  product1: ProductWithFirstImage;
+  product2: ProductWithFirstImage;
   similarityScore: number;
   matchReasons: string[];
 }
@@ -374,6 +388,168 @@ export function findOrderDuplicates(orders: OrderWithContact[], threshold = 70):
       duplicateGroups.push({
         id: `group-${duplicateGroups.length + 1}`,
         orders: similarOrders,
+        similarityScore: maxSimilarity,
+        matchType: primaryMatchType
+      });
+    }
+  }
+
+  // Sort by similarity score (highest first)
+  return duplicateGroups.sort((a, b) => b.similarityScore - a.similarityScore);
+}
+
+// Calculate similarity between two products
+export function calculateProductSimilarity(product1: ProductWithFirstImage, product2: ProductWithFirstImage): ProductSimilarity {
+  const matchReasons: string[] = [];
+  let totalScore = 0;
+  let scoreCount = 0;
+
+  // SKU match (highest priority - should be unique)
+  if (product1.sku && product2.sku) {
+    const skuSimilarity = stringSimilarity(product1.sku, product2.sku);
+    if (skuSimilarity === 100) {
+      matchReasons.push('Exact SKU match');
+      totalScore += 100;
+    } else if (skuSimilarity > 90) {
+      matchReasons.push('Very similar SKU');
+      totalScore += skuSimilarity;
+    } else if (skuSimilarity > 80) {
+      matchReasons.push('Similar SKU');
+      totalScore += skuSimilarity * 0.9;
+    }
+    scoreCount++;
+  }
+
+  // Name match (high priority)
+  const nameSimilarity = stringSimilarity(product1.name, product2.name);
+  if (nameSimilarity === 100) {
+    matchReasons.push('Exact name match');
+    totalScore += 95;
+  } else if (nameSimilarity > 90) {
+    matchReasons.push('Very similar name');
+    totalScore += nameSimilarity * 0.9;
+  } else if (nameSimilarity > 80) {
+    matchReasons.push('Similar name');
+    totalScore += nameSimilarity * 0.8;
+  } else if (nameSimilarity > 70) {
+    matchReasons.push('Somewhat similar name');
+    totalScore += nameSimilarity * 0.6;
+  }
+  scoreCount++;
+
+  // Price match (medium priority)
+  const price1 = Number(product1.price);
+  const price2 = Number(product2.price);
+  if (price1 === price2) {
+    matchReasons.push('Exact price match');
+    totalScore += 85;
+    scoreCount++;
+  } else if (Math.abs(price1 - price2) <= 0.01) {
+    matchReasons.push('Very similar price');
+    totalScore += 80;
+    scoreCount++;
+  } else {
+    // Calculate percentage difference
+    const avgPrice = (price1 + price2) / 2;
+    if (avgPrice > 0) {
+      const percentDiff = Math.abs(price1 - price2) / avgPrice * 100;
+      if (percentDiff <= 5) {
+        matchReasons.push('Similar price');
+        totalScore += 75;
+        scoreCount++;
+      } else if (percentDiff <= 10) {
+        matchReasons.push('Somewhat similar price');
+        totalScore += 65;
+        scoreCount++;
+      }
+    }
+  }
+
+  // Description match (lower priority)
+  if (product1.description && product2.description) {
+    const descSimilarity = stringSimilarity(product1.description, product2.description);
+    if (descSimilarity === 100) {
+      matchReasons.push('Exact description match');
+      totalScore += 70;
+    } else if (descSimilarity > 85) {
+      matchReasons.push('Very similar description');
+      totalScore += descSimilarity * 0.6;
+    } else if (descSimilarity > 70) {
+      matchReasons.push('Similar description');
+      totalScore += descSimilarity * 0.4;
+    }
+    scoreCount++;
+  }
+
+  const averageScore = scoreCount > 0 ? totalScore / scoreCount : 0;
+
+  return {
+    product1,
+    product2,
+    similarityScore: Math.round(averageScore),
+    matchReasons
+  };
+}
+
+// Find potential duplicate products in a list of products
+export function findProductDuplicates(products: ProductWithFirstImage[], threshold = 70): ProductDuplicateGroup[] {
+  const duplicateGroups: ProductDuplicateGroup[] = [];
+  const processedProducts = new Set<string>();
+
+  for (let i = 0; i < products.length; i++) {
+    if (processedProducts.has(products[i].id)) continue;
+
+    const currentProduct = products[i];
+    const similarProducts: ProductWithFirstImage[] = [currentProduct];
+    let maxSimilarity = 0;
+    const matchTypes = new Set<string>();
+
+    for (let j = i + 1; j < products.length; j++) {
+      if (processedProducts.has(products[j].id)) continue;
+
+      const similarity = calculateProductSimilarity(currentProduct, products[j]);
+
+      if (similarity.similarityScore >= threshold) {
+        similarProducts.push(products[j]);
+        maxSimilarity = Math.max(maxSimilarity, similarity.similarityScore);
+
+        // Determine match type
+        if (similarity.matchReasons.some(reason => reason.includes('SKU'))) {
+          matchTypes.add('sku');
+        }
+        if (similarity.matchReasons.some(reason => reason.includes('name'))) {
+          matchTypes.add('name');
+        }
+        if (similarity.matchReasons.some(reason => reason.includes('price'))) {
+          matchTypes.add('price');
+        }
+        if (similarity.matchReasons.some(reason => reason.includes('description'))) {
+          matchTypes.add('description');
+        }
+      }
+    }
+
+    if (similarProducts.length > 1) {
+      // Mark all products in this group as processed
+      similarProducts.forEach(product => processedProducts.add(product.id));
+
+      // Determine primary match type
+      let primaryMatchType: 'name' | 'sku' | 'price' | 'description' | 'multiple' = 'name';
+      if (matchTypes.size > 1) {
+        primaryMatchType = 'multiple';
+      } else if (matchTypes.has('sku')) {
+        primaryMatchType = 'sku';
+      } else if (matchTypes.has('name')) {
+        primaryMatchType = 'name';
+      } else if (matchTypes.has('price')) {
+        primaryMatchType = 'price';
+      } else if (matchTypes.has('description')) {
+        primaryMatchType = 'description';
+      }
+
+      duplicateGroups.push({
+        id: `group-${duplicateGroups.length + 1}`,
+        products: similarProducts,
         similarityScore: maxSimilarity,
         matchType: primaryMatchType
       });

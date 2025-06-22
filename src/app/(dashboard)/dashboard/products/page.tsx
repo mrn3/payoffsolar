@@ -9,7 +9,9 @@ import { ProductWithFirstImage } from '@/lib/models';
 import DeleteProductModal from '@/components/products/DeleteProductModal';
 import DeleteAllProductsModal from '@/components/products/DeleteAllProductsModal';
 import ImportProductsModal from '@/components/products/ImportProductsModal';
-import {FaEdit, FaEye, FaImage, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload} from 'react-icons/fa';
+import BulkMergeProductsModal from '@/components/products/BulkMergeProductsModal';
+import DuplicateProductsModal from '@/components/products/DuplicateProductsModal';
+import {FaEdit, FaEye, FaImage, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload, FaCopy, FaTimes} from 'react-icons/fa';
 import { createTextPreview } from '@/lib/utils/text';
 
 interface ProductsResponse {
@@ -38,6 +40,10 @@ export default function ProductsPage() {
   const [includeInactive, setIncludeInactive] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [isSelectAllChecked, setIsSelectAllChecked] = useState(false);
+  const [showBulkMergeModal, setShowBulkMergeModal] = useState(false);
+  const [showDuplicatesModal, setShowDuplicatesModal] = useState(false);
 
   const fetchProducts = async (page: number, search: string = '', includeInactiveProducts: boolean = false, categoryId: string = '') => {
     try {
@@ -132,6 +138,35 @@ export default function ProductsPage() {
     fetchProducts(currentPage, searchQuery, includeInactive, selectedCategory);
   };
 
+  // Bulk selection functions
+  const handleSelectProduct = (productId: string, checked: boolean) => {
+    const newSelected = new Set(selectedProductIds);
+    if (checked) {
+      newSelected.add(productId);
+    } else {
+      newSelected.delete(productId);
+    }
+    setSelectedProductIds(newSelected);
+
+    // Update select all checkbox state
+    setIsSelectAllChecked(newSelected.size === products.length && products.length > 0);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(products.map(product => product.id));
+      setSelectedProductIds(allIds);
+    } else {
+      setSelectedProductIds(new Set());
+    }
+    setIsSelectAllChecked(checked);
+  };
+
+  const clearSelection = () => {
+    setSelectedProductIds(new Set());
+    setIsSelectAllChecked(false);
+  };
+
   const handleDeleteProduct = async () => {
     if (!selectedProduct) return;
 
@@ -214,6 +249,16 @@ export default function ProductsPage() {
             {total > 0 && (
               <button
                 type="button"
+                onClick={() => setShowDuplicatesModal(true)}
+                className="inline-flex items-center justify-center rounded-md border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
+              >
+                <FaCopy className="mr-2 h-4 w-4" />
+                Find Duplicates
+              </button>
+            )}
+            {total > 0 && (
+              <button
+                type="button"
                 onClick={() => setIsDeleteAllModalOpen(true)}
                 className="inline-flex items-center justify-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
               >
@@ -274,6 +319,37 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      {/* Bulk Actions Toolbar */}
+      {selectedProductIds.size > 0 && (
+        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-md p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <span className="text-sm font-medium text-blue-900">
+                {selectedProductIds.size} product{selectedProductIds.size !== 1 ? 's' : ''} selected
+              </span>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkMergeModal(true)}
+                  disabled={selectedProductIds.size < 2}
+                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FaCopy className="mr-1 h-3 w-3" />
+                  Merge Duplicates
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={clearSelection}
+              className="inline-flex items-center p-1.5 border border-transparent text-xs font-medium rounded text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              <FaTimes className="h-4 w-4" />
+              <span className="sr-only">Clear selection</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Loading state */}
       {loading && (
         <div className="mt-8 text-center">
@@ -307,9 +383,34 @@ export default function ProductsPage() {
 
       {/* Products grid */}
       {!loading && products.length > 0 && (
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <div key={product.id} className={`bg-white overflow-hidden shadow rounded-lg ${!product.is_active ? 'opacity-75' : ''}`}>
+        <div className="mt-8">
+          {/* Select All Checkbox */}
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={isSelectAllChecked}
+                onChange={(e) => handleSelectAll(e.target.checked)}
+                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+              />
+              <span className="ml-2 text-sm text-gray-700">
+                Select all products on this page
+              </span>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {products.map((product) => (
+              <div key={product.id} className={`relative bg-white overflow-hidden shadow rounded-lg ${!product.is_active ? 'opacity-75' : ''} ${selectedProductIds.has(product.id) ? 'ring-2 ring-blue-500' : ''}`}>
+                {/* Checkbox */}
+                <div className="absolute top-2 left-2 z-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedProductIds.has(product.id)}
+                    onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded bg-white"
+                  />
+                </div>
               <button
                 onClick={() => router.push(`/dashboard/products/${product.id}`)}
                 className="w-full h-48 bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
@@ -386,7 +487,8 @@ export default function ProductsPage() {
                 </div>
               </div>
             </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
@@ -476,6 +578,26 @@ export default function ProductsPage() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImportComplete={handleImportComplete}
+      />
+
+      {/* Bulk Merge Modal */}
+      <BulkMergeProductsModal
+        isOpen={showBulkMergeModal}
+        onClose={() => setShowBulkMergeModal(false)}
+        selectedProductIds={Array.from(selectedProductIds)}
+        onComplete={() => {
+          clearSelection();
+          fetchProducts(currentPage, searchQuery, includeInactive, selectedCategory);
+        }}
+      />
+
+      {/* Duplicates Modal */}
+      <DuplicateProductsModal
+        isOpen={showDuplicatesModal}
+        onClose={() => setShowDuplicatesModal(false)}
+        onMergeComplete={() => {
+          fetchProducts(currentPage, searchQuery, includeInactive, selectedCategory);
+        }}
       />
     </div>
   );
