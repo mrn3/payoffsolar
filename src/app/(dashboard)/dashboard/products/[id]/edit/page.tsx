@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Product, ProductImage, ProductCategory, ProductCostBreakdownWithCategory, CostCategory } from '@/lib/models';
 import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
 import PDFUpload from '@/components/ui/PDFUpload';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
 
 export default function EditProductPage() {
@@ -316,6 +317,10 @@ export default function EditProductPage() {
     }
   };
 
+  const handleDescriptionChange = (value: string) => {
+    setFormData(prev => ({ ...prev, description: value }));
+  };
+
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name } = e.target;
     
@@ -533,14 +538,13 @@ export default function EditProductPage() {
 
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                name="description"
-                rows={4}
-                value={formData.description}
-                onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter product description"
-              />
+              <div className="mt-1">
+                <RichTextEditor
+                  value={formData.description}
+                  onChange={handleDescriptionChange}
+                  placeholder="Enter product description with rich formatting..."
+                />
+              </div>
             </div>
 
             <div className="sm:col-span-2">

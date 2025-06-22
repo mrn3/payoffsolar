@@ -169,9 +169,10 @@ export default function ProductDetailPage() {
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
                 <div className="prose prose-gray max-w-none">
-                  <p className="text-gray-700 leading-relaxed">
-                    {product.description}
-                  </p>
+                  <div
+                    className="text-gray-700 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: product.description || '' }}
+                  />
                 </div>
               </div>
 

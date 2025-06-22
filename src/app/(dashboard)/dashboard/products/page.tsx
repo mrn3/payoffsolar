@@ -10,6 +10,7 @@ import DeleteProductModal from '@/components/products/DeleteProductModal';
 import DeleteAllProductsModal from '@/components/products/DeleteAllProductsModal';
 import ImportProductsModal from '@/components/products/ImportProductsModal';
 import {FaEdit, FaEye, FaImage, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload} from 'react-icons/fa';
+import { createTextPreview } from '@/lib/utils/text';
 
 interface ProductsResponse {
   products: ProductWithFirstImage[];
@@ -300,8 +301,8 @@ export default function ProductsPage() {
                 <h3 className="text-lg font-medium text-gray-900 truncate" title={product.name}>
                   {product.name}
                 </h3>
-                <p className="mt-1 text-sm text-gray-500 line-clamp-2" title={product.description}>
-                  {product.description || 'No description available'}
+                <p className="mt-1 text-sm text-gray-500 line-clamp-2" title={createTextPreview(product.description || '', 200)}>
+                  {createTextPreview(product.description || '', 100) || 'No description available'}
                 </p>
                 {product.category_name && (
                   <p className="mt-1 text-xs text-blue-600">
