@@ -14,19 +14,36 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
     const search = searchParams.get('search') || '';
+    const categoryId = searchParams.get('category') || '';
     const includeInactive = searchParams.get('includeInactive') === 'true';
     const offset = (page - 1) * limit;
 
     let products;
     let total;
 
-    if (search) {
+    if (search && categoryId) {
+      if (includeInactive) {
+        products = await ProductModel.searchByCategoryIncludingInactive(search, categoryId, limit, offset);
+        total = await ProductModel.getSearchByCategoryCountIncludingInactive(search, categoryId);
+      } else {
+        products = await ProductModel.searchByCategory(search, categoryId, limit, offset);
+        total = await ProductModel.getSearchByCategoryCount(search, categoryId);
+      }
+    } else if (search) {
       if (includeInactive) {
         products = await ProductModel.searchIncludingInactive(search, limit, offset);
         total = await ProductModel.getSearchCountIncludingInactive(search);
       } else {
         products = await ProductModel.search(search, limit, offset);
         total = await ProductModel.getSearchCount(search);
+      }
+    } else if (categoryId) {
+      if (includeInactive) {
+        products = await ProductModel.getByCategoryIncludingInactive(categoryId, limit, offset);
+        total = await ProductModel.getCategoryCountIncludingInactive(categoryId);
+      } else {
+        products = await ProductModel.getByCategory(categoryId, limit, offset);
+        total = await ProductModel.getCategoryCount(categoryId);
       }
     } else if (includeInactive) {
       products = await ProductModel.getAllIncludingInactive(limit, offset);

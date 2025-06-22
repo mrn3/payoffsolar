@@ -8,13 +8,16 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '12');
     const search = searchParams.get('search') || '';
     const sort = searchParams.get('sort') || '';
-    const categoryId = searchParams.get('categoryId') || '';
+    const categoryId = searchParams.get('category') || '';
     const offset = (page - 1) * limit;
 
     let products;
     let total;
 
-    if (search) {
+    if (search && categoryId) {
+      products = await ProductModel.searchByCategory(search, categoryId, limit, offset, sort);
+      total = await ProductModel.getSearchByCategoryCount(search, categoryId);
+    } else if (search) {
       products = await ProductModel.search(search, limit, offset, sort);
       total = await ProductModel.getSearchCount(search);
     } else if (categoryId) {

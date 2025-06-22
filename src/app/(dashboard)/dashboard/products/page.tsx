@@ -36,8 +36,10 @@ export default function ProductsPage() {
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [includeInactive, setIncludeInactive] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
 
-  const fetchProducts = async (page: number, search: string = '', includeInactiveProducts: boolean = false) => {
+  const fetchProducts = async (page: number, search: string = '', includeInactiveProducts: boolean = false, categoryId: string = '') => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -47,6 +49,10 @@ export default function ProductsPage() {
 
       if (search) {
         params.append('search', search);
+      }
+
+      if (categoryId) {
+        params.append('category', categoryId);
       }
 
       if (includeInactiveProducts) {
@@ -81,9 +87,27 @@ export default function ProductsPage() {
     return () => clearTimeout(timer);
   }, [localSearchQuery]);
 
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/product-categories', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
   useEffect(() => {
-    fetchProducts(1, searchQuery, includeInactive);
-  }, [searchQuery, includeInactive]);
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    fetchProducts(1, searchQuery, includeInactive, selectedCategory);
+  }, [searchQuery, includeInactive, selectedCategory]);
 
   const handleSearch = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalSearchQuery(_e.target.value);
@@ -95,12 +119,17 @@ export default function ProductsPage() {
     setCurrentPage(1);
   };
 
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCategory(e.target.value);
+    setCurrentPage(1);
+  };
+
   const navigateToAdd = () => {
     router.push('/dashboard/products/new');
   };
 
   const handleImportComplete = () => {
-    fetchProducts(currentPage, searchQuery, includeInactive);
+    fetchProducts(currentPage, searchQuery, includeInactive, selectedCategory);
   };
 
   const handleDeleteProduct = async () => {
@@ -136,7 +165,7 @@ export default function ProductsPage() {
         throw new Error(errorData.error || 'Failed to delete all products');
       }
 
-      await fetchProducts(1, '', includeInactive);
+      await fetchProducts(1, '', includeInactive, selectedCategory);
       setSearchQuery('');
       setLocalSearchQuery('');
       setCurrentPage(1);
@@ -220,13 +249,16 @@ export default function ProductsPage() {
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-4">
           <select
+            value={selectedCategory}
+            onChange={handleCategoryChange}
             className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
           >
-            <option>All Categories</option>
-            <option>Solar Panels</option>
-            <option>Batteries</option>
-            <option>Inverters</option>
-            <option>Accessories</option>
+            <option value="">All Categories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
           </select>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-4">
@@ -363,14 +395,14 @@ export default function ProductsPage() {
         <div className="mt-8 flex items-center justify-between">
           <div className="flex-1 flex justify-between sm:hidden">
             <button
-              onClick={() => currentPage > 1 && fetchProducts(currentPage - 1, searchQuery, includeInactive)}
+              onClick={() => currentPage > 1 && fetchProducts(currentPage - 1, searchQuery, includeInactive, selectedCategory)}
               disabled={currentPage <= 1}
               className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
-              onClick={() => currentPage < totalPages && fetchProducts(currentPage + 1, searchQuery, includeInactive)}
+              onClick={() => currentPage < totalPages && fetchProducts(currentPage + 1, searchQuery, includeInactive, selectedCategory)}
               disabled={currentPage >= totalPages}
               className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -388,7 +420,7 @@ export default function ProductsPage() {
             <div>
               <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                 <button
-                  onClick={() => currentPage > 1 && fetchProducts(currentPage - 1, searchQuery, includeInactive)}
+                  onClick={() => currentPage > 1 && fetchProducts(currentPage - 1, searchQuery, includeInactive, selectedCategory)}
                   disabled={currentPage <= 1}
                   className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -399,7 +431,7 @@ export default function ProductsPage() {
                   return (
                     <button
                       key={page}
-                      onClick={() => fetchProducts(page, searchQuery, includeInactive)}
+                      onClick={() => fetchProducts(page, searchQuery, includeInactive, selectedCategory)}
                       className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                         page === currentPage
                           ? 'bg-green-50 border-green-500 text-green-600'
@@ -411,7 +443,7 @@ export default function ProductsPage() {
                   );
                 })}
                 <button
-                  onClick={() => currentPage < totalPages && fetchProducts(currentPage + 1, searchQuery, includeInactive)}
+                  onClick={() => currentPage < totalPages && fetchProducts(currentPage + 1, searchQuery, includeInactive, selectedCategory)}
                   disabled={currentPage >= totalPages}
                   className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

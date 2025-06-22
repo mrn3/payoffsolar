@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {FaSearch, FaTimes} from 'react-icons/fa';
 
 interface ProductCategory {
-  _id: string;
+  id: string;
   name: string;
 }
 
