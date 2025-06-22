@@ -5,6 +5,8 @@ import { format } from 'date-fns';
 import { Contact } from '@/lib/models';
 import { DuplicateGroup } from '@/lib/utils/duplicates';
 import { FaTimes, FaExclamationTriangle, FaSync, FaCheck } from 'react-icons/fa';
+import PhoneInput from '@/components/ui/PhoneInput';
+import StateSelect from '@/components/ui/StateSelect';
 
 interface DuplicateContactsModalProps {
   isOpen: boolean;
@@ -338,8 +340,8 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
-                    <input
-                      type="text"
+                    <PhoneInput
+                      name="phone"
                       value={mergedData.phone || ''}
                       onChange={(_e) => setMergedData(prev => ({ ...prev, phone: _e.target.value }))}
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
@@ -366,8 +368,8 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">State</label>
-                      <input
-                        type="text"
+                      <StateSelect
+                        name="state"
                         value={mergedData.state || ''}
                         onChange={(_e) => setMergedData(prev => ({ ...prev, state: _e.target.value }))}
                         className="w-full text-sm border border-gray-300 rounded px-2 py-1"

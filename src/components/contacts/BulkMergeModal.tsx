@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { FaTimes, FaCopy, FaSync } from 'react-icons/fa';
 import { Contact } from '@/lib/models';
 import { format } from 'date-fns';
+import PhoneInput from '@/components/ui/PhoneInput';
+import StateSelect from '@/components/ui/StateSelect';
 
 interface BulkMergeModalProps {
   isOpen: boolean;
@@ -399,8 +401,8 @@ export default function BulkMergeModal({
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
-                    <input
-                      type="text"
+                    <PhoneInput
+                      name="phone"
                       value={mergedData.phone || ''}
                       onChange={(e) => setMergedData(prev => ({ ...prev, phone: e.target.value }))}
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
@@ -427,8 +429,8 @@ export default function BulkMergeModal({
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">State</label>
-                      <input
-                        type="text"
+                      <StateSelect
+                        name="state"
                         value={mergedData.state || ''}
                         onChange={(e) => setMergedData(prev => ({ ...prev, state: e.target.value }))}
                         className="w-full text-sm border border-gray-300 rounded px-2 py-1"
