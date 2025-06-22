@@ -122,14 +122,11 @@ export default function BulkMergeOrdersModal({
     for (let i = 1; i < group.orders.length; i++) {
       const order = group.orders[i];
       if (!mergedOrderData.notes && order.notes) mergedOrderData.notes = order.notes;
-      // For orders, we typically want to keep the highest total and most recent date
+      // For orders, we typically want to keep the highest total but use the first order's date
       if (Number(order.total) > Number(mergedOrderData.total)) {
         mergedOrderData.total = order.total;
       }
-      // Use the most recent order date
-      if (new Date(order.order_date) > new Date(mergedOrderData.order_date)) {
-        mergedOrderData.order_date = order.order_date;
-      }
+      // Keep the first order's date (no need to update order_date)
     }
 
     setMergedData({
