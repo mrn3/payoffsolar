@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
-import { FaArrowLeft, FaEdit, FaEye, FaDownload, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaStickyNote, FaPlus } from 'react-icons/fa';
+import { FaArrowLeft, FaEdit, FaEye, FaDownload, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaStickyNote, FaPlus, FaTrash } from 'react-icons/fa';
 import { Contact } from '@/lib/models';
+import { toast } from 'react-hot-toast';
+import { UserProfile } from '@/lib/auth';
 
 interface Order {
   id: string;
@@ -41,11 +43,25 @@ export default function ViewContactPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
+    fetchUserProfile();
     fetchContact();
     fetchOrders(1);
   }, [contactId]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await fetch('/api/auth/profile');
+      if (response.ok) {
+        const data = await response.json();
+        setUserProfile(data.profile);
+      }
+    } catch (err) {
+      console.error('Error loading user profile:', err);
+    }
+  };
 
   const fetchContact = async () => {
     try {
@@ -105,6 +121,34 @@ export default function ViewContactPage() {
         return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const isAdmin = () => {
+    return userProfile?.role === 'admin';
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        toast.success('Order deleted successfully');
+        // Refresh the orders list
+        fetchOrders(currentPage);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to delete order');
+      }
+    } catch (err) {
+      console.error('Error deleting order:', err);
+      toast.error('Failed to delete order');
     }
   };
 
@@ -324,6 +368,16 @@ export default function ViewContactPage() {
                                 <FaDownload className="h-4 w-4" />
                                 <span className="sr-only">Download</span>
                               </Link>
+                              {isAdmin() && (
+                                <button
+                                  onClick={() => handleDeleteOrder(order.id)}
+                                  className="text-red-600 hover:text-red-900"
+                                  title="Delete order"
+                                >
+                                  <FaTrash className="h-4 w-4" />
+                                  <span className="sr-only">Delete</span>
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -381,6 +435,16 @@ export default function ViewContactPage() {
                           <FaDownload className="h-5 w-5" />
                           <span className="sr-only">Download</span>
                         </Link>
+                        {isAdmin() && (
+                          <button
+                            onClick={() => handleDeleteOrder(order.id)}
+                            className="text-red-600 hover:text-red-900 p-2"
+                            title="Delete order"
+                          >
+                            <FaTrash className="h-5 w-5" />
+                            <span className="sr-only">Delete</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
