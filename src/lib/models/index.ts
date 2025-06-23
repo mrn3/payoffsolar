@@ -785,6 +785,99 @@ export interface CostItemWithCategory extends CostItem {
   category_name?: string;
 }
 
+// Listing Platform model
+export interface ListingPlatform {
+  id: string;
+  name: string;
+  display_name: string;
+  api_endpoint?: string;
+  requires_auth: boolean;
+  is_active: boolean;
+  configuration: Record<string, any>;
+  credentials?: Record<string, any>; // For frontend use only
+  created_at: string;
+  updated_at: string;
+}
+
+// Listing Template model
+export interface ListingTemplate {
+  id: string;
+  platform_id: string;
+  name: string;
+  title_template?: string;
+  description_template?: string;
+  category_mapping: Record<string, string>;
+  price_adjustment_type: 'none' | 'percentage' | 'fixed';
+  price_adjustment_value: number;
+  shipping_template?: Record<string, any>;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ListingTemplateWithPlatform extends ListingTemplate {
+  platform_name?: string;
+  platform_display_name?: string;
+}
+
+// Product Listing model
+export interface ProductListing {
+  id: string;
+  product_id: string;
+  platform_id: string;
+  template_id?: string;
+  external_listing_id?: string;
+  title?: string;
+  description?: string;
+  price?: number;
+  status: 'draft' | 'pending' | 'active' | 'paused' | 'ended' | 'error';
+  listing_url?: string;
+  error_message?: string;
+  last_sync_at?: string;
+  auto_sync: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductListingWithDetails extends ProductListing {
+  product_name?: string;
+  product_sku?: string;
+  platform_name?: string;
+  platform_display_name?: string;
+  template_name?: string;
+}
+
+// Listing Image model
+export interface ListingImage {
+  id: string;
+  listing_id: string;
+  product_image_id?: string;
+  external_image_id?: string;
+  image_url: string;
+  sort_order: number;
+  upload_status: 'pending' | 'uploaded' | 'failed';
+  created_at: string;
+}
+
+// Platform Credentials model
+export interface PlatformCredentials {
+  id: string;
+  platform_id: string;
+  user_id: string;
+  credential_type: 'api_key' | 'oauth' | 'username_password';
+  credentials: Record<string, any>;
+  is_active: boolean;
+  expires_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlatformCredentialsWithPlatform extends PlatformCredentials {
+  platform_name?: string;
+  platform_display_name?: string;
+}
+
 // Project model
 export interface Project {
   id: string;
@@ -2231,6 +2324,446 @@ export const ContentModel = {
 
   async getPublishedCount(): Promise<number> {
     const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM content WHERE published = TRUE');
+    return result?.count || 0;
+  }
+};
+
+// Listing Platform Model
+// Platform Credentials Model
+export const PlatformCredentialsModel = {
+  async getByUserAndPlatform(userId: string, platformId: string): Promise<PlatformCredentials | null> {
+    return getOne<PlatformCredentials>(
+      'SELECT * FROM platform_credentials WHERE user_id = ? AND platform_id = ? AND is_active = TRUE',
+      [userId, platformId]
+    );
+  },
+
+  async create(data: Omit<PlatformCredentials, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO platform_credentials (platform_id, user_id, credential_type, credentials, is_active, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [data.platform_id, data.user_id, data.credential_type, JSON.stringify(data.credentials), data.is_active, data.expires_at || null]
+    );
+
+    const credential = await getOne<{ id: string }>(
+      'SELECT id FROM platform_credentials WHERE user_id = ? AND platform_id = ? ORDER BY created_at DESC LIMIT 1',
+      [data.user_id, data.platform_id]
+    );
+    return credential!.id;
+  },
+
+  async update(userId: string, platformId: string, data: Partial<Omit<PlatformCredentials, 'id' | 'user_id' | 'platform_id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.credential_type !== undefined) {
+      fields.push('credential_type = ?');
+      values.push(data.credential_type);
+    }
+    if (data.credentials !== undefined) {
+      fields.push('credentials = ?');
+      values.push(JSON.stringify(data.credentials));
+    }
+    if (data.is_active !== undefined) {
+      fields.push('is_active = ?');
+      values.push(data.is_active);
+    }
+    if (data.expires_at !== undefined) {
+      fields.push('expires_at = ?');
+      values.push(data.expires_at || null);
+    }
+
+    if (fields.length > 0) {
+      values.push(userId, platformId);
+      await executeSingle(
+        `UPDATE platform_credentials SET ${fields.join(', ')} WHERE user_id = ? AND platform_id = ?`,
+        values
+      );
+    }
+  },
+
+  async upsert(data: Omit<PlatformCredentials, 'id' | 'created_at' | 'updated_at'>): Promise<void> {
+    const existing = await this.getByUserAndPlatform(data.user_id, data.platform_id);
+    if (existing) {
+      await this.update(data.user_id, data.platform_id, {
+        credential_type: data.credential_type,
+        credentials: data.credentials,
+        is_active: data.is_active,
+        expires_at: data.expires_at
+      });
+    } else {
+      await this.create(data);
+    }
+  },
+
+  async delete(userId: string, platformId: string): Promise<void> {
+    await executeSingle('DELETE FROM platform_credentials WHERE user_id = ? AND platform_id = ?', [userId, platformId]);
+  }
+};
+
+export const ListingPlatformModel = {
+  async getAll(): Promise<ListingPlatform[]> {
+    return executeQuery<ListingPlatform>(
+      'SELECT * FROM listing_platforms ORDER BY display_name ASC',
+      []
+    );
+  },
+
+  async getActive(): Promise<ListingPlatform[]> {
+    return executeQuery<ListingPlatform>(
+      'SELECT * FROM listing_platforms WHERE is_active = TRUE ORDER BY display_name ASC',
+      []
+    );
+  },
+
+  async getById(id: string): Promise<ListingPlatform | null> {
+    return getOne<ListingPlatform>('SELECT * FROM listing_platforms WHERE id = ?', [id]);
+  },
+
+  async getByName(name: string): Promise<ListingPlatform | null> {
+    return getOne<ListingPlatform>('SELECT * FROM listing_platforms WHERE name = ?', [name]);
+  },
+
+  async create(data: Omit<ListingPlatform, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO listing_platforms (name, display_name, api_endpoint, requires_auth, is_active, configuration) VALUES (?, ?, ?, ?, ?, ?)',
+      [data.name, data.display_name, data.api_endpoint || null, data.requires_auth, data.is_active, JSON.stringify(data.configuration)]
+    );
+
+    const platform = await getOne<{ id: string }>(
+      'SELECT id FROM listing_platforms WHERE name = ? ORDER BY created_at DESC LIMIT 1',
+      [data.name]
+    );
+    return platform!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<ListingPlatform, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.name !== undefined) {
+      fields.push('name = ?');
+      values.push(data.name);
+    }
+    if (data.display_name !== undefined) {
+      fields.push('display_name = ?');
+      values.push(data.display_name);
+    }
+    if (data.api_endpoint !== undefined) {
+      fields.push('api_endpoint = ?');
+      values.push(data.api_endpoint || null);
+    }
+    if (data.requires_auth !== undefined) {
+      fields.push('requires_auth = ?');
+      values.push(data.requires_auth);
+    }
+    if (data.is_active !== undefined) {
+      fields.push('is_active = ?');
+      values.push(data.is_active);
+    }
+    if (data.configuration !== undefined) {
+      fields.push('configuration = ?');
+      values.push(JSON.stringify(data.configuration));
+    }
+
+    if (fields.length > 0) {
+      values.push(id);
+      await executeSingle(
+        `UPDATE listing_platforms SET ${fields.join(', ')} WHERE id = ?`,
+        values
+      );
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM listing_platforms WHERE id = ?', [id]);
+  }
+};
+
+// Listing Template Model
+export const ListingTemplateModel = {
+  async getAll(): Promise<ListingTemplateWithPlatform[]> {
+    return executeQuery<ListingTemplateWithPlatform>(
+      `SELECT lt.*, lp.name as platform_name, lp.display_name as platform_display_name
+       FROM listing_templates lt
+       LEFT JOIN listing_platforms lp ON lt.platform_id = lp.id
+       ORDER BY lp.display_name ASC, lt.name ASC`,
+      []
+    );
+  },
+
+  async getByPlatformId(platformId: string): Promise<ListingTemplateWithPlatform[]> {
+    return executeQuery<ListingTemplateWithPlatform>(
+      `SELECT lt.*, lp.name as platform_name, lp.display_name as platform_display_name
+       FROM listing_templates lt
+       LEFT JOIN listing_platforms lp ON lt.platform_id = lp.id
+       WHERE lt.platform_id = ? AND lt.is_active = TRUE
+       ORDER BY lt.is_default DESC, lt.name ASC`,
+      [platformId]
+    );
+  },
+
+  async getById(id: string): Promise<ListingTemplateWithPlatform | null> {
+    return getOne<ListingTemplateWithPlatform>(
+      `SELECT lt.*, lp.name as platform_name, lp.display_name as platform_display_name
+       FROM listing_templates lt
+       LEFT JOIN listing_platforms lp ON lt.platform_id = lp.id
+       WHERE lt.id = ?`,
+      [id]
+    );
+  },
+
+  async getDefaultByPlatformId(platformId: string): Promise<ListingTemplateWithPlatform | null> {
+    return getOne<ListingTemplateWithPlatform>(
+      `SELECT lt.*, lp.name as platform_name, lp.display_name as platform_display_name
+       FROM listing_templates lt
+       LEFT JOIN listing_platforms lp ON lt.platform_id = lp.id
+       WHERE lt.platform_id = ? AND lt.is_default = TRUE AND lt.is_active = TRUE`,
+      [platformId]
+    );
+  },
+
+  async create(data: Omit<ListingTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO listing_templates (platform_id, name, title_template, description_template, category_mapping, price_adjustment_type, price_adjustment_value, shipping_template, is_default, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        data.platform_id,
+        data.name,
+        data.title_template || null,
+        data.description_template || null,
+        JSON.stringify(data.category_mapping),
+        data.price_adjustment_type,
+        data.price_adjustment_value,
+        data.shipping_template ? JSON.stringify(data.shipping_template) : null,
+        data.is_default,
+        data.is_active
+      ]
+    );
+
+    const template = await getOne<{ id: string }>(
+      'SELECT id FROM listing_templates WHERE platform_id = ? AND name = ? ORDER BY created_at DESC LIMIT 1',
+      [data.platform_id, data.name]
+    );
+    return template!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<ListingTemplate, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.name !== undefined) {
+      fields.push('name = ?');
+      values.push(data.name);
+    }
+    if (data.title_template !== undefined) {
+      fields.push('title_template = ?');
+      values.push(data.title_template || null);
+    }
+    if (data.description_template !== undefined) {
+      fields.push('description_template = ?');
+      values.push(data.description_template || null);
+    }
+    if (data.category_mapping !== undefined) {
+      fields.push('category_mapping = ?');
+      values.push(JSON.stringify(data.category_mapping));
+    }
+    if (data.price_adjustment_type !== undefined) {
+      fields.push('price_adjustment_type = ?');
+      values.push(data.price_adjustment_type);
+    }
+    if (data.price_adjustment_value !== undefined) {
+      fields.push('price_adjustment_value = ?');
+      values.push(data.price_adjustment_value);
+    }
+    if (data.shipping_template !== undefined) {
+      fields.push('shipping_template = ?');
+      values.push(data.shipping_template ? JSON.stringify(data.shipping_template) : null);
+    }
+    if (data.is_default !== undefined) {
+      fields.push('is_default = ?');
+      values.push(data.is_default);
+    }
+    if (data.is_active !== undefined) {
+      fields.push('is_active = ?');
+      values.push(data.is_active);
+    }
+
+    if (fields.length > 0) {
+      values.push(id);
+      await executeSingle(
+        `UPDATE listing_templates SET ${fields.join(', ')} WHERE id = ?`,
+        values
+      );
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM listing_templates WHERE id = ?', [id]);
+  }
+};
+
+// Product Listing Model
+export const ProductListingModel = {
+  async getAll(limit = 50, offset = 0): Promise<ProductListingWithDetails[]> {
+    return executeQuery<ProductListingWithDetails>(
+      `SELECT pl.*, p.name as product_name, p.sku as product_sku,
+              lp.name as platform_name, lp.display_name as platform_display_name,
+              lt.name as template_name
+       FROM product_listings pl
+       LEFT JOIN products p ON pl.product_id = p.id
+       LEFT JOIN listing_platforms lp ON pl.platform_id = lp.id
+       LEFT JOIN listing_templates lt ON pl.template_id = lt.id
+       ORDER BY pl.created_at DESC LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+  },
+
+  async getByProductId(productId: string): Promise<ProductListingWithDetails[]> {
+    return executeQuery<ProductListingWithDetails>(
+      `SELECT pl.*, p.name as product_name, p.sku as product_sku,
+              lp.name as platform_name, lp.display_name as platform_display_name,
+              lt.name as template_name
+       FROM product_listings pl
+       LEFT JOIN products p ON pl.product_id = p.id
+       LEFT JOIN listing_platforms lp ON pl.platform_id = lp.id
+       LEFT JOIN listing_templates lt ON pl.template_id = lt.id
+       WHERE pl.product_id = ?
+       ORDER BY lp.display_name ASC`,
+      [productId]
+    );
+  },
+
+  async getByPlatformId(platformId: string): Promise<ProductListingWithDetails[]> {
+    return executeQuery<ProductListingWithDetails>(
+      `SELECT pl.*, p.name as product_name, p.sku as product_sku,
+              lp.name as platform_name, lp.display_name as platform_display_name,
+              lt.name as template_name
+       FROM product_listings pl
+       LEFT JOIN products p ON pl.product_id = p.id
+       LEFT JOIN listing_platforms lp ON pl.platform_id = lp.id
+       LEFT JOIN listing_templates lt ON pl.template_id = lt.id
+       WHERE pl.platform_id = ?
+       ORDER BY pl.created_at DESC`,
+      [platformId]
+    );
+  },
+
+  async getById(id: string): Promise<ProductListingWithDetails | null> {
+    return getOne<ProductListingWithDetails>(
+      `SELECT pl.*, p.name as product_name, p.sku as product_sku,
+              lp.name as platform_name, lp.display_name as platform_display_name,
+              lt.name as template_name
+       FROM product_listings pl
+       LEFT JOIN products p ON pl.product_id = p.id
+       LEFT JOIN listing_platforms lp ON pl.platform_id = lp.id
+       LEFT JOIN listing_templates lt ON pl.template_id = lt.id
+       WHERE pl.id = ?`,
+      [id]
+    );
+  },
+
+  async getByProductAndPlatform(productId: string, platformId: string): Promise<ProductListingWithDetails | null> {
+    return getOne<ProductListingWithDetails>(
+      `SELECT pl.*, p.name as product_name, p.sku as product_sku,
+              lp.name as platform_name, lp.display_name as platform_display_name,
+              lt.name as template_name
+       FROM product_listings pl
+       LEFT JOIN products p ON pl.product_id = p.id
+       LEFT JOIN listing_platforms lp ON pl.platform_id = lp.id
+       LEFT JOIN listing_templates lt ON pl.template_id = lt.id
+       WHERE pl.product_id = ? AND pl.platform_id = ?`,
+      [productId, platformId]
+    );
+  },
+
+  async create(data: Omit<ProductListing, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO product_listings (product_id, platform_id, template_id, external_listing_id, title, description, price, status, listing_url, error_message, auto_sync) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        data.product_id,
+        data.platform_id,
+        data.template_id || null,
+        data.external_listing_id || null,
+        data.title || null,
+        data.description || null,
+        data.price || null,
+        data.status,
+        data.listing_url || null,
+        data.error_message || null,
+        data.auto_sync
+      ]
+    );
+
+    const listing = await getOne<{ id: string }>(
+      'SELECT id FROM product_listings WHERE product_id = ? AND platform_id = ? ORDER BY created_at DESC LIMIT 1',
+      [data.product_id, data.platform_id]
+    );
+    return listing!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<ProductListing, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.template_id !== undefined) {
+      fields.push('template_id = ?');
+      values.push(data.template_id || null);
+    }
+    if (data.external_listing_id !== undefined) {
+      fields.push('external_listing_id = ?');
+      values.push(data.external_listing_id || null);
+    }
+    if (data.title !== undefined) {
+      fields.push('title = ?');
+      values.push(data.title || null);
+    }
+    if (data.description !== undefined) {
+      fields.push('description = ?');
+      values.push(data.description || null);
+    }
+    if (data.price !== undefined) {
+      fields.push('price = ?');
+      values.push(data.price || null);
+    }
+    if (data.status !== undefined) {
+      fields.push('status = ?');
+      values.push(data.status);
+    }
+    if (data.listing_url !== undefined) {
+      fields.push('listing_url = ?');
+      values.push(data.listing_url || null);
+    }
+    if (data.error_message !== undefined) {
+      fields.push('error_message = ?');
+      values.push(data.error_message || null);
+    }
+    if (data.auto_sync !== undefined) {
+      fields.push('auto_sync = ?');
+      values.push(data.auto_sync);
+    }
+
+    // Always update last_sync_at when updating
+    fields.push('last_sync_at = CURRENT_TIMESTAMP');
+
+    if (fields.length > 0) {
+      values.push(id);
+      await executeSingle(
+        `UPDATE product_listings SET ${fields.join(', ')} WHERE id = ?`,
+        values
+      );
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM product_listings WHERE id = ?', [id]);
+  },
+
+  async getCount(): Promise<number> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM product_listings');
+    return result?.count || 0;
+  },
+
+  async getCountByStatus(status: string): Promise<number> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM product_listings WHERE status = ?', [status]);
     return result?.count || 0;
   }
 };

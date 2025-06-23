@@ -340,10 +340,142 @@ CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tok
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user ON password_reset_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_content_published ON content(published);
 
+-- Create listing platforms table
+CREATE TABLE IF NOT EXISTS listing_platforms (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  name VARCHAR(100) NOT NULL UNIQUE,
+  display_name VARCHAR(100) NOT NULL,
+  api_endpoint VARCHAR(500),
+  requires_auth BOOLEAN DEFAULT TRUE,
+  is_active BOOLEAN DEFAULT TRUE,
+  configuration JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Create listing templates table
+CREATE TABLE IF NOT EXISTS listing_templates (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  platform_id VARCHAR(36) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  title_template TEXT,
+  description_template TEXT,
+  category_mapping JSON,
+  price_adjustment_type ENUM('none', 'percentage', 'fixed') DEFAULT 'none',
+  price_adjustment_value DECIMAL(10, 2) DEFAULT 0,
+  shipping_template JSON,
+  is_default BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (platform_id) REFERENCES listing_platforms(id) ON DELETE CASCADE
+);
+
+-- Create product listings table
+CREATE TABLE IF NOT EXISTS product_listings (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  product_id VARCHAR(36) NOT NULL,
+  platform_id VARCHAR(36) NOT NULL,
+  template_id VARCHAR(36),
+  external_listing_id VARCHAR(255),
+  title VARCHAR(500),
+  description TEXT,
+  price DECIMAL(10, 2),
+  status ENUM('draft', 'pending', 'active', 'paused', 'ended', 'error') DEFAULT 'draft',
+  listing_url VARCHAR(1000),
+  error_message TEXT,
+  last_sync_at TIMESTAMP NULL,
+  auto_sync BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  FOREIGN KEY (platform_id) REFERENCES listing_platforms(id) ON DELETE CASCADE,
+  FOREIGN KEY (template_id) REFERENCES listing_templates(id) ON DELETE SET NULL,
+  UNIQUE KEY unique_product_platform (product_id, platform_id)
+);
+
+-- Create listing images table
+CREATE TABLE IF NOT EXISTS listing_images (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  listing_id VARCHAR(36) NOT NULL,
+  product_image_id VARCHAR(36),
+  external_image_id VARCHAR(255),
+  image_url VARCHAR(1000) NOT NULL,
+  sort_order INT DEFAULT 0,
+  upload_status ENUM('pending', 'uploaded', 'failed') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (listing_id) REFERENCES product_listings(id) ON DELETE CASCADE,
+  FOREIGN KEY (product_image_id) REFERENCES product_images(id) ON DELETE SET NULL
+);
+
+-- Create platform credentials table
+CREATE TABLE IF NOT EXISTS platform_credentials (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  platform_id VARCHAR(36) NOT NULL,
+  user_id VARCHAR(36) NOT NULL,
+  credential_type ENUM('api_key', 'oauth', 'username_password') NOT NULL,
+  credentials JSON NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  expires_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (platform_id) REFERENCES listing_platforms(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_user_platform (user_id, platform_id)
+);
+
 -- Insert sample roles
 INSERT IGNORE INTO roles (id, name, description) VALUES
 ('admin-role-id', 'admin', 'Administrator with full access'),
 ('contact-role-id', 'contact', 'Contact with limited access');
+
+-- Insert default listing platforms
+INSERT IGNORE INTO listing_platforms (id, name, display_name, api_endpoint, requires_auth, is_active, configuration) VALUES
+('ebay-platform-id', 'ebay', 'eBay', 'https://api.ebay.com/ws/api.dll', TRUE, TRUE, '{"sandbox_endpoint": "https://api.sandbox.ebay.com/ws/api.dll", "max_images": 12, "max_title_length": 80, "max_description_length": 500000}'),
+('facebook-platform-id', 'facebook_marketplace', 'Facebook Marketplace', 'https://graph.facebook.com', TRUE, TRUE, '{"max_images": 20, "max_title_length": 100, "max_description_length": 9999}'),
+('amazon-platform-id', 'amazon', 'Amazon', 'https://mws.amazonservices.com', TRUE, TRUE, '{"max_images": 9, "max_title_length": 200, "max_description_length": 2000}'),
+('ksl-platform-id', 'ksl', 'KSL Classifieds', 'https://api.ksl.com', TRUE, TRUE, '{"max_images": 8, "max_title_length": 50, "max_description_length": 4000}'),
+('offerup-platform-id', 'offerup', 'OfferUp', 'https://api.offerup.com', TRUE, TRUE, '{"max_images": 12, "max_title_length": 80, "max_description_length": 1000}'),
+('nextdoor-platform-id', 'nextdoor', 'Nextdoor', 'https://api.nextdoor.com', TRUE, TRUE, '{"max_images": 10, "max_title_length": 75, "max_description_length": 1200}'),
+('craigslist-platform-id', 'craigslist', 'Craigslist', NULL, FALSE, TRUE, '{"max_images": 8, "max_title_length": 70, "max_description_length": 4000, "requires_manual_posting": true}');
+
+-- Insert default listing templates
+INSERT IGNORE INTO listing_templates (id, platform_id, name, title_template, description_template, category_mapping, price_adjustment_type, price_adjustment_value, is_default, is_active) VALUES
+('ebay-default-template', 'ebay-platform-id', 'eBay Default Template',
+ '{{product_name}} - {{product_sku}} - Solar Equipment',
+ '<h2>{{product_name}}</h2><p><strong>SKU:</strong> {{product_sku}}</p><p><strong>Price:</strong> ${{product_price}}</p><div>{{product_description}}</div><p><strong>Condition:</strong> New</p><p><strong>Shipping:</strong> Fast and secure shipping available</p><p><strong>Returns:</strong> 30-day return policy</p>',
+ '{"solar-panels": "11700", "inverters": "41979", "batteries": "20676", "mounting-systems": "11700", "accessories": "11700"}',
+ 'percentage', 5.00, TRUE, TRUE),
+('facebook-default-template', 'facebook-platform-id', 'Facebook Marketplace Default Template',
+ '{{product_name}} - {{product_sku}}',
+ '{{product_name}}\n\nSKU: {{product_sku}}\nPrice: ${{product_price}}\n\n{{product_description}}\n\nCondition: New\nPickup or delivery available\nMessage for more details!',
+ '{"solar-panels": "home_garden", "inverters": "electronics", "batteries": "electronics", "mounting-systems": "home_garden", "accessories": "electronics"}',
+ 'none', 0.00, TRUE, TRUE),
+('amazon-default-template', 'amazon-platform-id', 'Amazon Default Template',
+ '{{product_name}} {{product_sku}} Solar Equipment',
+ '{{product_description}}\n\nKey Features:\n- High quality solar equipment\n- Professional grade\n- Fast shipping\n- Excellent customer service',
+ '{"solar-panels": "2236", "inverters": "228013", "batteries": "228013", "mounting-systems": "2236", "accessories": "2236"}',
+ 'percentage', 10.00, TRUE, TRUE),
+('ksl-default-template', 'ksl-platform-id', 'KSL Default Template',
+ '{{product_name}} - {{product_sku}}',
+ '{{product_name}}\n\nSKU: {{product_sku}}\nPrice: ${{product_price}}\n\n{{product_description}}\n\nCondition: New\nLocal pickup or delivery available in Utah area\nCall or text for more information!',
+ '{"solar-panels": "electronics", "inverters": "electronics", "batteries": "electronics", "mounting-systems": "home_garden", "accessories": "electronics"}',
+ 'none', 0.00, TRUE, TRUE),
+('offerup-default-template', 'offerup-platform-id', 'OfferUp Default Template',
+ '{{product_name}} - {{product_sku}}',
+ '{{product_name}}\n\nSKU: {{product_sku}}\nPrice: ${{product_price}}\n\n{{product_description}}\n\nCondition: New\nPickup available\nShipping possible for additional cost',
+ '{"solar-panels": "electronics", "inverters": "electronics", "batteries": "electronics", "mounting-systems": "home_garden", "accessories": "electronics"}',
+ 'none', 0.00, TRUE, TRUE),
+('nextdoor-default-template', 'nextdoor-platform-id', 'Nextdoor Default Template',
+ '{{product_name}} - {{product_sku}}',
+ '{{product_name}}\n\nSKU: {{product_sku}}\nPrice: ${{product_price}}\n\n{{product_description}}\n\nCondition: New\nLocal pickup preferred\nGreat for neighbors looking for solar equipment!',
+ '{"solar-panels": "for_sale", "inverters": "for_sale", "batteries": "for_sale", "mounting-systems": "for_sale", "accessories": "for_sale"}',
+ 'none', 0.00, TRUE, TRUE),
+('craigslist-default-template', 'craigslist-platform-id', 'Craigslist Default Template',
+ '{{product_name}} - {{product_sku}} - ${{product_price}}',
+ '{{product_name}}\n\nSKU: {{product_sku}}\nPrice: ${{product_price}}\n\n{{product_description}}\n\nCondition: New\nCash only\nPickup preferred\nSerious inquiries only',
+ '{"solar-panels": "for_sale", "inverters": "electronics", "batteries": "electronics", "mounting-systems": "for_sale", "accessories": "electronics"}',
+ 'none', 0.00, TRUE, TRUE);
 
 -- Insert sample warehouses
 INSERT IGNORE INTO warehouses (id, name, address, city, state, zip) VALUES

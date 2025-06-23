@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import {useParams, useRouter} from 'next/navigation';
-import {Product, ProductImage, ProductCategory} from '@/lib/models';
+import {Product, ProductImage, ProductCategory, ProductWithImages} from '@/lib/models';
 import ImageCarousel from '@/components/ui/ImageCarousel';
+import ProductListingManager from '@/components/listings/ProductListingManager';
 import {FaArrowLeft, FaEdit} from 'react-icons/fa';
 
 export default function ProductDetailPage() {
@@ -224,6 +225,17 @@ export default function ProductDetailPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Listing Management */}
+      <div className="mt-8">
+        <ProductListingManager
+          product={{ ...product, images: productImages } as ProductWithImages}
+          onListingUpdate={() => {
+            // Optionally refresh product data or show success message
+            console.log('Listings updated');
+          }}
+        />
       </div>
     </div>
   );

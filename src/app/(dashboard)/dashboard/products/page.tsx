@@ -11,7 +11,8 @@ import DeleteAllProductsModal from '@/components/products/DeleteAllProductsModal
 import ImportProductsModal from '@/components/products/ImportProductsModal';
 import BulkMergeProductsModal from '@/components/products/BulkMergeProductsModal';
 import DuplicateProductsModal from '@/components/products/DuplicateProductsModal';
-import {FaEdit, FaEye, FaImage, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload, FaCopy, FaTimes} from 'react-icons/fa';
+import BulkListingModal from '@/components/listings/BulkListingModal';
+import {FaEdit, FaEye, FaImage, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload, FaCopy, FaTimes, FaGlobe} from 'react-icons/fa';
 import { createTextPreview } from '@/lib/utils/text';
 
 interface ProductsResponse {
@@ -44,6 +45,7 @@ export default function ProductsPage() {
   const [isSelectAllChecked, setIsSelectAllChecked] = useState(false);
   const [showBulkMergeModal, setShowBulkMergeModal] = useState(false);
   const [showDuplicatesModal, setShowDuplicatesModal] = useState(false);
+  const [showBulkListingModal, setShowBulkListingModal] = useState(false);
 
   const fetchProducts = async (page: number, search: string = '', includeInactiveProducts: boolean = false, categoryId: string = '') => {
     try {
@@ -337,6 +339,15 @@ export default function ProductsPage() {
                   <FaCopy className="mr-1 h-3 w-3" />
                   Merge Duplicates
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBulkListingModal(true)}
+                  disabled={selectedProductIds.size === 0}
+                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FaGlobe className="mr-1 h-3 w-3" />
+                  Create Listings
+                </button>
               </div>
             </div>
             <button
@@ -596,6 +607,17 @@ export default function ProductsPage() {
         isOpen={showDuplicatesModal}
         onClose={() => setShowDuplicatesModal(false)}
         onMergeComplete={() => {
+          fetchProducts(currentPage, searchQuery, includeInactive, selectedCategory);
+        }}
+      />
+
+      {/* Bulk Listing Modal */}
+      <BulkListingModal
+        isOpen={showBulkListingModal}
+        onClose={() => setShowBulkListingModal(false)}
+        selectedProducts={products.filter(p => selectedProductIds.has(p.id))}
+        onComplete={() => {
+          clearSelection();
           fetchProducts(currentPage, searchQuery, includeInactive, selectedCategory);
         }}
       />
