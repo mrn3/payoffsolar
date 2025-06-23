@@ -333,7 +333,13 @@ export default function ContactsPage() {
                           />
                         </td>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          {contact.name}
+                          <button
+                            type="button"
+                            onClick={() => router.push(`/dashboard/contacts/${contact.id}`)}
+                            className="text-green-600 hover:text-green-900 hover:underline font-medium"
+                          >
+                            {contact.name}
+                          </button>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {contact.email}
@@ -427,8 +433,14 @@ export default function ContactsPage() {
                       className="mt-1 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
                     />
                     <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-medium text-gray-900 truncate">
-                      {contact.name}
+                    <h3 className="text-lg font-medium truncate">
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/dashboard/contacts/${contact.id}`)}
+                        className="text-green-600 hover:text-green-900 hover:underline font-medium"
+                      >
+                        {contact.name}
+                      </button>
                     </h3>
                     <div className="mt-2 space-y-1">
                       {contact.email && (
