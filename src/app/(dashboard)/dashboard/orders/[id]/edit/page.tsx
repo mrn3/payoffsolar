@@ -610,7 +610,6 @@ export default function EditOrderPage() {
                     </label>
                     <input
                       type="number"
-                      min="0"
                       step="0.01"
                       required
                       value={costItem.amount}

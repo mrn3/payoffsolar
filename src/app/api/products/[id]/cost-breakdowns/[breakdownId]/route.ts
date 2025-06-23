@@ -36,12 +36,9 @@ export async function PUT(
       }
 
       const value = parseFloat(data.value);
-      if (value < 0) {
-        return NextResponse.json({ error: 'Value must be non-negative' }, { status: 400 });
-      }
 
-      if (data.calculation_type === 'percentage' && value > 100) {
-        return NextResponse.json({ error: 'Percentage value cannot exceed 100%' }, { status: 400 });
+      if (data.calculation_type === 'percentage' && (value > 100 || value < -100)) {
+        return NextResponse.json({ error: 'Percentage value must be between -100% and 100%' }, { status: 400 });
       }
     }
 

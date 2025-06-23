@@ -635,8 +635,8 @@ export default function EditProductPage() {
                         )}
                         <input
                           type="number"
-                          min="0"
                           step={breakdown.calculation_type === 'percentage' ? '0.01' : '0.01'}
+                          min={breakdown.calculation_type === 'percentage' ? '-100' : undefined}
                           max={breakdown.calculation_type === 'percentage' ? '100' : undefined}
                           value={breakdown.value}
                           onChange={(e) => updateCostBreakdown(breakdown.id, { value: parseFloat(e.target.value) || 0 })}
