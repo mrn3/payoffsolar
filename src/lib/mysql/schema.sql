@@ -250,6 +250,74 @@ CREATE TABLE IF NOT EXISTS content (
   FOREIGN KEY (author_id) REFERENCES users(id)
 );
 
+-- Create projects table
+CREATE TABLE IF NOT EXISTS projects (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  status ENUM('planning', 'active', 'on_hold', 'completed', 'cancelled') DEFAULT 'planning',
+  priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium',
+  start_date DATE,
+  due_date DATE,
+  completion_date DATE,
+  budget DECIMAL(10, 2),
+  owner_id VARCHAR(36),
+  created_by VARCHAR(36) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (owner_id) REFERENCES users(id),
+  FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- Create tasks table
+CREATE TABLE IF NOT EXISTS tasks (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  project_id VARCHAR(36) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  status ENUM('todo', 'in_progress', 'review', 'completed', 'cancelled') DEFAULT 'todo',
+  priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium',
+  assigned_to VARCHAR(36),
+  created_by VARCHAR(36) NOT NULL,
+  start_date DATE,
+  due_date DATE,
+  completion_date DATE,
+  estimated_hours DECIMAL(5, 2),
+  actual_hours DECIMAL(5, 2),
+  parent_task_id VARCHAR(36),
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (assigned_to) REFERENCES users(id),
+  FOREIGN KEY (created_by) REFERENCES users(id),
+  FOREIGN KEY (parent_task_id) REFERENCES tasks(id) ON DELETE CASCADE
+);
+
+-- Create project_members table for project team assignments
+CREATE TABLE IF NOT EXISTS project_members (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  project_id VARCHAR(36) NOT NULL,
+  user_id VARCHAR(36) NOT NULL,
+  role ENUM('owner', 'manager', 'member', 'viewer') DEFAULT 'member',
+  joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_project_user (project_id, user_id)
+);
+
+-- Create task_comments table for task discussions
+CREATE TABLE IF NOT EXISTS task_comments (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  task_id VARCHAR(36) NOT NULL,
+  user_id VARCHAR(36) NOT NULL,
+  comment TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email);
 CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);

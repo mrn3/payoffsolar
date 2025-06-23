@@ -785,6 +785,432 @@ export interface CostItemWithCategory extends CostItem {
   category_name?: string;
 }
 
+// Project model
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  status: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  start_date?: string;
+  due_date?: string;
+  completion_date?: string;
+  budget?: number;
+  owner_id?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectWithDetails extends Project {
+  owner_name?: string;
+  created_by_name?: string;
+  task_count?: number;
+  completed_task_count?: number;
+  member_count?: number;
+}
+
+// Task model
+export interface Task {
+  id: string;
+  project_id: string;
+  title: string;
+  description?: string;
+  status: 'todo' | 'in_progress' | 'review' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  assigned_to?: string;
+  created_by: string;
+  start_date?: string;
+  due_date?: string;
+  completion_date?: string;
+  estimated_hours?: number;
+  actual_hours?: number;
+  parent_task_id?: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskWithDetails extends Task {
+  assigned_to_name?: string;
+  created_by_name?: string;
+  project_name?: string;
+  subtask_count?: number;
+  completed_subtask_count?: number;
+}
+
+// Project Member model
+export interface ProjectMember {
+  id: string;
+  project_id: string;
+  user_id: string;
+  role: 'owner' | 'manager' | 'member' | 'viewer';
+  joined_at: string;
+}
+
+export interface ProjectMemberWithDetails extends ProjectMember {
+  user_name?: string;
+  user_email?: string;
+}
+
+// Task Comment model
+export interface TaskComment {
+  id: string;
+  task_id: string;
+  user_id: string;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskCommentWithDetails extends TaskComment {
+  user_name?: string;
+}
+
+// Project Model
+export const ProjectModel = {
+  async getAll(limit?: number, offset?: number): Promise<ProjectWithDetails[]> {
+    const limitClause = limit ? `LIMIT ${limit}` : '';
+    const offsetClause = offset ? `OFFSET ${offset}` : '';
+
+    const projects = await executeQuery<ProjectWithDetails>(
+      `SELECT
+        p.*,
+        CONCAT(owner.first_name, ' ', owner.last_name) as owner_name,
+        CONCAT(creator.first_name, ' ', creator.last_name) as created_by_name,
+        COUNT(DISTINCT t.id) as task_count,
+        COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_task_count,
+        COUNT(DISTINCT pm.user_id) as member_count
+       FROM projects p
+       LEFT JOIN profiles owner ON p.owner_id = owner.id
+       LEFT JOIN profiles creator ON p.created_by = creator.id
+       LEFT JOIN tasks t ON p.id = t.project_id
+       LEFT JOIN project_members pm ON p.id = pm.project_id
+       GROUP BY p.id
+       ORDER BY p.updated_at DESC
+       ${limitClause} ${offsetClause}`,
+      []
+    );
+    return projects || [];
+  },
+
+  async getById(id: string): Promise<ProjectWithDetails | null> {
+    const project = await getOne<ProjectWithDetails>(
+      `SELECT
+        p.*,
+        CONCAT(owner.first_name, ' ', owner.last_name) as owner_name,
+        CONCAT(creator.first_name, ' ', creator.last_name) as created_by_name,
+        COUNT(DISTINCT t.id) as task_count,
+        COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_task_count,
+        COUNT(DISTINCT pm.user_id) as member_count
+       FROM projects p
+       LEFT JOIN profiles owner ON p.owner_id = owner.id
+       LEFT JOIN profiles creator ON p.created_by = creator.id
+       LEFT JOIN tasks t ON p.id = t.project_id
+       LEFT JOIN project_members pm ON p.id = pm.project_id
+       WHERE p.id = ?
+       GROUP BY p.id`,
+      [id]
+    );
+    return project;
+  },
+
+  async create(data: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO projects (name, description, status, priority, start_date, due_date, budget, owner_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.name, data.description || null, data.status, data.priority, data.start_date || null, data.due_date || null, data.budget || null, data.owner_id || null, data.created_by]
+    );
+
+    const project = await getOne<{ id: string }>(
+      'SELECT id FROM projects WHERE name = ? AND created_by = ? ORDER BY created_at DESC LIMIT 1',
+      [data.name, data.created_by]
+    );
+    return project!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<Project, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.name !== undefined) {
+      fields.push('name = ?');
+      values.push(data.name);
+    }
+    if (data.description !== undefined) {
+      fields.push('description = ?');
+      values.push(data.description || null);
+    }
+    if (data.status !== undefined) {
+      fields.push('status = ?');
+      values.push(data.status);
+    }
+    if (data.priority !== undefined) {
+      fields.push('priority = ?');
+      values.push(data.priority);
+    }
+    if (data.start_date !== undefined) {
+      fields.push('start_date = ?');
+      values.push(data.start_date || null);
+    }
+    if (data.due_date !== undefined) {
+      fields.push('due_date = ?');
+      values.push(data.due_date || null);
+    }
+    if (data.completion_date !== undefined) {
+      fields.push('completion_date = ?');
+      values.push(data.completion_date || null);
+    }
+    if (data.budget !== undefined) {
+      fields.push('budget = ?');
+      values.push(data.budget || null);
+    }
+    if (data.owner_id !== undefined) {
+      fields.push('owner_id = ?');
+      values.push(data.owner_id || null);
+    }
+
+    if (fields.length > 0) {
+      values.push(id);
+      await executeSingle(
+        `UPDATE projects SET ${fields.join(', ')} WHERE id = ?`,
+        values
+      );
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM projects WHERE id = ?', [id]);
+  },
+
+  async getByStatus(status: string): Promise<ProjectWithDetails[]> {
+    const projects = await executeQuery<ProjectWithDetails>(
+      `SELECT
+        p.*,
+        CONCAT(owner.first_name, ' ', owner.last_name) as owner_name,
+        CONCAT(creator.first_name, ' ', creator.last_name) as created_by_name,
+        COUNT(DISTINCT t.id) as task_count,
+        COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_task_count,
+        COUNT(DISTINCT pm.user_id) as member_count
+       FROM projects p
+       LEFT JOIN profiles owner ON p.owner_id = owner.id
+       LEFT JOIN profiles creator ON p.created_by = creator.id
+       LEFT JOIN tasks t ON p.id = t.project_id
+       LEFT JOIN project_members pm ON p.id = pm.project_id
+       WHERE p.status = ?
+       GROUP BY p.id
+       ORDER BY p.updated_at DESC`,
+      [status]
+    );
+    return projects || [];
+  }
+};
+
+// Task Model
+export const TaskModel = {
+  async getAll(limit?: number, offset?: number): Promise<TaskWithDetails[]> {
+    const limitClause = limit ? `LIMIT ${limit}` : '';
+    const offsetClause = offset ? `OFFSET ${offset}` : '';
+
+    const tasks = await executeQuery<TaskWithDetails>(
+      `SELECT
+        t.*,
+        CONCAT(assigned.first_name, ' ', assigned.last_name) as assigned_to_name,
+        CONCAT(creator.first_name, ' ', creator.last_name) as created_by_name,
+        p.name as project_name,
+        COUNT(DISTINCT st.id) as subtask_count,
+        COUNT(DISTINCT CASE WHEN st.status = 'completed' THEN st.id END) as completed_subtask_count
+       FROM tasks t
+       LEFT JOIN profiles assigned ON t.assigned_to = assigned.id
+       LEFT JOIN profiles creator ON t.created_by = creator.id
+       LEFT JOIN projects p ON t.project_id = p.id
+       LEFT JOIN tasks st ON t.id = st.parent_task_id
+       GROUP BY t.id
+       ORDER BY t.sort_order ASC, t.created_at DESC
+       ${limitClause} ${offsetClause}`,
+      []
+    );
+    return tasks || [];
+  },
+
+  async getByProjectId(projectId: string): Promise<TaskWithDetails[]> {
+    const tasks = await executeQuery<TaskWithDetails>(
+      `SELECT
+        t.*,
+        CONCAT(assigned.first_name, ' ', assigned.last_name) as assigned_to_name,
+        CONCAT(creator.first_name, ' ', creator.last_name) as created_by_name,
+        p.name as project_name,
+        COUNT(DISTINCT st.id) as subtask_count,
+        COUNT(DISTINCT CASE WHEN st.status = 'completed' THEN st.id END) as completed_subtask_count
+       FROM tasks t
+       LEFT JOIN profiles assigned ON t.assigned_to = assigned.id
+       LEFT JOIN profiles creator ON t.created_by = creator.id
+       LEFT JOIN projects p ON t.project_id = p.id
+       LEFT JOIN tasks st ON t.id = st.parent_task_id
+       WHERE t.project_id = ?
+       GROUP BY t.id
+       ORDER BY t.sort_order ASC, t.created_at DESC`,
+      [projectId]
+    );
+    return tasks || [];
+  },
+
+  async getById(id: string): Promise<TaskWithDetails | null> {
+    const task = await getOne<TaskWithDetails>(
+      `SELECT
+        t.*,
+        CONCAT(assigned.first_name, ' ', assigned.last_name) as assigned_to_name,
+        CONCAT(creator.first_name, ' ', creator.last_name) as created_by_name,
+        p.name as project_name,
+        COUNT(DISTINCT st.id) as subtask_count,
+        COUNT(DISTINCT CASE WHEN st.status = 'completed' THEN st.id END) as completed_subtask_count
+       FROM tasks t
+       LEFT JOIN profiles assigned ON t.assigned_to = assigned.id
+       LEFT JOIN profiles creator ON t.created_by = creator.id
+       LEFT JOIN projects p ON t.project_id = p.id
+       LEFT JOIN tasks st ON t.id = st.parent_task_id
+       WHERE t.id = ?
+       GROUP BY t.id`,
+      [id]
+    );
+    return task;
+  },
+
+  async create(data: Omit<Task, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO tasks (project_id, title, description, status, priority, assigned_to, created_by, start_date, due_date, estimated_hours, parent_task_id, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.project_id, data.title, data.description || null, data.status, data.priority, data.assigned_to || null, data.created_by, data.start_date || null, data.due_date || null, data.estimated_hours || null, data.parent_task_id || null, data.sort_order]
+    );
+
+    const task = await getOne<{ id: string }>(
+      'SELECT id FROM tasks WHERE title = ? AND project_id = ? AND created_by = ? ORDER BY created_at DESC LIMIT 1',
+      [data.title, data.project_id, data.created_by]
+    );
+    return task!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<Task, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.title !== undefined) {
+      fields.push('title = ?');
+      values.push(data.title);
+    }
+    if (data.description !== undefined) {
+      fields.push('description = ?');
+      values.push(data.description || null);
+    }
+    if (data.status !== undefined) {
+      fields.push('status = ?');
+      values.push(data.status);
+
+      // Set completion date when marking as completed
+      if (data.status === 'completed') {
+        fields.push('completion_date = ?');
+        values.push(new Date().toISOString().split('T')[0]);
+      }
+    }
+    if (data.priority !== undefined) {
+      fields.push('priority = ?');
+      values.push(data.priority);
+    }
+    if (data.assigned_to !== undefined) {
+      fields.push('assigned_to = ?');
+      values.push(data.assigned_to || null);
+    }
+    if (data.start_date !== undefined) {
+      fields.push('start_date = ?');
+      values.push(data.start_date || null);
+    }
+    if (data.due_date !== undefined) {
+      fields.push('due_date = ?');
+      values.push(data.due_date || null);
+    }
+    if (data.estimated_hours !== undefined) {
+      fields.push('estimated_hours = ?');
+      values.push(data.estimated_hours || null);
+    }
+    if (data.actual_hours !== undefined) {
+      fields.push('actual_hours = ?');
+      values.push(data.actual_hours || null);
+    }
+    if (data.sort_order !== undefined) {
+      fields.push('sort_order = ?');
+      values.push(data.sort_order);
+    }
+
+    if (fields.length > 0) {
+      values.push(id);
+      await executeSingle(
+        `UPDATE tasks SET ${fields.join(', ')} WHERE id = ?`,
+        values
+      );
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM tasks WHERE id = ?', [id]);
+  },
+
+  async getByAssignedUser(userId: string): Promise<TaskWithDetails[]> {
+    const tasks = await executeQuery<TaskWithDetails>(
+      `SELECT
+        t.*,
+        CONCAT(assigned.first_name, ' ', assigned.last_name) as assigned_to_name,
+        CONCAT(creator.first_name, ' ', creator.last_name) as created_by_name,
+        p.name as project_name,
+        COUNT(DISTINCT st.id) as subtask_count,
+        COUNT(DISTINCT CASE WHEN st.status = 'completed' THEN st.id END) as completed_subtask_count
+       FROM tasks t
+       LEFT JOIN profiles assigned ON t.assigned_to = assigned.id
+       LEFT JOIN profiles creator ON t.created_by = creator.id
+       LEFT JOIN projects p ON t.project_id = p.id
+       LEFT JOIN tasks st ON t.id = st.parent_task_id
+       WHERE t.assigned_to = ?
+       GROUP BY t.id
+       ORDER BY t.sort_order ASC, t.created_at DESC`,
+      [userId]
+    );
+    return tasks || [];
+  }
+};
+
+// User Model for project/task assignments
+export const UserModel = {
+  async getAll(): Promise<{ id: string; name: string; email: string; role: string }[]> {
+    const users = await executeQuery<any>(
+      `SELECT
+        u.id,
+        CONCAT(p.first_name, ' ', p.last_name) as name,
+        p.email,
+        r.name as role
+       FROM users u
+       JOIN profiles p ON u.id = p.id
+       LEFT JOIN roles r ON p.role_id = r.id
+       WHERE r.name != 'contact'
+       ORDER BY p.first_name, p.last_name`,
+      []
+    );
+    return users || [];
+  },
+
+  async getById(id: string): Promise<{ id: string; name: string; email: string; role: string } | null> {
+    const user = await getOne<any>(
+      `SELECT
+        u.id,
+        CONCAT(p.first_name, ' ', p.last_name) as name,
+        p.email,
+        r.name as role
+       FROM users u
+       JOIN profiles p ON u.id = p.id
+       LEFT JOIN roles r ON p.role_id = r.id
+       WHERE u.id = ?`,
+      [id]
+    );
+    return user;
+  }
+};
+
 // Product Cost Breakdown model
 export interface ProductCostBreakdown {
   id: string;
