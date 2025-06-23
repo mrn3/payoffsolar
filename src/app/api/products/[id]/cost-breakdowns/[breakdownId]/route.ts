@@ -45,17 +45,11 @@ export async function PUT(
       }
     }
 
-    // Validate description if provided
-    if (data.description !== undefined && data.description !== null && typeof data.description !== 'string') {
-      return NextResponse.json({ error: 'Description must be a string' }, { status: 400 });
-    }
-
     // Update cost breakdown
     await ProductCostBreakdownModel.update(breakdownId, {
       category_id: data.category_id,
       calculation_type: data.calculation_type,
-      value: data.value !== undefined ? parseFloat(data.value) : undefined,
-      description: data.description ? data.description.trim() : data.description
+      value: data.value !== undefined ? parseFloat(data.value) : undefined
     });
 
     const costBreakdowns = await ProductCostBreakdownModel.getByProductId(id);

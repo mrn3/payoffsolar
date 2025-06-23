@@ -212,8 +212,7 @@ export default function EditProductPage() {
         body: JSON.stringify({
           category_id: costCategories[0]?.id || '',
           calculation_type: 'percentage',
-          value: 0,
-          description: ''
+          value: 0
         })
       });
 
@@ -586,7 +585,7 @@ export default function EditProductPage() {
             {costBreakdowns.length > 0 ? (
               <div className="space-y-4">
                 {costBreakdowns.map((breakdown) => (
-                  <div key={breakdown.id} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border border-gray-200 rounded-md">
+                  <div key={breakdown.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border border-gray-200 rounded-md">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Category *
@@ -646,19 +645,6 @@ export default function EditProductPage() {
                           }`}
                         />
                       </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Description
-                      </label>
-                      <input
-                        type="text"
-                        value={breakdown.description || ''}
-                        onChange={(e) => updateCostBreakdown(breakdown.id, { description: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
-                        placeholder="Optional description..."
-                      />
                     </div>
 
                     <div className="flex items-end">

@@ -139,7 +139,6 @@ export async function PUT(
           await CostItemModel.create({
             order_id: id,
             category_id: costItem.category_id,
-            description: costItem.description,
             amount: costItem.amount
           });
         }
@@ -176,7 +175,6 @@ export async function PUT(
         await CostItemModel.create({
           order_id: id,
           category_id: costItem.category_id,
-          description: costItem.description || undefined,
           amount: parseFloat(costItem.amount)
         });
       }

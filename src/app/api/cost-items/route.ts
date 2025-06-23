@@ -21,11 +21,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Category ID is required' }, { status: 400 });
     }
 
-    // Description is optional, but if provided, it should be a string
-    if (data.description !== undefined && data.description !== null && typeof data.description !== 'string') {
-      return NextResponse.json({ error: 'Description must be a string' }, { status: 400 });
-    }
-
     if (data.amount === undefined || data.amount === null || isNaN(parseFloat(data.amount))) {
       return NextResponse.json({ error: 'Valid amount is required' }, { status: 400 });
     }
@@ -40,7 +35,6 @@ export async function POST(request: NextRequest) {
     const costItemId = await CostItemModel.create({
       order_id: data.order_id,
       category_id: data.category_id,
-      description: data.description ? data.description.trim() : undefined,
       amount: parseFloat(data.amount)
     });
 

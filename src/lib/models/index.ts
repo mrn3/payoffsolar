@@ -774,7 +774,6 @@ export interface CostItem {
   id: string;
   order_id: string;
   category_id: string;
-  description?: string;
   amount: number | string;
   created_at: string;
   updated_at: string;
@@ -791,7 +790,6 @@ export interface ProductCostBreakdown {
   category_id: string;
   calculation_type: 'percentage' | 'fixed_amount';
   value: number;
-  description?: string;
   created_at: string;
   updated_at: string;
 }
@@ -1249,8 +1247,8 @@ export const CostItemModel = {
 
   async create(data: Omit<CostItem, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     await executeSingle(
-      'INSERT INTO cost_items (order_id, category_id, description, amount) VALUES (?, ?, ?, ?)',
-      [data.order_id, data.category_id, data.description || null, data.amount]
+      'INSERT INTO cost_items (order_id, category_id, amount) VALUES (?, ?, ?)',
+      [data.order_id, data.category_id, data.amount]
     );
 
     const item = await getOne<{ id: string }>(
@@ -1267,10 +1265,6 @@ export const CostItemModel = {
     if (_data.category_id !== undefined) {
       fields.push('category_id = ?');
       values.push(_data.category_id);
-    }
-    if (_data.description !== undefined) {
-      fields.push('description = ?');
-      values.push(_data.description || null);
     }
     if (_data.amount !== undefined) {
       fields.push('amount = ?');
@@ -1310,8 +1304,8 @@ export const ProductCostBreakdownModel = {
 
   async create(data: Omit<ProductCostBreakdown, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     await executeSingle(
-      'INSERT INTO product_cost_breakdowns (product_id, category_id, calculation_type, value, description) VALUES (?, ?, ?, ?, ?)',
-      [data.product_id, data.category_id, data.calculation_type, data.value, data.description || null]
+      'INSERT INTO product_cost_breakdowns (product_id, category_id, calculation_type, value) VALUES (?, ?, ?, ?)',
+      [data.product_id, data.category_id, data.calculation_type, data.value]
     );
 
     const breakdown = await getOne<{ id: string }>(
@@ -1337,10 +1331,6 @@ export const ProductCostBreakdownModel = {
       fields.push('value = ?');
       values.push(data.value);
     }
-    if (data.description !== undefined) {
-      fields.push('description = ?');
-      values.push(data.description || null);
-    }
 
     if (fields.length === 0) return;
 
@@ -1359,7 +1349,7 @@ export const ProductCostBreakdownModel = {
     await executeSingle('DELETE FROM product_cost_breakdowns WHERE product_id = ?', [productId]);
   },
 
-  async calculateCostItems(productId: string, quantity: number, unitPrice: number): Promise<Array<{category_id: string, amount: number, description?: string}>> {
+  async calculateCostItems(productId: string, quantity: number, unitPrice: number): Promise<Array<{category_id: string, amount: number}>> {
     const breakdowns = await this.getByProductId(productId);
     const costItems = [];
 
@@ -1375,8 +1365,7 @@ export const ProductCostBreakdownModel = {
 
       costItems.push({
         category_id: breakdown.category_id,
-        amount: Math.round(amount * 100) / 100, // Round to 2 decimal places
-        description: breakdown.description || `Auto-generated from ${breakdown.category_name || 'product default'}`
+        amount: Math.round(amount * 100) / 100 // Round to 2 decimal places
       });
     }
 

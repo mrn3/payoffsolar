@@ -24,11 +24,6 @@ export async function PUT(
       }
     }
 
-    // Validate description if provided
-    if (data.description !== undefined && data.description !== null && typeof data.description !== 'string') {
-      return NextResponse.json({ error: 'Description must be a string' }, { status: 400 });
-    }
-
     // Validate amount if provided
     if (data.amount !== undefined && (data.amount === null || isNaN(parseFloat(data.amount)))) {
       return NextResponse.json({ error: 'Amount must be a valid number' }, { status: 400 });
@@ -37,7 +32,6 @@ export async function PUT(
     // Update cost item
     await CostItemModel.update(id, {
       category_id: data.category_id,
-      description: data.description ? data.description.trim() : data.description,
       amount: data.amount !== undefined ? parseFloat(data.amount) : undefined
     });
 

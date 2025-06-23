@@ -82,8 +82,7 @@ export async function POST(
       product_id: id,
       category_id: data.category_id,
       calculation_type: data.calculation_type,
-      value: value,
-      description: data.description ? data.description.trim() : undefined
+      value: value
     });
 
     const costBreakdowns = await ProductCostBreakdownModel.getByProductId(id);

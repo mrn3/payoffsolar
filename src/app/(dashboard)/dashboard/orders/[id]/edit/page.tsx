@@ -19,7 +19,6 @@ interface FormOrderItem {
 interface FormCostItem {
   id?: string;
   category_id: string;
-  description?: string;
   amount: number | string;
 }
 
@@ -102,7 +101,6 @@ export default function EditOrderPage() {
             ? _order.costItems.map(costItem => ({
                 id: costItem.id,
                 category_id: costItem.category_id,
-                description: costItem.description,
                 amount: Number(costItem.amount)
               }))
             : []
@@ -194,7 +192,7 @@ export default function EditOrderPage() {
   const addCostItem = () => {
     setFormData(prev => ({
       ...prev,
-      costItems: [...prev.costItems, { category_id: '', description: '', amount: 0 }]
+      costItems: [...prev.costItems, { category_id: '', amount: 0 }]
     }));
   };
 
@@ -255,8 +253,7 @@ export default function EditOrderPage() {
 
               allCostItems.push({
                 category_id: breakdown.category_id,
-                amount: Math.round(amount * 100) / 100, // Round to 2 decimal places
-                description: breakdown.description || `Auto-generated from ${breakdown.category_name || 'product default'}`
+                amount: Math.round(amount * 100) / 100 // Round to 2 decimal places
               });
             }
           }
@@ -280,7 +277,6 @@ export default function EditOrderPage() {
       // Update the form with the calculated cost items
       const newCostItems = Array.from(mergedCostItems.values()).map(item => ({
         category_id: item.category_id,
-        description: item.description,
         amount: item.amount
       }));
 
@@ -321,7 +317,6 @@ export default function EditOrderPage() {
             costItems: data.order.costItems.map((item: any) => ({
               id: item.id,
               category_id: item.category_id,
-              description: item.description || '',
               amount: item.amount
             }))
           }));
@@ -589,7 +584,7 @@ export default function EditOrderPage() {
           {formData.costItems.length > 0 ? (
             <div className="space-y-4">
               {formData.costItems.map((costItem, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border border-gray-200 rounded-md">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-md">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Category *
@@ -607,19 +602,6 @@ export default function EditOrderPage() {
                         </option>
                       ))}
                     </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Description
-                    </label>
-                    <input
-                      type="text"
-                      value={costItem.description || ''}
-                      onChange={(e) => updateCostItem(index, 'description', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
-                      placeholder="Enter description..."
-                    />
                   </div>
 
                   <div>

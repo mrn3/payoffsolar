@@ -144,7 +144,6 @@ export async function POST(request: NextRequest) {
       await CostItemModel.create({
         order_id: orderId,
         category_id: costItem.category_id,
-        description: costItem.description,
         amount: costItem.amount
       });
     }
