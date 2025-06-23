@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ListingPlatform, ListingTemplateWithPlatform } from '@/lib/models';
 import { FaPlus, FaEdit, FaTrash, FaToggleOn, FaToggleOff, FaSpinner } from 'react-icons/fa';
 import PlatformEditModal from '@/components/settings/PlatformEditModal';
+import TemplateEditModal from '@/components/settings/TemplateEditModal';
 
 export default function PlatformSettingsPage() {
   const [platforms, setPlatforms] = useState<ListingPlatform[]>([]);
@@ -12,6 +13,8 @@ export default function PlatformSettingsPage() {
   const [selectedPlatform, setSelectedPlatform] = useState<string>('');
   const [editingPlatform, setEditingPlatform] = useState<ListingPlatform | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showTemplateEditModal, setShowTemplateEditModal] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<ListingTemplateWithPlatform | null>(null);
 
   useEffect(() => {
     fetchPlatforms();
@@ -70,6 +73,20 @@ export default function PlatformSettingsPage() {
     await fetchPlatforms();
   };
 
+  const handleEditTemplate = (template: ListingTemplateWithPlatform) => {
+    setEditingTemplate(template);
+    setShowTemplateEditModal(true);
+  };
+
+  const handleCloseTemplateEditModal = () => {
+    setShowTemplateEditModal(false);
+    setEditingTemplate(null);
+  };
+
+  const handleSaveTemplate = async () => {
+    await fetchTemplates();
+  };
+
   const filteredTemplates = selectedPlatform 
     ? templates.filter(t => t.platform_id === selectedPlatform)
     : templates;
@@ -91,6 +108,12 @@ export default function PlatformSettingsPage() {
         <p className="mt-2 text-sm text-gray-700">
           Configure marketplace platforms and listing templates.
         </p>
+        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-800">
+            <strong>Need help setting up credentials?</strong> Each platform has specific setup requirements.
+            When you edit a platform, you'll see detailed setup instructions and links to get started.
+          </p>
+        </div>
       </div>
 
       {/* Platforms Section */}
@@ -274,10 +297,14 @@ export default function PlatformSettingsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800">
+                      <button
+                        onClick={() => handleEditTemplate(template)}
+                        className="text-blue-600 hover:text-blue-800"
+                        title="Edit template"
+                      >
                         <FaEdit className="h-4 w-4" />
                       </button>
-                      <button className="text-red-600 hover:text-red-800">
+                      <button className="text-red-600 hover:text-red-800" title="Delete template">
                         <FaTrash className="h-4 w-4" />
                       </button>
                     </div>
@@ -306,6 +333,15 @@ export default function PlatformSettingsPage() {
         onClose={handleCloseEditModal}
         platform={editingPlatform}
         onSave={handleSavePlatform}
+      />
+
+      {/* Edit Template Modal */}
+      <TemplateEditModal
+        isOpen={showTemplateEditModal}
+        onClose={handleCloseTemplateEditModal}
+        template={editingTemplate}
+        platforms={platforms}
+        onSave={handleSaveTemplate}
       />
     </div>
   );

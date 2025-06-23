@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ListingPlatform } from '@/lib/models';
-import { FaTimes, FaSpinner } from 'react-icons/fa';
+import { FaTimes, FaSpinner, FaExternalLinkAlt, FaInfoCircle } from 'react-icons/fa';
 
 interface PlatformEditModalProps {
   isOpen: boolean;
@@ -81,10 +81,99 @@ export default function PlatformEditModal({
         ];
       case 'craigslist':
         return [
-          { key: 'email', label: 'Email', type: 'email' }
+          { key: 'email', label: 'Email', type: 'email' },
+          { key: 'password', label: 'Password', type: 'password' }
         ];
       default:
         return [];
+    }
+  };
+
+  const getPlatformSetupInfo = (platformName: string) => {
+    switch (platformName) {
+      case 'facebook_marketplace':
+        return {
+          setupUrl: 'https://developers.facebook.com/apps/',
+          instructions: [
+            '1. Go to Facebook Developers and create a new app',
+            '2. Add the "Marketing API" product to your app',
+            '3. Create a Facebook Business Page if you don\'t have one',
+            '4. Generate an access token with "pages_manage_posts" and "pages_show_list" permissions',
+            '5. Get your Page ID from your Facebook Business Page settings'
+          ],
+          docs: 'https://developers.facebook.com/docs/marketing-api/catalog'
+        };
+      case 'ebay':
+        return {
+          setupUrl: 'https://developer.ebay.com/my/keys',
+          instructions: [
+            '1. Create an eBay Developer account at developer.ebay.com',
+            '2. Create a new application in your developer dashboard',
+            '3. Get your App ID (Client ID), Dev ID, and Cert ID (Client Secret)',
+            '4. Generate a User Token using the "Get a User Token" tool',
+            '5. For production, you\'ll need to have your app reviewed by eBay'
+          ],
+          docs: 'https://developer.ebay.com/api-docs/static/gs_create-the-ebay-api-keysets.html'
+        };
+      case 'amazon':
+        return {
+          setupUrl: 'https://sellercentral.amazon.com/apps/manage',
+          instructions: [
+            '1. Register as an Amazon seller at sellercentral.amazon.com',
+            '2. Go to Apps & Services > Develop apps for Amazon',
+            '3. Create a new developer profile and app',
+            '4. Get your Access Key ID and Secret Access Key from AWS IAM',
+            '5. Find your Seller ID in Seller Central settings',
+            '6. Use marketplace ID: A1VC38T7YXB528 for US marketplace'
+          ],
+          docs: 'https://developer-docs.amazon.com/sp-api/docs/registering-your-application'
+        };
+      case 'ksl':
+        return {
+          setupUrl: 'https://www.ksl.com/',
+          instructions: [
+            '1. Create a KSL account at ksl.com',
+            '2. Verify your account with a phone number',
+            '3. Use your regular KSL login credentials',
+            '4. Note: KSL doesn\'t have an official API, this uses web automation'
+          ],
+          docs: 'https://www.ksl.com/help'
+        };
+      case 'offerup':
+        return {
+          setupUrl: 'https://offerup.com/',
+          instructions: [
+            '1. Create an OfferUp account at offerup.com',
+            '2. Verify your account with a phone number',
+            '3. Use your regular OfferUp login credentials',
+            '4. Note: OfferUp doesn\'t have a public API, this uses web automation'
+          ],
+          docs: 'https://offerup.com/support/'
+        };
+      case 'nextdoor':
+        return {
+          setupUrl: 'https://nextdoor.com/',
+          instructions: [
+            '1. Create a Nextdoor account at nextdoor.com',
+            '2. Verify your address and join your neighborhood',
+            '3. Use your regular Nextdoor login credentials',
+            '4. Note: Nextdoor doesn\'t have a public API, this uses web automation'
+          ],
+          docs: 'https://help.nextdoor.com/'
+        };
+      case 'craigslist':
+        return {
+          setupUrl: 'https://craigslist.org/',
+          instructions: [
+            '1. Create a Craigslist account (varies by city)',
+            '2. Verify your account with a phone number',
+            '3. Use your regular Craigslist login credentials',
+            '4. Note: Craigslist doesn\'t have an official API, this uses web automation'
+          ],
+          docs: 'https://www.craigslist.org/about/help/'
+        };
+      default:
+        return null;
     }
   };
 
@@ -127,10 +216,11 @@ export default function PlatformEditModal({
   if (!isOpen || !platform) return null;
 
   const credentialFields = getCredentialFields(platform.name);
+  const setupInfo = getPlatformSetupInfo(platform.name);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h3 className="text-lg font-semibold text-gray-900">
             Edit {platform.display_name}
@@ -192,9 +282,61 @@ export default function PlatformEditModal({
             </label>
           </div>
 
+          {/* Setup Information */}
+          {setupInfo && (
+            <div className="border-t pt-4">
+              <div className="flex items-center mb-3">
+                <FaInfoCircle className="h-4 w-4 text-blue-500 mr-2" />
+                <h4 className="text-sm font-medium text-gray-900">Setup Instructions</h4>
+              </div>
+
+              <div className="bg-blue-50 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-blue-900">Get Started:</span>
+                  <a
+                    href={setupInfo.setupUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    Open Setup Page
+                    <FaExternalLinkAlt className="ml-1 h-3 w-3" />
+                  </a>
+                </div>
+
+                <div className="space-y-2">
+                  {setupInfo.instructions.map((instruction, index) => (
+                    <div key={index} className="text-sm text-blue-800">
+                      {instruction}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-2 border-t border-blue-200">
+                  <a
+                    href={setupInfo.docs}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    View Documentation
+                    <FaExternalLinkAlt className="ml-1 h-3 w-3" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
           {formData.requires_auth && credentialFields.length > 0 && (
             <div className="border-t pt-4">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">Credentials</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-medium text-gray-900">Credentials</h4>
+                {setupInfo && (
+                  <span className="text-xs text-gray-500">
+                    See setup instructions above for help
+                  </span>
+                )}
+              </div>
               <div className="space-y-3">
                 {credentialFields.map((field) => (
                   <div key={field.key}>
