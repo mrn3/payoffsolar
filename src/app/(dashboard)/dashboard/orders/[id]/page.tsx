@@ -4,7 +4,7 @@ import { requireAuth, isContact } from '@/lib/auth';
 import { OrderModel } from '@/lib/models';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
-import {FaArrowLeft, FaDownload, FaEdit, FaUser, FaCalendarAlt} from 'react-icons/fa';
+import {FaArrowLeft, FaDownload, FaEdit, FaUser, FaCalendarAlt, FaPhone, FaSms, FaEnvelope} from 'react-icons/fa';
 
 interface OrderPageProps {
   params: Promise<{ id: string }>;
@@ -273,13 +273,70 @@ export default async function OrderPage({ params }: OrderPageProps) {
               Customer Information
             </h2>
 
-            <dl className="space-y-3">
+            <dl className="space-y-4">
               <div>
                 <dt className="text-sm font-medium text-gray-500">Name</dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {order.contact_name}
+                  {order.contact_id ? (
+                    <Link
+                      href={`/dashboard/contacts/${order.contact_id}`}
+                      className="text-blue-600 hover:text-blue-900 hover:underline"
+                    >
+                      {order.contact_name}
+                    </Link>
+                  ) : (
+                    order.contact_name
+                  )}
                 </dd>
               </div>
+
+              {order.contact_phone && (
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Phone</dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    <div className="flex flex-col space-y-1">
+                      <span className="text-gray-900">{order.contact_phone}</span>
+                      <div className="flex space-x-3">
+                        <a
+                          href={`tel:${order.contact_phone}`}
+                          className="inline-flex items-center text-green-600 hover:text-green-800 text-sm"
+                          title="Call"
+                        >
+                          <FaPhone className="mr-1 h-3 w-3" />
+                          Call
+                        </a>
+                        <a
+                          href={`sms:${order.contact_phone}`}
+                          className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm"
+                          title="Text"
+                        >
+                          <FaSms className="mr-1 h-3 w-3" />
+                          Text
+                        </a>
+                      </div>
+                    </div>
+                  </dd>
+                </div>
+              )}
+
+              {order.contact_email && (
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Email</dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    <div className="flex flex-col space-y-1">
+                      <span className="text-gray-900">{order.contact_email}</span>
+                      <a
+                        href={`mailto:${order.contact_email}`}
+                        className="inline-flex items-center text-purple-600 hover:text-purple-800 text-sm w-fit"
+                        title="Send Email"
+                      >
+                        <FaEnvelope className="mr-1 h-3 w-3" />
+                        Email
+                      </a>
+                    </div>
+                  </dd>
+                </div>
+              )}
             </dl>
           </div>
 

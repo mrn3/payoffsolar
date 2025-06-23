@@ -737,6 +737,8 @@ export interface Order {
 
 export interface OrderWithContact extends Order {
   contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
 }
 
 // Order Item model
@@ -860,7 +862,7 @@ export const OrderModel = {
 
   async getByIdForUser(_id: string, _userId: string): Promise<OrderWithContact | null> {
     return getOne<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name
+      `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE o.id = ? AND c.user_id = ?`,
@@ -993,7 +995,7 @@ export const OrderModel = {
 
   async getWithItems(_id: string): Promise<OrderWithItems | null> {
     const order = await getOne<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name
+      `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE o.id = ?`,
