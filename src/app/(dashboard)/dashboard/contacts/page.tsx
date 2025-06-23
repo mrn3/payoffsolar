@@ -342,10 +342,28 @@ export default function ContactsPage() {
                           </button>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {contact.email}
+                          {contact.email ? (
+                            <a
+                              href={`mailto:${contact.email}`}
+                              className="text-blue-600 hover:text-blue-900 hover:underline"
+                            >
+                              {contact.email}
+                            </a>
+                          ) : (
+                            '-'
+                          )}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {contact.phone}
+                          {contact.phone ? (
+                            <a
+                              href={`sms:${contact.phone}`}
+                              className="text-blue-600 hover:text-blue-900 hover:underline"
+                            >
+                              {contact.phone}
+                            </a>
+                          ) : (
+                            '-'
+                          )}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {[contact.city, contact.state].filter(Boolean).join(', ')}
@@ -445,12 +463,24 @@ export default function ContactsPage() {
                     <div className="mt-2 space-y-1">
                       {contact.email && (
                         <p className="text-sm text-gray-600 truncate">
-                          <span className="font-medium">Email:</span> {contact.email}
+                          <span className="font-medium">Email:</span>{' '}
+                          <a
+                            href={`mailto:${contact.email}`}
+                            className="text-blue-600 hover:text-blue-900 hover:underline"
+                          >
+                            {contact.email}
+                          </a>
                         </p>
                       )}
                       {contact.phone && (
                         <p className="text-sm text-gray-600">
-                          <span className="font-medium">Phone:</span> {contact.phone}
+                          <span className="font-medium">Phone:</span>{' '}
+                          <a
+                            href={`sms:${contact.phone}`}
+                            className="text-blue-600 hover:text-blue-900 hover:underline"
+                          >
+                            {contact.phone}
+                          </a>
                         </p>
                       )}
                       {(contact.city || contact.state) && (

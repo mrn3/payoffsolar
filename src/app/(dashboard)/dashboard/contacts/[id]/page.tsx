@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
-import { FaArrowLeft, FaEdit, FaEye, FaDownload, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaStickyNote, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaArrowLeft, FaEdit, FaEye, FaDownload, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaStickyNote, FaPlus, FaTrash, FaSms } from 'react-icons/fa';
 import { Contact } from '@/lib/models';
 import { toast } from 'react-hot-toast';
 import { UserProfile } from '@/lib/auth';
@@ -227,7 +227,17 @@ export default function ViewContactPage() {
                   <FaEnvelope className="h-5 w-5 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Email</p>
-                    <p className="text-sm text-gray-600">{contact.email}</p>
+                    <div className="flex flex-col space-y-1">
+                      <span className="text-sm text-gray-600">{contact.email}</span>
+                      <a
+                        href={`mailto:${contact.email}`}
+                        className="inline-flex items-center text-purple-600 hover:text-purple-800 text-sm w-fit"
+                        title="Send Email"
+                      >
+                        <FaEnvelope className="mr-1 h-3 w-3" />
+                        Email
+                      </a>
+                    </div>
                   </div>
                 </div>
               )}
@@ -236,7 +246,27 @@ export default function ViewContactPage() {
                   <FaPhone className="h-5 w-5 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Phone</p>
-                    <p className="text-sm text-gray-600">{contact.phone}</p>
+                    <div className="flex flex-col space-y-1">
+                      <span className="text-sm text-gray-600">{contact.phone}</span>
+                      <div className="flex space-x-3">
+                        <a
+                          href={`tel:${contact.phone}`}
+                          className="inline-flex items-center text-green-600 hover:text-green-800 text-sm"
+                          title="Call"
+                        >
+                          <FaPhone className="mr-1 h-3 w-3" />
+                          Call
+                        </a>
+                        <a
+                          href={`sms:${contact.phone}`}
+                          className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm"
+                          title="Text"
+                        >
+                          <FaSms className="mr-1 h-3 w-3" />
+                          Text
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
