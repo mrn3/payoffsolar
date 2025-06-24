@@ -57,14 +57,25 @@ export async function PATCH(
     });
 
     // Update credentials if provided
-    if (data.credentials && Object.keys(data.credentials).length > 0) {
-      await PlatformCredentialsModel.upsert({
-        platform_id: params.id,
-        user_id: session.profile.id,
-        credential_type: 'api_key', // Default type, could be made configurable
-        credentials: data.credentials,
-        is_active: true
-      });
+    if (data.credentials && typeof data.credentials === 'object') {
+      // Check if any credential values are non-empty
+      const hasNonEmptyCredentials = Object.values(data.credentials).some(value =>
+        value !== null && value !== undefined && value !== ''
+      );
+
+      if (hasNonEmptyCredentials) {
+        // Save/update credentials
+        await PlatformCredentialsModel.upsert({
+          platform_id: params.id,
+          user_id: session.profile.id,
+          credential_type: 'api_key', // Default type, could be made configurable
+          credentials: data.credentials,
+          is_active: true
+        });
+      } else {
+        // All credentials are empty, delete existing credentials
+        await PlatformCredentialsModel.delete(session.profile.id, params.id);
+      }
     }
 
     return NextResponse.json({ success: true });
