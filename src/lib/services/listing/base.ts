@@ -138,6 +138,7 @@ export abstract class BasePlatformService {
       // Convert relative URL to absolute
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
                      process.env.NEXT_PUBLIC_SITE_URL ||
+                     process.env.NEXT_PUBLIC_APP_URL ||
                      'http://localhost:6666';
       return `${baseUrl}${url}`;
     }

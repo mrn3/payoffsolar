@@ -68,6 +68,26 @@ export class FacebookService extends BasePlatformService {
         };
       }
 
+      // Check if we have any valid public URLs (not localhost)
+      const publicImageUrls = imageUrls.filter(url =>
+        url && !url.includes('localhost') && !url.includes('127.0.0.1')
+      );
+
+      console.log('Facebook listing - Original image URLs:', imageUrls);
+      console.log('Facebook listing - Public image URLs:', publicImageUrls);
+      console.log('Facebook listing - Environment variables:', {
+        NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+        NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL
+      });
+
+      if (publicImageUrls.length === 0) {
+        return {
+          success: false,
+          error: `Facebook Marketplace requires publicly accessible image URLs. Found URLs: ${imageUrls.join(', ')}. Please ensure your server has a public domain and set NEXT_PUBLIC_BASE_URL, NEXT_PUBLIC_SITE_URL, or NEXT_PUBLIC_APP_URL environment variable.`
+        };
+      }
+
       // Validate and format price
       const priceInCents = Math.round(Number(data.price) * 100);
       if (isNaN(priceInCents) || priceInCents <= 0) {
@@ -85,19 +105,9 @@ export class FacebookService extends BasePlatformService {
         currency: 'USD',
         condition: 'new',
         availability: 'in stock',
-        retailer_id: `ps_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+        retailer_id: `ps_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+        image_url: publicImageUrls[0] // Use the first valid public image URL
       };
-
-      // Only add image if we have one and it's not a localhost URL
-      if (imageUrls.length > 0) {
-        const imageUrl = imageUrls[0];
-        // Skip localhost URLs as Facebook requires publicly accessible URLs
-        if (!imageUrl.includes('localhost') && !imageUrl.includes('127.0.0.1')) {
-          listingData.image_url = imageUrl;
-        } else {
-          console.log('Skipping localhost image URL for Facebook:', imageUrl);
-        }
-      }
 
       console.log('Facebook listing data:', JSON.stringify(listingData, null, 2));
       console.log('Using catalog ID:', this.facebookCredentials.catalogId);
@@ -188,8 +198,15 @@ export class FacebookService extends BasePlatformService {
       // Handle image updates if provided
       if (data.images && data.images.length > 0) {
         const imageUrls = data.images.slice(0, 20);
-        updateData.image_url = imageUrls[0] || '';
-        updateData.additional_image_urls = imageUrls.slice(1);
+        // Filter out localhost URLs for Facebook
+        const publicImageUrls = imageUrls.filter(url =>
+          url && !url.includes('localhost') && !url.includes('127.0.0.1')
+        );
+
+        if (publicImageUrls.length > 0) {
+          updateData.image_url = publicImageUrls[0];
+          updateData.additional_image_urls = publicImageUrls.slice(1);
+        }
       }
 
       const response = await fetch(
