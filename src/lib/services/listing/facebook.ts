@@ -268,6 +268,20 @@ export class FacebookService extends BasePlatformService {
 
       if (!response.ok) {
         const error = await response.json();
+        console.log('Facebook delete error response:', {
+          status: response.status,
+          error: error
+        });
+
+        // Check if the listing doesn't exist or is already deleted
+        if (response.status === 400 &&
+            (error.error?.message?.includes('Unsupported delete request') ||
+             error.error?.message?.includes('Object with ID') ||
+             error.error?.code === 100)) {
+          console.log('Facebook listing appears to be already deleted, treating as success');
+          return { success: true };
+        }
+
         let errorMessage = error.error?.message || 'Failed to delete Facebook listing';
 
         // Check for authentication/token errors

@@ -248,7 +248,7 @@ export class ListingService {
           description: listingData.description,
           price: listingData.price,
           status: result.success ? 'active' : 'error',
-          error_message: result.error || null
+          error_message: result.error || undefined
         });
 
         results.push({
@@ -280,6 +280,7 @@ export class ListingService {
 
   // Delete listings for a product
   async deleteListings(productId: string, userId: string, platformIds?: string[]): Promise<BulkListingResult> {
+    console.log('Starting deleteListings for product:', productId, 'platforms:', platformIds);
     const existingListings = await ProductListingModel.getByProductId(productId);
     const listingsToDelete = platformIds 
       ? existingListings.filter(listing => platformIds.includes(listing.platform_id))
@@ -302,17 +303,31 @@ export class ListingService {
 
         // Create platform service with credentials
         const platformService = await this.createPlatformServiceWithCredentials(platform, userId);
-        
+
+        console.log(`Attempting to delete listing for platform ${platform.display_name}:`, {
+          listingId: listing.id,
+          externalListingId: listing.external_listing_id,
+          currentStatus: listing.status,
+          currentError: listing.error_message
+        });
+
         // Delete the listing
         const result = await platformService.deleteListing(
           listing.external_listing_id || ''
         );
 
+        console.log(`Delete result for platform ${platform.display_name}:`, result);
+
         // Update database status
         if (result.success) {
           await ProductListingModel.update(listing.id, {
             status: 'ended',
-            error_message: null
+            error_message: undefined
+          });
+        } else {
+          // If deletion failed, update the error message
+          await ProductListingModel.update(listing.id, {
+            error_message: result.error || 'Failed to delete listing'
           });
         }
 

@@ -178,6 +178,7 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
 
       await fetchData();
       onListingUpdate?.();
+      closeDeleteModal();
 
     } catch (error) {
       console.error('Error deleting listing:', error);
