@@ -311,9 +311,23 @@ export class ListingService {
           currentError: listing.error_message
         });
 
-        // Delete the listing
+        // If the listing is in error state or has no external listing ID, just delete the database record
+        if (listing.status === 'error' || !listing.external_listing_id) {
+          console.log(`Deleting error listing or listing without external ID for platform ${platform.display_name}`);
+          await ProductListingModel.delete(listing.id);
+
+          results.push({
+            platformId: platform.id,
+            platformName: platform.display_name,
+            success: true,
+            warnings: ['Listing was in error state - removed from database without platform deletion']
+          });
+          continue;
+        }
+
+        // Delete the listing from the platform
         const result = await platformService.deleteListing(
-          listing.external_listing_id || ''
+          listing.external_listing_id
         );
 
         console.log(`Delete result for platform ${platform.display_name}:`, result);

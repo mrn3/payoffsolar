@@ -173,7 +173,8 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete listing');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete listing');
       }
 
       await fetchData();
@@ -182,6 +183,36 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
 
     } catch (error) {
       console.error('Error deleting listing:', error);
+      alert(`Failed to delete listing: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setActionLoading({});
+    }
+  };
+
+  const handleClearError = async (platformId: string) => {
+    try {
+      setActionLoading({ [platformId]: true });
+
+      const response = await fetch('/api/listing/clear-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          platformId: platformId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to clear error');
+      }
+
+      await fetchData();
+      onListingUpdate?.();
+
+    } catch (error) {
+      console.error('Error clearing listing error:', error);
+      alert(`Failed to clear error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setActionLoading({});
     }
@@ -329,7 +360,25 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
                 </a>
               )}
               
-              {status.status !== 'not_listed' && status.status !== 'ended' && (
+              {(status.status === 'error' || (status.status === 'ended' && status.error)) && (
+                <button
+                  onClick={() => handleClearError(status.platformId)}
+                  disabled={actionLoading[status.platformId]}
+                  className="text-orange-700 hover:text-orange-900 disabled:opacity-50"
+                  title="Clear error and reset listing state"
+                >
+                  {actionLoading[status.platformId] ? (
+                    <FaSpinner className="animate-spin h-4 w-4" />
+                  ) : (
+                    <FaTimes className="h-4 w-4" />
+                  )}
+                </button>
+              )}
+
+              {status.status !== 'not_listed' &&
+               status.status !== 'ended' &&
+               status.status !== 'error' &&
+               !(status.status === 'ended' && status.error) && (
                 <>
                   <button
                     onClick={() => handleUpdateListing(status.platformId)}
