@@ -2332,10 +2332,26 @@ export const ContentModel = {
 // Platform Credentials Model
 export const PlatformCredentialsModel = {
   async getByUserAndPlatform(userId: string, platformId: string): Promise<PlatformCredentials | null> {
-    return getOne<PlatformCredentials>(
+    const result = await getOne<PlatformCredentials>(
       'SELECT * FROM platform_credentials WHERE user_id = ? AND platform_id = ? AND is_active = TRUE',
       [userId, platformId]
     );
+
+    if (result) {
+      console.log('Raw credentials from DB:', typeof result.credentials, result.credentials);
+
+      // If credentials is a string, parse it
+      if (typeof result.credentials === 'string') {
+        try {
+          result.credentials = JSON.parse(result.credentials);
+          console.log('Parsed credentials:', result.credentials);
+        } catch (e) {
+          console.error('Failed to parse credentials JSON:', e);
+        }
+      }
+    }
+
+    return result;
   },
 
   async create(data: Omit<PlatformCredentials, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
@@ -2462,7 +2478,7 @@ export const ListingPlatformModel = {
     }
     if (data.configuration !== undefined) {
       fields.push('configuration = ?');
-      values.push(JSON.stringify(data.configuration));
+      values.push(typeof data.configuration === 'string' ? data.configuration : JSON.stringify(data.configuration));
     }
 
     if (fields.length > 0) {

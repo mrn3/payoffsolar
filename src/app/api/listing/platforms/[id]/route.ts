@@ -4,7 +4,7 @@ import { ListingPlatformModel, PlatformCredentialsModel } from '@/lib/models';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await requireAuth();
@@ -12,7 +12,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const platform = await ListingPlatformModel.getById(params.id);
+    const { id } = await params;
+    const platform = await ListingPlatformModel.getById(id);
     if (!platform) {
       return NextResponse.json({ error: 'Platform not found' }, { status: 404 });
     }
@@ -20,7 +21,7 @@ export async function GET(
     // Get user's credentials for this platform
     const credentials = await PlatformCredentialsModel.getByUserAndPlatform(
       session.profile.id,
-      params.id
+      id
     );
 
     return NextResponse.json({
@@ -37,7 +38,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await requireAuth();
@@ -45,36 +46,59 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    const { id } = await params;
     const data = await request.json();
 
+    // Parse configuration if it's a string
+    let configuration = data.configuration;
+    if (typeof configuration === 'string') {
+      try {
+        configuration = JSON.parse(configuration);
+      } catch (e) {
+        // If parsing fails, keep as string
+      }
+    }
+
     // Update platform settings
-    await ListingPlatformModel.update(params.id, {
+    await ListingPlatformModel.update(id, {
       display_name: data.display_name,
       api_endpoint: data.api_endpoint,
       requires_auth: data.requires_auth,
       is_active: data.is_active,
-      configuration: data.configuration
+      configuration: configuration
     });
 
     // Update credentials if provided
     if (data.credentials && typeof data.credentials === 'object') {
+      // Filter out any non-credential fields that might have been corrupted
+      const credentialFields = ['accessToken', 'pageId', 'appId', 'devId', 'certId', 'userToken',
+                               'accessKeyId', 'secretAccessKey', 'sellerId', 'marketplaceId', 'region',
+                               'username', 'password', 'email'];
+
+      const cleanCredentials: Record<string, any> = {};
+      for (const field of credentialFields) {
+        if (data.credentials[field] !== undefined) {
+          cleanCredentials[field] = data.credentials[field];
+        }
+      }
+
       // Check if any credential values are non-empty
-      const hasNonEmptyCredentials = Object.values(data.credentials).some(value =>
+      const hasNonEmptyCredentials = Object.values(cleanCredentials).some(value =>
         value !== null && value !== undefined && value !== ''
       );
 
       if (hasNonEmptyCredentials) {
         // Save/update credentials
         await PlatformCredentialsModel.upsert({
-          platform_id: params.id,
+          platform_id: id,
           user_id: session.profile.id,
           credential_type: 'api_key', // Default type, could be made configurable
-          credentials: data.credentials,
+          credentials: cleanCredentials,
           is_active: true
         });
       } else {
         // All credentials are empty, delete existing credentials
-        await PlatformCredentialsModel.delete(session.profile.id, params.id);
+        await PlatformCredentialsModel.delete(session.profile.id, id);
       }
     }
 
@@ -87,7 +111,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await requireAuth();
@@ -95,7 +119,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const deleted = await ListingPlatformModel.delete(params.id);
+    const { id } = await params;
+    const deleted = await ListingPlatformModel.delete(id);
     if (!deleted) {
       return NextResponse.json({ error: 'Platform not found' }, { status: 404 });
     }
