@@ -285,9 +285,20 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
                 {getStatusText(status.status)}
               </span>
               {status.error && (
-                <span className="text-sm text-red-700 font-medium" title={status.error}>
-                  {status.error.length > 50 ? `${status.error.substring(0, 50)}...` : status.error}
-                </span>
+                <div className="text-sm text-red-700 font-medium">
+                  <span title={status.error}>
+                    {status.error.length > 50 ? `${status.error.substring(0, 50)}...` : status.error}
+                  </span>
+                  {status.error.includes('Session has expired') && (
+                    <a
+                      href="/dashboard/settings/platforms"
+                      className="ml-2 text-blue-600 hover:text-blue-800 underline"
+                      title="Update credentials in Platform Settings"
+                    >
+                      Update Token
+                    </a>
+                  )}
+                </div>
               )}
             </div>
             

@@ -35,6 +35,11 @@ export class FacebookService extends BasePlatformService {
       );
 
       if (!response.ok) {
+        const error = await response.json();
+        console.error('Facebook authentication failed:', {
+          status: response.status,
+          error: error
+        });
         return false;
       }
 
@@ -129,6 +134,11 @@ export class FacebookService extends BasePlatformService {
           errorMessage = error.error.error_user_msg;
         }
 
+        // Check for authentication/token errors
+        if (this.isAuthenticationError(response.status, error)) {
+          errorMessage = this.getAuthErrorMessage();
+        }
+
         return {
           success: false,
           error: errorMessage
@@ -196,9 +206,16 @@ export class FacebookService extends BasePlatformService {
 
       if (!response.ok) {
         const error = await response.json();
+        let errorMessage = error.error?.message || 'Failed to update Facebook listing';
+
+        // Check for authentication/token errors
+        if (this.isAuthenticationError(response.status, error)) {
+          errorMessage = this.getAuthErrorMessage();
+        }
+
         return {
           success: false,
-          error: error.error?.message || 'Failed to update Facebook listing'
+          error: errorMessage
         };
       }
 
@@ -234,9 +251,16 @@ export class FacebookService extends BasePlatformService {
 
       if (!response.ok) {
         const error = await response.json();
+        let errorMessage = error.error?.message || 'Failed to delete Facebook listing';
+
+        // Check for authentication/token errors
+        if (this.isAuthenticationError(response.status, error)) {
+          errorMessage = this.getAuthErrorMessage();
+        }
+
         return {
           success: false,
-          error: error.error?.message || 'Failed to delete Facebook listing'
+          error: errorMessage
         };
       }
 
@@ -266,6 +290,11 @@ export class FacebookService extends BasePlatformService {
       );
 
       if (!response.ok) {
+        const error = await response.json();
+        // Check if it's an authentication error
+        if (this.isAuthenticationError(response.status, error)) {
+          return { status: 'auth_error' };
+        }
         return { status: 'error' };
       }
 
@@ -308,5 +337,14 @@ export class FacebookService extends BasePlatformService {
     if (availability === 'pending') return 'pending';
     if (availability === 'mark_as_sold') return 'paused';
     return 'unknown';
+  }
+
+  private isAuthenticationError(status: number, error: any): boolean {
+    return status === 401 ||
+           (error.error?.code && ['190', '102', '463'].includes(error.error.code.toString()));
+  }
+
+  private getAuthErrorMessage(): string {
+    return 'Error validating access token: Session has expired. Please update your Facebook access token in Platform Settings.';
   }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ListingPlatform } from '@/lib/models';
-import { FaTimes, FaSpinner, FaExternalLinkAlt, FaInfoCircle } from 'react-icons/fa';
+import { FaTimes, FaSpinner, FaExternalLinkAlt, FaInfoCircle, FaCheckCircle } from 'react-icons/fa';
 
 interface PlatformEditModalProps {
   isOpen: boolean;
@@ -13,13 +13,15 @@ interface PlatformCredentials {
   [key: string]: string;
 }
 
-export default function PlatformEditModal({ 
-  isOpen, 
-  onClose, 
-  platform, 
-  onSave 
+export default function PlatformEditModal({
+  isOpen,
+  onClose,
+  platform,
+  onSave
 }: PlatformEditModalProps) {
   const [loading, setLoading] = useState(false);
+  const [testingAuth, setTestingAuth] = useState(false);
+  const [authTestResult, setAuthTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [formData, setFormData] = useState({
     display_name: '',
     api_endpoint: '',
@@ -214,6 +216,50 @@ export default function PlatformEditModal({
         [key]: value
       }
     }));
+    // Clear previous test result when credentials change
+    setAuthTestResult(null);
+  };
+
+  const handleTestAuthentication = async () => {
+    if (!platform) return;
+
+    setTestingAuth(true);
+    setAuthTestResult(null);
+
+    try {
+      // First save the current credentials
+      const response = await fetch(`/api/listing/platforms/${platform.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save credentials');
+      }
+
+      // Then test authentication
+      const testResponse = await fetch('/api/listing/test-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platformId: platform.id })
+      });
+
+      const result = await testResponse.json();
+      setAuthTestResult({
+        success: result.success,
+        message: result.message || (result.success ? 'Authentication successful' : 'Authentication failed')
+      });
+
+    } catch (error) {
+      console.error('Error testing authentication:', error);
+      setAuthTestResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to test authentication'
+      });
+    } finally {
+      setTestingAuth(false);
+    }
   };
 
   if (!isOpen || !platform) return null;
@@ -355,6 +401,45 @@ export default function PlatformEditModal({
                     />
                   </div>
                 ))}
+
+                {/* Test Authentication Button */}
+                <div className="pt-3 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={handleTestAuthentication}
+                    disabled={testingAuth || !Object.values(formData.credentials).some(val => val)}
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {testingAuth ? (
+                      <>
+                        <FaSpinner className="animate-spin mr-2 h-4 w-4" />
+                        Testing...
+                      </>
+                    ) : (
+                      <>
+                        <FaCheckCircle className="mr-2 h-4 w-4" />
+                        Test Authentication
+                      </>
+                    )}
+                  </button>
+
+                  {authTestResult && (
+                    <div className={`mt-2 p-2 rounded-md text-sm ${
+                      authTestResult.success
+                        ? 'bg-green-50 text-green-800 border border-green-200'
+                        : 'bg-red-50 text-red-800 border border-red-200'
+                    }`}>
+                      <div className="flex items-center">
+                        {authTestResult.success ? (
+                          <FaCheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                        ) : (
+                          <FaTimes className="mr-2 h-4 w-4 text-red-600" />
+                        )}
+                        {authTestResult.message}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
