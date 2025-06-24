@@ -103,17 +103,43 @@ export abstract class BasePlatformService {
     const validImages = images
       .filter(img => img.image_url && this.isValidImageUrl(img.image_url))
       .slice(0, maxImages)
-      .map(img => img.image_url);
+      .map(img => this.convertToAbsoluteUrl(img.image_url));
 
     return validImages;
   }
 
   protected isValidImageUrl(url: string): boolean {
+    if (!url) return false;
+
+    // Check if it's already an absolute URL
     try {
       const urlObj = new URL(url);
       return ['http:', 'https:'].includes(urlObj.protocol);
     } catch {
-      return false;
+      // If not absolute, check if it's a valid relative path
+      return url.startsWith('/') && (
+        url.includes('.jpg') ||
+        url.includes('.jpeg') ||
+        url.includes('.png') ||
+        url.includes('.webp') ||
+        url.includes('.gif')
+      );
+    }
+  }
+
+  protected convertToAbsoluteUrl(url: string): string {
+    if (!url) return '';
+
+    // If already absolute, return as-is
+    try {
+      new URL(url);
+      return url;
+    } catch {
+      // Convert relative URL to absolute
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+                     process.env.NEXT_PUBLIC_SITE_URL ||
+                     'http://localhost:6666';
+      return `${baseUrl}${url}`;
     }
   }
 

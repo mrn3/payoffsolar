@@ -71,7 +71,7 @@ export async function PATCH(
     // Update credentials if provided
     if (data.credentials && typeof data.credentials === 'object') {
       // Filter out any non-credential fields that might have been corrupted
-      const credentialFields = ['accessToken', 'pageId', 'appId', 'devId', 'certId', 'userToken',
+      const credentialFields = ['accessToken', 'pageId', 'catalogId', 'appId', 'devId', 'certId', 'userToken',
                                'accessKeyId', 'secretAccessKey', 'sellerId', 'marketplaceId', 'region',
                                'username', 'password', 'email'];
 

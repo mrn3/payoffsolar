@@ -4,6 +4,7 @@ import { BasePlatformService, ListingData, ListingResult, PlatformCredentials } 
 interface FacebookCredentials extends PlatformCredentials {
   accessToken: string;
   pageId: string;
+  catalogId: string;
 }
 
 export class FacebookService extends BasePlatformService {
@@ -17,7 +18,8 @@ export class FacebookService extends BasePlatformService {
   protected hasRequiredCredentials(): boolean {
     return !!(
       this.facebookCredentials?.accessToken &&
-      this.facebookCredentials?.pageId
+      this.facebookCredentials?.pageId &&
+      this.facebookCredentials?.catalogId
     );
   }
 
@@ -50,32 +52,54 @@ export class FacebookService extends BasePlatformService {
     }
 
     try {
-      // First, upload images if any
-      const imageIds: string[] = [];
-      for (const imageUrl of data.images.slice(0, 20)) { // Facebook allows up to 20 images
-        const imageId = await this.uploadImage(imageUrl);
-        if (imageId) {
-          imageIds.push(imageId);
+      // For Product Catalog, we use image URLs directly instead of uploading
+      const imageUrls = data.images.slice(0, 20); // Facebook allows up to 20 images
+
+      // Validate that we have at least one image
+      if (!imageUrls.length || !imageUrls[0]) {
+        return {
+          success: false,
+          error: 'At least one product image is required for Facebook Marketplace'
+        };
+      }
+
+      // Validate and format price
+      const priceInCents = Math.round(Number(data.price) * 100);
+      if (isNaN(priceInCents) || priceInCents <= 0) {
+        return {
+          success: false,
+          error: 'Invalid price value for Facebook listing'
+        };
+      }
+
+      // Create the marketplace listing using Product Catalog - minimal required fields only
+      const listingData: any = {
+        name: data.title,
+        description: this.stripHtml(data.description || 'Solar equipment'),
+        price: priceInCents, // Facebook expects price in cents
+        currency: 'USD',
+        condition: 'new',
+        availability: 'in stock',
+        retailer_id: `ps_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+      };
+
+      // Only add image if we have one and it's not a localhost URL
+      if (imageUrls.length > 0) {
+        const imageUrl = imageUrls[0];
+        // Skip localhost URLs as Facebook requires publicly accessible URLs
+        if (!imageUrl.includes('localhost') && !imageUrl.includes('127.0.0.1')) {
+          listingData.image_url = imageUrl;
+        } else {
+          console.log('Skipping localhost image URL for Facebook:', imageUrl);
         }
       }
 
-      // Create the marketplace listing
-      const listingData = {
-        name: data.title,
-        description: data.description,
-        price: Math.round(data.price * 100), // Facebook expects price in cents
-        currency: 'USD',
-        category: this.mapCategory(data.category),
-        condition: 'NEW',
-        availability: 'IN_STOCK',
-        brand: 'Payoff Solar',
-        retailer_id: `product_${Date.now()}`,
-        images: imageIds.map(id => ({ id })),
-        custom_label_0: data.category || 'solar_equipment'
-      };
+      console.log('Facebook listing data:', JSON.stringify(listingData, null, 2));
+      console.log('Using catalog ID:', this.facebookCredentials.catalogId);
+      console.log('Using access token (first 20 chars):', this.facebookCredentials.accessToken.substring(0, 20) + '...');
 
       const response = await fetch(
-        `https://graph.facebook.com/v18.0/${this.facebookCredentials.pageId}/products`,
+        `https://graph.facebook.com/v20.0/${this.facebookCredentials.catalogId}/products`,
         {
           method: 'POST',
           headers: {
@@ -88,13 +112,42 @@ export class FacebookService extends BasePlatformService {
 
       if (!response.ok) {
         const error = await response.json();
+        console.error('Facebook API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: error,
+          requestData: listingData
+        });
+
+        // Extract more detailed error information
+        let errorMessage = `Failed to create Facebook listing (${response.status})`;
+        if (error.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        } else if (error.error?.error_user_msg) {
+          errorMessage = error.error.error_user_msg;
+        }
+
         return {
           success: false,
-          error: error.error?.message || 'Failed to create Facebook listing'
+          error: errorMessage
         };
       }
 
       const result = await response.json();
+      console.log('Facebook API Success Response:', result);
+      console.log('Result ID:', result.id);
+      console.log('Full result object:', JSON.stringify(result, null, 2));
+
+      if (!result.id) {
+        console.error('No ID in Facebook response:', result);
+        return {
+          success: false,
+          error: 'Facebook did not return a product ID'
+        };
+      }
+
       return {
         success: true,
         listingId: result.id,
@@ -124,18 +177,13 @@ export class FacebookService extends BasePlatformService {
 
       // Handle image updates if provided
       if (data.images && data.images.length > 0) {
-        const imageIds: string[] = [];
-        for (const imageUrl of data.images.slice(0, 20)) {
-          const imageId = await this.uploadImage(imageUrl);
-          if (imageId) {
-            imageIds.push(imageId);
-          }
-        }
-        updateData.images = imageIds.map(id => ({ id }));
+        const imageUrls = data.images.slice(0, 20);
+        updateData.image_url = imageUrls[0] || '';
+        updateData.additional_image_urls = imageUrls.slice(1);
       }
 
       const response = await fetch(
-        `https://graph.facebook.com/v18.0/${listingId}`,
+        `https://graph.facebook.com/v20.0/${listingId}`,
         {
           method: 'POST',
           headers: {
@@ -175,7 +223,7 @@ export class FacebookService extends BasePlatformService {
 
     try {
       const response = await fetch(
-        `https://graph.facebook.com/v18.0/${listingId}`,
+        `https://graph.facebook.com/v20.0/${listingId}`,
         {
           method: 'DELETE',
           headers: {
@@ -209,7 +257,7 @@ export class FacebookService extends BasePlatformService {
 
     try {
       const response = await fetch(
-        `https://graph.facebook.com/v18.0/${listingId}?fields=availability,review_status`,
+        `https://graph.facebook.com/v20.0/${listingId}?fields=availability,review_status`,
         {
           headers: {
             'Authorization': `Bearer ${this.facebookCredentials.accessToken}`
@@ -234,59 +282,31 @@ export class FacebookService extends BasePlatformService {
     }
   }
 
-  private async uploadImage(imageUrl: string): Promise<string | null> {
-    try {
-      // Download the image first
-      const imageResponse = await fetch(imageUrl);
-      if (!imageResponse.ok) {
-        return null;
-      }
 
-      const imageBlob = await imageResponse.blob();
-      const formData = new FormData();
-      formData.append('source', imageBlob);
-
-      // Upload to Facebook
-      const uploadResponse = await fetch(
-        `https://graph.facebook.com/v18.0/${this.facebookCredentials.pageId}/photos`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.facebookCredentials.accessToken}`
-          },
-          body: formData
-        }
-      );
-
-      if (!uploadResponse.ok) {
-        return null;
-      }
-
-      const result = await uploadResponse.json();
-      return result.id;
-    } catch (error) {
-      console.error('Facebook image upload failed:', error);
-      return null;
-    }
-  }
 
   private mapCategory(category?: string): string {
+    // Facebook Product Catalog categories for solar equipment
     const categoryMap: Record<string, string> = {
-      'solar-panels': 'home_garden',
-      'inverters': 'electronics',
-      'batteries': 'electronics',
-      'mounting-systems': 'home_garden',
-      'accessories': 'electronics'
+      'solar-panels': 'Home & Garden > Home Improvement > Solar Panels',
+      'inverters': 'Electronics > Power Supplies > Inverters',
+      'batteries': 'Electronics > Batteries',
+      'mounting-systems': 'Home & Garden > Home Improvement > Solar Panel Mounting',
+      'accessories': 'Electronics > Electronic Accessories'
     };
 
-    return categoryMap[category || ''] || 'home_garden';
+    return categoryMap[category || ''] || 'Home & Garden > Home Improvement';
   }
 
   private mapFacebookStatus(availability?: string, reviewStatus?: string): string {
     if (reviewStatus === 'PENDING') return 'pending';
     if (reviewStatus === 'REJECTED') return 'error';
-    if (availability === 'IN_STOCK') return 'active';
-    if (availability === 'OUT_OF_STOCK') return 'paused';
+    if (availability === 'in stock') return 'active';
+    if (availability === 'out of stock') return 'paused';
+    if (availability === 'available for order') return 'active';
+    if (availability === 'preorder') return 'active';
+    if (availability === 'discontinued') return 'paused';
+    if (availability === 'pending') return 'pending';
+    if (availability === 'mark_as_sold') return 'paused';
     return 'unknown';
   }
 }

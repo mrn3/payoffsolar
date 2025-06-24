@@ -47,7 +47,8 @@ export default function PlatformEditModal({
       case 'facebook_marketplace':
         return [
           { key: 'accessToken', label: 'Access Token', type: 'password' },
-          { key: 'pageId', label: 'Page ID', type: 'text' }
+          { key: 'pageId', label: 'Page ID', type: 'text' },
+          { key: 'catalogId', label: 'Product Catalog ID', type: 'text' }
         ];
       case 'ebay':
         return [
@@ -98,8 +99,10 @@ export default function PlatformEditModal({
             '1. Go to Facebook Developers and create a new app',
             '2. Add the "Marketing API" product to your app',
             '3. Create a Facebook Business Page if you don\'t have one',
-            '4. Generate an access token with "pages_manage_posts" and "pages_show_list" permissions',
-            '5. Get your Page ID from your Facebook Business Page settings'
+            '4. Create a Product Catalog in Facebook Business Manager',
+            '5. Generate an access token with "catalog_management" and "pages_show_list" permissions',
+            '6. Get your Page ID from your Facebook Business Page settings',
+            '7. Get your Product Catalog ID from Facebook Business Manager > Catalog'
           ],
           docs: 'https://developers.facebook.com/docs/marketing-api/catalog'
         };

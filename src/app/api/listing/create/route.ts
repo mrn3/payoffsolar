@@ -19,12 +19,16 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    console.log('Creating listings for product:', data.productId, 'platforms:', data.platformIds);
+
     const result = await listingService.createListings({
       productId: data.productId,
       platformIds: data.platformIds,
       templateIds: data.templateIds,
       customData: data.customData
     }, session.profile.id);
+
+    console.log('Listing creation result:', JSON.stringify(result, null, 2));
 
     return NextResponse.json({ result });
 

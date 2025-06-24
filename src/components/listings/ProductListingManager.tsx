@@ -81,7 +81,9 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
 
     try {
       setActionLoading({ create: true });
-      
+
+      console.log('Creating listings for platforms:', selectedPlatforms);
+
       const response = await fetch('/api/listing/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -91,18 +93,23 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
         })
       });
 
+      console.log('Response status:', response.status, response.statusText);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
         throw new Error('Failed to create listings');
       }
 
       const result = await response.json();
-      
+      console.log('Client received result:', result);
+
       // Show results and refresh data
       await fetchData();
       setShowCreateModal(false);
       setSelectedPlatforms([]);
       onListingUpdate?.();
-      
+
     } catch (error) {
       console.error('Error creating listings:', error);
     } finally {
