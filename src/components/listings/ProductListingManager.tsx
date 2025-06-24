@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProductWithImages, ListingPlatform, ProductListingWithDetails } from '@/lib/models';
 import { FaPlus, FaSync, FaTrash, FaExternalLinkAlt, FaSpinner, FaCheck, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
+import DeleteListingModal from './DeleteListingModal';
 
 interface ProductListingManagerProps {
   product: ProductWithImages;
@@ -26,6 +27,8 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingPlatform, setDeletingPlatform] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -144,18 +147,28 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
     }
   };
 
-  const handleDeleteListing = async (platformId: string) => {
-    if (!confirm('Are you sure you want to delete this listing?')) return;
+  const openDeleteModal = (platformId: string, platformName: string) => {
+    setDeletingPlatform({ id: platformId, name: platformName });
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeletingPlatform(null);
+  };
+
+  const handleDeleteListing = async () => {
+    if (!deletingPlatform) return;
 
     try {
-      setActionLoading({ [platformId]: true });
-      
+      setActionLoading({ [deletingPlatform.id]: true });
+
       const response = await fetch('/api/listing/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: product.id,
-          platformIds: [platformId]
+          platformIds: [deletingPlatform.id]
         })
       });
 
@@ -165,7 +178,7 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
 
       await fetchData();
       onListingUpdate?.();
-      
+
     } catch (error) {
       console.error('Error deleting listing:', error);
     } finally {
@@ -330,7 +343,7 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
                     )}
                   </button>
                   <button
-                    onClick={() => handleDeleteListing(status.platformId)}
+                    onClick={() => openDeleteModal(status.platformId, status.platformName)}
                     disabled={actionLoading[status.platformId]}
                     className="text-red-700 hover:text-red-900 disabled:opacity-50"
                     title="Delete listing"
@@ -398,6 +411,13 @@ export default function ProductListingManager({ product, onListingUpdate }: Prod
           </div>
         </div>
       )}
+
+      <DeleteListingModal
+        isOpen={showDeleteModal}
+        onClose={closeDeleteModal}
+        onConfirm={handleDeleteListing}
+        platformName={deletingPlatform?.name || ''}
+      />
     </div>
   );
 }

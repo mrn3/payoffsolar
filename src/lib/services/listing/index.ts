@@ -311,7 +311,8 @@ export class ListingService {
         // Update database status
         if (result.success) {
           await ProductListingModel.update(listing.id, {
-            status: 'ended'
+            status: 'ended',
+            error_message: null
           });
         }
 
