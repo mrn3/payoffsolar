@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {useParams, useRouter} from 'next/navigation';
 import { Order, OrderItem, Contact, Product, CostCategory, CostItem } from '@/lib/models';
 import ContactAutocomplete from '@/components/ui/ContactAutocomplete';
+import ProductAutocomplete from '@/components/ui/ProductAutocomplete';
 import {FaArrowLeft, FaPlus, FaTrash} from 'react-icons/fa';
 
 // Local interface for form state that allows quantity to be string during editing
@@ -470,19 +471,13 @@ export default function EditOrderPage() {
                   <label className="block text-sm font-medium text-gray-700">
                     Product *
                   </label>
-                  <select
-                    required
+                  <ProductAutocomplete
                     value={item.product_id}
-                    onChange={(_e) => handleProductChange(_index, _e.target.value)}
+                    onChange={(productId, _productName) => handleProductChange(_index, productId)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
-                  >
-                    <option value="">Select a product</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name} ({product.sku})
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Search for a product..."
+                    required
+                  />
                 </div>
 
                 <div>

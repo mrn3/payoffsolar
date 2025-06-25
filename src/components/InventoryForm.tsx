@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import ProductAutocomplete from '@/components/ui/ProductAutocomplete';
 
 interface Product {
   id: string;
@@ -53,7 +54,8 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
         credentials: 'include'
       });
       if (_response.ok) {
-                setProducts(_data.products || []);
+        const _data = await _response.json();
+        setProducts(_data.products || []);
       }
     } catch (_error) {
       console.error('Error loading products:', _error);
@@ -66,7 +68,8 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
         credentials: 'include'
       });
       if (_response.ok) {
-                setWarehouses(_data.warehouses || []);
+        const _data = await _response.json();
+        setWarehouses(_data.warehouses || []);
       }
     } catch (_error) {
       console.error('Error loading warehouses:', _error);
@@ -93,7 +96,7 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (_e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -121,7 +124,7 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
       if (_response.ok) {
         router.push('/dashboard/inventory');
       } else {
-        const errorData = await response.json();
+        const errorData = await _response.json();
         setErrors({ submit: errorData.error || 'An error occurred' });
       }
     } catch (_error) {
@@ -147,6 +150,10 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
     }
   };
 
+  const handleProductChange = (productId: string, _productName: string) => {
+    handleInputChange('product_id', productId);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {errors.submit && (
@@ -159,22 +166,17 @@ export default function InventoryForm({ initialData, inventoryId, onSubmit, onCa
         <label htmlFor="product_id" className="block text-sm font-medium text-gray-700">
           Product *
         </label>
-        <select
-          id="product_id"
+        <ProductAutocomplete
           value={formData.product_id}
-          onChange={(_e) => handleInputChange('product_id', _e.target.value)}
-          disabled={!!inventoryId} // Don&apos;t allow changing product for existing inventory
+          onChange={handleProductChange}
           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 ${
             errors.product_id ? 'border-red-300' : ''
           }`}
-        >
-          <option value="">Select a product</option>
-          {products.map((product) => (
-            <option key={product.id} value={product.id}>
-              {product.name} ({product.sku})
-            </option>
-          ))}
-        </select>
+          placeholder="Search for a product..."
+          required
+          disabled={!!inventoryId} // Don't allow changing product for existing inventory
+          error={!!errors.product_id}
+        />
         {errors.product_id && <p className="mt-1 text-sm text-red-600">{errors.product_id}</p>}
       </div>
 
