@@ -7,6 +7,7 @@ import ImportOrdersModal from '@/components/orders/ImportOrdersModal';
 import DeleteAllOrdersModal from '@/components/orders/DeleteAllOrdersModal';
 import DuplicateOrdersModal from '@/components/orders/DuplicateOrdersModal';
 import BulkMergeOrdersModal from '@/components/orders/BulkMergeOrdersModal';
+import OrderFiltersComponent, { OrderFilters } from '@/components/orders/OrderFilters';
 import toast from 'react-hot-toast';
 import {FaDownload, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaUpload, FaCopy} from 'react-icons/fa';
 
@@ -61,6 +62,18 @@ export default function OrdersPage() {
   const [isDuplicatesModalOpen, setIsDuplicatesModalOpen] = useState(false);
   const [showBulkMergeModal, setShowBulkMergeModal] = useState(false);
 
+  // Filter state
+  const [filters, setFilters] = useState<OrderFilters>({
+    contactName: '',
+    city: '',
+    state: '',
+    status: '',
+    minTotal: '',
+    maxTotal: '',
+    startDate: '',
+    endDate: ''
+  });
+
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -70,11 +83,16 @@ export default function OrdersPage() {
     return () => clearTimeout(timer);
   }, [localSearchQuery]);
 
+  // Debounce filters
   useEffect(() => {
-    fetchOrders(1, searchQuery);
-  }, [searchQuery]); // eslint-disable-next-line react-hooks/exhaustive-deps
+    const timer = setTimeout(() => {
+      fetchOrders(1);
+    }, 300);
 
-  const fetchOrders = async (page: number, search: string = '') => {
+    return () => clearTimeout(timer);
+  }, [searchQuery, filters]); // eslint-disable-next-line react-hooks/exhaustive-deps
+
+  const fetchOrders = async (page: number) => {
     try {
       setLoading(true);
 
@@ -88,14 +106,41 @@ export default function OrdersPage() {
       const profileData = await profileRes.json();
       setProfile(profileData.profile);
 
-      // Then get orders with pagination and search parameters
+      // Then get orders with pagination and filter parameters
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '10'
       });
 
-      if (search) {
-        params.append('search', search);
+      // Add legacy search parameter
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+
+      // Add filter parameters
+      if (filters.contactName) {
+        params.append('contactName', filters.contactName);
+      }
+      if (filters.city) {
+        params.append('city', filters.city);
+      }
+      if (filters.state) {
+        params.append('state', filters.state);
+      }
+      if (filters.status) {
+        params.append('status', filters.status);
+      }
+      if (filters.minTotal) {
+        params.append('minTotal', filters.minTotal);
+      }
+      if (filters.maxTotal) {
+        params.append('maxTotal', filters.maxTotal);
+      }
+      if (filters.startDate) {
+        params.append('startDate', filters.startDate);
+      }
+      if (filters.endDate) {
+        params.append('endDate', filters.endDate);
       }
 
       const ordersRes = await fetch(`/api/orders?${params}`);
@@ -121,6 +166,25 @@ export default function OrdersPage() {
     setCurrentPage(1);
   };
 
+  const handleFiltersChange = (newFilters: OrderFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      contactName: '',
+      city: '',
+      state: '',
+      status: '',
+      minTotal: '',
+      maxTotal: '',
+      startDate: '',
+      endDate: ''
+    });
+    setCurrentPage(1);
+  };
+
   const handleDeleteOrder = async (orderId: string) => {
     if (!confirm('Are you sure you want to delete this order?')) {
       return;
@@ -133,7 +197,7 @@ export default function OrdersPage() {
 
       if (_response.ok) {
         // Refresh the orders list
-        fetchOrders(currentPage, searchQuery);
+        fetchOrders(currentPage);
       } else {
         const errorData = await _response.json();
         toast.error(errorData.error || 'Failed to delete order');
@@ -145,13 +209,13 @@ export default function OrdersPage() {
   };
 
   const handleDuplicatesComplete = () => {
-    fetchOrders(currentPage, searchQuery);
+    fetchOrders(currentPage);
   };
 
   const handleBulkMergeComplete = () => {
     setSelectedOrders(new Set());
     setShowBulkMergeModal(false);
-    fetchOrders(currentPage, searchQuery);
+    fetchOrders(currentPage);
   };
 
   const isContact = (role: string | null) => {
@@ -200,7 +264,7 @@ export default function OrdersPage() {
         toast.success(_data.message);
         setSelectedOrders(new Set());
         setBulkStatus('');
-        fetchOrders(currentPage, searchQuery); // Refresh the orders list
+        fetchOrders(currentPage); // Refresh the orders list
       } else {
         const errorData = await _response.json();
         toast.error(errorData.error || 'Failed to update orders');
@@ -353,6 +417,17 @@ export default function OrdersPage() {
               placeholder="Search orders by contact name"
             />
           </div>
+        </div>
+      )}
+
+      {/* Filters */}
+      {!isContact(profile.role) && (
+        <div className="mt-6">
+          <OrderFiltersComponent
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onClearFilters={handleClearFilters}
+          />
         </div>
       )}
 
@@ -569,14 +644,14 @@ export default function OrdersPage() {
         <div className="mt-8 flex items-center justify-between">
           <div className="flex-1 flex justify-between sm:hidden">
             <button
-              onClick={() => currentPage > 1 && fetchOrders(currentPage - 1, searchQuery)}
+              onClick={() => currentPage > 1 && fetchOrders(currentPage - 1)}
               disabled={currentPage <= 1}
               className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
-              onClick={() => currentPage < totalPages && fetchOrders(currentPage + 1, searchQuery)}
+              onClick={() => currentPage < totalPages && fetchOrders(currentPage + 1)}
               disabled={currentPage >= totalPages}
               className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -594,7 +669,7 @@ export default function OrdersPage() {
             <div>
               <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                 <button
-                  onClick={() => currentPage > 1 && fetchOrders(currentPage - 1, searchQuery)}
+                  onClick={() => currentPage > 1 && fetchOrders(currentPage - 1)}
                   disabled={currentPage <= 1}
                   className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -615,7 +690,7 @@ export default function OrdersPage() {
                     pages.push(
                       <button
                         key={page}
-                        onClick={() => fetchOrders(page, searchQuery)}
+                        onClick={() => fetchOrders(page)}
                         className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                           page === currentPage
                             ? 'bg-green-50 border-green-500 text-green-600'
@@ -629,7 +704,7 @@ export default function OrdersPage() {
                   return pages;
                 })()}
                 <button
-                  onClick={() => currentPage < totalPages && fetchOrders(currentPage + 1, searchQuery)}
+                  onClick={() => currentPage < totalPages && fetchOrders(currentPage + 1)}
                   disabled={currentPage >= totalPages}
                   className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -647,7 +722,7 @@ export default function OrdersPage() {
         onClose={() => setShowImportModal(false)}
         onImportComplete={() => {
           setShowImportModal(false);
-          fetchOrders(currentPage, searchQuery); // Refresh the orders list
+          fetchOrders(currentPage); // Refresh the orders list
         }}
       />
 

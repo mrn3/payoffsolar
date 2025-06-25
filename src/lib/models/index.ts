@@ -1367,6 +1367,162 @@ export const OrderModel = {
     return result?.count || 0;
   },
 
+  async searchWithFilters(filters: {
+    search?: string;
+    contactName?: string;
+    city?: string;
+    state?: string;
+    status?: string;
+    minTotal?: number | null;
+    maxTotal?: number | null;
+    startDate?: string;
+    endDate?: string;
+  }, limit = 50, offset = 0): Promise<OrderWithContact[]> {
+    const conditions = [];
+    const params = [];
+
+    // General search (legacy support)
+    if (filters.search) {
+      conditions.push('c.name LIKE ?');
+      params.push(`%${filters.search}%`);
+    }
+
+    // Contact name filter
+    if (filters.contactName) {
+      conditions.push('c.name LIKE ?');
+      params.push(`%${filters.contactName}%`);
+    }
+
+    // City filter
+    if (filters.city) {
+      conditions.push('c.city LIKE ?');
+      params.push(`%${filters.city}%`);
+    }
+
+    // State filter
+    if (filters.state) {
+      conditions.push('c.state = ?');
+      params.push(filters.state);
+    }
+
+    // Status filter
+    if (filters.status) {
+      conditions.push('o.status = ?');
+      params.push(filters.status);
+    }
+
+    // Total amount range filter
+    if (filters.minTotal !== null && filters.minTotal !== undefined) {
+      conditions.push('o.total >= ?');
+      params.push(filters.minTotal);
+    }
+    if (filters.maxTotal !== null && filters.maxTotal !== undefined) {
+      conditions.push('o.total <= ?');
+      params.push(filters.maxTotal);
+    }
+
+    // Date range filter
+    if (filters.startDate) {
+      conditions.push('o.order_date >= ?');
+      params.push(filters.startDate);
+    }
+    if (filters.endDate) {
+      conditions.push('o.order_date <= ?');
+      params.push(filters.endDate);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const query = `
+      SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+      FROM orders o
+      LEFT JOIN contacts c ON o.contact_id = c.id
+      ${whereClause}
+      ORDER BY o.order_date DESC, o.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    params.push(limit, offset);
+    return executeQuery<OrderWithContact>(query, params);
+  },
+
+  async getFilteredCount(filters: {
+    search?: string;
+    contactName?: string;
+    city?: string;
+    state?: string;
+    status?: string;
+    minTotal?: number | null;
+    maxTotal?: number | null;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<number> {
+    const conditions = [];
+    const params = [];
+
+    // General search (legacy support)
+    if (filters.search) {
+      conditions.push('c.name LIKE ?');
+      params.push(`%${filters.search}%`);
+    }
+
+    // Contact name filter
+    if (filters.contactName) {
+      conditions.push('c.name LIKE ?');
+      params.push(`%${filters.contactName}%`);
+    }
+
+    // City filter
+    if (filters.city) {
+      conditions.push('c.city LIKE ?');
+      params.push(`%${filters.city}%`);
+    }
+
+    // State filter
+    if (filters.state) {
+      conditions.push('c.state = ?');
+      params.push(filters.state);
+    }
+
+    // Status filter
+    if (filters.status) {
+      conditions.push('o.status = ?');
+      params.push(filters.status);
+    }
+
+    // Total amount range filter
+    if (filters.minTotal !== null && filters.minTotal !== undefined) {
+      conditions.push('o.total >= ?');
+      params.push(filters.minTotal);
+    }
+    if (filters.maxTotal !== null && filters.maxTotal !== undefined) {
+      conditions.push('o.total <= ?');
+      params.push(filters.maxTotal);
+    }
+
+    // Date range filter
+    if (filters.startDate) {
+      conditions.push('o.order_date >= ?');
+      params.push(filters.startDate);
+    }
+    if (filters.endDate) {
+      conditions.push('o.order_date <= ?');
+      params.push(filters.endDate);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const query = `
+      SELECT COUNT(*) as count
+      FROM orders o
+      LEFT JOIN contacts c ON o.contact_id = c.id
+      ${whereClause}
+    `;
+
+    const result = await getOne<{ count: number }>(query, params);
+    return result?.count || 0;
+  },
+
   async getAllByUser(_userId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address

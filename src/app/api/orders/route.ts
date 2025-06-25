@@ -14,14 +14,40 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
     const search = searchParams.get('search') || '';
+    const contactName = searchParams.get('contactName') || '';
+    const city = searchParams.get('city') || '';
+    const state = searchParams.get('state') || '';
+    const status = searchParams.get('status') || '';
+    const minTotal = searchParams.get('minTotal') ? parseFloat(searchParams.get('minTotal')!) : null;
+    const maxTotal = searchParams.get('maxTotal') ? parseFloat(searchParams.get('maxTotal')!) : null;
+    const startDate = searchParams.get('startDate') || '';
+    const endDate = searchParams.get('endDate') || '';
     const offset = (page - 1) * limit;
+
+    // Build filter object
+    const filters = {
+      search,
+      contactName,
+      city,
+      state,
+      status,
+      minTotal,
+      maxTotal,
+      startDate,
+      endDate
+    };
+
+    // Check if any filters are applied
+    const hasFilters = Object.values(filters).some(value =>
+      value !== '' && value !== null && value !== undefined
+    );
 
     let orders;
     let total;
 
-    if (search) {
-      orders = await OrderModel.search(search, limit, offset);
-      total = await OrderModel.getSearchCount(search);
+    if (hasFilters) {
+      orders = await OrderModel.searchWithFilters(filters, limit, offset);
+      total = await OrderModel.getFilteredCount(filters);
     } else {
       orders = await OrderModel.getAll(limit, offset);
       total = await OrderModel.getCount();
