@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {FaEdit, FaMapMarkerAlt, FaTrash} from 'react-icons/fa';
 
 interface Warehouse {
-  _id: string;
+  id: string;
   name: string;
   address?: string;
   city?: string;
@@ -24,20 +24,20 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleDelete = async (_id: string) => {
+  const handleDelete = async (id: string) => {
     try {
-      const _response = await fetch(`/api/warehouses/${_id}`, {
+      const response = await fetch(`/api/warehouses/${id}`, {
         method: 'DELETE',
       });
 
-      if (_response.ok) {
+      if (response.ok) {
         router.refresh();
         setDeleteConfirm(null);
       } else {
         console.error('Failed to delete warehouse');
       }
-    } catch (_error) {
-      console.error('Error deleting warehouse: ', _error);
+    } catch (error) {
+      console.error('Error deleting warehouse: ', error);
     }
   };
 
@@ -77,7 +77,7 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
                   </tr>
                 ) : (
                   warehouses.map((warehouse) => (
-                    <tr key={warehouse._id}>
+                    <tr key={warehouse.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         <div className="flex items-center">
                           <FaMapMarkerAlt className="mr-2 h-4 w-4 text-gray-400" />
@@ -95,15 +95,15 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <div className="flex justify-end space-x-2">
                           <Link
-                            href={`/dashboard/warehouses/${warehouse._id}/edit`}
+                            href={`/dashboard/warehouses/${warehouse.id}/edit`}
                             className="text-green-600 hover:text-green-900"
                           >
                             <FaEdit className="h-4 w-4" />
                           </Link>
-                          {deleteConfirm === warehouse._id ? (
+                          {deleteConfirm === warehouse.id ? (
                             <div className="flex space-x-1">
                               <button
-                                onClick={() => handleDelete(warehouse._id)}
+                                onClick={() => handleDelete(warehouse.id)}
                                 className="text-red-600 hover:text-red-900 text-xs"
                               >
                                 Confirm
@@ -117,7 +117,7 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
                             </div>
                           ) : (
                             <button
-                              onClick={() => setDeleteConfirm(warehouse._id)}
+                              onClick={() => setDeleteConfirm(warehouse.id)}
                               className="text-red-600 hover:text-red-900"
                             >
                               <FaTrash className="h-4 w-4" />

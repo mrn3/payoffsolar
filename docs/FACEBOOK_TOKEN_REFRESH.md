@@ -8,7 +8,7 @@ Facebook access tokens expire periodically, causing "Session has expired" errors
 ### Method 1: Facebook Graph API Explorer (Recommended)
 
 1. **Go to Graph API Explorer**
-   - Visit: https://developers.facebook.com/tools/explorer/
+   - Visit: https://developers.facebook.com/tools/explorer/, or directly to https://developers.facebook.com/tools/explorer/683059651390078/
 
 2. **Select Your App**
    - In the "Facebook App" dropdown, select your Payoff Solar app

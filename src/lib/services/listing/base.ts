@@ -142,7 +142,7 @@ export abstract class BasePlatformService {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
                      process.env.NEXT_PUBLIC_SITE_URL ||
                      process.env.NEXT_PUBLIC_APP_URL ||
-                     'http://localhost:6666';
+                     'http://localhost:3000';
       return `${baseUrl}${url}`;
     }
   }

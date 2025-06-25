@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Product {
-  _id: string;
+  id: string;
   name: string;
   sku: string;
 }
 
 interface Warehouse {
-  _id: string;
+  id: string;
   name: string;
 }
 

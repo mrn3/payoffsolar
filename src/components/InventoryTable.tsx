@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { FaEdit, FaExchangeAlt, FaSearch, FaTrash } from 'react-icons/fa';
 
 interface InventoryItem {
-  _id: string;
+  id: string;
   product_id: string;
   warehouse_id: string;
   quantity: number;
@@ -19,7 +19,7 @@ interface InventoryItem {
 }
 
 interface Warehouse {
-  _id: string;
+  id: string;
   name: string;
 }
 
@@ -142,7 +142,7 @@ export default function InventoryTable({
           >
             <option value="">All Warehouses</option>
             {warehouses.map((warehouse) => (
-              <option key={warehouse._id} value={warehouse._id}>
+              <option key={warehouse.id} value={warehouse.id}>
                 {warehouse.name}
               </option>
             ))}
@@ -214,7 +214,7 @@ export default function InventoryTable({
                     </tr>
                   ) : (
                     inventory.map((item) => (
-                      <tr key={item._id}>
+                      <tr key={item.id}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                           {item.product_name || 'Unknown Product'}
                         </td>
@@ -236,15 +236,15 @@ export default function InventoryTable({
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                           <div className="flex justify-end space-x-2">
                             <Link
-                              href={`/dashboard/inventory/${item._id}/edit`}
+                              href={`/dashboard/inventory/${item.id}/edit`}
                               className="text-green-600 hover:text-green-900"
                             >
                               <FaEdit className="h-4 w-4" />
                             </Link>
-                            {deleteConfirm === item._id ? (
+                            {deleteConfirm === item.id ? (
                               <div className="flex space-x-1">
                                 <button
-                                  onClick={() => handleDelete(item._id)}
+                                  onClick={() => handleDelete(item.id)}
                                   className="text-red-600 hover:text-red-900 text-xs"
                                 >
                                   Confirm
@@ -258,7 +258,7 @@ export default function InventoryTable({
                               </div>
                             ) : (
                               <button
-                                onClick={() => setDeleteConfirm(item._id)}
+                                onClick={() => setDeleteConfirm(item.id)}
                                 className="text-red-600 hover:text-red-900"
                               >
                                 <FaTrash className="h-4 w-4" />

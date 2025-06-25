@@ -5,7 +5,7 @@ import { InventoryModel } from '@/lib/models';
 import InventoryForm from '@/components/InventoryForm';
 
 interface EditInventoryPageProps {
-  params: Promise<{ _id: string }>;
+  params: Promise<{ id: string }>;
 }
 
 export default async function EditInventoryPage({ params }: EditInventoryPageProps) {
@@ -15,13 +15,13 @@ export default async function EditInventoryPage({ params }: EditInventoryPagePro
     redirect('/dashboard');
   }
 
-  const { _id } = await params;
+  const { id } = await params;
 
   let inventory = null;
   let error = '';
 
   try {
-    inventory = await InventoryModel.getById(_id);
+    inventory = await InventoryModel.getById(id);
     if (!inventory) {
       notFound();
     }
@@ -54,7 +54,7 @@ export default async function EditInventoryPage({ params }: EditInventoryPagePro
 
       <div className="bg-white shadow rounded-lg p-6">
         <InventoryForm
-          inventoryId={_id}
+          inventoryId={id}
           initialData={{
             product_id: inventory!.product_id,
             warehouse_id: inventory!.warehouse_id,

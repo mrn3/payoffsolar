@@ -5,7 +5,7 @@ import { WarehouseModel } from '@/lib/models';
 import WarehouseForm from '@/components/WarehouseForm';
 
 interface EditWarehousePageProps {
-  params: Promise<{ _id: string }>;
+  params: Promise<{ id: string }>;
 }
 
 export default async function EditWarehousePage({ params }: EditWarehousePageProps) {
@@ -15,13 +15,13 @@ export default async function EditWarehousePage({ params }: EditWarehousePagePro
     redirect('/dashboard');
   }
 
-  const { _id } = await params;
+  const { id } = await params;
 
   let warehouse = null;
   let error = '';
 
   try {
-    warehouse = await WarehouseModel.getById(_id);
+    warehouse = await WarehouseModel.getById(id);
     if (!warehouse) {
       notFound();
     }
@@ -54,7 +54,7 @@ export default async function EditWarehousePage({ params }: EditWarehousePagePro
 
       <div className="bg-white shadow rounded-lg p-6">
         <WarehouseForm
-          warehouseId={_id}
+          warehouseId={id}
           initialData={{
             name: warehouse!.name,
             address: warehouse!.address || '',
