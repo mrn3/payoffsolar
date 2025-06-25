@@ -216,7 +216,18 @@ export default function InventoryTable({
                     inventory.map((item) => (
                       <tr key={item.id}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          {item.product_name || 'Unknown Product'}
+                          {item.product_id ? (
+                            <Link
+                              href={`/dashboard/products/${item.product_id}`}
+                              className="text-green-600 hover:text-green-900 hover:underline"
+                            >
+                              {item.product_name || 'Unknown Product'}
+                            </Link>
+                          ) : (
+                            <span className="text-gray-500">
+                              {item.product_name || 'Unknown Product'}
+                            </span>
+                          )}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {item.product_sku || 'N/A'}
