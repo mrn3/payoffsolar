@@ -8,6 +8,9 @@ export interface ListingData {
   images: string[];
   category?: string;
   condition?: string;
+  quantity?: number;
+  productId?: string;
+  productUrl?: string;
   location?: {
     city?: string;
     state?: string;
@@ -158,11 +161,12 @@ export abstract class BasePlatformService {
   public generateListingData(
     product: ProductWithImages,
     template: ListingTemplate,
-    categoryMapping?: Record<string, string>
+    categoryMapping?: Record<string, string>,
+    quantity?: number
   ): ListingData {
     const adjustedPrice = this.formatPrice(
       product.price,
-      template.price_adjustment_type !== 'none' 
+      template.price_adjustment_type !== 'none'
         ? { type: template.price_adjustment_type, value: template.price_adjustment_value }
         : undefined
     );
@@ -177,9 +181,13 @@ export abstract class BasePlatformService {
 
     const images = this.validateImages(product.images || []);
 
-    const category = categoryMapping && product.category_name 
+    const category = categoryMapping && product.category_name
       ? categoryMapping[product.category_name.toLowerCase().replace(/\s+/g, '-')]
       : undefined;
+
+    // Generate product URL
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL;
+    const productUrl = baseUrl ? `${baseUrl}/products/${product.id}` : undefined;
 
     return {
       title,
@@ -188,6 +196,9 @@ export abstract class BasePlatformService {
       images,
       category,
       condition: 'new',
+      quantity: quantity || 1, // Default to 1 if no quantity provided
+      productId: product.id,
+      productUrl,
       shipping: {
         available: true,
         cost: 0

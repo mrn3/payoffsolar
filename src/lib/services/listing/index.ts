@@ -9,7 +9,8 @@ import {
   ProductListingModel,
   ProductModel,
   ProductImageModel,
-  PlatformCredentialsModel
+  PlatformCredentialsModel,
+  InventoryModel
 } from '@/lib/models';
 import { createPlatformService, ListingResult } from './base';
 
@@ -52,6 +53,10 @@ export class ListingService {
 
     const images = await ProductImageModel.getByProductId(productId);
     const productWithImages: ProductWithImages = { ...product, images };
+
+    // Fetch total inventory quantity across all warehouses
+    const inventoryItems = await InventoryModel.getByProductId(productId);
+    const totalQuantity = inventoryItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
     // Fetch platforms
     const platforms = await Promise.all(
@@ -113,7 +118,8 @@ export class ListingService {
         const listingData = platformService.generateListingData(
           productWithImages,
           template,
-          template.category_mapping
+          template.category_mapping,
+          totalQuantity
         );
 
         // Apply custom data overrides
@@ -191,6 +197,10 @@ export class ListingService {
     const images = await ProductImageModel.getByProductId(productId);
     const productWithImages: ProductWithImages = { ...product, images };
 
+    // Fetch total inventory quantity across all warehouses
+    const inventoryItems = await InventoryModel.getByProductId(productId);
+    const totalQuantity = inventoryItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
+
     // Get existing listings
     const existingListings = await ProductListingModel.getByProductId(productId);
     const listingsToUpdate = platformIds 
@@ -233,7 +243,8 @@ export class ListingService {
         const listingData = platformService.generateListingData(
           productWithImages,
           template,
-          template.category_mapping
+          template.category_mapping,
+          totalQuantity
         );
 
         // Update the listing

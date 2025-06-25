@@ -97,6 +97,15 @@ export class FacebookService extends BasePlatformService {
         };
       }
 
+      // Get base URL for product link
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL;
+      if (!baseUrl) {
+        return {
+          success: false,
+          error: 'No base URL configured. Please set NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_BASE_URL, or NEXT_PUBLIC_APP_URL environment variable.'
+        };
+      }
+
       // Create the marketplace listing using Product Catalog - minimal required fields only
       const listingData: any = {
         name: data.title,
@@ -105,6 +114,8 @@ export class FacebookService extends BasePlatformService {
         currency: 'USD',
         condition: 'new',
         availability: 'in stock',
+        inventory: data.quantity || 1, // Facebook requires inventory quantity
+        url: data.productUrl || `${baseUrl}/products/${data.productId || 'unknown'}`, // Product page URL
         retailer_id: `ps_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
         image_url: publicImageUrls[0] // Use the first valid public image URL
       };
@@ -194,6 +205,17 @@ export class FacebookService extends BasePlatformService {
       if (data.description) updateData.description = data.description;
       if (data.price) updateData.price = Math.round(data.price * 100);
       if (data.category) updateData.category = this.mapCategory(data.category);
+      if (data.quantity !== undefined) updateData.inventory = data.quantity;
+
+      // Update product URL if available
+      if (data.productUrl) {
+        updateData.url = data.productUrl;
+      } else if (data.productId) {
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL;
+        if (baseUrl) {
+          updateData.url = `${baseUrl}/products/${data.productId}`;
+        }
+      }
 
       // Handle image updates if provided
       if (data.images && data.images.length > 0) {

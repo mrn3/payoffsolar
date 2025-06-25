@@ -1975,6 +1975,13 @@ export const InventoryModel = {
     );
   },
 
+  async getByProductId(productId: string): Promise<Inventory[]> {
+    return executeQuery<Inventory>(
+      'SELECT * FROM inventory WHERE product_id = ?',
+      [productId]
+    );
+  },
+
   async create(data: Omit<Inventory, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     await executeSingle(
       'INSERT INTO inventory (product_id, warehouse_id, quantity, min_quantity) VALUES (?, ?, ?, ?)',
