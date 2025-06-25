@@ -739,6 +739,9 @@ export interface OrderWithContact extends Order {
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
+  contact_city?: string;
+  contact_state?: string;
+  contact_address?: string;
 }
 
 // Order Item model
@@ -1332,7 +1335,7 @@ export interface CartItem {
 export const OrderModel = {
   async getAll(limit = 50, offset = 0): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name
+      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
@@ -1343,7 +1346,7 @@ export const OrderModel = {
   async search(query: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
     const searchTerm = `%${query}%`;
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name
+      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE c.name LIKE ?
@@ -1366,7 +1369,7 @@ export const OrderModel = {
 
   async getAllByUser(_userId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name
+      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE c.user_id = ?
@@ -1425,7 +1428,7 @@ export const OrderModel = {
 
   async getByContactId(contactId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name
+      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE o.contact_id = ?
@@ -1502,7 +1505,7 @@ export const OrderModel = {
 
   async getOrdersByMonthAndStatus(month: string, status: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name
+      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE DATE_FORMAT(o.order_date, '%Y-%m') = ?

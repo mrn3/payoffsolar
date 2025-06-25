@@ -20,6 +20,9 @@ interface Order {
   created_at: string;
   updated_at: string;
   contact_name?: string;
+  contact_city?: string;
+  contact_state?: string;
+  contact_address?: string;
 }
 
 interface UserProfile {
@@ -249,6 +252,17 @@ export default function OrdersPage() {
     }
   };
 
+  const formatLocation = (order: Order) => {
+    const parts = [];
+    if (order.contact_city) {
+      parts.push(order.contact_city);
+    }
+    if (order.contact_state) {
+      parts.push(order.contact_state);
+    }
+    return parts.length > 0 ? parts.join(', ') : '-';
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -422,6 +436,11 @@ export default function OrdersPage() {
                         Contact
                       </th>
                     )}
+                    {!isContact(profile.role) && (
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        Location
+                      </th>
+                    )}
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Status
                     </th>
@@ -470,6 +489,11 @@ export default function OrdersPage() {
                             ) : (
                               _order.contact_name || 'Unknown Contact'
                             )}
+                          </td>
+                        )}
+                        {!isContact(profile.role) && (
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            {formatLocation(_order)}
                           </td>
                         )}
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">

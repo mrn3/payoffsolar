@@ -19,6 +19,9 @@ interface Order {
   created_at: string;
   updated_at: string;
   contact_name?: string;
+  contact_city?: string;
+  contact_state?: string;
+  contact_address?: string;
 }
 
 interface OrdersResponse {
