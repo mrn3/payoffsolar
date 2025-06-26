@@ -141,9 +141,16 @@ export default async function PublicLayout({
             </div>
           </div>
           <div className="mt-12 border-t border-gray-200 pt-8">
-            <p className="text-sm text-gray-600 text-center">
-              © {new Date().getFullYear()} Payoff Solar. All rights reserved.
-            </p>
+            <div className="flex flex-col sm:flex-row justify-between items-center">
+              <p className="text-sm text-gray-600 text-center sm:text-left mb-4 sm:mb-0">
+                © {new Date().getFullYear()} Payoff Solar. All rights reserved.
+              </p>
+              <div className="flex space-x-6">
+                <Link href="/privacy" className="text-sm text-gray-600 hover:text-green-500">
+                  Privacy Policy
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
