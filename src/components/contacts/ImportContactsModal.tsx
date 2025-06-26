@@ -42,7 +42,8 @@ const CONTACT_FIELDS = [
   { key: 'city', label: 'City' },
   { key: 'state', label: 'State' },
   { key: 'zip', label: 'ZIP Code' },
-  { key: 'notes', label: 'Notes' }
+  { key: 'notes', label: 'Notes' },
+  { key: 'created_at', label: 'Date Created' }
 ];
 
 export default function ImportContactsModal({ isOpen, onClose, onImportComplete }: ImportContactsModalProps) {
@@ -129,6 +130,7 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
     if (header.includes('state')) return 'state';
     if (header.includes('zip') || header.includes('postal')) return 'zip';
     if (header.includes('note')) return 'notes';
+    if (header.includes('created') || header.includes('date created') || header.includes('date_created')) return 'created_at';
 
     return '';
   };
@@ -203,6 +205,30 @@ export default function ImportContactsModal({ isOpen, onClose, onImportComplete 
               message: 'Phone number must be 10 digits or 11 digits starting with 1',
               value
             });
+          }
+        }
+
+        // Validate date format for created_at
+        if (mapping.contactField === 'created_at' && value) {
+          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+          if (!dateRegex.test(value)) {
+            errors.push({
+              row: _index + 1,
+              field: 'created_at',
+              message: 'Date must be in YYYY-MM-DD format',
+              value
+            });
+          } else {
+            // Validate that it's a valid date
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+              errors.push({
+                row: _index + 1,
+                field: 'created_at',
+                message: 'Invalid date',
+                value
+              });
+            }
           }
         }
       });

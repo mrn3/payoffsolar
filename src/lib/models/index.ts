@@ -32,15 +32,26 @@ export const ContactModel = {
     return getOne<Contact>('SELECT * FROM contacts WHERE email = ?', [email]);
   },
 
-  async create(data: Omit<Contact, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-    await executeSingle(
-      'INSERT INTO contacts (name, email, phone, address, city, state, zip, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [data.name, data.email || '', data.phone || '', data.address || '', data.city || '', data.state || '', data.zip || '', data.notes || null, data.user_id || null]
-    );
+  async create(data: Omit<Contact, 'id' | 'updated_at'> & { created_at?: string }): Promise<string> {
+    const { created_at, ...contactData } = data;
+
+    if (created_at) {
+      // Insert with custom created_at
+      await executeSingle(
+        'INSERT INTO contacts (name, email, phone, address, city, state, zip, notes, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [contactData.name, contactData.email || '', contactData.phone || '', contactData.address || '', contactData.city || '', contactData.state || '', contactData.zip || '', contactData.notes || null, contactData.user_id || null, created_at]
+      );
+    } else {
+      // Insert with default created_at (current timestamp)
+      await executeSingle(
+        'INSERT INTO contacts (name, email, phone, address, city, state, zip, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [contactData.name, contactData.email || '', contactData.phone || '', contactData.address || '', contactData.city || '', contactData.state || '', contactData.zip || '', contactData.notes || null, contactData.user_id || null]
+      );
+    }
 
     const contact = await getOne<{ id: string }>(
       'SELECT id FROM contacts WHERE name = ? AND email = ? ORDER BY created_at DESC LIMIT 1',
-      [data.name, data.email || '']
+      [contactData.name, contactData.email || '']
     );
     return contact!.id;
   },

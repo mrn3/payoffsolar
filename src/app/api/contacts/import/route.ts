@@ -13,6 +13,7 @@ interface ImportContact {
   state?: string;
   zip?: string;
   notes?: string;
+  created_at?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -73,6 +74,20 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Validate and process created_at date
+        let createdAt = contact.created_at?.trim();
+        if (createdAt) {
+          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+          if (!dateRegex.test(createdAt)) {
+            throw new Error(`Row ${i + 1}: Date Created must be in YYYY-MM-DD format`);
+          }
+          // Validate that it's a valid date
+          const date = new Date(createdAt);
+          if (isNaN(date.getTime())) {
+            throw new Error(`Row ${i + 1}: Invalid Date Created`);
+          }
+        }
+
         // Create contact
         await ContactModel.create({
           name: fullName,
@@ -83,7 +98,8 @@ export async function POST(request: NextRequest) {
           state: normalizedState,
           zip: contact.zip?.trim() || '',
           notes: contact.notes?.trim() || null,
-          user_id: null
+          user_id: null,
+          ...(createdAt && { created_at: createdAt })
         });
 
         successCount++;
