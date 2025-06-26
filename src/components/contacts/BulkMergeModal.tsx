@@ -316,6 +316,7 @@ export default function BulkMergeModal({
                                 <div>Location: {[contact.city, contact.state].filter(Boolean).join(', ')}</div>
                               )}
                               {contact.notes && <div>Notes: {contact.notes}</div>}
+                              <div>Created: {format(new Date(contact.created_at), 'MMM d, yyyy')}</div>
                             </div>
                           </div>
                         ))}
