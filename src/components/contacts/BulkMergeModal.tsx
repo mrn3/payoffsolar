@@ -141,7 +141,8 @@ export default function BulkMergeModal({
       city: mergedContactData.city,
       state: mergedContactData.state,
       zip: mergedContactData.zip,
-      notes: mergedContactData.notes
+      notes: mergedContactData.notes,
+      created_at: mergedContactData.created_at
     });
 
     setStep('merge');
@@ -458,6 +459,15 @@ export default function BulkMergeModal({
                       onChange={(e) => setMergedData(prev => ({ ...prev, notes: e.target.value }))}
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                       rows={2}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Created Date</label>
+                    <input
+                      type="datetime-local"
+                      value={mergedData.created_at ? new Date(mergedData.created_at).toISOString().slice(0, 16) : ''}
+                      onChange={(e) => setMergedData(prev => ({ ...prev, created_at: e.target.value ? new Date(e.target.value).toISOString() : '' }))}
+                      className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                     />
                   </div>
                 </div>

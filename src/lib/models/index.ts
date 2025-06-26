@@ -68,6 +68,31 @@ export const ContactModel = {
     );
   },
 
+  // Special update method for merge operations that allows updating created_at
+  async updateForMerge(_id: string, _data: Partial<Omit<Contact, 'id' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (_data.name !== undefined) { fields.push('name = ? '); values.push(_data.name); }
+    if (_data.email !== undefined) { fields.push('email = ? '); values.push(_data.email); }
+    if (_data.phone !== undefined) { fields.push('phone = ? '); values.push(_data.phone); }
+    if (_data.address !== undefined) { fields.push('address = ? '); values.push(_data.address); }
+    if (_data.city !== undefined) { fields.push('city = ? '); values.push(_data.city); }
+    if (_data.state !== undefined) { fields.push('state = ?'); values.push(_data.state); }
+    if (_data.zip !== undefined) { fields.push('zip = ? '); values.push(_data.zip); }
+    if (_data.notes !== undefined) { fields.push('notes = ? '); values.push(_data.notes); }
+    if (_data.user_id !== undefined) { fields.push('user_id = ? '); values.push(_data.user_id); }
+    if (_data.created_at !== undefined) { fields.push('created_at = ? '); values.push(_data.created_at); }
+
+    if (fields.length === 0) return;
+
+    values.push(_id);
+    await executeSingle(
+      `UPDATE contacts SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+  },
+
   async delete(_id: string): Promise<void> {
     await executeSingle('DELETE FROM contacts WHERE id = ? ', [_id]);
   },

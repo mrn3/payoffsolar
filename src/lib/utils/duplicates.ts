@@ -53,9 +53,29 @@ export function getMostRecentRecord<T extends { updated_at: string }>(record1: T
   return date1 >= date2 ? record1 : record2;
 }
 
-export function smartMergeContacts(contact1: Contact, contact2: Contact): Omit<Contact, 'id' | 'created_at' | 'updated_at'> {
+export function getEarliestCreatedRecord<T extends { created_at: string }>(record1: T, record2: T): T {
+  const date1 = new Date(record1.created_at);
+  const date2 = new Date(record2.created_at);
+  return date1 <= date2 ? record1 : record2;
+}
+
+export function smartMergeContacts(contact1: Contact, contact2: Contact): Omit<Contact, 'id' | 'updated_at'> {
   const mostRecent = getMostRecentRecord(contact1, contact2);
+  const earliest = getEarliestCreatedRecord(contact1, contact2);
   const other = mostRecent === contact1 ? contact2 : contact1;
+
+  // For notes, combine both if they're different and both have content
+  let mergedNotes = '';
+  const notes1 = contact1.notes?.trim() || '';
+  const notes2 = contact2.notes?.trim() || '';
+
+  if (notes1 && notes2 && notes1 !== notes2) {
+    mergedNotes = `${notes1}\n\n${notes2}`;
+  } else if (notes1) {
+    mergedNotes = notes1;
+  } else if (notes2) {
+    mergedNotes = notes2;
+  }
 
   return {
     name: !isBlankValue(contact1.name) ? contact1.name :
@@ -72,10 +92,10 @@ export function smartMergeContacts(contact1: Contact, contact2: Contact): Omit<C
            !isBlankValue(contact2.state) ? contact2.state : mostRecent.state,
     zip: !isBlankValue(contact1.zip) ? contact1.zip :
          !isBlankValue(contact2.zip) ? contact2.zip : mostRecent.zip,
-    notes: !isBlankValue(contact1.notes) ? contact1.notes :
-           !isBlankValue(contact2.notes) ? contact2.notes : mostRecent.notes,
+    notes: mergedNotes || null,
     user_id: !isBlankValue(contact1.user_id) ? contact1.user_id :
-             !isBlankValue(contact2.user_id) ? contact2.user_id : mostRecent.user_id
+             !isBlankValue(contact2.user_id) ? contact2.user_id : mostRecent.user_id,
+    created_at: earliest.created_at // Use the earliest created date
   };
 }
 

@@ -75,7 +75,8 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
       city: smartMerged.city,
       state: smartMerged.state,
       zip: smartMerged.zip,
-      notes: smartMerged.notes
+      notes: smartMerged.notes,
+      created_at: smartMerged.created_at
     });
 
     setStep('merge');
@@ -397,6 +398,15 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                       rows={3}
                       placeholder="Enter any notes..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Created Date</label>
+                    <input
+                      type="datetime-local"
+                      value={mergedData.created_at ? new Date(mergedData.created_at).toISOString().slice(0, 16) : ''}
+                      onChange={(_e) => setMergedData(prev => ({ ...prev, created_at: _e.target.value ? new Date(_e.target.value).toISOString() : '' }))}
+                      className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                     />
                   </div>
                 </div>

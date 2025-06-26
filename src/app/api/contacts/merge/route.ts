@@ -16,6 +16,7 @@ interface MergeRequest {
     state: string;
     zip: string;
     notes?: string;
+    created_at?: string;
   };
 }
 
@@ -57,8 +58,8 @@ export async function POST(request: NextRequest) {
       // 2. Generate smart merged data if not provided
       const finalMergedData = mergedData || smartMergeContacts(primaryContact, duplicateContact);
 
-      // 3. Update the primary contact with merged data
-      await ContactModel.update(primaryContactId, {
+      // 3. Update the primary contact with merged data (including created_at if provided)
+      await ContactModel.updateForMerge(primaryContactId, {
         name: finalMergedData.name,
         email: finalMergedData.email,
         phone: finalMergedData.phone,
@@ -66,7 +67,8 @@ export async function POST(request: NextRequest) {
         city: finalMergedData.city,
         state: finalMergedData.state,
         zip: finalMergedData.zip,
-        notes: finalMergedData.notes
+        notes: finalMergedData.notes,
+        created_at: mergedData?.created_at || finalMergedData.created_at
       });
 
       // 4. Delete the duplicate contact
