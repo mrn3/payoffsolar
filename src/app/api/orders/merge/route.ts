@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { OrderModel, OrderItemModel } from '@/lib/models';
 import { requireAuth, isAdmin } from '@/lib/auth';
 import { executeSingle } from '@/lib/mysql/connection';
+import { smartMergeOrders } from '@/lib/utils/duplicates';
 
 interface MergeRequest {
   primaryOrderId: string;
   duplicateOrderId: string;
-  mergedData: {
+  mergedData?: {
     contact_id: string;
     status: string;
     total: number;
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     const { primaryOrderId, duplicateOrderId, mergedData }: MergeRequest = await request.json();
 
     // Validate input
-    if (!primaryOrderId || !duplicateOrderId || !mergedData) {
+    if (!primaryOrderId || !duplicateOrderId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -73,19 +74,22 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 3. Update the primary order with merged data
+      // 3. Generate smart merged data if not provided
+      const finalMergedData = mergedData || smartMergeOrders(primaryOrder, duplicateOrder);
+
+      // 4. Update the primary order with merged data
       await OrderModel.update(primaryOrderId, {
-        contact_id: mergedData.contact_id,
-        status: mergedData.status,
-        total: mergedData.total,
-        order_date: mergedData.order_date,
-        notes: mergedData.notes
+        contact_id: finalMergedData.contact_id,
+        status: finalMergedData.status,
+        total: finalMergedData.total,
+        order_date: finalMergedData.order_date,
+        notes: finalMergedData.notes
       });
 
-      // 4. Delete the duplicate order (this will cascade delete its items)
+      // 5. Delete the duplicate order (this will cascade delete its items)
       await OrderModel.delete(duplicateOrderId);
 
-      // 5. Get the updated primary order with items
+      // 6. Get the updated primary order with items
       const updatedOrder = await OrderModel.getWithItems(primaryOrderId);
 
       return NextResponse.json({ 

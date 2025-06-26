@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Contact } from '@/lib/models';
-import { DuplicateGroup } from '@/lib/utils/duplicates';
+import { DuplicateGroup, smartMergeContacts } from '@/lib/utils/duplicates';
 import { FaTimes, FaExclamationTriangle, FaSync, FaCheck } from 'react-icons/fa';
 import PhoneInput from '@/components/ui/PhoneInput';
 import StateSelect from '@/components/ui/StateSelect';
@@ -64,19 +64,20 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
     // Set the first contact as primary by default
     setPrimaryContact(group.contacts[0]);
     setDuplicateContact(group.contacts[1]);
-    
-    // Initialize merged data with primary contact data
+
+    // Initialize merged data with smart merge logic
+    const smartMerged = smartMergeContacts(group.contacts[0], group.contacts[1]);
     setMergedData({
-      name: group.contacts[0].name,
-      email: group.contacts[0].email,
-      phone: group.contacts[0].phone,
-      address: group.contacts[0].address,
-      city: group.contacts[0].city,
-      state: group.contacts[0].state,
-      zip: group.contacts[0].zip,
-      notes: group.contacts[0].notes
+      name: smartMerged.name,
+      email: smartMerged.email,
+      phone: smartMerged.phone,
+      address: smartMerged.address,
+      city: smartMerged.city,
+      state: smartMerged.state,
+      zip: smartMerged.zip,
+      notes: smartMerged.notes
     });
-    
+
     setStep('merge');
   };
 

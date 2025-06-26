@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { OrderWithContact } from '@/lib/models';
-import { OrderDuplicateGroup } from '@/lib/utils/duplicates';
+import { OrderDuplicateGroup, smartMergeOrders } from '@/lib/utils/duplicates';
 import { FaTimes, FaExclamationTriangle, FaSync, FaCheck } from 'react-icons/fa';
 
 interface DuplicateOrdersModalProps {
@@ -62,16 +62,17 @@ export default function DuplicateOrdersModal({ isOpen, onClose, onMergeComplete 
     // Set the first order as primary by default
     setPrimaryOrder(group.orders[0]);
     setDuplicateOrder(group.orders[1]);
-    
-    // Initialize merged data with primary order data
+
+    // Initialize merged data with smart merge logic
+    const smartMerged = smartMergeOrders(group.orders[0], group.orders[1]);
     setMergedData({
-      contact_id: group.orders[0].contact_id,
-      status: group.orders[0].status,
-      total: group.orders[0].total,
-      order_date: group.orders[0].order_date,
-      notes: group.orders[0].notes
+      contact_id: smartMerged.contact_id,
+      status: smartMerged.status,
+      total: smartMerged.total,
+      order_date: smartMerged.order_date,
+      notes: smartMerged.notes
     });
-    
+
     setStep('merge');
   };
 

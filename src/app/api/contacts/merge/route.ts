@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import {ContactModel} from '@/lib/models';
 import { requireAuth , isAdmin} from '@/lib/auth';
 import { executeSingle } from '@/lib/mysql/connection';
+import { smartMergeContacts } from '@/lib/utils/duplicates';
 
 interface MergeRequest {
   primaryContactId: string;
   duplicateContactId: string;
-  mergedData: {
+  mergedData?: {
     name: string;
     email: string;
     phone: string;
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     const { primaryContactId, duplicateContactId, mergedData }: MergeRequest = await request.json();
 
     // Validate input
-    if (!primaryContactId || !duplicateContactId || !mergedData) {
+    if (!primaryContactId || !duplicateContactId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -53,22 +54,25 @@ export async function POST(request: NextRequest) {
         [primaryContactId, duplicateContactId]
       );
 
-      // 2. Update the primary contact with merged data
+      // 2. Generate smart merged data if not provided
+      const finalMergedData = mergedData || smartMergeContacts(primaryContact, duplicateContact);
+
+      // 3. Update the primary contact with merged data
       await ContactModel.update(primaryContactId, {
-        name: mergedData.name,
-        email: mergedData.email,
-        phone: mergedData.phone,
-        address: mergedData.address,
-        city: mergedData.city,
-        state: mergedData.state,
-        zip: mergedData.zip,
-        notes: mergedData.notes
+        name: finalMergedData.name,
+        email: finalMergedData.email,
+        phone: finalMergedData.phone,
+        address: finalMergedData.address,
+        city: finalMergedData.city,
+        state: finalMergedData.state,
+        zip: finalMergedData.zip,
+        notes: finalMergedData.notes
       });
 
-      // 3. Delete the duplicate contact
+      // 4. Delete the duplicate contact
       await ContactModel.delete(duplicateContactId);
 
-      // 4. Get the updated primary contact
+      // 5. Get the updated primary contact
       const updatedContact = await ContactModel.getById(primaryContactId);
 
       return NextResponse.json({ 

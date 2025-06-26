@@ -1,4 +1,4 @@
-import { Contact, OrderWithContact, OrderWithItems, ProductWithFirstImage } from '@/lib/models';
+import { Contact, OrderWithContact, OrderWithItems, ProductWithFirstImage, Product, Order } from '@/lib/models';
 
 export interface DuplicateGroup {
   id: string;
@@ -40,6 +40,84 @@ export interface ProductSimilarity {
   product2: ProductWithFirstImage;
   similarityScore: number;
   matchReasons: string[];
+}
+
+// Smart merge utility functions
+export function isBlankValue(value: any): boolean {
+  return value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '');
+}
+
+export function getMostRecentRecord<T extends { updated_at: string }>(record1: T, record2: T): T {
+  const date1 = new Date(record1.updated_at);
+  const date2 = new Date(record2.updated_at);
+  return date1 >= date2 ? record1 : record2;
+}
+
+export function smartMergeContacts(contact1: Contact, contact2: Contact): Omit<Contact, 'id' | 'created_at' | 'updated_at'> {
+  const mostRecent = getMostRecentRecord(contact1, contact2);
+  const other = mostRecent === contact1 ? contact2 : contact1;
+
+  return {
+    name: !isBlankValue(contact1.name) ? contact1.name :
+          !isBlankValue(contact2.name) ? contact2.name : mostRecent.name,
+    email: !isBlankValue(contact1.email) ? contact1.email :
+           !isBlankValue(contact2.email) ? contact2.email : mostRecent.email,
+    phone: !isBlankValue(contact1.phone) ? contact1.phone :
+           !isBlankValue(contact2.phone) ? contact2.phone : mostRecent.phone,
+    address: !isBlankValue(contact1.address) ? contact1.address :
+             !isBlankValue(contact2.address) ? contact2.address : mostRecent.address,
+    city: !isBlankValue(contact1.city) ? contact1.city :
+          !isBlankValue(contact2.city) ? contact2.city : mostRecent.city,
+    state: !isBlankValue(contact1.state) ? contact1.state :
+           !isBlankValue(contact2.state) ? contact2.state : mostRecent.state,
+    zip: !isBlankValue(contact1.zip) ? contact1.zip :
+         !isBlankValue(contact2.zip) ? contact2.zip : mostRecent.zip,
+    notes: !isBlankValue(contact1.notes) ? contact1.notes :
+           !isBlankValue(contact2.notes) ? contact2.notes : mostRecent.notes,
+    user_id: !isBlankValue(contact1.user_id) ? contact1.user_id :
+             !isBlankValue(contact2.user_id) ? contact2.user_id : mostRecent.user_id
+  };
+}
+
+export function smartMergeProducts(product1: Product, product2: Product): Omit<Product, 'id' | 'created_at' | 'updated_at'> {
+  const mostRecent = getMostRecentRecord(product1, product2);
+  const other = mostRecent === product1 ? product2 : product1;
+
+  return {
+    name: !isBlankValue(product1.name) ? product1.name :
+          !isBlankValue(product2.name) ? product2.name : mostRecent.name,
+    description: !isBlankValue(product1.description) ? product1.description :
+                 !isBlankValue(product2.description) ? product2.description : mostRecent.description,
+    price: product1.price !== 0 ? product1.price :
+           product2.price !== 0 ? product2.price : mostRecent.price,
+    image_url: !isBlankValue(product1.image_url) ? product1.image_url :
+               !isBlankValue(product2.image_url) ? product2.image_url : mostRecent.image_url,
+    data_sheet_url: !isBlankValue(product1.data_sheet_url) ? product1.data_sheet_url :
+                    !isBlankValue(product2.data_sheet_url) ? product2.data_sheet_url : mostRecent.data_sheet_url,
+    category_id: !isBlankValue(product1.category_id) ? product1.category_id :
+                 !isBlankValue(product2.category_id) ? product2.category_id : mostRecent.category_id,
+    sku: !isBlankValue(product1.sku) ? product1.sku :
+         !isBlankValue(product2.sku) ? product2.sku : mostRecent.sku,
+    is_active: mostRecent.is_active // For boolean, use most recent
+  };
+}
+
+export function smartMergeOrders(order1: Order, order2: Order): Omit<Order, 'id' | 'created_at' | 'updated_at'> {
+  const mostRecent = getMostRecentRecord(order1, order2);
+  const other = mostRecent === order1 ? order2 : order1;
+
+  return {
+    contact_id: !isBlankValue(order1.contact_id) ? order1.contact_id :
+                !isBlankValue(order2.contact_id) ? order2.contact_id : mostRecent.contact_id,
+    status: !isBlankValue(order1.status) ? order1.status :
+            !isBlankValue(order2.status) ? order2.status : mostRecent.status,
+    total: (typeof order1.total === 'number' && order1.total !== 0) ? order1.total :
+           (typeof order2.total === 'number' && order2.total !== 0) ? order2.total : mostRecent.total,
+    order_date: !isBlankValue(order1.order_date) ? order1.order_date :
+                !isBlankValue(order2.order_date) ? order2.order_date : mostRecent.order_date,
+    notes: !isBlankValue(order1.notes) ? order1.notes :
+           !isBlankValue(order2.notes) ? order2.notes : mostRecent.notes
+  };
 }
 
 // Calculate similarity between two strings using Levenshtein distance

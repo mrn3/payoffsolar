@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ProductWithFirstImage } from '@/lib/models';
-import { ProductDuplicateGroup } from '@/lib/utils/duplicates';
+import { ProductDuplicateGroup, smartMergeProducts } from '@/lib/utils/duplicates';
 import { FaTimes, FaExclamationTriangle, FaSync, FaCheck } from 'react-icons/fa';
 
 interface DuplicateProductsModalProps {
@@ -62,19 +62,20 @@ export default function DuplicateProductsModal({ isOpen, onClose, onMergeComplet
     // Set the first product as primary by default
     setPrimaryProduct(group.products[0]);
     setDuplicateProduct(group.products[1]);
-    
-    // Initialize merged data with primary product data
+
+    // Initialize merged data with smart merge logic
+    const smartMerged = smartMergeProducts(group.products[0], group.products[1]);
     setMergedData({
-      name: group.products[0].name,
-      description: group.products[0].description,
-      price: group.products[0].price,
-      image_url: group.products[0].image_url,
-      data_sheet_url: group.products[0].data_sheet_url,
-      category_id: group.products[0].category_id,
-      sku: group.products[0].sku,
-      is_active: group.products[0].is_active
+      name: smartMerged.name,
+      description: smartMerged.description,
+      price: smartMerged.price,
+      image_url: smartMerged.image_url,
+      data_sheet_url: smartMerged.data_sheet_url,
+      category_id: smartMerged.category_id,
+      sku: smartMerged.sku,
+      is_active: smartMerged.is_active
     });
-    
+
     setStep('merge');
   };
 

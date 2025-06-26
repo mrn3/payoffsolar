@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { FaTimes, FaCopy, FaSync } from 'react-icons/fa';
 import { Contact } from '@/lib/models';
 import { format } from 'date-fns';
+import { smartMergeContacts } from '@/lib/utils/duplicates';
 import PhoneInput from '@/components/ui/PhoneInput';
 import StateSelect from '@/components/ui/StateSelect';
 
@@ -117,11 +118,11 @@ export default function BulkMergeModal({
     setPrimaryContact(group.contacts[0]);
     setDuplicateContact(group.contacts[1]);
 
-    // Initialize merged data with primary contact data, but merge in non-empty values from other contacts
-    const mergedContactData = { ...group.contacts[0] };
+    // Use smart merge logic for the first two contacts, then merge in additional contacts
+    let mergedContactData = smartMergeContacts(group.contacts[0], group.contacts[1]);
 
-    // For each field, use the first non-empty value found across all contacts
-    for (let i = 1; i < group.contacts.length; i++) {
+    // For additional contacts beyond the first two, merge in non-empty values
+    for (let i = 2; i < group.contacts.length; i++) {
       const contact = group.contacts[i];
       if (!mergedContactData.email && contact.email) mergedContactData.email = contact.email;
       if (!mergedContactData.phone && contact.phone) mergedContactData.phone = contact.phone;

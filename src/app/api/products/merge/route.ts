@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ProductModel, ProductImageModel } from '@/lib/models';
 import { requireAuth, isAdmin } from '@/lib/auth';
 import { executeSingle } from '@/lib/mysql/connection';
+import { smartMergeProducts } from '@/lib/utils/duplicates';
 
 interface MergeRequest {
   primaryProductId: string;
   duplicateProductId: string;
-  mergedData: {
+  mergedData?: {
     name: string;
     description: string;
     price: number;
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     const { primaryProductId, duplicateProductId, mergedData }: MergeRequest = await request.json();
 
     // Validate input
-    if (!primaryProductId || !duplicateProductId || !mergedData) {
+    if (!primaryProductId || !duplicateProductId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -45,12 +46,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'One or both products not found' }, { status: 404 });
     }
 
+    // Generate smart merged data if not provided
+    const finalMergedData = mergedData || smartMergeProducts(primaryProduct, duplicateProduct);
+
     // Check if the merged SKU would conflict with another product (excluding the two being merged)
-    if (mergedData.sku) {
-      const existingProduct = await ProductModel.getBySku(mergedData.sku);
+    if (finalMergedData.sku) {
+      const existingProduct = await ProductModel.getBySku(finalMergedData.sku);
       if (existingProduct && existingProduct.id !== primaryProductId && existingProduct.id !== duplicateProductId) {
-        return NextResponse.json({ 
-          error: 'SKU already exists for another product' 
+        return NextResponse.json({
+          error: 'SKU already exists for another product'
         }, { status: 400 });
       }
     }
@@ -87,14 +91,14 @@ export async function POST(request: NextRequest) {
 
       // 4. Update the primary product with merged data
       await ProductModel.update(primaryProductId, {
-        name: mergedData.name,
-        description: mergedData.description,
-        price: mergedData.price,
-        image_url: mergedData.image_url,
-        data_sheet_url: mergedData.data_sheet_url,
-        category_id: mergedData.category_id,
-        sku: mergedData.sku,
-        is_active: mergedData.is_active
+        name: finalMergedData.name,
+        description: finalMergedData.description,
+        price: finalMergedData.price,
+        image_url: finalMergedData.image_url,
+        data_sheet_url: finalMergedData.data_sheet_url,
+        category_id: finalMergedData.category_id,
+        sku: finalMergedData.sku,
+        is_active: finalMergedData.is_active
       });
 
       // 5. Delete the duplicate product (this will cascade delete any remaining references)
