@@ -34,6 +34,7 @@ interface CostCategory {
 
 interface CostBreakdownChartProps {
   data: CostBreakdownData[];
+  categories: CostCategory[];
 }
 
 // Color palette for different cost categories
@@ -67,27 +68,9 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export default function CostBreakdownChart({ data }: CostBreakdownChartProps) {
+export default function CostBreakdownChart({ data, categories }: CostBreakdownChartProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [categories, setCategories] = useState<CostCategory[]>([]);
   const [filteredData, setFilteredData] = useState<CostBreakdownData[]>(data);
-
-  // Fetch categories on component mount
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch('/api/cost-categories');
-        if (response.ok) {
-          const result = await response.json();
-          setCategories(result.categories || []);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
 
   // Filter data when category selection changes
   useEffect(() => {

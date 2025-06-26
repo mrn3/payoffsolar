@@ -163,7 +163,7 @@ async function getCostCategories(userRole?: string) {
 export default async function DashboardPage() {
   console.log('🏠 Loading dashboard page...');
 
-  let profile, stats, activity, revenueData, orderCountsData, costBreakdownData;
+  let profile, stats, activity, revenueData, orderCountsData, costBreakdownData, costCategories;
 
   try {
     profile = await getUserProfile();
@@ -174,6 +174,7 @@ export default async function DashboardPage() {
     revenueData = await getRevenueData(profile?.role || undefined);
     orderCountsData = await getOrderCountsData(profile?.role || undefined);
     costBreakdownData = await getCostBreakdownData(profile?.role || undefined);
+    costCategories = await getCostCategories(profile?.role || undefined);
 
     console.log('✅ Dashboard data loaded successfully');
   } catch (error) {
@@ -425,7 +426,7 @@ export default async function DashboardPage() {
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">Cost Breakdown by Month (Complete Orders)</h3>
                 <div className="mt-4">
-                  <CostBreakdownChart data={costBreakdownData} />
+                  <CostBreakdownChart data={costBreakdownData} categories={costCategories} />
                 </div>
               </div>
             </div>
