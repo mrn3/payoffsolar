@@ -149,6 +149,9 @@ export default async function PublicLayout({
                 <Link href="/privacy" className="text-sm text-gray-600 hover:text-green-500">
                   Privacy Policy
                 </Link>
+                <Link href="/terms" className="text-sm text-gray-600 hover:text-green-500">
+                  Terms of Service
+                </Link>
               </div>
             </div>
           </div>
