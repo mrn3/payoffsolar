@@ -1671,7 +1671,15 @@ export const OrderModel = {
     );
   },
 
-  async getCostBreakdownByMonth(months = 12): Promise<Array<{ month: string; category_name: string; total_amount: number }>> {
+  async getCostBreakdownByMonth(months = 12, categoryId?: string | null): Promise<Array<{ month: string; category_name: string; total_amount: number }>> {
+    const params = [months];
+    let categoryFilter = '';
+
+    if (categoryId) {
+      categoryFilter = 'AND cc.id = ?';
+      params.push(categoryId);
+    }
+
     return executeQuery<{ month: string; category_name: string; total_amount: number }>(
       `SELECT
          DATE_FORMAT(o.order_date, '%Y-%m') as month,
@@ -1682,9 +1690,10 @@ export const OrderModel = {
        INNER JOIN cost_categories cc ON ci.category_id = cc.id
        WHERE o.status = 'complete'
          AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+         ${categoryFilter}
        GROUP BY DATE_FORMAT(o.order_date, '%Y-%m'), cc.id, cc.name
        ORDER BY month ASC, cc.name ASC`,
-      [months]
+      params
     );
   },
 

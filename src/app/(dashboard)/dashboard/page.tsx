@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { getUserProfile, isContact } from '@/lib/auth';
-import {ContactModel, ProductModel, InventoryModel, OrderModel} from '@/lib/models';
+import {ContactModel, ProductModel, InventoryModel, OrderModel, CostCategoryModel} from '@/lib/models';
 import { formatDistanceToNow } from 'date-fns';
 import { FaUsers, FaBoxes, FaShoppingCart, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import RevenueChart from '@/components/dashboard/RevenueChart';
@@ -138,6 +138,24 @@ async function getCostBreakdownData(userRole?: string) {
     return costBreakdownData || [];
   } catch (error) {
     console.error('❌ Error getting cost breakdown data:', error);
+    return [];
+  }
+}
+
+async function getCostCategories(userRole?: string) {
+  try {
+    console.log('📊 Getting cost categories...');
+
+    // Only show cost categories to admin/staff users
+    if (userRole === 'contact') {
+      return [];
+    }
+
+    const categories = await CostCategoryModel.getAll();
+    console.log('📊 Cost categories:', categories?.length || 0, 'found');
+    return categories || [];
+  } catch (error) {
+    console.error('❌ Error getting cost categories:', error);
     return [];
   }
 }
