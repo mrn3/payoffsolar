@@ -1,24 +1,25 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: transparent;">
-  <!-- Star-like sun rays (pointed triangular rays) -->
-  <path d="M512 32L560 192L512 224L464 192Z" fill="#22c55e"/>
-  <path d="M512 992L464 832L512 800L560 832Z" fill="#22c55e"/>
-  <path d="M992 512L832 464L800 512L832 560Z" fill="#22c55e"/>
-  <path d="M32 512L192 560L224 512L192 464Z" fill="#22c55e"/>
-  <path d="M859.87 164.13L735.28 257.28L703.28 225.28L735.28 193.28Z" fill="#22c55e"/>
-  <path d="M164.13 859.87L257.28 735.28L289.28 767.28L257.28 799.28Z" fill="#22c55e"/>
-  <path d="M859.87 859.87L735.28 766.72L767.28 734.72L799.28 766.72Z" fill="#22c55e"/>
-  <path d="M164.13 164.13L257.28 288.72L225.28 320.72L193.28 288.72Z" fill="#22c55e"/>
+  <!-- 8 pointed star rays - sharp triangular points -->
+  <!-- Top ray -->
+  <path d="M512 64L576 320L512 352L448 320Z" fill="#22c55e"/>
+  <!-- Bottom ray -->
+  <path d="M512 960L448 704L512 672L576 704Z" fill="#22c55e"/>
+  <!-- Right ray -->
+  <path d="M960 512L704 448L672 512L704 576Z" fill="#22c55e"/>
+  <!-- Left ray -->
+  <path d="M64 512L320 576L352 512L320 448Z" fill="#22c55e"/>
+  <!-- Top-right ray -->
+  <path d="M822.11 201.89L635.2 388.8L603.2 356.8L646.4 313.6Z" fill="#22c55e"/>
+  <!-- Bottom-left ray -->
+  <path d="M201.89 822.11L388.8 635.2L420.8 667.2L377.6 710.4Z" fill="#22c55e"/>
+  <!-- Bottom-right ray -->
+  <path d="M822.11 822.11L635.2 635.2L667.2 603.2L710.4 646.4Z" fill="#22c55e"/>
+  <!-- Top-left ray -->
+  <path d="M201.89 201.89L388.8 388.8L356.8 420.8L313.6 377.6Z" fill="#22c55e"/>
 
-  <!-- Sun center circle -->
-  <circle cx="512" cy="512" r="192" fill="#22c55e"/>
+  <!-- Main center circle -->
+  <circle cx="512" cy="512" r="176" fill="#22c55e"/>
 
-  <!-- Inner circle with gear-like teeth -->
-  <circle cx="512" cy="512" r="144" fill="#4ade80"/>
-  <circle cx="512" cy="512" r="96" fill="#22c55e"/>
-
-  <!-- Small gear teeth around inner circle -->
-  <path d="M512 336L537.6 361.6L512 387.2L486.4 361.6Z" fill="#4ade80"/>
-  <path d="M688 512L662.4 537.6L636.8 512L662.4 486.4Z" fill="#4ade80"/>
-  <path d="M512 688L486.4 662.4L512 636.8L537.6 662.4Z" fill="#4ade80"/>
-  <path d="M336 512L361.6 486.4L387.2 512L361.6 537.6Z" fill="#4ade80"/>
+  <!-- Inner circle (hole in the center) -->
+  <circle cx="512" cy="512" r="80" fill="#4ade80"/>
 </svg>
