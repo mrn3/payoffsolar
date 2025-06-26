@@ -403,9 +403,16 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Created Date</label>
                     <input
-                      type="datetime-local"
-                      value={mergedData.created_at ? new Date(mergedData.created_at).toISOString().slice(0, 16) : ''}
-                      onChange={(_e) => setMergedData(prev => ({ ...prev, created_at: _e.target.value ? new Date(_e.target.value).toISOString() : '' }))}
+                      type="date"
+                      value={mergedData.created_at ? new Date(mergedData.created_at).toISOString().slice(0, 10) : ''}
+                      onChange={(_e) => {
+                        if (_e.target.value) {
+                          // Keep the date in YYYY-MM-DD format and let the backend handle the conversion
+                          setMergedData(prev => ({ ...prev, created_at: _e.target.value + ' 00:00:00' }));
+                        } else {
+                          setMergedData(prev => ({ ...prev, created_at: '' }));
+                        }
+                      }}
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
                     />
                   </div>

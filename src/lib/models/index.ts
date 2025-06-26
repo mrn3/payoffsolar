@@ -86,11 +86,12 @@ export const ContactModel = {
 
     if (fields.length === 0) return;
 
+    const query = `UPDATE contacts SET ${fields.join(', ')} WHERE id = ?`;
     values.push(_id);
-    await executeSingle(
-      `UPDATE contacts SET ${fields.join(', ')} WHERE id = ?`,
-      values
-    );
+
+
+
+    await executeSingle(query, values);
   },
 
   async delete(_id: string): Promise<void> {

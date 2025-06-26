@@ -58,8 +58,23 @@ export async function POST(request: NextRequest) {
       // 2. Generate smart merged data if not provided
       const finalMergedData = mergedData || smartMergeContacts(primaryContact, duplicateContact);
 
+
+
       // 3. Update the primary contact with merged data (including created_at if provided)
-      await ContactModel.updateForMerge(primaryContactId, {
+      let createdAtValue = mergedData?.created_at || finalMergedData.created_at;
+
+      // Convert ISO date to MySQL TIMESTAMP format if needed
+      if (createdAtValue && createdAtValue.includes('T')) {
+        const date = new Date(createdAtValue);
+        createdAtValue = date.getFullYear() + '-' +
+          String(date.getMonth() + 1).padStart(2, '0') + '-' +
+          String(date.getDate()).padStart(2, '0') + ' ' +
+          String(date.getHours()).padStart(2, '0') + ':' +
+          String(date.getMinutes()).padStart(2, '0') + ':' +
+          String(date.getSeconds()).padStart(2, '0');
+      }
+
+      const updateData = {
         name: finalMergedData.name,
         email: finalMergedData.email,
         phone: finalMergedData.phone,
@@ -68,8 +83,12 @@ export async function POST(request: NextRequest) {
         state: finalMergedData.state,
         zip: finalMergedData.zip,
         notes: finalMergedData.notes,
-        created_at: mergedData?.created_at || finalMergedData.created_at
-      });
+        created_at: createdAtValue
+      };
+
+
+
+      await ContactModel.updateForMerge(primaryContactId, updateData);
 
       // 4. Delete the duplicate contact
       await ContactModel.delete(duplicateContactId);
@@ -77,7 +96,7 @@ export async function POST(request: NextRequest) {
       // 5. Get the updated primary contact
       const updatedContact = await ContactModel.getById(primaryContactId);
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         success: true,
         mergedContact: updatedContact,
         message: 'Contacts merged successfully'
