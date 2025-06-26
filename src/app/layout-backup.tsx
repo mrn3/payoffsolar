@@ -16,21 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Payoff Solar - Solar Supply and Installation",
   description: "Comprehensive solar supply and installation services for residential and commercial customers",
-  manifest: "/manifest.json",
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-  },
-};
-
-export const viewport = {
-  themeColor: "#22c55e",
 };
 
 export default function RootLayout({
@@ -40,13 +25,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#22c55e" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Payoff Solar" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -64,7 +42,7 @@ export default function RootLayout({
                 background: '#22c55e',
               },
             },
-            error: {
+            _error: {
               style: {
                 background: '#ef4444',
               },
