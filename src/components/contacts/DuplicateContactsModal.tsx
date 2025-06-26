@@ -253,6 +253,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                               {contact.address && (
                                 <p>Address: {contact.address}, {contact.city}, {contact.state} {contact.zip}</p>
                               )}
+                              {contact.notes && <p>Notes: {contact.notes}</p>}
                               <p>Created: {format(new Date(contact.created_at), 'MMM d, yyyy')}</p>
                             </div>
                           </div>
@@ -296,6 +297,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                   <p><strong>Email:</strong> {primaryContact.email || 'N/A'}</p>
                   <p><strong>Phone:</strong> {primaryContact.phone || 'N/A'}</p>
                   <p><strong>Address:</strong> {primaryContact.address || 'N/A'}</p>
+                  <p><strong>Notes:</strong> {primaryContact.notes || 'N/A'}</p>
                   <p><strong>Created:</strong> {format(new Date(primaryContact.created_at), 'MMM d, yyyy')}</p>
                 </div>
               </div>
@@ -313,6 +315,7 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                   <p><strong>Email:</strong> {duplicateContact.email || 'N/A'}</p>
                   <p><strong>Phone:</strong> {duplicateContact.phone || 'N/A'}</p>
                   <p><strong>Address:</strong> {duplicateContact.address || 'N/A'}</p>
+                  <p><strong>Notes:</strong> {duplicateContact.notes || 'N/A'}</p>
                   <p><strong>Created:</strong> {format(new Date(duplicateContact.created_at), 'MMM d, yyyy')}</p>
                 </div>
               </div>
@@ -384,6 +387,16 @@ export default function DuplicateContactsModal({ isOpen, onClose, onMergeComplet
                       value={mergedData.zip || ''}
                       onChange={(_e) => setMergedData(prev => ({ ...prev, zip: _e.target.value }))}
                       className="w-full text-sm border border-gray-300 rounded px-2 py-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea
+                      value={mergedData.notes || ''}
+                      onChange={(_e) => setMergedData(prev => ({ ...prev, notes: _e.target.value }))}
+                      className="w-full text-sm border border-gray-300 rounded px-2 py-1"
+                      rows={3}
+                      placeholder="Enter any notes..."
                     />
                   </div>
                 </div>

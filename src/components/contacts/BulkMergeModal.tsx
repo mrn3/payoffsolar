@@ -315,6 +315,7 @@ export default function BulkMergeModal({
                               {(contact.city || contact.state) && (
                                 <div>Location: {[contact.city, contact.state].filter(Boolean).join(', ')}</div>
                               )}
+                              {contact.notes && <div>Notes: {contact.notes}</div>}
                             </div>
                           </div>
                         ))}
@@ -357,6 +358,7 @@ export default function BulkMergeModal({
                   <p><strong>Email:</strong> {primaryContact.email || 'N/A'}</p>
                   <p><strong>Phone:</strong> {primaryContact.phone || 'N/A'}</p>
                   <p><strong>Address:</strong> {primaryContact.address || 'N/A'}</p>
+                  <p><strong>Notes:</strong> {primaryContact.notes || 'N/A'}</p>
                   <p><strong>Created:</strong> {format(new Date(primaryContact.created_at), 'MMM d, yyyy')}</p>
                 </div>
               </div>
@@ -374,6 +376,7 @@ export default function BulkMergeModal({
                   <p><strong>Email:</strong> {duplicateContact.email || 'N/A'}</p>
                   <p><strong>Phone:</strong> {duplicateContact.phone || 'N/A'}</p>
                   <p><strong>Address:</strong> {duplicateContact.address || 'N/A'}</p>
+                  <p><strong>Notes:</strong> {duplicateContact.notes || 'N/A'}</p>
                   <p><strong>Created:</strong> {format(new Date(duplicateContact.created_at), 'MMM d, yyyy')}</p>
                 </div>
               </div>
