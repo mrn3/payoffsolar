@@ -522,6 +522,11 @@ export default function OrdersPage() {
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Total
                     </th>
+                    {!isContact(profile.role) && (
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        Internal Cost
+                      </th>
+                    )}
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Date
                     </th>
@@ -579,6 +584,11 @@ export default function OrdersPage() {
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           ${Number(_order.total).toFixed(2)}
                         </td>
+                        {!isContact(profile.role) && (
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            ${Number(_order.total_internal_cost || 0).toFixed(2)}
+                          </td>
+                        )}
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {format(new Date(_order.order_date), 'MMM d, yyyy')}
                         </td>

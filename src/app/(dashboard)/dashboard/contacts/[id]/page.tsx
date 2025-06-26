@@ -22,6 +22,7 @@ interface Order {
   contact_city?: string;
   contact_state?: string;
   contact_address?: string;
+  total_internal_cost?: number;
 }
 
 interface OrdersResponse {
@@ -350,6 +351,11 @@ export default function ViewContactPage() {
                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                           Total
                         </th>
+                        {isAdmin() && (
+                          <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                            Internal Cost
+                          </th>
+                        )}
                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                           Date
                         </th>
@@ -372,6 +378,11 @@ export default function ViewContactPage() {
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             ${typeof order.total === 'string' ? parseFloat(order.total).toFixed(2) : order.total.toFixed(2)}
                           </td>
+                          {isAdmin() && (
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                              ${Number(order.total_internal_cost || 0).toFixed(2)}
+                            </td>
+                          )}
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             {format(new Date(order.order_date), 'MMM d, yyyy')}
                           </td>

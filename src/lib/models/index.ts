@@ -742,6 +742,7 @@ export interface OrderWithContact extends Order {
   contact_city?: string;
   contact_state?: string;
   contact_address?: string;
+  total_internal_cost?: number;
 }
 
 // Order Item model
@@ -1335,9 +1336,16 @@ export interface CartItem {
 export const OrderModel = {
   async getAll(limit = 50, offset = 0): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+      `SELECT o.*,
+              c.name as contact_name,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address,
+              COALESCE(SUM(ci.amount), 0) as total_internal_cost
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN cost_items ci ON o.id = ci.order_id
+       GROUP BY o.id, c.name, c.city, c.state, c.address
        ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
       [limit, offset]
     );
@@ -1434,10 +1442,17 @@ export const OrderModel = {
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const query = `
-      SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+      SELECT o.*,
+             c.name as contact_name,
+             c.city as contact_city,
+             c.state as contact_state,
+             c.address as contact_address,
+             COALESCE(SUM(ci.amount), 0) as total_internal_cost
       FROM orders o
       LEFT JOIN contacts c ON o.contact_id = c.id
+      LEFT JOIN cost_items ci ON o.id = ci.order_id
       ${whereClause}
+      GROUP BY o.id, c.name, c.city, c.state, c.address
       ORDER BY o.order_date DESC, o.created_at DESC
       LIMIT ? OFFSET ?
     `;
@@ -1525,10 +1540,17 @@ export const OrderModel = {
 
   async getAllByUser(_userId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+      `SELECT o.*,
+              c.name as contact_name,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address,
+              COALESCE(SUM(ci.amount), 0) as total_internal_cost
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN cost_items ci ON o.id = ci.order_id
        WHERE c.user_id = ?
+       GROUP BY o.id, c.name, c.city, c.state, c.address
        ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
       [_userId, limit, offset]
     );
@@ -1584,10 +1606,17 @@ export const OrderModel = {
 
   async getByContactId(contactId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+      `SELECT o.*,
+              c.name as contact_name,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address,
+              COALESCE(SUM(ci.amount), 0) as total_internal_cost
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN cost_items ci ON o.id = ci.order_id
        WHERE o.contact_id = ?
+       GROUP BY o.id, c.name, c.city, c.state, c.address
        ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
       [contactId, limit, offset]
     );
