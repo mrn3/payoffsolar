@@ -3,10 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
-import {FaImage, FaMinus, FaPlus, FaTimes, FaTrash} from 'react-icons/fa';
+import {FaImage, FaMinus, FaPlus, FaTimes, FaTrash, FaTag} from 'react-icons/fa';
+import AffiliateCodeInput from './AffiliateCodeInput';
 
 export default function CartSidebar() {
-  const { state, removeItem, updateQuantity, closeCart, getTotalPrice } = useCart();
+  const { state, removeItem, updateQuantity, closeCart, getTotalPrice, getTotalDiscount, getDiscountedPrice } = useCart();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -78,9 +79,22 @@ export default function CartSidebar() {
                       {item.product_name}
                     </h3>
                     <p className="text-xs text-gray-500">SKU: {item.product_sku}</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {formatPrice(item.product_price)}
-                    </p>
+                    <div>
+                      {state.affiliateCode ? (
+                        <div>
+                          <p className="text-xs text-gray-500 line-through">
+                            {formatPrice(item.product_price)}
+                          </p>
+                          <p className="text-sm font-medium text-green-600">
+                            {formatPrice(getDiscountedPrice(item.product_price))}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm font-medium text-gray-900">
+                          {formatPrice(item.product_price)}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Quantity Controls */}
@@ -121,6 +135,20 @@ export default function CartSidebar() {
         {/* Footer */}
         {state.items.length > 0 && (
           <div className="border-t p-4 space-y-4">
+            {/* Affiliate Code Input */}
+            <AffiliateCodeInput />
+
+            {/* Discount Display */}
+            {state.affiliateCode && getTotalDiscount() > 0 && (
+              <div className="flex items-center justify-between text-sm text-green-600">
+                <span className="flex items-center gap-1">
+                  <FaTag className="h-3 w-3" />
+                  Discount ({state.affiliateCode.code})
+                </span>
+                <span>-{formatPrice(getTotalDiscount())}</span>
+              </div>
+            )}
+
             {/* Total */}
             <div className="flex items-center justify-between text-lg font-semibold text-gray-900">
               <span>Total:</span>

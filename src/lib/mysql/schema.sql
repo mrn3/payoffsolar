@@ -371,6 +371,21 @@ CREATE TABLE IF NOT EXISTS listing_templates (
   FOREIGN KEY (platform_id) REFERENCES listing_platforms(id) ON DELETE CASCADE
 );
 
+-- Create affiliate codes table
+CREATE TABLE IF NOT EXISTS affiliate_codes (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  code VARCHAR(50) UNIQUE NOT NULL,
+  name VARCHAR(100),
+  discount_type ENUM('percentage', 'fixed_amount') NOT NULL,
+  discount_value DECIMAL(10, 2) NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  expires_at TIMESTAMP NULL,
+  usage_limit INT NULL,
+  usage_count INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Create product listings table
 CREATE TABLE IF NOT EXISTS product_listings (
   id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),

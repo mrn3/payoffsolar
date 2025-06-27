@@ -1,11 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { CartItem } from '@/lib/models';
+import { CartItem, AffiliateCode } from '@/lib/models';
 
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
+  affiliateCode?: AffiliateCode;
 }
 
 type CartAction =
@@ -16,7 +17,10 @@ type CartAction =
   | { type: 'TOGGLE_CART' }
   | { type: 'OPEN_CART' }
   | { type: 'CLOSE_CART' }
-  | { type: 'LOAD_CART'; payload: CartItem[] };
+  | { type: 'LOAD_CART'; payload: CartItem[] }
+  | { type: 'APPLY_AFFILIATE_CODE'; payload: AffiliateCode }
+  | { type: 'REMOVE_AFFILIATE_CODE' }
+  | { type: 'LOAD_AFFILIATE_CODE'; payload: AffiliateCode };
 
 interface CartContextType {
   state: CartState;
@@ -29,6 +33,10 @@ interface CartContextType {
   closeCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
+  getDiscountedPrice: (price: number) => number;
+  getTotalDiscount: () => number;
+  applyAffiliateCode: (affiliateCode: AffiliateCode) => void;
+  removeAffiliateCode: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -77,7 +85,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     }
 
     case 'CLEAR_CART':
-      return { ...state, items: [] };
+      return { ...state, items: [], affiliateCode: undefined };
 
     case 'TOGGLE_CART':
       return { ...state, isOpen: !state.isOpen };
@@ -91,6 +99,15 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     case 'LOAD_CART':
       return { ...state, items: action.payload };
 
+    case 'APPLY_AFFILIATE_CODE':
+      return { ...state, affiliateCode: action.payload };
+
+    case 'REMOVE_AFFILIATE_CODE':
+      return { ...state, affiliateCode: undefined };
+
+    case 'LOAD_AFFILIATE_CODE':
+      return { ...state, affiliateCode: action.payload };
+
     default:
       return state;
   }
@@ -99,6 +116,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 const initialState: CartState = {
   items: [],
   isOpen: false,
+  affiliateCode: undefined,
 };
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -115,12 +133,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error loading cart from localStorage:', _error);
       }
     }
+
+    const savedAffiliateCode = localStorage.getItem('payoffsolar-affiliate-code');
+    if (savedAffiliateCode) {
+      try {
+        const affiliateCode = JSON.parse(savedAffiliateCode);
+        dispatch({ type: 'LOAD_AFFILIATE_CODE', payload: affiliateCode });
+      } catch (_error) {
+        console.error('Error loading affiliate code from localStorage:', _error);
+      }
+    }
   }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('payoffsolar-cart', JSON.stringify(state.items));
   }, [state.items]);
+
+  // Save affiliate code to localStorage whenever it changes
+  useEffect(() => {
+    if (state.affiliateCode) {
+      localStorage.setItem('payoffsolar-affiliate-code', JSON.stringify(state.affiliateCode));
+    } else {
+      localStorage.removeItem('payoffsolar-affiliate-code');
+    }
+  }, [state.affiliateCode]);
 
   const addItem = (item: Omit<CartItem, 'quantity'>, quantity = 1) => {
     dispatch({
@@ -158,7 +195,39 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const getTotalPrice = () => {
-    return state.items.reduce((total, item) => total + (item.product_price * item.quantity), 0);
+    return state.items.reduce((total, item) => {
+      const discountedPrice = getDiscountedPrice(item.product_price);
+      return total + (discountedPrice * item.quantity);
+    }, 0);
+  };
+
+  const getDiscountedPrice = (price: number) => {
+    if (!state.affiliateCode) return price;
+
+    if (state.affiliateCode.discount_type === 'percentage') {
+      const discount = (price * state.affiliateCode.discount_value) / 100;
+      return Math.max(0, price - discount);
+    } else {
+      return Math.max(0, price - state.affiliateCode.discount_value);
+    }
+  };
+
+  const getTotalDiscount = () => {
+    if (!state.affiliateCode) return 0;
+
+    return state.items.reduce((total, item) => {
+      const originalPrice = item.product_price * item.quantity;
+      const discountedPrice = getDiscountedPrice(item.product_price) * item.quantity;
+      return total + (originalPrice - discountedPrice);
+    }, 0);
+  };
+
+  const applyAffiliateCode = (affiliateCode: AffiliateCode) => {
+    dispatch({ type: 'APPLY_AFFILIATE_CODE', payload: affiliateCode });
+  };
+
+  const removeAffiliateCode = () => {
+    dispatch({ type: 'REMOVE_AFFILIATE_CODE' });
   };
 
   const value: CartContextType = {
@@ -172,6 +241,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     closeCart,
     getTotalItems,
     getTotalPrice,
+    getDiscountedPrice,
+    getTotalDiscount,
+    applyAffiliateCode,
+    removeAffiliateCode,
   };
 
   return (

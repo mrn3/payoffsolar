@@ -2,14 +2,14 @@ import React from 'react';
 import Link from 'next/link';
 import { ProductWithFirstImage } from '@/lib/models';
 import { useCart } from '@/contexts/CartContext';
-import { FaImage, FaShoppingCart } from 'react-icons/fa';
+import { FaImage, FaShoppingCart, FaTag } from 'react-icons/fa';
 
 interface ProductCardProps {
   product: ProductWithFirstImage;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { addItem } = useCart();
+  const { addItem, getDiscountedPrice, state } = useCart();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -59,9 +59,28 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.description}
         </p>
         <div className="flex items-center justify-between mb-4">
-          <span className="text-2xl font-bold text-gray-900">
-            {formatPrice(product.price)}
-          </span>
+          <div>
+            {state.affiliateCode ? (
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="text-sm text-gray-500 line-through">
+                    {formatPrice(product.price)}
+                  </span>
+                  <span className="bg-green-100 text-green-800 text-xs px-1 py-0.5 rounded flex items-center gap-1">
+                    <FaTag className="h-2 w-2" />
+                    {state.affiliateCode.code}
+                  </span>
+                </div>
+                <span className="text-xl font-bold text-green-600">
+                  {formatPrice(getDiscountedPrice(product.price))}
+                </span>
+              </div>
+            ) : (
+              <span className="text-2xl font-bold text-gray-900">
+                {formatPrice(product.price)}
+              </span>
+            )}
+          </div>
           <span className="text-xs text-gray-500">
             SKU: {product.sku}
           </span>

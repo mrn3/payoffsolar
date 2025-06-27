@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {useParams} from 'next/navigation';
+import {useParams, useSearchParams} from 'next/navigation';
 import Link from 'next/link';
-import {Product, ProductImage} from '@/lib/models';
+import {Product, ProductImage, AffiliateCode} from '@/lib/models';
 import ImageCarousel from '@/components/ui/ImageCarousel';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import RelatedProducts from '@/components/products/RelatedProducts';
 import { useCart } from '@/contexts/CartContext';
-import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaSpinner, FaFilePdf, FaDownload} from 'react-icons/fa';
+import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaSpinner, FaFilePdf, FaDownload, FaTag} from 'react-icons/fa';
+import toast from 'react-hot-toast';
 
 interface ProductWithDetails extends Product {
   category_name?: string;
@@ -17,18 +18,48 @@ interface ProductWithDetails extends Product {
 
 export default function ProductDetailPage() {
   const params = useParams();
-    const { addItem } = useCart();
+  const searchParams = useSearchParams();
+  const { addItem, applyAffiliateCode, getDiscountedPrice, state } = useCart();
 
   const [product, setProduct] = useState<ProductWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [affiliateLoading, setAffiliateLoading] = useState(false);
 
   useEffect(() => {
     if (params.id) {
       fetchProduct(params.id as string);
     }
   }, [params.id]);
+
+  // Handle affiliate code from URL parameter
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode && !state.affiliateCode) {
+      validateAndApplyAffiliateCode(refCode);
+    }
+  }, [searchParams, state.affiliateCode]);
+
+  const validateAndApplyAffiliateCode = async (code: string) => {
+    try {
+      setAffiliateLoading(true);
+      const response = await fetch(`/api/affiliate/validate?code=${encodeURIComponent(code)}`);
+      const data = await response.json();
+
+      if (data.valid) {
+        applyAffiliateCode(data.affiliateCode);
+        toast.success(`Affiliate code "${code}" applied! ${data.affiliateCode.discount_type === 'percentage' ? `${data.affiliateCode.discount_value}% off` : `$${data.affiliateCode.discount_value} off`}`);
+      } else {
+        toast.error(`Invalid affiliate code: ${data.reason}`);
+      }
+    } catch (error) {
+      console.error('Error validating affiliate code:', error);
+      toast.error('Failed to validate affiliate code');
+    } finally {
+      setAffiliateLoading(false);
+    }
+  };
 
   const fetchProduct = async (_id: string) => {
     try {
@@ -72,6 +103,7 @@ export default function ProductDetailPage() {
         product_price: product.price,
         product_image_url: product.images?.[0]?.image_url,
       }, quantity);
+      toast.success(`Added ${quantity} ${product.name} to cart`);
     }
   };
 
@@ -161,9 +193,29 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="mb-6">
-                <span className="text-4xl font-bold text-gray-900">
-                  {formatPrice(product.price)}
-                </span>
+                {state.affiliateCode ? (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl text-gray-500 line-through">
+                        {formatPrice(product.price)}
+                      </span>
+                      <span className="bg-green-100 text-green-800 text-sm px-2 py-1 rounded-full flex items-center gap-1">
+                        <FaTag className="h-3 w-3" />
+                        {state.affiliateCode.code}
+                      </span>
+                    </div>
+                    <span className="text-4xl font-bold text-green-600">
+                      {formatPrice(getDiscountedPrice(product.price))}
+                    </span>
+                    <div className="text-sm text-green-600 mt-1">
+                      You save {formatPrice(product.price - getDiscountedPrice(product.price))}
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-4xl font-bold text-gray-900">
+                    {formatPrice(product.price)}
+                  </span>
+                )}
               </div>
 
               <div className="mb-8">

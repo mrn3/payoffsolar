@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import toast from 'react-hot-toast';
-import { FaArrowLeft, FaImage, FaLock } from 'react-icons/fa';
+import { FaArrowLeft, FaImage, FaLock, FaTag } from 'react-icons/fa';
 
 interface CheckoutFormData {
   email: string;
@@ -20,7 +20,7 @@ interface CheckoutFormData {
 }
 
 export default function CheckoutPage() {
-  const { state, getTotalPrice } = useCart();
+  const { state, getTotalPrice, getTotalDiscount } = useCart();
   const [formData, setFormData] = useState<CheckoutFormData>({
     email: '',
     firstName: '',
@@ -334,9 +334,25 @@ export default function CheckoutPage() {
                     </p>
                     <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                   </div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {formatPrice(item.product_price * item.quantity)}
-                  </p>
+                  <div className="text-right">
+                    {state.affiliateCode ? (
+                      <div>
+                        <p className="text-xs text-gray-500 line-through">
+                          {formatPrice(item.product_price * item.quantity)}
+                        </p>
+                        <p className="text-sm font-medium text-green-600">
+                          {formatPrice(state.affiliateCode.discount_type === 'percentage'
+                            ? (item.product_price - (item.product_price * state.affiliateCode.discount_value / 100)) * item.quantity
+                            : Math.max(0, item.product_price - state.affiliateCode.discount_value) * item.quantity
+                          )}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm font-medium text-gray-900">
+                        {formatPrice(item.product_price * item.quantity)}
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -347,6 +363,15 @@ export default function CheckoutPage() {
                 <span>Subtotal</span>
                 <span>{formatPrice(getTotalPrice())}</span>
               </div>
+              {state.affiliateCode && getTotalDiscount() > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span className="flex items-center gap-1">
+                    <FaTag className="h-3 w-3" />
+                    Discount ({state.affiliateCode.code})
+                  </span>
+                  <span>-{formatPrice(getTotalDiscount())}</span>
+                </div>
+              )}
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>
                 <span>{formatPrice(calculateShipping())}</span>

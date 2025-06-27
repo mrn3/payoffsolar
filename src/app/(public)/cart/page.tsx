@@ -7,10 +7,11 @@ import React from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import Breadcrumb from '@/components/ui/Breadcrumb';
-import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaTrash} from 'react-icons/fa';
+import AffiliateCodeInput from '@/components/cart/AffiliateCodeInput';
+import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaTrash, FaTag} from 'react-icons/fa';
 
 export default function CartPage() {
-  const { state, removeItem, updateQuantity, clearCart, getTotalPrice } = useCart();
+  const { state, removeItem, updateQuantity, clearCart, getTotalPrice, getTotalDiscount, getDiscountedPrice } = useCart();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -144,9 +145,20 @@ export default function CartPage() {
 
                       {/* Item Total */}
                       <div className="text-right">
-                        <p className="text-lg font-medium text-gray-900">
-                          {formatPrice(item.product_price * item.quantity)}
-                        </p>
+                        {state.affiliateCode ? (
+                          <div>
+                            <p className="text-sm text-gray-500 line-through">
+                              {formatPrice(item.product_price * item.quantity)}
+                            </p>
+                            <p className="text-lg font-medium text-green-600">
+                              {formatPrice(getDiscountedPrice(item.product_price) * item.quantity)}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-lg font-medium text-gray-900">
+                            {formatPrice(item.product_price * item.quantity)}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -159,12 +171,26 @@ export default function CartPage() {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-lg p-6 sticky top-8">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
-              
+
+              {/* Affiliate Code Input */}
+              <div className="mb-6">
+                <AffiliateCodeInput />
+              </div>
+
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
                   <span>{formatPrice(getTotalPrice())}</span>
                 </div>
+                {state.affiliateCode && getTotalDiscount() > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span className="flex items-center gap-1">
+                      <FaTag className="h-3 w-3" />
+                      Discount ({state.affiliateCode.code})
+                    </span>
+                    <span>-{formatPrice(getTotalDiscount())}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
                   <span>Calculated at checkout</span>

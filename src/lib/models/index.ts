@@ -2371,6 +2371,148 @@ export interface ContentType {
   created_at: string;
 }
 
+// Affiliate Code model
+export interface AffiliateCode {
+  id: string;
+  code: string;
+  name?: string;
+  discount_type: 'percentage' | 'fixed_amount';
+  discount_value: number;
+  is_active: boolean;
+  expires_at?: string;
+  usage_limit?: number;
+  usage_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export const AffiliateCodeModel = {
+  async getAll(limit = 50, offset = 0): Promise<AffiliateCode[]> {
+    return executeQuery<AffiliateCode>(
+      'SELECT * FROM affiliate_codes ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+  },
+
+  async getById(id: string): Promise<AffiliateCode | null> {
+    return getOne<AffiliateCode>('SELECT * FROM affiliate_codes WHERE id = ?', [id]);
+  },
+
+  async getByCode(code: string): Promise<AffiliateCode | null> {
+    return getOne<AffiliateCode>('SELECT * FROM affiliate_codes WHERE code = ?', [code]);
+  },
+
+  async validateCode(code: string): Promise<{ valid: boolean; affiliateCode?: AffiliateCode; reason?: string }> {
+    const affiliateCode = await this.getByCode(code);
+
+    if (!affiliateCode) {
+      return { valid: false, reason: 'Affiliate code not found' };
+    }
+
+    if (!affiliateCode.is_active) {
+      return { valid: false, reason: 'Affiliate code is inactive' };
+    }
+
+    // Check expiration
+    if (affiliateCode.expires_at) {
+      const expiryDate = new Date(affiliateCode.expires_at);
+      if (expiryDate < new Date()) {
+        return { valid: false, reason: 'Affiliate code has expired' };
+      }
+    }
+
+    // Check usage limit
+    if (affiliateCode.usage_limit && affiliateCode.usage_count >= affiliateCode.usage_limit) {
+      return { valid: false, reason: 'Affiliate code usage limit reached' };
+    }
+
+    return { valid: true, affiliateCode };
+  },
+
+  async incrementUsage(id: string): Promise<void> {
+    await executeSingle(
+      'UPDATE affiliate_codes SET usage_count = usage_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [id]
+    );
+  },
+
+  async create(data: Omit<AffiliateCode, 'id' | 'usage_count' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO affiliate_codes (code, name, discount_type, discount_value, is_active, expires_at, usage_limit) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [data.code, data.name || null, data.discount_type, data.discount_value, data.is_active, data.expires_at || null, data.usage_limit || null]
+    );
+
+    const affiliateCode = await getOne<{ id: string }>(
+      'SELECT id FROM affiliate_codes WHERE code = ? ORDER BY created_at DESC LIMIT 1',
+      [data.code]
+    );
+    return affiliateCode!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<AffiliateCode, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.code !== undefined) {
+      fields.push('code = ?');
+      values.push(data.code);
+    }
+    if (data.name !== undefined) {
+      fields.push('name = ?');
+      values.push(data.name);
+    }
+    if (data.discount_type !== undefined) {
+      fields.push('discount_type = ?');
+      values.push(data.discount_type);
+    }
+    if (data.discount_value !== undefined) {
+      fields.push('discount_value = ?');
+      values.push(data.discount_value);
+    }
+    if (data.is_active !== undefined) {
+      fields.push('is_active = ?');
+      values.push(data.is_active);
+    }
+    if (data.expires_at !== undefined) {
+      fields.push('expires_at = ?');
+      values.push(data.expires_at);
+    }
+    if (data.usage_limit !== undefined) {
+      fields.push('usage_limit = ?');
+      values.push(data.usage_limit);
+    }
+    if (data.usage_count !== undefined) {
+      fields.push('usage_count = ?');
+      values.push(data.usage_count);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE affiliate_codes SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM affiliate_codes WHERE id = ?', [id]);
+  },
+
+  calculateDiscount(price: number, affiliateCode: AffiliateCode): number {
+    if (affiliateCode.discount_type === 'percentage') {
+      return Math.round((price * affiliateCode.discount_value / 100) * 100) / 100;
+    } else {
+      return Math.min(affiliateCode.discount_value, price); // Don't discount more than the price
+    }
+  },
+
+  applyDiscount(price: number, affiliateCode: AffiliateCode): number {
+    const discount = this.calculateDiscount(price, affiliateCode);
+    return Math.max(0, price - discount); // Ensure price doesn't go below 0
+  }
+};
+
 export const ContentTypeModel = {
   async getAll(): Promise<ContentType[]> {
     return executeQuery<ContentType>('SELECT * FROM content_types ORDER BY name');
