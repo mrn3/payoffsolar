@@ -52,6 +52,21 @@ async function main() {
 
     console.log('Connected to database');
 
+    // First, check if slug column exists and add it if it doesn't
+    try {
+      await connection.execute('SELECT slug FROM products LIMIT 1');
+      console.log('Slug column already exists');
+    } catch (error) {
+      if (error.code === 'ER_BAD_FIELD_ERROR') {
+        console.log('Adding slug column to products table...');
+        await connection.execute('ALTER TABLE products ADD COLUMN slug VARCHAR(255) UNIQUE AFTER sku');
+        await connection.execute('CREATE INDEX IF NOT EXISTS idx_products_slug ON products(slug)');
+        console.log('Slug column added successfully');
+      } else {
+        throw error;
+      }
+    }
+
     // Get all products without slugs
     const [products] = await connection.execute(
       'SELECT id, name, sku, slug FROM products WHERE slug IS NULL OR slug = ""'
