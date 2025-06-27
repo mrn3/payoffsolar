@@ -257,6 +257,19 @@ export const ProductCategoryModel = {
   }
 };
 
+// Shipping method types
+export interface ShippingMethod {
+  type: 'free' | 'fixed' | 'calculated_distance' | 'api_calculated';
+  name: string;
+  description?: string;
+  cost?: number; // For fixed amount
+  warehouse_id?: string; // For distance calculation
+  api_config?: {
+    provider: string;
+    settings: Record<string, any>;
+  };
+}
+
 // Product model
 export interface Product {
   id: string;
@@ -269,6 +282,7 @@ export interface Product {
   sku: string;
   slug?: string;
   tax_percentage: number;
+  shipping_methods?: ShippingMethod[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -294,6 +308,18 @@ export interface ProductWithImages extends ProductWithCategory {
 
 export interface ProductWithFirstImage extends ProductWithCategory {
   first_image_url?: string;
+}
+
+// Helper function to parse shipping methods from JSON
+function parseShippingMethods(product: any): Product {
+  if (product.shipping_methods && typeof product.shipping_methods === 'string') {
+    try {
+      product.shipping_methods = JSON.parse(product.shipping_methods);
+    } catch (e) {
+      product.shipping_methods = null;
+    }
+  }
+  return product;
 }
 
 export const ProductModel = {
@@ -428,15 +454,18 @@ export const ProductModel = {
   },
 
   async getById(_id: string): Promise<Product | null> {
-    return getOne<Product>('SELECT * FROM products WHERE id = ?', [_id]);
+    const product = await getOne<Product>('SELECT * FROM products WHERE id = ?', [_id]);
+    return product ? parseShippingMethods(product) : null;
   },
 
   async getBySku(sku: string): Promise<Product | null> {
-    return getOne<Product>('SELECT * FROM products WHERE sku = ?', [sku]);
+    const product = await getOne<Product>('SELECT * FROM products WHERE sku = ?', [sku]);
+    return product ? parseShippingMethods(product) : null;
   },
 
   async getBySlug(slug: string): Promise<Product | null> {
-    return getOne<Product>('SELECT * FROM products WHERE slug = ? AND is_active = TRUE', [slug]);
+    const product = await getOne<Product>('SELECT * FROM products WHERE slug = ? AND is_active = TRUE', [slug]);
+    return product ? parseShippingMethods(product) : null;
   },
 
   async create(data: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
@@ -444,8 +473,8 @@ export const ProductModel = {
     const slug = data.slug || generateProductSlug(data.name, data.sku);
 
     await executeSingle(
-      'INSERT INTO products (name, description, price, image_url, data_sheet_url, category_id, sku, slug, tax_percentage, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [data.name, data.description, data.price, data.image_url || null, data.data_sheet_url || null, data.category_id || null, data.sku, slug, data.tax_percentage || 0, data.is_active]
+      'INSERT INTO products (name, description, price, image_url, data_sheet_url, category_id, sku, slug, tax_percentage, shipping_methods, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.name, data.description, data.price, data.image_url || null, data.data_sheet_url || null, data.category_id || null, data.sku, slug, data.tax_percentage || 0, data.shipping_methods ? JSON.stringify(data.shipping_methods) : null, data.is_active]
     );
 
     const product = await getOne<{ id: string }>(
@@ -494,6 +523,10 @@ export const ProductModel = {
     if (data.tax_percentage !== undefined) {
       fields.push('tax_percentage = ?');
       values.push(data.tax_percentage);
+    }
+    if (data.shipping_methods !== undefined) {
+      fields.push('shipping_methods = ?');
+      values.push(data.shipping_methods ? JSON.stringify(data.shipping_methods) : null);
     }
     if (data.is_active !== undefined) {
       fields.push('is_active = ?');

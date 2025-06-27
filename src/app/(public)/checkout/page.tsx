@@ -11,6 +11,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { STRIPE_CONFIG } from '@/lib/stripe';
 import PaymentForm from '@/components/checkout/PaymentForm';
+import { ShippingService } from '@/lib/services/shipping';
 
 interface CheckoutFormData {
   email: string;
@@ -41,6 +42,14 @@ export default function CheckoutPage() {
     shippingMethod: 'standard',
   });
 
+  const [shippingMethods, setShippingMethods] = useState<Array<{
+    name: string;
+    cost: number;
+    estimatedDays?: number;
+  }>>([]);
+  const [shippingCost, setShippingCost] = useState(0);
+  const [loadingShipping, setLoadingShipping] = useState(false);
+
   // Track begin checkout event when page loads
   useEffect(() => {
     if (state.items.length > 0) {
@@ -60,6 +69,56 @@ export default function CheckoutPage() {
     }
   }, [state.items, getTotalPrice]);
 
+  // Calculate shipping when address changes
+  useEffect(() => {
+    const calculateShippingCosts = async () => {
+      if (!formData.address || !formData.city || !formData.state || !formData.zip || state.items.length === 0) {
+        setShippingMethods([]);
+        setShippingCost(0);
+        return;
+      }
+
+      setLoadingShipping(true);
+      try {
+        const cartItems = state.items.map(item => ({
+          productId: item.product_id,
+          quantity: item.quantity
+        }));
+
+        const shippingAddress = {
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zip: formData.zip
+        };
+
+        const result = await ShippingService.calculateCartShipping(cartItems, shippingAddress);
+        setShippingMethods(result.methods);
+
+        // Set the cost of the selected method or the cheapest one
+        const selectedMethod = result.methods.find(m => m.name.toLowerCase().includes(formData.shippingMethod));
+        const defaultMethod = selectedMethod || result.methods[0];
+        setShippingCost(defaultMethod?.cost || 0);
+
+      } catch (error) {
+        console.error('Error calculating shipping:', error);
+        // Fall back to default shipping calculation
+        setShippingMethods([
+          { name: 'Standard Shipping', cost: 9.99 },
+          { name: 'Express Shipping', cost: 29.99 },
+          { name: 'Overnight Shipping', cost: 49.99 }
+        ]);
+        setShippingCost(9.99);
+      } finally {
+        setLoadingShipping(false);
+      }
+    };
+
+    // Debounce the calculation
+    const timeoutId = setTimeout(calculateShippingCosts, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.address, formData.city, formData.state, formData.zip, formData.shippingMethod, state.items]);
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -68,15 +127,7 @@ export default function CheckoutPage() {
   };
 
   const calculateShipping = () => {
-    // Simple shipping calculation - in a real app this would be more complex
-    switch (formData.shippingMethod) {
-      case 'express':
-        return 29.99;
-      case 'overnight':
-        return 49.99;
-      default:
-        return 9.99;
-    }
+    return shippingCost;
   };
 
   const calculateTotal = () => {
@@ -103,6 +154,16 @@ export default function CheckoutPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Update shipping cost when method changes
+    if (name === 'shippingMethod') {
+      const selectedMethod = shippingMethods.find(method =>
+        method.name.toLowerCase().replace(/\s+/g, '-') === value
+      );
+      if (selectedMethod) {
+        setShippingCost(selectedMethod.cost);
+      }
+    }
 
     // Clear error when user starts typing
     if (formErrors[name]) {
@@ -329,44 +390,42 @@ export default function CheckoutPage() {
               {/* Shipping Method */}
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipping Method</h2>
-                <div className="space-y-3">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="shippingMethod"
-                      value="standard"
-                      checked={formData.shippingMethod === 'standard'}
-                      onChange={handleInputChange}
-                      className="mr-3"
-                    />
-                    <span className="flex-1">Standard Shipping (5-7 business days)</span>
-                    <span className="font-medium">{formatPrice(9.99)}</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="shippingMethod"
-                      value="express"
-                      checked={formData.shippingMethod === 'express'}
-                      onChange={handleInputChange}
-                      className="mr-3"
-                    />
-                    <span className="flex-1">Express Shipping (2-3 business days)</span>
-                    <span className="font-medium">{formatPrice(29.99)}</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="shippingMethod"
-                      value="overnight"
-                      checked={formData.shippingMethod === 'overnight'}
-                      onChange={handleInputChange}
-                      className="mr-3"
-                    />
-                    <span className="flex-1">Overnight Shipping (1 business day)</span>
-                    <span className="font-medium">{formatPrice(49.99)}</span>
-                  </label>
-                </div>
+                {loadingShipping ? (
+                  <div className="text-gray-500 text-center py-4">
+                    Calculating shipping costs...
+                  </div>
+                ) : shippingMethods.length > 0 ? (
+                  <div className="space-y-3">
+                    {shippingMethods.map((method, index) => {
+                      const methodValue = method.name.toLowerCase().replace(/\s+/g, '-');
+                      return (
+                        <label key={index} className="flex items-center">
+                          <input
+                            type="radio"
+                            name="shippingMethod"
+                            value={methodValue}
+                            checked={formData.shippingMethod === methodValue || (index === 0 && !shippingMethods.some(m => m.name.toLowerCase().replace(/\s+/g, '-') === formData.shippingMethod))}
+                            onChange={handleInputChange}
+                            className="mr-3"
+                          />
+                          <span className="flex-1">
+                            {method.name}
+                            {method.estimatedDays && (
+                              <span className="text-gray-500 text-sm ml-1">
+                                ({method.estimatedDays} business day{method.estimatedDays !== 1 ? 's' : ''})
+                              </span>
+                            )}
+                          </span>
+                          <span className="font-medium">{formatPrice(method.cost)}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-gray-500 text-sm">
+                    Enter your shipping address to see available shipping options.
+                  </div>
+                )}
               </div>
 
               {/* Payment Section */}
@@ -376,6 +435,7 @@ export default function CheckoutPage() {
                   <PaymentForm
                     customerInfo={formData}
                     shippingMethod={formData.shippingMethod}
+                    shippingCost={shippingCost}
                     onSuccess={handlePaymentSuccess}
                     onValidationError={handleValidationError}
                   />

@@ -122,6 +122,7 @@ export async function PUT(
       category_id: data.category_id,
       sku: data.sku,
       slug: data.slug,
+      shipping_methods: data.shipping_methods,
       is_active: data.is_active
     });
 

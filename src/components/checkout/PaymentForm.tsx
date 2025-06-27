@@ -19,11 +19,12 @@ interface PaymentFormProps {
     zip: string;
   };
   shippingMethod: string;
+  shippingCost: number;
   onSuccess: (paymentIntentId: string) => void;
   onValidationError: (message: string) => void;
 }
 
-export default function PaymentForm({ customerInfo, shippingMethod, onSuccess, onValidationError }: PaymentFormProps) {
+export default function PaymentForm({ customerInfo, shippingMethod, shippingCost, onSuccess, onValidationError }: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { state, getTotalPrice, getTotalDiscount, getTotalTax, clearCart } = useCart();
@@ -35,14 +36,7 @@ export default function PaymentForm({ customerInfo, shippingMethod, onSuccess, o
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY !== 'pk_test_your_stripe_publishable_key_here';
 
   const calculateShipping = () => {
-    switch (shippingMethod) {
-      case 'express':
-        return 29.99;
-      case 'overnight':
-        return 49.99;
-      default:
-        return 9.99;
-    }
+    return shippingCost;
   };
 
   const calculateTotal = () => {

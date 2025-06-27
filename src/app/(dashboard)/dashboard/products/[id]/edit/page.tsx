@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Product, ProductImage, ProductCategory, ProductCostBreakdownWithCategory, CostCategory } from '@/lib/models';
+import { Product, ProductImage, ProductCategory, ProductCostBreakdownWithCategory, CostCategory, ShippingMethod, Warehouse } from '@/lib/models';
 import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
 import PDFUpload from '@/components/ui/PDFUpload';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import ShippingMethodsEditor from '@/components/ui/ShippingMethodsEditor';
 import { generateProductSlug } from '@/lib/utils/slug';
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
 
@@ -25,6 +26,7 @@ export default function EditProductPage() {
     sku: '',
     slug: '',
     tax_percentage: '',
+    shipping_methods: [] as ShippingMethod[],
     is_active: true
   });
   const [categories, setCategories] = useState<ProductCategory[]>([]);
@@ -32,6 +34,7 @@ export default function EditProductPage() {
   const [costBreakdowns, setCostBreakdowns] = useState<ProductCostBreakdownWithCategory[]>([]);
   const [uploadedImages, setUploadedImages] = useState<ProductImage[]>([]);
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -43,6 +46,7 @@ export default function EditProductPage() {
     fetchCostCategories();
     fetchProductImages();
     fetchCostBreakdowns();
+    fetchWarehouses();
   }, [productId]);
 
   const fetchProduct = useCallback(async () => {
@@ -72,6 +76,7 @@ export default function EditProductPage() {
         sku: data.product.sku || '',
         slug: data.product.slug || '',
         tax_percentage: data.product.tax_percentage?.toString() || '',
+        shipping_methods: data.product.shipping_methods || [],
         is_active: data.product.is_active
       });
     } catch (error) {
@@ -107,6 +112,20 @@ export default function EditProductPage() {
       }
     } catch (error) {
       console.error('Error fetching cost categories:', error);
+    }
+  };
+
+  const fetchWarehouses = async () => {
+    try {
+      const response = await fetch('/api/warehouses', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setWarehouses(data.warehouses);
+      }
+    } catch (error) {
+      console.error('Error fetching warehouses:', error);
     }
   };
 
@@ -353,6 +372,10 @@ export default function EditProductPage() {
     setFormData(prev => ({ ...prev, description: value }));
   };
 
+  const handleShippingMethodsChange = (methods: ShippingMethod[]) => {
+    setFormData(prev => ({ ...prev, shipping_methods: methods }));
+  };
+
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name } = e.target;
     
@@ -594,6 +617,14 @@ export default function EditProductPage() {
               </div>
               <p className="mt-1 text-xs text-gray-500">Leave empty for no tax (default: 0%)</p>
               {errors.tax_percentage && <p className="mt-1 text-sm text-red-600">{errors.tax_percentage}</p>}
+            </div>
+
+            <div className="sm:col-span-2">
+              <ShippingMethodsEditor
+                value={formData.shipping_methods}
+                onChange={handleShippingMethodsChange}
+                warehouses={warehouses}
+              />
             </div>
 
             <div>
