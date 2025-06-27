@@ -22,6 +22,7 @@ export default function EditProductPage() {
     data_sheet_url: '',
     category_id: '',
     sku: '',
+    tax_percentage: '',
     is_active: true
   });
   const [categories, setCategories] = useState<ProductCategory[]>([]);
@@ -67,6 +68,7 @@ export default function EditProductPage() {
         data_sheet_url: data.product.data_sheet_url || '',
         category_id: data.product.category_id || '',
         sku: data.product.sku || '',
+        tax_percentage: data.product.tax_percentage?.toString() || '',
         is_active: data.product.is_active
       });
     } catch (error) {
@@ -296,6 +298,13 @@ export default function EditProductPage() {
       }
     }
 
+    if (formData.tax_percentage.trim()) {
+      const taxPercentage = parseFloat(formData.tax_percentage);
+      if (isNaN(taxPercentage) || taxPercentage < 0 || taxPercentage > 100) {
+        newErrors.tax_percentage = 'Tax percentage must be a valid number between 0 and 100';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -350,6 +359,17 @@ export default function EditProductPage() {
           delete newErrors.price;
         }
       }
+    } else if (name === 'tax_percentage') {
+      if (formData.tax_percentage.trim()) {
+        const taxPercentage = parseFloat(formData.tax_percentage);
+        if (isNaN(taxPercentage) || taxPercentage < 0 || taxPercentage > 100) {
+          newErrors.tax_percentage = 'Tax percentage must be a valid number between 0 and 100';
+        } else {
+          delete newErrors.tax_percentage;
+        }
+      } else {
+        delete newErrors.tax_percentage;
+      }
     }
     
     setErrors(newErrors);
@@ -369,6 +389,7 @@ export default function EditProductPage() {
         body: JSON.stringify({
           ...formData,
           price: parseFloat(formData.price),
+          tax_percentage: formData.tax_percentage ? parseFloat(formData.tax_percentage) : 0,
           category_id: formData.category_id || null,
           image_url: formData.image_url || null,
           data_sheet_url: formData.data_sheet_url || null
@@ -494,6 +515,31 @@ export default function EditProductPage() {
                 />
               </div>
               {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Tax Percentage</label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <input
+                  type="number"
+                  name="tax_percentage"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={formData.tax_percentage}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`block w-full pl-3 pr-12 py-2 border rounded-md ${
+                    errors.tax_percentage ? 'border-red-300' : 'border-gray-300'
+                  } focus:outline-none focus:ring-green-500 focus:border-green-500`}
+                  placeholder="0.00"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">%</span>
+                </div>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Leave empty for no tax (default: 0%)</p>
+              {errors.tax_percentage && <p className="mt-1 text-sm text-red-600">{errors.tax_percentage}</p>}
             </div>
 
             <div>

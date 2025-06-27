@@ -35,6 +35,7 @@ interface CartContextType {
   getTotalPrice: () => number;
   getDiscountedPrice: (price: number) => number;
   getTotalDiscount: () => number;
+  getTotalTax: () => number;
   applyAffiliateCode: (affiliateCode: AffiliateCode) => void;
   removeAffiliateCode: () => void;
 }
@@ -128,7 +129,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedCart) {
       try {
         const cartItems = JSON.parse(savedCart);
-        dispatch({ type: 'LOAD_CART', payload: cartItems });
+        // Ensure all cart items have the product_tax_percentage field (for backward compatibility)
+        const migratedCartItems = cartItems.map((item: any) => ({
+          ...item,
+          product_tax_percentage: item.product_tax_percentage ?? 0
+        }));
+        dispatch({ type: 'LOAD_CART', payload: migratedCartItems });
       } catch (_error) {
         console.error('Error loading cart from localStorage:', _error);
       }
@@ -222,6 +228,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 0);
   };
 
+  const getTotalTax = () => {
+    return state.items.reduce((total, item) => {
+      if (item.product_tax_percentage > 0) {
+        const itemPrice = getDiscountedPrice(item.product_price) * item.quantity;
+        const itemTax = (itemPrice * item.product_tax_percentage) / 100;
+        return total + itemTax;
+      }
+      return total;
+    }, 0);
+  };
+
   const applyAffiliateCode = (affiliateCode: AffiliateCode) => {
     dispatch({ type: 'APPLY_AFFILIATE_CODE', payload: affiliateCode });
   };
@@ -243,6 +260,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getTotalPrice,
     getDiscountedPrice,
     getTotalDiscount,
+    getTotalTax,
     applyAffiliateCode,
     removeAffiliateCode,
   };

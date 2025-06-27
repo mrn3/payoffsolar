@@ -77,6 +77,15 @@ export async function PUT(
       }
     }
 
+    // Validate tax percentage if provided
+    if (data.tax_percentage !== undefined && data.tax_percentage !== null) {
+      const taxPercentage = parseFloat(data.tax_percentage);
+      if (isNaN(taxPercentage) || taxPercentage < 0 || taxPercentage > 100) {
+        return NextResponse.json({
+          error: 'Tax percentage must be a valid number between 0 and 100' }, { status: 400 });
+      }
+    }
+
     // Validate image URL if provided
     if (data.image_url && data.image_url.trim()) {
       try {
@@ -91,6 +100,7 @@ export async function PUT(
       name: data.name,
       description: data.description,
       price: data.price !== undefined ? parseFloat(data.price) : undefined,
+      tax_percentage: data.tax_percentage !== undefined ? parseFloat(data.tax_percentage) : undefined,
       image_url: data.image_url,
       data_sheet_url: data.data_sheet_url,
       category_id: data.category_id,

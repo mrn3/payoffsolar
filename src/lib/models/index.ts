@@ -266,6 +266,7 @@ export interface Product {
   data_sheet_url?: string;
   category_id?: string;
   sku: string;
+  tax_percentage: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -434,8 +435,8 @@ export const ProductModel = {
 
   async create(data: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     await executeSingle(
-      'INSERT INTO products (name, description, price, image_url, data_sheet_url, category_id, sku, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [data.name, data.description, data.price, data.image_url || null, data.data_sheet_url || null, data.category_id || null, data.sku, data.is_active]
+      'INSERT INTO products (name, description, price, image_url, data_sheet_url, category_id, sku, tax_percentage, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.name, data.description, data.price, data.image_url || null, data.data_sheet_url || null, data.category_id || null, data.sku, data.tax_percentage || 0, data.is_active]
     );
 
     const product = await getOne<{ id: string }>(
@@ -476,6 +477,10 @@ export const ProductModel = {
     if (data.sku !== undefined) {
       fields.push('sku = ?');
       values.push(data.sku);
+    }
+    if (data.tax_percentage !== undefined) {
+      fields.push('tax_percentage = ?');
+      values.push(data.tax_percentage);
     }
     if (data.is_active !== undefined) {
       fields.push('is_active = ?');
@@ -1367,6 +1372,7 @@ export interface CartItem {
   product_sku: string;
   product_price: number;
   product_image_url?: string;
+  product_tax_percentage: number;
   quantity: number;
 }
 

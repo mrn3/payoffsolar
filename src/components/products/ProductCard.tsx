@@ -18,7 +18,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     }).format(price);
   };
 
-  const handleAddToCart = (_e: React.MouseEvent) => {
+  const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation when clicking the button
     addItem({
       product_id: product.id,
@@ -26,6 +26,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       product_sku: product.sku,
       product_price: product.price,
       product_image_url: product.first_image_url,
+      product_tax_percentage: product.tax_percentage || 0,
     });
   };
 

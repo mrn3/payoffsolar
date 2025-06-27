@@ -102,6 +102,7 @@ export default function ProductDetailPage() {
         product_sku: product.sku,
         product_price: product.price,
         product_image_url: product.images?.[0]?.image_url,
+        product_tax_percentage: product.tax_percentage || 0,
       }, quantity);
       toast.success(`Added ${quantity} ${product.name} to cart`);
     }

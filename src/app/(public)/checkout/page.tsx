@@ -20,7 +20,7 @@ interface CheckoutFormData {
 }
 
 export default function CheckoutPage() {
-  const { state, getTotalPrice, getTotalDiscount } = useCart();
+  const { state, getTotalPrice, getTotalDiscount, getTotalTax } = useCart();
   const [formData, setFormData] = useState<CheckoutFormData>({
     email: '',
     firstName: '',
@@ -52,21 +52,16 @@ export default function CheckoutPage() {
     }
   };
 
-  const calculateTax = () => {
-    // Simple tax calculation - 8.5% for demo
-    return getTotalPrice() * 0.085;
-  };
-
   const calculateTotal = () => {
-    return getTotalPrice() + calculateShipping() + calculateTax();
+    return getTotalPrice() + calculateShipping() + getTotalTax();
   };
 
-  const handleInputChange = (_e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (_e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Implement Stripe payment processing
     console.log('Checkout form submitted:', formData);
@@ -376,10 +371,12 @@ export default function CheckoutPage() {
                 <span>Shipping</span>
                 <span>{formatPrice(calculateShipping())}</span>
               </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Tax</span>
-                <span>{formatPrice(calculateTax())}</span>
-              </div>
+              {getTotalTax() > 0 && (
+                <div className="flex justify-between text-gray-600">
+                  <span>Tax</span>
+                  <span>{formatPrice(getTotalTax())}</span>
+                </div>
+              )}
               <div className="border-t pt-3">
                 <div className="flex justify-between text-lg font-semibold text-gray-900">
                   <span>Total</span>
