@@ -211,26 +211,28 @@ export default function AffiliateCodesPage() {
                         {code.expires_at ? formatDate(code.expires_at) : 'Never'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <Link
-                        href={`/dashboard/affiliate-codes/${code.id}`}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        <FaEye className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        href={`/dashboard/affiliate-codes/${code.id}/edit`}
-                        className="text-green-600 hover:text-green-900"
-                      >
-                        <FaEdit className="h-4 w-4" />
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(code.id, code.code)}
-                        disabled={deleteLoading === code.id}
-                        className="text-red-600 hover:text-red-900 disabled:opacity-50"
-                      >
-                        <FaTrash className="h-4 w-4" />
-                      </button>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <Link
+                          href={`/dashboard/affiliate-codes/${code.id}`}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          <FaEye className="h-4 w-4" />
+                        </Link>
+                        <Link
+                          href={`/dashboard/affiliate-codes/${code.id}/edit`}
+                          className="text-green-600 hover:text-green-900"
+                        >
+                          <FaEdit className="h-4 w-4" />
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(code.id, code.code)}
+                          disabled={deleteLoading === code.id}
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                        >
+                          <FaTrash className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
