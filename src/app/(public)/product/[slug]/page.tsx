@@ -237,20 +237,41 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Data Sheet */}
+              {/* Data Sheet Section */}
               {product.data_sheet_url && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Documentation</h3>
-                  <a
-                    href={product.data_sheet_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-green-600 hover:text-green-700 transition-colors"
-                  >
-                    <FaFilePdf className="h-4 w-4 mr-2" />
-                    View Data Sheet
-                    <FaDownload className="h-3 w-3 ml-1" />
-                  </a>
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Documentation</h3>
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <FaFilePdf className="text-red-500 text-xl" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Product Data Sheet
+                          </p>
+                          <p className="text-xs text-gray-500">PDF Document</p>
+                        </div>
+                      </div>
+                      <a
+                        href={product.data_sheet_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                      >
+                        <FaDownload className="mr-2 h-4 w-4" />
+                        Download
+                      </a>
+                    </div>
+
+                    {/* PDF Viewer */}
+                    <div className="w-full h-96 border border-gray-300 rounded-md overflow-hidden">
+                      <iframe
+                        src={`${product.data_sheet_url}#toolbar=1&navpanes=0&scrollbar=1`}
+                        className="w-full h-full"
+                        title="Product Data Sheet"
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -258,18 +279,22 @@ export default function ProductDetailPage() {
               <div className="border-t pt-6">
                 <div className="flex items-center space-x-4 mb-4">
                   <label className="text-sm font-medium text-gray-700">Quantity:</label>
-                  <div className="flex items-center border rounded-md">
+                  <div className="flex items-center border border-gray-300 rounded-md">
                     <button
                       onClick={() => handleQuantityChange(-1)}
-                      className="p-2 hover:bg-gray-100 transition-colors"
+                      className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
                       disabled={quantity <= 1}
+                      aria-label="Decrease quantity"
                     >
                       <FaMinus className="h-3 w-3" />
                     </button>
-                    <span className="px-4 py-2 border-x">{quantity}</span>
+                    <span className="px-4 py-2 text-gray-900 font-medium min-w-[3rem] text-center border-x">
+                      {quantity}
+                    </span>
                     <button
                       onClick={() => handleQuantityChange(1)}
-                      className="p-2 hover:bg-gray-100 transition-colors"
+                      className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                      aria-label="Increase quantity"
                     >
                       <FaPlus className="h-3 w-3" />
                     </button>
