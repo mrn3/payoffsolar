@@ -166,7 +166,7 @@ export class ShippingService {
 
     return {
       product,
-      hasCustomMethods,
+      hasCustomMethods: hasCustomMethods || false,
       methods
     };
   }
