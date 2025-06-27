@@ -7,6 +7,10 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import { trackBeginCheckout, formatGAItem } from '@/components/GoogleAnalytics';
 import toast from 'react-hot-toast';
 import { FaArrowLeft, FaImage, FaLock, FaTag } from 'react-icons/fa';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import { STRIPE_CONFIG } from '@/lib/stripe';
+import PaymentForm from '@/components/checkout/PaymentForm';
 
 interface CheckoutFormData {
   email: string;
@@ -19,6 +23,9 @@ interface CheckoutFormData {
   zip: string;
   shippingMethod: string;
 }
+
+// Initialize Stripe
+const stripePromise = loadStripe(STRIPE_CONFIG.publishableKey);
 
 export default function CheckoutPage() {
   const { state, getTotalPrice, getTotalDiscount, getTotalTax } = useCart();
@@ -76,19 +83,42 @@ export default function CheckoutPage() {
     return getTotalPrice() + calculateShipping() + getTotalTax();
   };
 
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.email) errors.email = 'Email is required';
+    if (!formData.firstName) errors.firstName = 'First name is required';
+    if (!formData.lastName) errors.lastName = 'Last name is required';
+    if (!formData.address) errors.address = 'Address is required';
+    if (!formData.city) errors.city = 'City is required';
+    if (!formData.state) errors.state = 'State is required';
+    if (!formData.zip) errors.zip = 'ZIP code is required';
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Clear error when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement Stripe payment processing
-    console.log('Checkout form submitted:', formData);
-    toast('Checkout functionality will be implemented with Stripe integration', {
-      icon: '🚧',
-      duration: 5000,
-    });
+  const handleValidationError = (message: string) => {
+    // Scroll to top to show validation errors
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    validateForm(); // This will set the form errors for display
+  };
+
+  const handlePaymentSuccess = (paymentIntentId: string) => {
+    // Redirect to success page
+    window.location.href = `/checkout/success?payment_intent=${paymentIntentId}`;
   };
 
   if (state.items.length === 0) {
@@ -133,7 +163,7 @@ export default function CheckoutPage() {
               <h1 className="text-2xl font-bold text-gray-900">Secure Checkout</h1>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-6">
               {/* Contact Information */}
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
@@ -149,8 +179,13 @@ export default function CheckoutPage() {
                       required
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                        formErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
                     />
+                    {formErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
@@ -176,8 +211,13 @@ export default function CheckoutPage() {
                       required
                       value={formData.firstName}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                        formErrors.firstName ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
                     />
+                    {formErrors.firstName && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.firstName}</p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -190,8 +230,13 @@ export default function CheckoutPage() {
                       required
                       value={formData.lastName}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                        formErrors.lastName ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
                     />
+                    {formErrors.lastName && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.lastName}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -211,8 +256,13 @@ export default function CheckoutPage() {
                       required
                       value={formData.address}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                        formErrors.address ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
                     />
+                    {formErrors.address && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.address}</p>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -226,8 +276,13 @@ export default function CheckoutPage() {
                         required
                         value={formData.city}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                          formErrors.city ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                        }`}
                       />
+                      {formErrors.city && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.city}</p>
+                      )}
                     </div>
                     <div>
                       <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
@@ -240,8 +295,13 @@ export default function CheckoutPage() {
                         required
                         value={formData.state}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                          formErrors.state ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                        }`}
                       />
+                      {formErrors.state && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.state}</p>
+                      )}
                     </div>
                     <div>
                       <label htmlFor="zip" className="block text-sm font-medium text-gray-700 mb-1">
@@ -254,8 +314,13 @@ export default function CheckoutPage() {
                         required
                         value={formData.zip}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                          formErrors.zip ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                        }`}
                       />
+                      {formErrors.zip && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.zip}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -304,22 +369,19 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Payment Section Placeholder */}
+              {/* Payment Section */}
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment Information</h2>
-                <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <FaLock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600">Stripe payment form will be integrated here</p>
-                </div>
+                <Elements stripe={stripePromise}>
+                  <PaymentForm
+                    customerInfo={formData}
+                    shippingMethod={formData.shippingMethod}
+                    onSuccess={handlePaymentSuccess}
+                    onValidationError={handleValidationError}
+                  />
+                </Elements>
               </div>
-
-              <button
-                type="submit"
-                className="w-full bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 transition-colors font-medium"
-              >
-                Complete Order
-              </button>
-            </form>
+            </div>
           </div>
 
           {/* Order Summary */}
