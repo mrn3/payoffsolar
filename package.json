@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 3002",
-    "build": "NODE_OPTIONS='--max-old-space-size=4096' next build",
+    "build": "NODE_OPTIONS='--max-old-space-size=768' next build",
+    "build-1gb": "NODE_OPTIONS='--max-old-space-size=1024' next build",
+    "build-low-memory": "NODE_OPTIONS='--max-old-space-size=640' next build",
     "start": "next start",
     "lint": "next lint",
     "setup-db": "node scripts/setup-db.js",

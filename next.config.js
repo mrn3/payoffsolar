@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+
+  // Disable source maps in production to save memory
+  productionBrowserSourceMaps: false,
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
@@ -11,6 +14,10 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   webpack: (config, { isServer }) => {
+    // Reduce memory usage during compilation
+    config.parallelism = 1;
+    config.cache = false;
+
     // Fixes npm packages that depend on Node.js modules
     if (!isServer) {
       config.resolve.fallback = {
