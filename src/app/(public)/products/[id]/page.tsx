@@ -302,21 +302,7 @@ export default function ProductDetailPage() {
                   <span>Add to Cart</span>
                 </button>
 
-                {/* Secondary Actions */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Link
-                    href="/contact"
-                    className="bg-white text-green-500 border border-green-500 px-4 py-2 rounded-md hover:bg-green-50 transition-colors text-center block font-medium"
-                  >
-                    Get Quote
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors text-center block font-medium"
-                  >
-                    Contact Us
-                  </Link>
-                </div>
+
               </div>
 
               {/* Product Status */}
