@@ -30,9 +30,12 @@ export default function ProductCard({ product }: ProductCardProps) {
     });
   };
 
+  // Use slug-based URL if available, fallback to ID-based URL
+  const productUrl = product.slug ? `/product/${product.slug}` : `/products/${product.id}`;
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <Link href={`/products/${product.id}`} className="block">
+      <Link href={productUrl} className="block">
         <div className="aspect-w-16 aspect-h-9 bg-gray-200">
           {product.first_image_url ? (
             <img
@@ -88,7 +91,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
         <div className="flex space-x-2">
           <Link
-            href={`/products/${product.id}`}
+            href={productUrl}
             className="flex-1 bg-gray-100 text-gray-900 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors text-center block font-medium"
           >
             View Details

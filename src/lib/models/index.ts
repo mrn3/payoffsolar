@@ -1,4 +1,5 @@
 import {getOne, executeSingle, executeQuery} from '../mysql/connection';
+import { generateProductSlug } from '@/lib/utils/slug';
 
 // Contact model
 export interface Contact {
@@ -266,6 +267,7 @@ export interface Product {
   data_sheet_url?: string;
   category_id?: string;
   sku: string;
+  slug?: string;
   tax_percentage: number;
   is_active: boolean;
   created_at: string;
@@ -433,10 +435,17 @@ export const ProductModel = {
     return getOne<Product>('SELECT * FROM products WHERE sku = ?', [sku]);
   },
 
+  async getBySlug(slug: string): Promise<Product | null> {
+    return getOne<Product>('SELECT * FROM products WHERE slug = ? AND is_active = TRUE', [slug]);
+  },
+
   async create(data: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    // Generate slug if not provided
+    const slug = data.slug || generateProductSlug(data.name, data.sku);
+
     await executeSingle(
-      'INSERT INTO products (name, description, price, image_url, data_sheet_url, category_id, sku, tax_percentage, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [data.name, data.description, data.price, data.image_url || null, data.data_sheet_url || null, data.category_id || null, data.sku, data.tax_percentage || 0, data.is_active]
+      'INSERT INTO products (name, description, price, image_url, data_sheet_url, category_id, sku, slug, tax_percentage, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.name, data.description, data.price, data.image_url || null, data.data_sheet_url || null, data.category_id || null, data.sku, slug, data.tax_percentage || 0, data.is_active]
     );
 
     const product = await getOne<{ id: string }>(
@@ -477,6 +486,10 @@ export const ProductModel = {
     if (data.sku !== undefined) {
       fields.push('sku = ?');
       values.push(data.sku);
+    }
+    if (data.slug !== undefined) {
+      fields.push('slug = ?');
+      values.push(data.slug);
     }
     if (data.tax_percentage !== undefined) {
       fields.push('tax_percentage = ?');

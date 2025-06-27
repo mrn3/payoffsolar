@@ -86,6 +86,22 @@ export async function PUT(
       }
     }
 
+    // Validate slug if provided
+    if (data.slug !== undefined && data.slug.trim()) {
+      const slugRegex = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+      if (!slugRegex.test(data.slug)) {
+        return NextResponse.json({
+          error: 'Slug can only contain lowercase letters, numbers, and hyphens (no spaces or special characters)' }, { status: 400 });
+      }
+
+      // Check if slug already exists for a different product
+      const existingSlugProduct = await ProductModel.getBySlug(data.slug);
+      if (existingSlugProduct && existingSlugProduct.id !== id) {
+        return NextResponse.json({
+          error: 'A product with this slug already exists' }, { status: 400 });
+      }
+    }
+
     // Validate image URL if provided
     if (data.image_url && data.image_url.trim()) {
       try {
@@ -105,6 +121,7 @@ export async function PUT(
       data_sheet_url: data.data_sheet_url,
       category_id: data.category_id,
       sku: data.sku,
+      slug: data.slug,
       is_active: data.is_active
     });
 

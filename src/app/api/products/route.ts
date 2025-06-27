@@ -134,6 +134,7 @@ export async function POST(request: NextRequest) {
       data_sheet_url: data.data_sheet_url || null,
       category_id: data.category_id || null,
       sku: data.sku,
+      slug: data.slug,
       is_active: data.is_active !== undefined ? data.is_active : true
     });
 

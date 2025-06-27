@@ -6,6 +6,7 @@ import { Product, ProductImage, ProductCategory, ProductCostBreakdownWithCategor
 import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
 import PDFUpload from '@/components/ui/PDFUpload';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import { generateProductSlug } from '@/lib/utils/slug';
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
 
 export default function EditProductPage() {
@@ -22,6 +23,7 @@ export default function EditProductPage() {
     data_sheet_url: '',
     category_id: '',
     sku: '',
+    slug: '',
     tax_percentage: '',
     is_active: true
   });
@@ -68,6 +70,7 @@ export default function EditProductPage() {
         data_sheet_url: data.product.data_sheet_url || '',
         category_id: data.product.category_id || '',
         sku: data.product.sku || '',
+        slug: data.product.slug || '',
         tax_percentage: data.product.tax_percentage?.toString() || '',
         is_active: data.product.is_active
       });
@@ -289,6 +292,13 @@ export default function EditProductPage() {
       }
     }
 
+    if (formData.slug.trim()) {
+      const slugRegex = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+      if (!slugRegex.test(formData.slug)) {
+        newErrors.slug = 'Slug can only contain lowercase letters, numbers, and hyphens (no spaces or special characters)';
+      }
+    }
+
     if (!formData.price.trim()) {
       newErrors.price = 'Price is required';
     } else {
@@ -316,7 +326,21 @@ export default function EditProductPage() {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData(prev => {
+        const newData = { ...prev, [name]: value };
+
+        // Auto-generate slug when name or SKU changes (only if slug is currently auto-generated)
+        if ((name === 'name' || name === 'sku') && product) {
+          const currentAutoSlug = generateProductSlug(prev.name, prev.sku);
+          if (prev.slug === currentAutoSlug || !prev.slug) {
+            const newName = name === 'name' ? value : prev.name;
+            const newSku = name === 'sku' ? value : prev.sku;
+            newData.slug = generateProductSlug(newName, newSku);
+          }
+        }
+
+        return newData;
+      });
     }
 
     // Clear error when user starts typing
@@ -347,6 +371,17 @@ export default function EditProductPage() {
         } else {
           delete newErrors.sku;
         }
+      }
+    } else if (name === 'slug') {
+      if (formData.slug.trim()) {
+        const slugRegex = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+        if (!slugRegex.test(formData.slug)) {
+          newErrors.slug = 'Slug can only contain lowercase letters, numbers, and hyphens (no spaces or special characters)';
+        } else {
+          delete newErrors.slug;
+        }
+      } else {
+        delete newErrors.slug;
       }
     } else if (name === 'price') {
       if (!formData.price.trim()) {
@@ -492,6 +527,25 @@ export default function EditProductPage() {
                 placeholder="e.g., SP-001, SP*001"
               />
               {errors.sku && <p className="mt-1 text-sm text-red-600">{errors.sku}</p>}
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">URL Slug</label>
+              <input
+                type="text"
+                name="slug"
+                value={formData.slug}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
+                  errors.slug ? 'border-red-300' : 'border-gray-300'
+                } focus:outline-none focus:ring-green-500 focus:border-green-500`}
+                placeholder="url-friendly-slug"
+              />
+              {errors.slug && <p className="mt-1 text-sm text-red-600">{errors.slug}</p>}
+              <p className="mt-1 text-sm text-gray-500">
+                Used in SEO-friendly URLs. Auto-generated from product name and SKU.
+              </p>
             </div>
 
             <div>
