@@ -8,7 +8,9 @@
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 const path = require('path');
+// Load environment variables from .env.local first, then .env as fallback
 require('dotenv').config({ path: '.env.local' });
+require('dotenv').config({ path: '.env' });
 
 async function runSQLMigration(connection, migrationPath) {
   const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
