@@ -72,7 +72,9 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
       { href: '/dashboard/warehouses', icon: <FaBuilding className="mr-3 h-5 w-5" />, label: 'Warehouses' },
       { href: '/dashboard/cost-categories', icon: <FaTags className="mr-3 h-5 w-5" />, label: 'Cost Categories' },
       { href: '/dashboard/cms', icon: <FaEdit className="mr-3 h-5 w-5" />, label: 'CMS' },
+      { href: '/dashboard/settings', icon: <FaCog className="mr-3 h-5 w-5" />, label: 'Settings' },
       { href: '/dashboard/settings/platforms', icon: <FaCog className="mr-3 h-5 w-5" />, label: 'Platform Settings' },
+      { href: '/dashboard/settings/analytics-test', icon: <FaCog className="mr-3 h-5 w-5" />, label: 'Analytics Test' },
     ];
   };
 

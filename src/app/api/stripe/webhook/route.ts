@@ -43,11 +43,25 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Track purchase in Google Analytics
+        try {
+          // Note: This runs server-side, so we can't directly call gtag
+          // In a production app, you might want to queue this for client-side tracking
+          // or use Google Analytics Measurement Protocol for server-side tracking
+          console.log('Purchase completed for tracking:', {
+            transaction_id: paymentIntent.id,
+            value: paymentIntent.amount / 100, // Convert cents to dollars
+            currency: paymentIntent.currency.toUpperCase(),
+            customer_email: paymentIntent.metadata.customer_email
+          });
+        } catch (error) {
+          console.error('Error logging purchase for analytics:', error);
+        }
+
         // Here you could also:
         // - Create an order record in your database
         // - Send confirmation emails
         // - Update inventory
-        // - Log analytics events
         break;
 
       case 'payment_intent.payment_failed':

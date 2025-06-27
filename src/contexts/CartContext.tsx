@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { CartItem, AffiliateCode } from '@/lib/models';
+import { trackAddToCart, trackRemoveFromCart, formatGAItem } from '@/components/GoogleAnalytics';
 
 interface CartState {
   items: CartItem[];
@@ -170,10 +171,45 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       type: 'ADD_ITEM',
       payload: { ...item, quantity }
     });
+
+    // Track add to cart event
+    try {
+      const gaItem = formatGAItem({
+        id: item.product_id,
+        sku: item.product_sku,
+        name: item.product_name,
+        price: item.product_price,
+        category_name: 'Product'
+      }, quantity);
+
+      trackAddToCart('USD', item.product_price * quantity, [gaItem]);
+    } catch (error) {
+      console.error('Error tracking add to cart:', error);
+    }
   };
 
   const removeItem = (productId: string) => {
+    // Find the item being removed for tracking
+    const itemToRemove = state.items.find(item => item.product_id === productId);
+
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
+
+    // Track remove from cart event
+    if (itemToRemove) {
+      try {
+        const gaItem = formatGAItem({
+          id: itemToRemove.product_id,
+          sku: itemToRemove.product_sku,
+          name: itemToRemove.product_name,
+          price: itemToRemove.product_price,
+          category_name: 'Product'
+        }, itemToRemove.quantity);
+
+        trackRemoveFromCart('USD', itemToRemove.product_price * itemToRemove.quantity, [gaItem]);
+      } catch (error) {
+        console.error('Error tracking remove from cart:', error);
+      }
+    }
   };
 
   const updateQuantity = (productId: string, quantity: number) => {

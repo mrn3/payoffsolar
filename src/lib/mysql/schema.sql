@@ -445,6 +445,18 @@ INSERT IGNORE INTO roles (id, name, description) VALUES
 ('admin-role-id', 'admin', 'Administrator with full access'),
 ('contact-role-id', 'contact', 'Contact with limited access');
 
+-- Create site settings table
+CREATE TABLE IF NOT EXISTS site_settings (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  setting_key VARCHAR(100) NOT NULL UNIQUE,
+  setting_value TEXT,
+  setting_type ENUM('string', 'number', 'boolean', 'json') DEFAULT 'string',
+  description TEXT,
+  is_public BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Insert default listing platforms
 INSERT IGNORE INTO listing_platforms (id, name, display_name, api_endpoint, requires_auth, is_active, configuration) VALUES
 ('ebay-platform-id', 'ebay', 'eBay', 'https://api.ebay.com/ws/api.dll', TRUE, TRUE, '{"sandbox_endpoint": "https://api.sandbox.ebay.com/ws/api.dll", "max_images": 12, "max_title_length": 80, "max_description_length": 500000}'),
@@ -454,6 +466,13 @@ INSERT IGNORE INTO listing_platforms (id, name, display_name, api_endpoint, requ
 ('offerup-platform-id', 'offerup', 'OfferUp', 'https://api.offerup.com', TRUE, TRUE, '{"max_images": 12, "max_title_length": 80, "max_description_length": 1000}'),
 ('nextdoor-platform-id', 'nextdoor', 'Nextdoor', 'https://api.nextdoor.com', TRUE, TRUE, '{"max_images": 10, "max_title_length": 75, "max_description_length": 1200}'),
 ('craigslist-platform-id', 'craigslist', 'Craigslist', NULL, FALSE, TRUE, '{"max_images": 8, "max_title_length": 70, "max_description_length": 4000, "requires_manual_posting": true}');
+
+-- Insert default site settings
+INSERT IGNORE INTO site_settings (setting_key, setting_value, setting_type, description, is_public) VALUES
+('google_analytics_id', '', 'string', 'Google Analytics Measurement ID (e.g., G-XXXXXXXXXX)', TRUE),
+('site_name', 'Payoff Solar', 'string', 'Site name displayed in browser title and headers', TRUE),
+('contact_phone', '(801) 448-6396', 'string', 'Primary contact phone number', TRUE),
+('contact_email', 'info@payoffsolar.com', 'string', 'Primary contact email address', TRUE);
 
 -- Insert default listing templates
 INSERT IGNORE INTO listing_templates (id, platform_id, name, title_template, description_template, category_mapping, price_adjustment_type, price_adjustment_value, is_default, is_active) VALUES

@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import { trackBeginCheckout, formatGAItem } from '@/components/GoogleAnalytics';
 import toast from 'react-hot-toast';
 import { FaArrowLeft, FaImage, FaLock, FaTag } from 'react-icons/fa';
 
@@ -32,6 +33,25 @@ export default function CheckoutPage() {
     zip: '',
     shippingMethod: 'standard',
   });
+
+  // Track begin checkout event when page loads
+  useEffect(() => {
+    if (state.items.length > 0) {
+      try {
+        const items = state.items.map(item => formatGAItem({
+          id: item.product_id,
+          sku: item.product_sku,
+          name: item.product_name,
+          price: item.product_price,
+          category_name: 'Product'
+        }, item.quantity));
+
+        trackBeginCheckout('USD', getTotalPrice(), items);
+      } catch (error) {
+        console.error('Error tracking begin checkout:', error);
+      }
+    }
+  }, [state.items, getTotalPrice]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {

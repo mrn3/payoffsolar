@@ -8,6 +8,7 @@ import ImageCarousel from '@/components/ui/ImageCarousel';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import RelatedProducts from '@/components/products/RelatedProducts';
 import { useCart } from '@/contexts/CartContext';
+import { trackViewItem, formatGAItem } from '@/components/GoogleAnalytics';
 import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaSpinner, FaFilePdf, FaDownload, FaTag} from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
@@ -79,6 +80,21 @@ export default function ProductDetailPage() {
 
       const productData = await productResponse.json();
       setProduct(productData.product);
+
+      // Track view item event
+      try {
+        const gaItem = formatGAItem({
+          id: productData.product.id,
+          sku: productData.product.sku,
+          name: productData.product.name,
+          price: productData.product.price,
+          category_name: productData.product.category_name || 'Product'
+        }, 1);
+
+        trackViewItem('USD', productData.product.price, [gaItem]);
+      } catch (error) {
+        console.error('Error tracking view item:', error);
+      }
     } catch (_error) {
       console.error('Error fetching product:', _error);
       setError('Failed to load product');

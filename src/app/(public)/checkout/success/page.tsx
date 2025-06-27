@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
+import { trackPurchase, formatGAItem } from '@/components/GoogleAnalytics';
 import {FaExclamationTriangle, FaCheckCircle, FaSpinner} from 'react-icons/fa';
 
 // Force dynamic rendering
@@ -25,7 +26,7 @@ interface OrderData {
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
-  const { clearCart } = useCart();
+  const { state, clearCart } = useCart();
   const [order] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,9 +35,25 @@ function CheckoutSuccessContent() {
 
   useEffect(() => {
     if (paymentIntentId) {
+      // Track purchase completion
+      try {
+        const items = state.items.map(item => formatGAItem({
+          id: item.product_id,
+          sku: item.product_sku,
+          name: item.product_name,
+          price: item.product_price,
+          category_name: 'Product'
+        }, item.quantity));
+
+        const totalValue = state.items.reduce((sum, item) => sum + (item.product_price * item.quantity), 0);
+        trackPurchase(paymentIntentId, totalValue, 'USD', items);
+      } catch (error) {
+        console.error('Error tracking purchase:', error);
+      }
+
       // Clear the cart since the order was successful
       clearCart();
-      
+
       // In a real implementation, you would fetch the order details
       // For now, we&apos;ll show a generic success message
       setLoading(false);
@@ -44,7 +61,7 @@ function CheckoutSuccessContent() {
       setError('No payment information found');
       setLoading(false);
     }
-  }, [paymentIntentId, clearCart]);
+  }, [paymentIntentId, clearCart, state.items]);
 
   if (loading) {
     return (

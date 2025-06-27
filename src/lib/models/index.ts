@@ -2392,6 +2392,103 @@ export interface AffiliateCode {
   updated_at: string;
 }
 
+// Site Settings model
+export interface SiteSetting {
+  id: string;
+  setting_key: string;
+  setting_value: string | null;
+  setting_type: 'string' | 'number' | 'boolean' | 'json';
+  description: string | null;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const SiteSettingsModel = {
+  async getAll(): Promise<SiteSetting[]> {
+    return executeQuery<SiteSetting>('SELECT * FROM site_settings ORDER BY setting_key');
+  },
+
+  async getPublic(): Promise<SiteSetting[]> {
+    return executeQuery<SiteSetting>('SELECT * FROM site_settings WHERE is_public = TRUE ORDER BY setting_key');
+  },
+
+  async getByKey(key: string): Promise<SiteSetting | null> {
+    return getOne<SiteSetting>('SELECT * FROM site_settings WHERE setting_key = ?', [key]);
+  },
+
+  async getValue(key: string): Promise<string | null> {
+    const setting = await getOne<{ setting_value: string | null }>(
+      'SELECT setting_value FROM site_settings WHERE setting_key = ?',
+      [key]
+    );
+    return setting?.setting_value || null;
+  },
+
+  async setValue(key: string, value: string | null): Promise<void> {
+    const existing = await this.getByKey(key);
+    if (existing) {
+      await executeSingle(
+        'UPDATE site_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ?',
+        [value, key]
+      );
+    } else {
+      await executeSingle(
+        'INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?)',
+        [key, value]
+      );
+    }
+  },
+
+  async create(data: Omit<SiteSetting, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO site_settings (setting_key, setting_value, setting_type, description, is_public) VALUES (?, ?, ?, ?, ?)',
+      [data.setting_key, data.setting_value || null, data.setting_type, data.description || null, data.is_public]
+    );
+
+    const setting = await getOne<{ id: string }>(
+      'SELECT id FROM site_settings WHERE setting_key = ? ORDER BY created_at DESC LIMIT 1',
+      [data.setting_key]
+    );
+    return setting!.id;
+  },
+
+  async update(key: string, data: Partial<Omit<SiteSetting, 'id' | 'setting_key' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.setting_value !== undefined) {
+      fields.push('setting_value = ?');
+      values.push(data.setting_value);
+    }
+    if (data.setting_type !== undefined) {
+      fields.push('setting_type = ?');
+      values.push(data.setting_type);
+    }
+    if (data.description !== undefined) {
+      fields.push('description = ?');
+      values.push(data.description);
+    }
+    if (data.is_public !== undefined) {
+      fields.push('is_public = ?');
+      values.push(data.is_public);
+    }
+
+    if (fields.length > 0) {
+      fields.push('updated_at = CURRENT_TIMESTAMP');
+      values.push(key);
+      await executeSingle(
+        `UPDATE site_settings SET ${fields.join(', ')} WHERE setting_key = ?`,
+        values
+      );
+    }
+  },
+
+  async delete(key: string): Promise<void> {
+    await executeSingle('DELETE FROM site_settings WHERE setting_key = ?', [key]);
+  }
+};
+
 export const AffiliateCodeModel = {
   async getAll(limit = 50, offset = 0): Promise<AffiliateCode[]> {
     return executeQuery<AffiliateCode>(
