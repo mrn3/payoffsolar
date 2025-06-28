@@ -17,8 +17,12 @@ async function getStats(userId?: string, userRole?: string) {
       const orderCount = await OrderModel.getCountByUser(userId);
       console.log('🛒 User order count:', orderCount);
 
+      const orderCompletionStats = await OrderModel.getCompletionStatsByUser(userId);
+      console.log('📊 User order completion stats:', orderCompletionStats);
+
       return {
-        orderCount: orderCount || 0
+        orderCount: orderCount || 0,
+        orderCompletionStats: orderCompletionStats
       };
     } else {
       // Admin and other roles see all data
@@ -40,13 +44,17 @@ async function getStats(userId?: string, userRole?: string) {
       const orderCount = await OrderModel.getCount();
       console.log('🛒 Order count:', orderCount);
 
+      const orderCompletionStats = await OrderModel.getCompletionStats();
+      console.log('📊 Order completion stats:', orderCompletionStats);
+
       return {
         contactCount: contactCount || 0,
         contactCountWithEmail: contactCountWithEmail || 0,
         contactCountWithPhone: contactCountWithPhone || 0,
         productCount: productCount || 0,
         totalProductCount: totalProductCount || 0,
-        orderCount: orderCount || 0
+        orderCount: orderCount || 0,
+        orderCompletionStats: orderCompletionStats
       };
     }
   } catch (error) {
@@ -57,7 +65,8 @@ async function getStats(userId?: string, userRole?: string) {
       contactCountWithPhone: 0,
       productCount: 0,
       totalProductCount: 0,
-      orderCount: 0
+      orderCount: 0,
+      orderCompletionStats: { complete: 0, incomplete: 0, total: 0 }
     };
   }
 }
@@ -377,6 +386,22 @@ export default async function DashboardPage() {
                   </dt>
                   <dd>
                     <div className="text-lg font-medium text-gray-900">{stats.orderCount.toLocaleString()}</div>
+                    {stats.orderCompletionStats && stats.orderCompletionStats.total > 0 && (
+                      <div className="mt-2 text-sm text-gray-600 space-y-1">
+                        <div className="flex justify-between">
+                          <span>Complete:</span>
+                          <span className="font-medium text-green-600">
+                            {stats.orderCompletionStats.complete.toLocaleString()} ({Math.round((stats.orderCompletionStats.complete / stats.orderCompletionStats.total) * 100)}%)
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Incomplete:</span>
+                          <span className="font-medium text-orange-600">
+                            {stats.orderCompletionStats.incomplete.toLocaleString()} ({Math.round((stats.orderCompletionStats.incomplete / stats.orderCompletionStats.total) * 100)}%)
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </dd>
                 </dl>
               </div>

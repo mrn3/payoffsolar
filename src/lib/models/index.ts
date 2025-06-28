@@ -1682,6 +1682,31 @@ export const OrderModel = {
     return result?.count || 0;
   },
 
+  async getCompletionStats(): Promise<{ complete: number; incomplete: number; total: number }> {
+    const result = await getOne<{ complete: number; incomplete: number; total: number }>(
+      `SELECT
+         SUM(CASE WHEN status IN ('complete', 'paid') THEN 1 ELSE 0 END) as complete,
+         SUM(CASE WHEN status NOT IN ('complete', 'paid') THEN 1 ELSE 0 END) as incomplete,
+         COUNT(*) as total
+       FROM orders`
+    );
+    return result || { complete: 0, incomplete: 0, total: 0 };
+  },
+
+  async getCompletionStatsByUser(userId: string): Promise<{ complete: number; incomplete: number; total: number }> {
+    const result = await getOne<{ complete: number; incomplete: number; total: number }>(
+      `SELECT
+         SUM(CASE WHEN o.status IN ('complete', 'paid') THEN 1 ELSE 0 END) as complete,
+         SUM(CASE WHEN o.status NOT IN ('complete', 'paid') THEN 1 ELSE 0 END) as incomplete,
+         COUNT(*) as total
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE c.user_id = ?`,
+      [userId]
+    );
+    return result || { complete: 0, incomplete: 0, total: 0 };
+  },
+
   async getRecent(limit = 3): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT o.*, c.name as contact_name
