@@ -65,7 +65,7 @@ export class ShippingService {
       state: string;
       zip: string;
       country?: string;
-    }
+    } | null
   ): Promise<{
     totalCost: number;
     methods: Array<{
@@ -84,11 +84,45 @@ export class ShippingService {
 
     // Calculate shipping for each product
     for (const item of items) {
-      const quote = await this.calculateProductShipping(
-        item.productId,
-        item.quantity,
-        shippingAddress
-      );
+      let quote: ShippingQuote;
+
+      if (shippingAddress) {
+        quote = await this.calculateProductShipping(
+          item.productId,
+          item.quantity,
+          shippingAddress
+        );
+      } else {
+        // No shipping address provided - only return local pickup methods
+        const product = await ProductModel.getById(item.productId);
+        if (!product) {
+          throw new Error(`Product not found: ${item.productId}`);
+        }
+
+        const shippingMethods = product.shipping_methods || DEFAULT_SHIPPING_METHODS;
+        const localPickupMethods = shippingMethods.filter(method => method.type === 'local_pickup');
+
+        if (localPickupMethods.length === 0) {
+          // No local pickup available for this product
+          quote = {
+            methods: [],
+            totalCost: 0
+          };
+        } else {
+          // Calculate local pickup methods
+          const methods = localPickupMethods.map(method => ({
+            method,
+            cost: 0,
+            estimatedDays: 0
+          }));
+
+          quote = {
+            methods,
+            defaultMethod: methods[0],
+            totalCost: 0
+          };
+        }
+      }
 
       const product = await ProductModel.getById(item.productId);
       breakdown.push({

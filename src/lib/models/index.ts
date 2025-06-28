@@ -269,11 +269,12 @@ export const ProductCategoryModel = {
 
 // Shipping method types
 export interface ShippingMethod {
-  type: 'free' | 'fixed' | 'calculated_distance' | 'api_calculated';
+  type: 'free' | 'fixed' | 'calculated_distance' | 'api_calculated' | 'local_pickup';
   name: string;
   description?: string;
   cost?: number; // For fixed amount
   warehouse_id?: string; // For distance calculation
+  pickup_location?: string; // For local pickup
   api_config?: {
     provider: string;
     settings: Record<string, any>;

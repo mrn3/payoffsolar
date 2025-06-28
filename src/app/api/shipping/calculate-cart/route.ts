@@ -14,16 +14,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!shippingAddress) {
+    // Shipping address is optional for local pickup methods
+    if (shippingAddress && (!shippingAddress.address || !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip)) {
       return NextResponse.json(
-        { error: 'Shipping address is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!shippingAddress.address || !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip) {
-      return NextResponse.json(
-        { error: 'Complete shipping address is required (address, city, state, zip)' },
+        { error: 'Complete shipping address is required when provided (address, city, state, zip)' },
         { status: 400 }
       );
     }
@@ -39,13 +33,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate shipping for the cart
-    const result = await ShippingService.calculateCartShipping(items, {
+    const result = await ShippingService.calculateCartShipping(items, shippingAddress ? {
       address: shippingAddress.address,
       city: shippingAddress.city,
       state: shippingAddress.state,
       zip: shippingAddress.zip,
       country: shippingAddress.country || 'US'
-    });
+    } : null);
 
     return NextResponse.json(result);
 

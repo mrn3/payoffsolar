@@ -23,6 +23,7 @@ interface CheckoutFormData {
   state: string;
   zip: string;
   shippingMethod: string;
+  isLocalPickup?: boolean;
 }
 
 // Initialize Stripe
@@ -72,7 +73,21 @@ export default function CheckoutPage() {
   // Calculate shipping when address changes
   useEffect(() => {
     const calculateShippingCosts = async () => {
-      if (!formData.address || !formData.city || !formData.state || !formData.zip || state.items.length === 0) {
+      if (state.items.length === 0) {
+        setShippingMethods([]);
+        setShippingCost(0);
+        return;
+      }
+
+      // Check if we have any products with local pickup options
+      const hasLocalPickupOptions = state.items.some(item => {
+        // This would need to be enhanced to check actual product shipping methods
+        // For now, we'll always try to calculate shipping
+        return false;
+      });
+
+      // If no address is provided and we don't have local pickup, don't calculate
+      if (!hasLocalPickupOptions && (!formData.address || !formData.city || !formData.state || !formData.zip)) {
         setShippingMethods([]);
         setShippingCost(0);
         return;
@@ -85,12 +100,12 @@ export default function CheckoutPage() {
           quantity: item.quantity
         }));
 
-        const shippingAddress = {
+        const shippingAddress = formData.address && formData.city && formData.state && formData.zip ? {
           address: formData.address,
           city: formData.city,
           state: formData.state,
           zip: formData.zip
-        };
+        } : null;
 
         // Call the cart shipping calculation API
         const response = await fetch('/api/shipping/calculate-cart', {
@@ -159,10 +174,19 @@ export default function CheckoutPage() {
     if (!formData.email) errors.email = 'Email is required';
     if (!formData.firstName) errors.firstName = 'First name is required';
     if (!formData.lastName) errors.lastName = 'Last name is required';
-    if (!formData.address) errors.address = 'Address is required';
-    if (!formData.city) errors.city = 'City is required';
-    if (!formData.state) errors.state = 'State is required';
-    if (!formData.zip) errors.zip = 'ZIP code is required';
+
+    // Only require address fields if not local pickup
+    const selectedMethod = shippingMethods.find(method =>
+      method.name.toLowerCase().replace(/\s+/g, '-') === formData.shippingMethod
+    );
+    const isLocalPickup = selectedMethod?.name.toLowerCase().includes('pickup');
+
+    if (!isLocalPickup) {
+      if (!formData.address) errors.address = 'Address is required';
+      if (!formData.city) errors.city = 'City is required';
+      if (!formData.state) errors.state = 'State is required';
+      if (!formData.zip) errors.zip = 'ZIP code is required';
+    }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;

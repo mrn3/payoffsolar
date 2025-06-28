@@ -181,6 +181,11 @@ export async function calculateShippingForMethod(
         result.estimatedDays = 5;
         break;
 
+      case 'local_pickup':
+        result.cost = 0; // Local pickup is always free
+        result.estimatedDays = 0; // Available immediately
+        break;
+
       default:
         result.error = 'Unknown shipping method type';
     }
@@ -291,6 +296,12 @@ export function validateShippingMethod(method: ShippingMethod): string[] {
     case 'api_calculated':
       if (!method.api_config?.provider) {
         errors.push('API-based shipping requires a provider configuration');
+      }
+      break;
+
+    case 'local_pickup':
+      if (!method.pickup_location?.trim()) {
+        errors.push('Local pickup requires a pickup location');
       }
       break;
   }
