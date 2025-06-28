@@ -136,6 +136,16 @@ export const ContactModel = {
     return result?.count || 0;
   },
 
+  async getCountWithEmail(): Promise<number> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM contacts WHERE email IS NOT NULL AND email != ""');
+    return result?.count || 0;
+  },
+
+  async getCountWithPhone(): Promise<number> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM contacts WHERE phone IS NOT NULL AND phone != ""');
+    return result?.count || 0;
+  },
+
   async getSearchCount(query: string): Promise<number> {
     const searchTerm = `%${query}%`;
     const result = await getOne<{ count: number }>(

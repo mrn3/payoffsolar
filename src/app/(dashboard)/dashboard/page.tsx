@@ -25,6 +25,12 @@ async function getStats(userId?: string, userRole?: string) {
       const contactCount = await ContactModel.getCount();
       console.log('👥 Contact count:', contactCount);
 
+      const contactCountWithEmail = await ContactModel.getCountWithEmail();
+      console.log('📧 Contact count with email:', contactCountWithEmail);
+
+      const contactCountWithPhone = await ContactModel.getCountWithPhone();
+      console.log('📞 Contact count with phone:', contactCountWithPhone);
+
       const productCount = await ProductModel.getCount();
       console.log('📦 Product count:', productCount);
 
@@ -33,6 +39,8 @@ async function getStats(userId?: string, userRole?: string) {
 
       return {
         contactCount: contactCount || 0,
+        contactCountWithEmail: contactCountWithEmail || 0,
+        contactCountWithPhone: contactCountWithPhone || 0,
         productCount: productCount || 0,
         orderCount: orderCount || 0
       };
@@ -41,6 +49,8 @@ async function getStats(userId?: string, userRole?: string) {
     console.error('❌ Error getting dashboard stats:', error);
     return {
       contactCount: 0,
+      contactCountWithEmail: 0,
+      contactCountWithPhone: 0,
       productCount: 0,
       orderCount: 0
     };
@@ -268,6 +278,30 @@ export default async function DashboardPage() {
                       <dt className="text-sm font-medium text-gray-500 truncate">Total Contacts</dt>
                       <dd>
                         <div className="text-lg font-medium text-gray-900">{(stats.contactCount || 0).toLocaleString()}</div>
+                        <div className="mt-2 text-sm text-gray-600 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span>With Email:</span>
+                            <span className="font-medium">
+                              {(stats.contactCountWithEmail || 0).toLocaleString()}
+                              {stats.contactCount > 0 && (
+                                <span className="text-gray-500 ml-1">
+                                  ({Math.round(((stats.contactCountWithEmail || 0) / stats.contactCount) * 100)}%)
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>With Phone:</span>
+                            <span className="font-medium">
+                              {(stats.contactCountWithPhone || 0).toLocaleString()}
+                              {stats.contactCount > 0 && (
+                                <span className="text-gray-500 ml-1">
+                                  ({Math.round(((stats.contactCountWithPhone || 0) / stats.contactCount) * 100)}%)
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
                       </dd>
                     </dl>
                   </div>
