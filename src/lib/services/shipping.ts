@@ -101,9 +101,17 @@ export class ShippingService {
       for (const method of quote.methods) {
         const key = method.method.name;
         const existing = methodTotals.get(key);
-        
+
         if (existing) {
-          existing.cost += method.cost;
+          // Special handling for free shipping - if any product has free shipping for this method,
+          // the entire cart gets free shipping for this method
+          if (method.method.type === 'free' || method.cost === 0) {
+            existing.cost = 0;
+          } else if (existing.cost > 0) {
+            // Only add costs if the existing method isn't already free
+            existing.cost += method.cost;
+          }
+
           // Use the longest estimated delivery time
           if (method.estimatedDays && existing.estimatedDays) {
             existing.estimatedDays = Math.max(existing.estimatedDays, method.estimatedDays);

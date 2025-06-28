@@ -11,7 +11,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { STRIPE_CONFIG } from '@/lib/stripe';
 import PaymentForm from '@/components/checkout/PaymentForm';
-import { ShippingService } from '@/lib/services/shipping';
+// Removed direct import of ShippingService to avoid client-side Node.js module issues
 
 interface CheckoutFormData {
   email: string;
@@ -92,7 +92,23 @@ export default function CheckoutPage() {
           zip: formData.zip
         };
 
-        const result = await ShippingService.calculateCartShipping(cartItems, shippingAddress);
+        // Call the cart shipping calculation API
+        const response = await fetch('/api/shipping/calculate-cart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            items: cartItems,
+            shippingAddress: shippingAddress
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
         setShippingMethods(result.methods);
 
         // Set the cost of the selected method or the cheapest one
@@ -104,11 +120,12 @@ export default function CheckoutPage() {
         console.error('Error calculating shipping:', error);
         // Fall back to default shipping calculation
         setShippingMethods([
-          { name: 'Standard Shipping', cost: 9.99 },
-          { name: 'Express Shipping', cost: 29.99 },
-          { name: 'Overnight Shipping', cost: 49.99 }
+          { name: 'Free Shipping', cost: 0, estimatedDays: 7 },
+          { name: 'Standard Shipping', cost: 9.99, estimatedDays: 5 },
+          { name: 'Express Shipping', cost: 29.99, estimatedDays: 2 },
+          { name: 'Overnight Shipping', cost: 49.99, estimatedDays: 1 }
         ]);
-        setShippingCost(9.99);
+        setShippingCost(0); // Default to free shipping
       } finally {
         setLoadingShipping(false);
       }
@@ -409,14 +426,14 @@ export default function CheckoutPage() {
                             className="mr-3"
                           />
                           <span className="flex-1">
-                            {method.name}
+                            <span className="text-gray-900">{method.name}</span>
                             {method.estimatedDays && (
-                              <span className="text-gray-500 text-sm ml-1">
+                              <span className="text-gray-700 text-sm ml-1">
                                 ({method.estimatedDays} business day{method.estimatedDays !== 1 ? 's' : ''})
                               </span>
                             )}
                           </span>
-                          <span className="font-medium">{formatPrice(method.cost)}</span>
+                          <span className="font-medium text-gray-900">{formatPrice(method.cost)}</span>
                         </label>
                       );
                     })}
