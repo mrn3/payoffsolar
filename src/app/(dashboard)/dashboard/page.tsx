@@ -32,7 +32,10 @@ async function getStats(userId?: string, userRole?: string) {
       console.log('📞 Contact count with phone:', contactCountWithPhone);
 
       const productCount = await ProductModel.getCount();
-      console.log('📦 Product count:', productCount);
+      console.log('📦 Product count (active):', productCount);
+
+      const totalProductCount = await ProductModel.getTotalCount();
+      console.log('📦 Total product count:', totalProductCount);
 
       const orderCount = await OrderModel.getCount();
       console.log('🛒 Order count:', orderCount);
@@ -42,6 +45,7 @@ async function getStats(userId?: string, userRole?: string) {
         contactCountWithEmail: contactCountWithEmail || 0,
         contactCountWithPhone: contactCountWithPhone || 0,
         productCount: productCount || 0,
+        totalProductCount: totalProductCount || 0,
         orderCount: orderCount || 0
       };
     }
@@ -52,6 +56,7 @@ async function getStats(userId?: string, userRole?: string) {
       contactCountWithEmail: 0,
       contactCountWithPhone: 0,
       productCount: 0,
+      totalProductCount: 0,
       orderCount: 0
     };
   }
@@ -327,7 +332,21 @@ export default async function DashboardPage() {
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Total Products</dt>
                       <dd>
-                        <div className="text-lg font-medium text-gray-900">{(stats.productCount || 0).toLocaleString()}</div>
+                        <div className="text-lg font-medium text-gray-900">{(stats.totalProductCount || 0).toLocaleString()}</div>
+                        <div className="mt-2 text-sm text-gray-600 space-y-1">
+                          <div className="flex justify-between">
+                            <span>Active Products:</span>
+                            <span className="font-medium">
+                              {(stats.productCount || 0).toLocaleString()} ({stats.totalProductCount > 0 ? Math.round(((stats.productCount || 0) / stats.totalProductCount) * 100) : 0}%)
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Inactive Products:</span>
+                            <span className="font-medium">
+                              {((stats.totalProductCount || 0) - (stats.productCount || 0)).toLocaleString()} ({stats.totalProductCount > 0 ? Math.round((((stats.totalProductCount || 0) - (stats.productCount || 0)) / stats.totalProductCount) * 100) : 0}%)
+                            </span>
+                          </div>
+                        </div>
                       </dd>
                     </dl>
                   </div>

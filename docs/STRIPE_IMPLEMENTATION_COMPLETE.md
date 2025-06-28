@@ -61,7 +61,7 @@
 ```bash
 yarn dev
 ```
-The app runs on http://localhost:3002
+The app runs on http://localhost:3000
 
 ### 2. Test Payment Flow
 1. **Add Products to Cart**:
