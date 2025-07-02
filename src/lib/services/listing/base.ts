@@ -208,25 +208,39 @@ export abstract class BasePlatformService {
 }
 
 // Factory function to create platform services
-export function createPlatformService(
+export async function createPlatformService(
   platform: ListingPlatform,
   credentials?: PlatformCredentials
-): BasePlatformService {
+): Promise<BasePlatformService> {
   switch (platform.name) {
-    case 'ebay':
-      return new (require('./ebay').EbayService)(platform, credentials);
-    case 'facebook_marketplace':
-      return new (require('./facebook').FacebookService)(platform, credentials);
-    case 'amazon':
-      return new (require('./amazon').AmazonService)(platform, credentials);
-    case 'ksl':
-      return new (require('./ksl').KslService)(platform, credentials);
-    case 'offerup':
-      return new (require('./offerup').OfferUpService)(platform, credentials);
-    case 'nextdoor':
-      return new (require('./nextdoor').NextdoorService)(platform, credentials);
-    case 'craigslist':
-      return new (require('./craigslist').CraigslistService)(platform, credentials);
+    case 'ebay': {
+      const { EbayService } = await import('./ebay');
+      return new EbayService(platform, credentials);
+    }
+    case 'facebook_marketplace': {
+      const { FacebookService } = await import('./facebook');
+      return new FacebookService(platform, credentials);
+    }
+    case 'amazon': {
+      const { AmazonService } = await import('./amazon');
+      return new AmazonService(platform, credentials);
+    }
+    case 'ksl': {
+      const { KslService } = await import('./ksl');
+      return new KslService(platform, credentials);
+    }
+    case 'offerup': {
+      const { OfferUpService } = await import('./offerup');
+      return new OfferUpService(platform, credentials);
+    }
+    case 'nextdoor': {
+      const { NextdoorService } = await import('./nextdoor');
+      return new NextdoorService(platform, credentials);
+    }
+    case 'craigslist': {
+      const { CraigslistService } = await import('./craigslist');
+      return new CraigslistService(platform, credentials);
+    }
     default:
       throw new Error(`Unsupported platform: ${platform.name}`);
   }

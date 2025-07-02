@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ProductWithFirstImage } from '@/lib/models';
 import { useCart } from '@/contexts/CartContext';
 import { FaImage, FaShoppingCart, FaTag } from 'react-icons/fa';
+import { createTextPreview } from '@/lib/utils/text';
 
 interface ProductCardProps {
   product: ProductWithFirstImage;
@@ -60,7 +61,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </p>
         )}
         <p className="text-gray-600 text-sm mb-3 line-clamp-3">
-          {product.description}
+          {createTextPreview(product.description || '', 150)}
         </p>
         <div className="flex items-center justify-between mb-4">
           <div>

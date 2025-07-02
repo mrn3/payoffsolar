@@ -38,7 +38,7 @@ export class ListingService {
   // Helper method to create platform service with credentials
   private async createPlatformServiceWithCredentials(platform: ListingPlatform, userId: string) {
     const credentials = await PlatformCredentialsModel.getByUserAndPlatform(userId, platform.id);
-    return createPlatformService(platform, credentials?.credentials);
+    return await createPlatformService(platform, credentials?.credentials);
   }
 
   // Create listings for a product on multiple platforms

@@ -34,6 +34,9 @@ public/uploads/products/*
 public/uploads/datasheets/*
 !public/uploads/datasheets/.gitkeep
 
+# temp directory for KSL image downloads
+/temp/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

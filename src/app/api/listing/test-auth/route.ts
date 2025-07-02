@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create platform service
-    const platformService = createPlatformService(platform, credentialsRecord.credentials);
+    const platformService = await createPlatformService(platform, credentialsRecord.credentials);
 
     // Test authentication
     const isAuthenticated = await platformService.authenticate();
