@@ -281,9 +281,12 @@ export const FacebookConversationModel = {
   },
 
   async create(data: Omit<FacebookConversation, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    // Convert ISO string to MySQL datetime format
+    const mysqlDateTime = new Date(data.last_message_time).toISOString().slice(0, 19).replace('T', ' ');
+
     await executeSingle(
       'INSERT INTO facebook_conversations (contact_id, facebook_user_id, facebook_page_id, conversation_id, user_name, user_profile_pic, last_message_time, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [data.contact_id, data.facebook_user_id, data.facebook_page_id, data.conversation_id, data.user_name, data.user_profile_pic || null, data.last_message_time, data.is_active]
+      [data.contact_id, data.facebook_user_id, data.facebook_page_id, data.conversation_id, data.user_name, data.user_profile_pic || null, mysqlDateTime, data.is_active]
     );
 
     const conversation = await getOne<{ id: string }>(
@@ -294,9 +297,12 @@ export const FacebookConversationModel = {
   },
 
   async updateLastMessageTime(id: string, timestamp: string): Promise<void> {
+    // Convert ISO string to MySQL datetime format
+    const mysqlDateTime = new Date(timestamp).toISOString().slice(0, 19).replace('T', ' ');
+
     await executeSingle(
       'UPDATE facebook_conversations SET last_message_time = ? WHERE id = ?',
-      [timestamp, id]
+      [mysqlDateTime, id]
     );
   },
 

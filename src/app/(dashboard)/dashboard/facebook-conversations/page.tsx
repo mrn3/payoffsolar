@@ -39,6 +39,7 @@ export default function FacebookConversationsPage() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     fetchConversations();
@@ -119,6 +120,38 @@ export default function FacebookConversationsPage() {
     return new Date(dateString).toLocaleString();
   };
 
+  const importMessages = async () => {
+    if (!confirm('This will import all existing Facebook messages. This may take several minutes. Continue?')) {
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const response = await fetch('/api/facebook/import-messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to import messages');
+      }
+
+      const result = await response.json();
+      toast.success(`Import completed! ${result.summary.conversations} conversations, ${result.summary.messages} messages imported.`);
+
+      // Refresh conversations list
+      await fetchConversations();
+    } catch (error) {
+      console.error('Error importing messages:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to import messages');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -136,11 +169,20 @@ export default function FacebookConversationsPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Facebook Messenger Conversations</h1>
-        <p className="text-gray-600 mt-2">
-          Manage conversations from Facebook Marketplace and Messenger
-        </p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Facebook Messenger Conversations</h1>
+          <p className="text-gray-600 mt-2">
+            Manage conversations from Facebook Marketplace and Messenger
+          </p>
+        </div>
+        <button
+          onClick={importMessages}
+          disabled={importing}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+        >
+          {importing ? 'Importing...' : 'Import Historical Messages'}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
@@ -151,8 +193,16 @@ export default function FacebookConversationsPage() {
           </div>
           <div className="overflow-y-auto h-full">
             {conversations.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
-                No conversations yet. Conversations will appear here when customers message you on Facebook.
+              <div className="p-8 text-center text-gray-500">
+                <p className="mb-4">No conversations yet.</p>
+                <p className="text-sm mb-4">Conversations will appear here when customers message you on Facebook.</p>
+                <button
+                  onClick={importMessages}
+                  disabled={importing}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                >
+                  {importing ? 'Importing...' : 'Import Existing Messages'}
+                </button>
               </div>
             ) : (
               conversations.map((conversation) => (

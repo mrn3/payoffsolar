@@ -31,15 +31,20 @@ export async function POST(request: NextRequest) {
     const body = await request.text();
     const signature = request.headers.get('x-hub-signature-256');
 
+    console.log('🔔 Facebook webhook POST received');
+    console.log('📝 Headers:', Object.fromEntries(request.headers.entries()));
+    console.log('📦 Body length:', body.length);
+
     // Verify webhook signature
     const APP_SECRET = process.env.FACEBOOK_APP_SECRET;
     if (!APP_SECRET) {
-      console.error('FACEBOOK_APP_SECRET not configured');
+      console.error('❌ FACEBOOK_APP_SECRET not configured');
       return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
     }
 
     if (!signature) {
-      console.error('Missing Facebook webhook signature');
+      console.error('❌ Missing Facebook webhook signature');
+      console.log('📋 Available headers:', Object.keys(Object.fromEntries(request.headers.entries())));
       return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
     }
 
@@ -48,13 +53,17 @@ export async function POST(request: NextRequest) {
       .update(body)
       .digest('hex');
 
+    console.log('🔐 Signature verification:');
+    console.log('   Received:', signature);
+    console.log('   Expected:', expectedSignature);
+
     if (signature !== expectedSignature) {
-      console.error('Invalid Facebook webhook signature');
+      console.error('❌ Invalid Facebook webhook signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
     }
 
     const data = JSON.parse(body);
-    console.log('Facebook webhook received:', JSON.stringify(data, null, 2));
+    console.log('✅ Facebook webhook data received:', JSON.stringify(data, null, 2));
 
     // Process webhook events
     if (data.object === 'page') {
