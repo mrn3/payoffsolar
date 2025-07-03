@@ -65,7 +65,8 @@ export default function ContactAutocomplete({
       const filtered = contacts.filter(contact =>
         contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (contact.email && contact.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (contact.phone && contact.phone.includes(searchTerm))
+        (contact.phone && contact.phone.includes(searchTerm)) ||
+        (contact.notes && contact.notes.toLowerCase().includes(searchTerm.toLowerCase()))
       ).slice(0, 10); // Limit to 10 results
       setFilteredContacts(filtered);
     }

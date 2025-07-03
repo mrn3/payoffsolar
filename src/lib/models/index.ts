@@ -206,9 +206,9 @@ export const ContactModel = {
     const searchTerm = `%${query}%`;
     return executeQuery<Contact>(
       `SELECT * FROM contacts
-       WHERE name LIKE ? OR email LIKE ? OR phone LIKE ?
+       WHERE name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ?
        ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [searchTerm, searchTerm, searchTerm, limit, offset]
+      [searchTerm, searchTerm, searchTerm, searchTerm, limit, offset]
     );
   },
 
@@ -230,8 +230,8 @@ export const ContactModel = {
   async getSearchCount(query: string): Promise<number> {
     const searchTerm = `%${query}%`;
     const result = await getOne<{ count: number }>(
-      'SELECT COUNT(*) as count FROM contacts WHERE name LIKE ? OR email LIKE ? OR phone LIKE ?',
-      [searchTerm, searchTerm, searchTerm]
+      'SELECT COUNT(*) as count FROM contacts WHERE name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ?',
+      [searchTerm, searchTerm, searchTerm, searchTerm]
     );
     return result?.count || 0;
   },
