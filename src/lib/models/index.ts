@@ -13,8 +13,39 @@ export interface Contact {
   zip: string;
   notes?: string;
   user_id?: string;
+  facebook_user_id?: string;
   created_at: string;
   updated_at: string;
+}
+
+// Facebook Conversation model
+export interface FacebookConversation {
+  id: string;
+  contact_id: string;
+  facebook_user_id: string;
+  facebook_page_id: string;
+  conversation_id: string;
+  user_name: string;
+  user_profile_pic?: string;
+  last_message_time: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Facebook Message model
+export interface FacebookMessage {
+  id: string;
+  conversation_id: string;
+  facebook_message_id: string;
+  sender_id: string;
+  recipient_id: string;
+  message_text?: string;
+  message_type: 'text' | 'image' | 'file' | 'sticker' | 'quick_reply' | 'postback';
+  attachments?: any;
+  is_from_page: boolean;
+  timestamp: number;
+  created_at: string;
 }
 
 export const ContactModel = {
@@ -70,6 +101,7 @@ export const ContactModel = {
     if (_data.zip !== undefined) { fields.push('zip = ? '); values.push(_data.zip); }
     if (_data.notes !== undefined) { fields.push('notes = ? '); values.push(_data.notes); }
     if (_data.user_id !== undefined) { fields.push('user_id = ? '); values.push(_data.user_id); }
+    if (_data.facebook_user_id !== undefined) { fields.push('facebook_user_id = ? '); values.push(_data.facebook_user_id); }
 
     if (fields.length === 0) return;
 
@@ -153,6 +185,118 @@ export const ContactModel = {
       [searchTerm, searchTerm, searchTerm]
     );
     return result?.count || 0;
+  },
+
+  async getByFacebookUserId(facebookUserId: string): Promise<Contact | null> {
+    return getOne<Contact>('SELECT * FROM contacts WHERE facebook_user_id = ?', [facebookUserId]);
+  },
+
+  async createFromFacebook(data: {
+    name: string;
+    facebook_user_id: string;
+    email?: string;
+    notes?: string;
+  }): Promise<string> {
+    await executeSingle(
+      'INSERT INTO contacts (name, email, phone, address, city, state, zip, notes, facebook_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.name, data.email || '', '', '', '', '', '', data.notes || null, data.facebook_user_id]
+    );
+
+    const contact = await getOne<{ id: string }>(
+      'SELECT id FROM contacts WHERE facebook_user_id = ? ORDER BY created_at DESC LIMIT 1',
+      [data.facebook_user_id]
+    );
+    return contact!.id;
+  }
+};
+
+// Facebook Conversation model
+export const FacebookConversationModel = {
+  async getAll(limit = 50, offset = 0): Promise<FacebookConversation[]> {
+    return executeQuery<FacebookConversation>(
+      'SELECT * FROM facebook_conversations ORDER BY last_message_time DESC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+  },
+
+  async getById(id: string): Promise<FacebookConversation | null> {
+    return getOne<FacebookConversation>('SELECT * FROM facebook_conversations WHERE id = ?', [id]);
+  },
+
+  async getByContactId(contactId: string): Promise<FacebookConversation | null> {
+    return getOne<FacebookConversation>('SELECT * FROM facebook_conversations WHERE contact_id = ?', [contactId]);
+  },
+
+  async getByFacebookUserId(facebookUserId: string): Promise<FacebookConversation | null> {
+    return getOne<FacebookConversation>('SELECT * FROM facebook_conversations WHERE facebook_user_id = ?', [facebookUserId]);
+  },
+
+  async create(data: Omit<FacebookConversation, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO facebook_conversations (contact_id, facebook_user_id, facebook_page_id, conversation_id, user_name, user_profile_pic, last_message_time, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.contact_id, data.facebook_user_id, data.facebook_page_id, data.conversation_id, data.user_name, data.user_profile_pic || null, data.last_message_time, data.is_active]
+    );
+
+    const conversation = await getOne<{ id: string }>(
+      'SELECT id FROM facebook_conversations WHERE facebook_user_id = ? ORDER BY created_at DESC LIMIT 1',
+      [data.facebook_user_id]
+    );
+    return conversation!.id;
+  },
+
+  async updateLastMessageTime(id: string, timestamp: string): Promise<void> {
+    await executeSingle(
+      'UPDATE facebook_conversations SET last_message_time = ? WHERE id = ?',
+      [timestamp, id]
+    );
+  },
+
+  async getWithContactInfo(limit = 50, offset = 0): Promise<Array<FacebookConversation & { contact_name: string }>> {
+    return executeQuery<FacebookConversation & { contact_name: string }>(
+      `SELECT fc.*, c.name as contact_name
+       FROM facebook_conversations fc
+       LEFT JOIN contacts c ON fc.contact_id = c.id
+       ORDER BY fc.last_message_time DESC LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+  }
+};
+
+// Facebook Message model
+export const FacebookMessageModel = {
+  async getByConversationId(conversationId: string, limit = 50, offset = 0): Promise<FacebookMessage[]> {
+    return executeQuery<FacebookMessage>(
+      'SELECT * FROM facebook_messages WHERE conversation_id = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?',
+      [conversationId, limit, offset]
+    );
+  },
+
+  async getById(id: string): Promise<FacebookMessage | null> {
+    return getOne<FacebookMessage>('SELECT * FROM facebook_messages WHERE id = ?', [id]);
+  },
+
+  async getByFacebookMessageId(facebookMessageId: string): Promise<FacebookMessage | null> {
+    return getOne<FacebookMessage>('SELECT * FROM facebook_messages WHERE facebook_message_id = ?', [facebookMessageId]);
+  },
+
+  async create(data: Omit<FacebookMessage, 'id' | 'created_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO facebook_messages (conversation_id, facebook_message_id, sender_id, recipient_id, message_text, message_type, attachments, is_from_page, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.conversation_id, data.facebook_message_id, data.sender_id, data.recipient_id, data.message_text || null, data.message_type, JSON.stringify(data.attachments) || null, data.is_from_page, data.timestamp]
+    );
+
+    const message = await getOne<{ id: string }>(
+      'SELECT id FROM facebook_messages WHERE facebook_message_id = ? ORDER BY created_at DESC LIMIT 1',
+      [data.facebook_message_id]
+    );
+    return message!.id;
+  },
+
+  async getRecentByConversationId(conversationId: string, limit = 10): Promise<FacebookMessage[]> {
+    return executeQuery<FacebookMessage>(
+      'SELECT * FROM facebook_messages WHERE conversation_id = ? ORDER BY timestamp ASC LIMIT ?',
+      [conversationId, limit]
+    );
   }
 };
 
