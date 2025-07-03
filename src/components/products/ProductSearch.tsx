@@ -15,6 +15,7 @@ interface ProductSearchProps {
   onCategoryChange: (_categoryId: string) => void;
   onSortChange: (sortBy: string) => void;
   onClearFilters: () => void;
+  showCategoryFilter?: boolean;
 }
 
 export default function ProductSearch({
@@ -26,6 +27,7 @@ export default function ProductSearch({
   onCategoryChange,
   onSortChange,
   onClearFilters,
+  showCategoryFilter = true,
 }: ProductSearchProps) {
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
 
@@ -38,7 +40,7 @@ export default function ProductSearch({
     return () => clearTimeout(timer);
   }, [localSearchQuery, onSearchChange]);
 
-  const hasActiveFilters = searchQuery || selectedCategory || sortBy;
+  const hasActiveFilters = searchQuery || (showCategoryFilter && selectedCategory) || sortBy;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mb-8">
@@ -58,20 +60,22 @@ export default function ProductSearch({
         </div>
 
         {/* Category Filter */}
-        <div className="lg:w-64">
-          <select
-            value={selectedCategory}
-            onChange={(_e) => onCategoryChange(_e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          >
-            <option value="">All Categories</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {showCategoryFilter && (
+          <div className="lg:w-64">
+            <select
+              value={selectedCategory}
+              onChange={(_e) => onCategoryChange(_e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            >
+              <option value="">All Categories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Sort Filter */}
         <div className="lg:w-64">
@@ -119,7 +123,7 @@ export default function ProductSearch({
               </button>
             </span>
           )}
-          {selectedCategory && (
+          {showCategoryFilter && selectedCategory && (
             <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
               Category: {categories.find(c => c.id === selectedCategory)?.name}
               <button

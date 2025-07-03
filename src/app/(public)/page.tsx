@@ -51,7 +51,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-4">
                 High-efficiency solar panels designed to maximize energy production even in low-light conditions.
               </p>
-              <Link href="/products/solar-panels" className="text-green-600 font-medium hover:underline">
+              <Link href="/products/category/solar-panels" className="text-green-600 font-medium hover:underline">
                 Learn more
               </Link>
             </div>
@@ -63,7 +63,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-4">
                 Store excess energy for use during peak hours or power outages with our advanced battery solutions.
               </p>
-              <Link href="/products/batteries" className="text-green-600 font-medium hover:underline">
+              <Link href="/products/category/batteries" className="text-green-600 font-medium hover:underline">
                 Learn more
               </Link>
             </div>

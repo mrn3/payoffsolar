@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {useParams, useSearchParams} from 'next/navigation';
+import {useParams, useSearchParams, useRouter} from 'next/navigation';
 import Link from 'next/link';
 import {Product, ProductImage, AffiliateCode} from '@/lib/models';
 import ImageCarousel from '@/components/ui/ImageCarousel';
@@ -20,6 +20,7 @@ interface ProductWithDetails extends Product {
 export default function ProductDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { addItem, applyAffiliateCode, getDiscountedPrice, state } = useCart();
 
   const [product, setProduct] = useState<ProductWithDetails | null>(null);
@@ -30,9 +31,34 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (params.id) {
-      fetchProduct(params.id as string);
+      // First check if this might be a category slug
+      checkIfCategorySlugAndRedirect(params.id as string);
     }
   }, [params.id]);
+
+  const checkIfCategorySlugAndRedirect = async (id: string) => {
+    // Check if this looks like a category slug (contains hyphens, not a UUID)
+    if (id.includes('-') && !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      try {
+        // Try to fetch categories and see if this slug exists
+        const response = await fetch('/api/public/product-categories');
+        if (response.ok) {
+          const data = await response.json();
+          const category = data.categories.find((cat: any) => cat.slug === id);
+          if (category) {
+            // Redirect to the category page
+            router.push(`/products/category/${id}`);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking category slug:', error);
+      }
+    }
+
+    // If not a category slug, proceed with fetching product
+    fetchProduct(id);
+  };
 
   // Handle affiliate code from URL parameter
   useEffect(() => {

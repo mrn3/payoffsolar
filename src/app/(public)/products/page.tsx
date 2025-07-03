@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {ProductWithFirstImage, ProductCategory} from '@/lib/models';
 import ProductCard from '@/components/products/ProductCard';
 import ProductCardSkeleton from '@/components/products/ProductCardSkeleton';
@@ -22,6 +23,7 @@ interface CategoriesResponse {
 }
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<ProductWithFirstImage[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,16 +44,22 @@ export default function ProductsPage() {
       if (_response.ok) {
         const _data: CategoriesResponse = await _response.json();
         setCategories(_data.categories);
+
+        // Check for category parameter in URL
+        const categoryParam = searchParams.get('category');
+        if (categoryParam) {
+          setSelectedCategory(categoryParam);
+        }
       }
     } catch (_error) {
       console.error('Error fetching categories:', _error);
     }
   };
 
-  // Fetch categories on component mount
+  // Fetch categories on component mount and when URL params change
   useEffect(() => {
     fetchCategories();
-  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   const fetchProducts = useCallback(async () => {
     console.log('fetchProducts called with currentPage:', currentPage);

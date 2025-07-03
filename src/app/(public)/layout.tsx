@@ -66,22 +66,22 @@ export default async function PublicLayout({
               <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Products</h3>
               <ul className="mt-4 space-y-2">
                 <li>
-                  <Link href="/products/solar-panels" className="text-sm text-gray-700 hover:text-green-500">
+                  <Link href="/products/category/solar-panels" className="text-sm text-gray-700 hover:text-green-500">
                     Solar Panels
                   </Link>
                 </li>
                 <li>
-                  <Link href="/products/batteries" className="text-sm text-gray-700 hover:text-green-500">
+                  <Link href="/products/category/batteries" className="text-sm text-gray-700 hover:text-green-500">
                     Energy Storage
                   </Link>
                 </li>
                 <li>
-                  <Link href="/products/inverters" className="text-sm text-gray-700 hover:text-green-500">
+                  <Link href="/products/category/inverters" className="text-sm text-gray-700 hover:text-green-500">
                     Inverters
                   </Link>
                 </li>
                 <li>
-                  <Link href="/products/mounting-systems" className="text-sm text-gray-700 hover:text-green-500">
+                  <Link href="/products/category/mounting-systems" className="text-sm text-gray-700 hover:text-green-500">
                     Mounting Systems
                   </Link>
                 </li>
