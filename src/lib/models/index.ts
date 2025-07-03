@@ -48,6 +48,55 @@ export interface FacebookMessage {
   created_at: string;
 }
 
+// Email Communication model
+export interface EmailCommunication {
+  id: string;
+  contact_id: string;
+  direction: 'inbound' | 'outbound';
+  from_email: string;
+  to_email: string;
+  cc_emails?: string[];
+  bcc_emails?: string[];
+  subject?: string;
+  body_text?: string;
+  body_html?: string;
+  message_id?: string;
+  thread_id?: string;
+  status: 'sent' | 'delivered' | 'failed' | 'bounced' | 'opened' | 'clicked';
+  sent_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// SMS Communication model
+export interface SMSCommunication {
+  id: string;
+  contact_id: string;
+  direction: 'inbound' | 'outbound';
+  from_phone: string;
+  to_phone: string;
+  message_text: string;
+  status: 'sent' | 'delivered' | 'failed' | 'undelivered';
+  provider?: string;
+  provider_message_id?: string;
+  sent_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Combined Communication History item
+export interface CommunicationHistoryItem {
+  id: string;
+  type: 'facebook' | 'email' | 'sms';
+  contact_id: string;
+  direction: 'inbound' | 'outbound';
+  content: string;
+  subject?: string;
+  timestamp: string;
+  status?: string;
+  metadata?: any;
+}
+
 export const ContactModel = {
   async getAll(limit = 50, offset = 0): Promise<Contact[]> {
     return executeQuery<Contact>(
@@ -3493,5 +3542,219 @@ export const ProductListingModel = {
   async getCountByStatus(status: string): Promise<number> {
     const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM product_listings WHERE status = ?', [status]);
     return result?.count || 0;
+  }
+};
+
+// Email Communication Model
+export const EmailCommunicationModel = {
+  async getByContactId(contactId: string, limit = 50, offset = 0): Promise<EmailCommunication[]> {
+    return executeQuery<EmailCommunication>(
+      'SELECT * FROM email_communications WHERE contact_id = ? ORDER BY sent_at DESC LIMIT ? OFFSET ?',
+      [contactId, limit, offset]
+    );
+  },
+
+  async getById(id: string): Promise<EmailCommunication | null> {
+    return getOne<EmailCommunication>('SELECT * FROM email_communications WHERE id = ?', [id]);
+  },
+
+  async create(data: Omit<EmailCommunication, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO email_communications (contact_id, direction, from_email, to_email, cc_emails, bcc_emails, subject, body_text, body_html, message_id, thread_id, status, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        data.contact_id,
+        data.direction,
+        data.from_email,
+        data.to_email,
+        data.cc_emails ? JSON.stringify(data.cc_emails) : null,
+        data.bcc_emails ? JSON.stringify(data.bcc_emails) : null,
+        data.subject || null,
+        data.body_text || null,
+        data.body_html || null,
+        data.message_id || null,
+        data.thread_id || null,
+        data.status,
+        data.sent_at
+      ]
+    );
+
+    const email = await getOne<{ id: string }>(
+      'SELECT id FROM email_communications WHERE contact_id = ? AND sent_at = ? ORDER BY created_at DESC LIMIT 1',
+      [data.contact_id, data.sent_at]
+    );
+    return email!.id;
+  },
+
+  async updateStatus(id: string, status: EmailCommunication['status']): Promise<void> {
+    await executeSingle(
+      'UPDATE email_communications SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [status, id]
+    );
+  }
+};
+
+// SMS Communication Model
+export const SMSCommunicationModel = {
+  async getByContactId(contactId: string, limit = 50, offset = 0): Promise<SMSCommunication[]> {
+    return executeQuery<SMSCommunication>(
+      'SELECT * FROM sms_communications WHERE contact_id = ? ORDER BY sent_at DESC LIMIT ? OFFSET ?',
+      [contactId, limit, offset]
+    );
+  },
+
+  async getById(id: string): Promise<SMSCommunication | null> {
+    return getOne<SMSCommunication>('SELECT * FROM sms_communications WHERE id = ?', [id]);
+  },
+
+  async create(data: Omit<SMSCommunication, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO sms_communications (contact_id, direction, from_phone, to_phone, message_text, status, provider, provider_message_id, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        data.contact_id,
+        data.direction,
+        data.from_phone,
+        data.to_phone,
+        data.message_text,
+        data.status,
+        data.provider || null,
+        data.provider_message_id || null,
+        data.sent_at
+      ]
+    );
+
+    const sms = await getOne<{ id: string }>(
+      'SELECT id FROM sms_communications WHERE contact_id = ? AND sent_at = ? ORDER BY created_at DESC LIMIT 1',
+      [data.contact_id, data.sent_at]
+    );
+    return sms!.id;
+  },
+
+  async updateStatus(id: string, status: SMSCommunication['status']): Promise<void> {
+    await executeSingle(
+      'UPDATE sms_communications SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [status, id]
+    );
+  }
+};
+
+// Communication History Model - combines all communication types
+export const CommunicationHistoryModel = {
+  async getByContactId(contactId: string, limit = 50, offset = 0): Promise<CommunicationHistoryItem[]> {
+    // Get Facebook messages
+    const facebookMessages = await executeQuery<any>(
+      `SELECT
+        fm.id,
+        'facebook' as type,
+        fc.contact_id,
+        CASE WHEN fm.is_from_page = 1 THEN 'outbound' ELSE 'inbound' END as direction,
+        fm.message_text as content,
+        NULL as subject,
+        FROM_UNIXTIME(fm.timestamp / 1000) as timestamp,
+        NULL as status,
+        JSON_OBJECT(
+          'facebook_message_id', fm.facebook_message_id,
+          'message_type', fm.message_type,
+          'attachments', fm.attachments,
+          'conversation_id', fm.conversation_id
+        ) as metadata
+       FROM facebook_messages fm
+       JOIN facebook_conversations fc ON fm.conversation_id = fc.id
+       WHERE fc.contact_id = ?`,
+      [contactId]
+    );
+
+    // Get email communications
+    const emails = await executeQuery<any>(
+      `SELECT
+        id,
+        'email' as type,
+        contact_id,
+        direction,
+        COALESCE(body_text, body_html, '') as content,
+        subject,
+        sent_at as timestamp,
+        status,
+        JSON_OBJECT(
+          'from_email', from_email,
+          'to_email', to_email,
+          'cc_emails', cc_emails,
+          'bcc_emails', bcc_emails,
+          'message_id', message_id,
+          'thread_id', thread_id
+        ) as metadata
+       FROM email_communications
+       WHERE contact_id = ?`,
+      [contactId]
+    );
+
+    // Get SMS communications
+    const smsMessages = await executeQuery<any>(
+      `SELECT
+        id,
+        'sms' as type,
+        contact_id,
+        direction,
+        message_text as content,
+        NULL as subject,
+        sent_at as timestamp,
+        status,
+        JSON_OBJECT(
+          'from_phone', from_phone,
+          'to_phone', to_phone,
+          'provider', provider,
+          'provider_message_id', provider_message_id
+        ) as metadata
+       FROM sms_communications
+       WHERE contact_id = ?`,
+      [contactId]
+    );
+
+    // Combine all communications and sort by timestamp
+    const allCommunications = [
+      ...facebookMessages,
+      ...emails,
+      ...smsMessages
+    ];
+
+    // Sort by timestamp descending (newest first)
+    allCommunications.sort((a, b) => {
+      const timestampA = new Date(a.timestamp).getTime();
+      const timestampB = new Date(b.timestamp).getTime();
+      return timestampB - timestampA;
+    });
+
+    // Apply pagination
+    const paginatedResults = allCommunications.slice(offset, offset + limit);
+
+    // Parse metadata JSON strings back to objects
+    return paginatedResults.map(item => ({
+      ...item,
+      metadata: typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata
+    }));
+  },
+
+  async getCount(contactId: string): Promise<number> {
+    // Count Facebook messages
+    const facebookCount = await getOne<{ count: number }>(
+      `SELECT COUNT(*) as count
+       FROM facebook_messages fm
+       JOIN facebook_conversations fc ON fm.conversation_id = fc.id
+       WHERE fc.contact_id = ?`,
+      [contactId]
+    );
+
+    // Count email communications
+    const emailCount = await getOne<{ count: number }>(
+      'SELECT COUNT(*) as count FROM email_communications WHERE contact_id = ?',
+      [contactId]
+    );
+
+    // Count SMS communications
+    const smsCount = await getOne<{ count: number }>(
+      'SELECT COUNT(*) as count FROM sms_communications WHERE contact_id = ?',
+      [contactId]
+    );
+
+    return (facebookCount?.count || 0) + (emailCount?.count || 0) + (smsCount?.count || 0);
   }
 };

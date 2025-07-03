@@ -8,6 +8,8 @@ import { FaArrowLeft, FaEdit, FaEye, FaDownload, FaUser, FaEnvelope, FaPhone, Fa
 import { Contact } from '@/lib/models';
 import { toast } from 'react-hot-toast';
 import { UserProfile } from '@/lib/auth';
+import CommunicationHistory from '@/components/contacts/CommunicationHistory';
+import SendCommunication from '@/components/contacts/SendCommunication';
 
 interface Order {
   id: string;
@@ -48,6 +50,7 @@ export default function ViewContactPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [communicationKey, setCommunicationKey] = useState(0);
 
   useEffect(() => {
     fetchUserProfile();
@@ -126,6 +129,11 @@ export default function ViewContactPage() {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const handleCommunicationSent = () => {
+    // Refresh the communication history by changing the key
+    setCommunicationKey(prev => prev + 1);
   };
 
   const isAdmin = () => {
@@ -567,6 +575,18 @@ export default function ViewContactPage() {
           )}
         </div>
       </div>
+
+      {/* Send Communication Section */}
+      <SendCommunication
+        contact={contact}
+        onCommunicationSent={handleCommunicationSent}
+      />
+
+      {/* Communication History Section */}
+      <CommunicationHistory
+        key={communicationKey}
+        contactId={contact.id}
+      />
     </div>
   );
 }
