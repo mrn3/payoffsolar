@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {ProductWithFirstImage, ProductCategory} from '@/lib/models';
 import ProductCard from '@/components/products/ProductCard';
 import ProductCardSkeleton from '@/components/products/ProductCardSkeleton';
@@ -36,16 +36,6 @@ export default function ProductsPage() {
     totalPages: 0,
   });
 
-  // Fetch categories on component mount
-  useEffect(() => {
-    fetchCategories();
-  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
-
-  // Fetch products when search/filter parameters change
-  useEffect(() => {
-    fetchProducts();
-  }, [searchQuery, selectedCategory, sortBy, currentPage]);
-
   const fetchCategories = async () => {
     try {
       const _response = await fetch('/api/public/product-categories');
@@ -58,7 +48,13 @@ export default function ProductsPage() {
     }
   };
 
-  const fetchProducts = async () => {
+  // Fetch categories on component mount
+  useEffect(() => {
+    fetchCategories();
+  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
+
+  const fetchProducts = useCallback(async () => {
+    console.log('fetchProducts called with currentPage:', currentPage);
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -76,9 +72,11 @@ export default function ProductsPage() {
         params.append('sort', sortBy);
       }
 
+      console.log('Fetching with URL:', `/api/public/products?${params}`);
       const _response = await fetch(`/api/public/products?${params}`);
       if (_response.ok) {
         const _data: ProductsResponse = await _response.json();
+        console.log('Received data:', _data);
         setProducts(_data.products);
         setPagination(_data.pagination);
       }
@@ -87,31 +85,44 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchQuery, selectedCategory, sortBy]);
 
-  const handleSearchChange = (_query: string) => {
+  // Fetch products when search/filter parameters change
+  useEffect(() => {
+    console.log('useEffect triggered, calling fetchProducts');
+    fetchProducts();
+  }, [searchQuery, selectedCategory, sortBy]);
+
+  // Fetch products when page changes
+  useEffect(() => {
+    console.log('currentPage changed to:', currentPage, 'calling fetchProducts');
+    fetchProducts();
+  }, [currentPage]);
+
+  const handleSearchChange = useCallback((_query: string) => {
     setSearchQuery(_query);
     setCurrentPage(1); // Reset to first page when searching
-  };
+  }, []);
 
-  const handleCategoryChange = (_categoryId: string) => {
+  const handleCategoryChange = useCallback((_categoryId: string) => {
     setSelectedCategory(_categoryId);
     setCurrentPage(1); // Reset to first page when filtering
-  };
+  }, []);
 
-  const handleSortChange = (sort: string) => {
+  const handleSortChange = useCallback((sort: string) => {
     setSortBy(sort);
     setCurrentPage(1); // Reset to first page when sorting
-  };
+  }, []);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setSearchQuery('');
     setSelectedCategory('');
     setSortBy('');
     setCurrentPage(1);
-  };
+  }, []);
 
   const handlePageChange = (page: number) => {
+    console.log('handlePageChange called with page:', page);
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

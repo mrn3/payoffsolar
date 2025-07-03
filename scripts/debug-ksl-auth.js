@@ -41,7 +41,7 @@ async function debugKslAuth() {
 
   console.log('⚠️  Note: This debug script requires the development server to be running.');
   console.log('   Please use the admin dashboard to test authentication instead.');
-  console.log('   Go to: http://localhost:3001/dashboard/settings/platforms');
+  console.log('   Go to: http://localhost:3000/dashboard/settings/platforms');
   console.log('   The improved authentication will now:');
   console.log('   - Fill the email field character by character');
   console.log('   - Verify the field values after filling');
