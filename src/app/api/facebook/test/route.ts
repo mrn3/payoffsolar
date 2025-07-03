@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     // Check if Facebook tables exist
     let tablesExist = false;
     let tableError = null;
+    let conversationCount = 0;
 
     try {
       // Check if facebook_conversations table exists
@@ -30,8 +31,12 @@ export async function GET(request: NextRequest) {
 
       if (tablesExist) {
         // Test a simple query
-        const conversationCount = await executeQuery('SELECT COUNT(*) as count FROM facebook_conversations');
-        config.conversation_count = conversationCount[0]?.count || 0;
+        try {
+          const countResult = await executeQuery('SELECT COUNT(*) as count FROM facebook_conversations');
+          conversationCount = countResult[0]?.count || 0;
+        } catch (countError) {
+          tableError = `Table exists but query failed: ${countError instanceof Error ? countError.message : 'Unknown error'}`;
+        }
       }
     } catch (error) {
       tableError = error instanceof Error ? error.message : 'Unknown database error';
@@ -40,9 +45,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       status: 'ok',
       message: 'Facebook configuration test',
-      config,
+      config: {
+        ...config,
+        conversation_count: conversationCount
+      },
       database: {
         tables_exist: tablesExist,
+        conversation_count: conversationCount,
         error: tableError
       }
     });

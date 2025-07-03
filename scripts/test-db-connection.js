@@ -1,95 +1,137 @@
 #!/usr/bin/env node
 
 /**
- * Database connection test script for Bitnami servers
- * This script helps identify the correct MySQL credentials
+ * Database Connection Test
+ * 
+ * This script tests the database connection and verifies the Facebook tables exist.
  */
 
-// Load environment variables
-require('dotenv').config({ path: '.env' });
-require('dotenv').config({ path: '.env.local' });
 const mysql = require('mysql2/promise');
+const fs = require('fs');
+const path = require('path');
 
-async function testConnection(config, configName) {
-  console.log(`\n🔍 Testing ${configName}:`);
-  console.log(`   Host: ${config.host}`);
-  console.log(`   Port: ${config.port}`);
-  console.log(`   User: ${config.user}`);
-  console.log(`   Database: ${config.database}`);
-  console.log(`   Password: ${config.password ? '[SET]' : '[NOT SET]'}`);
-  
-  try {
-    const connection = await mysql.createConnection(config);
-    await connection.ping();
-    console.log(`   ✅ Connection successful!`);
-    
-    // Test if we can access the orders table
-    try {
-      const [rows] = await connection.execute('SELECT COUNT(*) as count FROM orders');
-      console.log(`   ✅ Orders table accessible (${rows[0].count} orders found)`);
-      
-      // Check for "Followed Up" orders
-      const [followedUp] = await connection.execute('SELECT COUNT(*) as count FROM orders WHERE status = "Followed Up"');
-      console.log(`   📊 Orders with "Followed Up" status: ${followedUp[0].count}`);
-      
-    } catch (tableError) {
-      console.log(`   ⚠️  Database connected but orders table not accessible: ${tableError.message}`);
-    }
-    
-    await connection.end();
-    return true;
-  } catch (error) {
-    console.log(`   ❌ Connection failed: ${error.message}`);
-    return false;
+// Load environment variables from .env file if it exists
+function loadEnvFile() {
+  const envPath = path.join(process.cwd(), '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+      const [key, ...valueParts] = line.split('=');
+      if (key && valueParts.length > 0) {
+        const value = valueParts.join('=').trim();
+        if (!process.env[key]) {
+          process.env[key] = value;
+        }
+      }
+    });
   }
 }
 
-async function main() {
-  console.log('🔧 Testing database connections...\n');
+async function testDatabaseConnection() {
+  console.log('🔍 Testing database connection and Facebook tables...\n');
   
-  // Configuration from environment variables
-  const envConfig = {
+  // Load environment variables
+  loadEnvFile();
+  
+  // Database configuration
+  const config = {
     host: process.env.MYSQL_HOST || 'localhost',
+    port: parseInt(process.env.MYSQL_PORT || '3306'),
     user: process.env.MYSQL_USER || 'root',
     password: process.env.MYSQL_PASSWORD || '',
-    database: process.env.MYSQL_DATABASE || 'payoffsolar',
-    port: parseInt(process.env.MYSQL_PORT || '3306')
+    database: process.env.MYSQL_DATABASE || 'payoffsolar'
   };
-  
-  // Common Bitnami configurations to try
-  const configs = [
-    { ...envConfig, name: 'Environment Variables' },
-    { ...envConfig, user: 'bitnami', name: 'Bitnami User' },
-    { ...envConfig, user: 'root', password: '', name: 'Root No Password' },
-    { ...envConfig, user: 'root', password: 'bitnami', name: 'Root with "bitnami" password' },
-  ];
-  
-  let successfulConfig = null;
-  
-  for (const config of configs) {
-    const success = await testConnection(config, config.name);
-    if (success && !successfulConfig) {
-      successfulConfig = config;
+
+  console.log('🔧 Database config:', {
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    password: config.password ? '***' : 'NOT SET',
+    database: config.database
+  });
+
+  let connection;
+  try {
+    // Test connection
+    console.log('\n1️⃣ Testing database connection...');
+    connection = await mysql.createConnection(config);
+    console.log('✅ Connected to database successfully');
+    
+    // Test basic query
+    console.log('\n2️⃣ Testing basic query...');
+    const [basicResult] = await connection.execute('SELECT 1 as test');
+    console.log('✅ Basic query successful:', basicResult[0]);
+    
+    // Check if contacts table exists (should exist)
+    console.log('\n3️⃣ Checking contacts table...');
+    const [contactsCheck] = await connection.execute(`
+      SELECT COUNT(*) as count 
+      FROM INFORMATION_SCHEMA.TABLES 
+      WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME = 'contacts'
+    `);
+    
+    if (contactsCheck[0].count > 0) {
+      console.log('✅ Contacts table exists');
+    } else {
+      console.log('❌ Contacts table missing');
     }
-  }
-  
-  if (successfulConfig) {
-    console.log('\n🎉 Found working configuration!');
-    console.log('\nUpdate your .env file with:');
-    console.log(`MYSQL_HOST=${successfulConfig.host}`);
-    console.log(`MYSQL_PORT=${successfulConfig.port}`);
-    console.log(`MYSQL_USER=${successfulConfig.user}`);
-    console.log(`MYSQL_PASSWORD=${successfulConfig.password}`);
-    console.log(`MYSQL_DATABASE=${successfulConfig.database}`);
-    console.log('\nThen run the migration script again.');
-  } else {
-    console.log('\n❌ No working configuration found.');
-    console.log('\n💡 Try these commands on your Bitnami server:');
-    console.log('   sudo cat /opt/bitnami/mysql/conf/my.cnf');
-    console.log('   mysql -u root -p');
-    console.log('   mysql -u bitnami -p');
-    console.log('\nOr check the Bitnami documentation for MySQL credentials.');
+    
+    // Check Facebook tables
+    console.log('\n4️⃣ Checking Facebook tables...');
+    const [facebookTables] = await connection.execute(`
+      SELECT TABLE_NAME 
+      FROM INFORMATION_SCHEMA.TABLES 
+      WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME IN ('facebook_conversations', 'facebook_messages')
+      ORDER BY TABLE_NAME
+    `);
+    
+    console.log('📊 Found Facebook tables:', facebookTables.map(t => t.TABLE_NAME));
+    
+    if (facebookTables.length === 2) {
+      console.log('✅ Both Facebook tables exist');
+      
+      // Test queries on Facebook tables
+      console.log('\n5️⃣ Testing Facebook table queries...');
+      
+      const [conversationCount] = await connection.execute('SELECT COUNT(*) as count FROM facebook_conversations');
+      console.log('✅ facebook_conversations query successful, count:', conversationCount[0].count);
+      
+      const [messageCount] = await connection.execute('SELECT COUNT(*) as count FROM facebook_messages');
+      console.log('✅ facebook_messages query successful, count:', messageCount[0].count);
+      
+    } else {
+      console.log('❌ Facebook tables missing:', 2 - facebookTables.length, 'tables not found');
+    }
+    
+    // Check facebook_user_id column in contacts
+    console.log('\n6️⃣ Checking facebook_user_id column...');
+    const [columnCheck] = await connection.execute(`
+      SELECT COLUMN_NAME 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME = 'contacts' 
+      AND COLUMN_NAME = 'facebook_user_id'
+    `);
+    
+    if (columnCheck.length > 0) {
+      console.log('✅ facebook_user_id column exists in contacts table');
+    } else {
+      console.log('❌ facebook_user_id column missing from contacts table');
+    }
+    
+    console.log('\n🎉 Database test completed successfully!');
+    
+  } catch (error) {
+    console.error('❌ Database test failed:', error.message);
+    console.error('Full error:', error);
+  } finally {
+    if (connection) {
+      await connection.end();
+      console.log('🔌 Database connection closed');
+    }
   }
 }
 
-main().catch(console.error);
+testDatabaseConnection();
