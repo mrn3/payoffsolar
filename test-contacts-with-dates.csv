@@ -1,6 +1,0 @@
-name,email,phone,city,state,created_at,notes
-John Smith,john.smith@example.com,555-123-4567,Salt Lake City,UT,2023-01-15,Imported contact with custom date
-Jane Doe,jane.doe@example.com,555-987-6543,Provo,UT,2023-06-20,Another imported contact
-Bob Johnson,bob.johnson@example.com,555-555-5555,Ogden,UT,,Contact without date - should use current
-Alice Brown,alice.brown@example.com,555-111-2222,Park City,UT,2024-12-01,Recent contact
-Charlie Wilson,charlie.wilson@example.com,555-333-4444,Logan,UT,2022-03-10,Older contact
