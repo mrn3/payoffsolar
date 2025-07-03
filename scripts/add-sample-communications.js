@@ -1,18 +1,22 @@
 #!/usr/bin/env node
 
 const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 async function addSampleCommunications() {
   let connection;
-  
+
   try {
-    // Create connection
+    // Create connection using environment variables
     connection = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: 'password',
-      database: 'payoffsolar'
+      host: process.env.MYSQL_HOST || 'localhost',
+      port: parseInt(process.env.MYSQL_PORT || '3306'),
+      user: process.env.MYSQL_USER || 'root',
+      password: process.env.MYSQL_PASSWORD || '',
+      database: process.env.MYSQL_DATABASE || 'payoffsolar'
     });
+
+    console.log(`Connecting to MySQL as ${process.env.MYSQL_USER || 'root'}@${process.env.MYSQL_HOST || 'localhost'}`);
 
     console.log('Connected to MySQL database');
     
