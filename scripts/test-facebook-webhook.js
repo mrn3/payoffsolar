@@ -16,21 +16,34 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-// Load environment variables from .env.local
+// Load environment variables from .env.local or .env
 function loadEnvFile() {
-  const envPath = path.join(process.cwd(), '.env.local');
-  if (fs.existsSync(envPath)) {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    envContent.split('\n').forEach(line => {
-      const [key, ...valueParts] = line.split('=');
-      if (key && valueParts.length > 0) {
-        const value = valueParts.join('=').trim();
-        if (!process.env[key]) {
-          process.env[key] = value;
-        }
-      }
-    });
+  // Try .env.local first (for local development)
+  const envLocalPath = path.join(process.cwd(), '.env.local');
+  const envPath = path.join(process.cwd(), '.env');
+
+  let envFile = null;
+  if (fs.existsSync(envLocalPath)) {
+    envFile = envLocalPath;
+    console.log('📁 Loading environment from .env.local');
+  } else if (fs.existsSync(envPath)) {
+    envFile = envPath;
+    console.log('📁 Loading environment from .env');
+  } else {
+    console.log('⚠️ No .env.local or .env file found');
+    return;
   }
+
+  const envContent = fs.readFileSync(envFile, 'utf8');
+  envContent.split('\n').forEach(line => {
+    const [key, ...valueParts] = line.split('=');
+    if (key && valueParts.length > 0) {
+      const value = valueParts.join('=').trim();
+      if (!process.env[key]) {
+        process.env[key] = value;
+      }
+    }
+  });
 }
 
 function generateSignature(body, secret) {
