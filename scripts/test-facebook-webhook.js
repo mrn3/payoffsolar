@@ -272,7 +272,15 @@ async function runAllTests() {
   results.facebookAPI = await testFacebookAPI();
   results.webhookVerification = await testWebhookVerification(baseUrl);
   results.webhookMessage = await testWebhookMessage(baseUrl);
-  results.webhookSubscription = await checkWebhookSubscription();
+
+  // Only check subscription if we want to (this requires special permissions)
+  const skipSubscriptionCheck = process.env.SKIP_SUBSCRIPTION_CHECK === 'true';
+  if (skipSubscriptionCheck) {
+    console.log('\n🔗 Skipping webhook subscription check (SKIP_SUBSCRIPTION_CHECK=true)');
+    results.webhookSubscription = 'skipped';
+  } else {
+    results.webhookSubscription = await checkWebhookSubscription();
+  }
 
   // Summary
   console.log('\n📊 Test Results Summary:');
