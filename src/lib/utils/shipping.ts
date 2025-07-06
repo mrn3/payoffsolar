@@ -1,4 +1,4 @@
-import { ShippingMethod, Warehouse } from '@/lib/models';
+import { ShippingMethod, Warehouse, WarehouseModel } from '@/lib/models';
 
 export interface ShippingCalculationRequest {
   productId: string;
@@ -18,6 +18,7 @@ export interface ShippingCalculationResult {
   cost: number;
   estimatedDays?: number;
   error?: string;
+  warehouses?: Warehouse[]; // For local pickup methods
 }
 
 export interface ShippingQuote {
@@ -184,6 +185,21 @@ export async function calculateShippingForMethod(
       case 'local_pickup':
         result.cost = 0; // Local pickup is always free
         result.estimatedDays = 0; // Available immediately
+
+        // Load warehouse information if warehouse_ids are specified
+        if (method.warehouse_ids && method.warehouse_ids.length > 0) {
+          const warehouses = await Promise.all(
+            method.warehouse_ids.map(async (warehouseId) => {
+              try {
+                return await WarehouseModel.getById(warehouseId);
+              } catch (error) {
+                console.error(`Error loading warehouse ${warehouseId}:`, error);
+                return null;
+              }
+            })
+          );
+          result.warehouses = warehouses.filter(Boolean) as Warehouse[];
+        }
         break;
 
       default:
@@ -300,8 +316,9 @@ export function validateShippingMethod(method: ShippingMethod): string[] {
       break;
 
     case 'local_pickup':
-      if (!method.pickup_location?.trim()) {
-        errors.push('Local pickup requires a pickup location');
+      // Support both legacy pickup_location and new warehouse_ids
+      if (!method.pickup_location?.trim() && (!method.warehouse_ids || method.warehouse_ids.length === 0)) {
+        errors.push('Local pickup requires either a pickup location or warehouse selection');
       }
       break;
   }

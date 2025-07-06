@@ -109,11 +109,34 @@ export class ShippingService {
             totalCost: 0
           };
         } else {
-          // Calculate local pickup methods
-          const methods = localPickupMethods.map(method => ({
-            method,
-            cost: 0,
-            estimatedDays: 0
+          // Calculate local pickup methods with warehouse information
+          const methods = await Promise.all(localPickupMethods.map(async (method) => {
+            let warehouses = [];
+
+            // Get warehouse information for this pickup method
+            if (method.warehouse_ids && method.warehouse_ids.length > 0) {
+              // Load warehouses for this method
+              warehouses = await Promise.all(
+                method.warehouse_ids.map(async (warehouseId) => {
+                  try {
+                    return await WarehouseModel.getById(warehouseId);
+                  } catch (error) {
+                    console.error(`Error loading warehouse ${warehouseId}:`, error);
+                    return null;
+                  }
+                })
+              );
+              warehouses = warehouses.filter(Boolean); // Remove null entries
+            }
+
+            return {
+              method: {
+                ...method,
+                warehouses // Include warehouse details
+              },
+              cost: 0,
+              estimatedDays: 0
+            };
           }));
 
           quote = {

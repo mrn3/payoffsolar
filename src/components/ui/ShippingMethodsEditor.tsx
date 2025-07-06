@@ -17,6 +17,27 @@ export default function ShippingMethodsEditor({ value, onChange, warehouses = []
   const [methods, setMethods] = useState<ShippingMethod[]>(value || []);
   const [errors, setErrors] = useState<Record<number, string[]>>({});
   const [shippingOption, setShippingOption] = useState<ShippingOption>('ship_only');
+  const [availableWarehouses, setAvailableWarehouses] = useState<Warehouse[]>(warehouses);
+
+  // Load warehouses if not provided
+  useEffect(() => {
+    if (warehouses.length === 0) {
+      const loadWarehouses = async () => {
+        try {
+          const response = await fetch('/api/warehouses');
+          if (response.ok) {
+            const data = await response.json();
+            setAvailableWarehouses(data.warehouses || []);
+          }
+        } catch (error) {
+          console.error('Error loading warehouses:', error);
+        }
+      };
+      loadWarehouses();
+    } else {
+      setAvailableWarehouses(warehouses);
+    }
+  }, [warehouses]);
 
   useEffect(() => {
     setMethods(value || []);
@@ -63,7 +84,7 @@ export default function ShippingMethodsEditor({ value, onChange, warehouses = []
             type: 'local_pickup',
             name: 'Local Pickup',
             description: 'Pick up from our location',
-            pickup_location: ''
+            warehouse_ids: []
           }];
         }
         break;
@@ -89,7 +110,7 @@ export default function ShippingMethodsEditor({ value, onChange, warehouses = []
             type: 'local_pickup',
             name: 'Local Pickup',
             description: 'Pick up from our location',
-            pickup_location: ''
+            warehouse_ids: []
           });
         }
         break;
@@ -110,27 +131,36 @@ export default function ShippingMethodsEditor({ value, onChange, warehouses = []
           delete updatedMethods[index].cost;
           delete updatedMethods[index].warehouse_id;
           delete updatedMethods[index].pickup_location;
+          delete updatedMethods[index].warehouse_ids;
           delete updatedMethods[index].api_config;
           break;
         case 'fixed':
           delete updatedMethods[index].warehouse_id;
           delete updatedMethods[index].pickup_location;
+          delete updatedMethods[index].warehouse_ids;
           delete updatedMethods[index].api_config;
           break;
         case 'calculated_distance':
           delete updatedMethods[index].cost;
           delete updatedMethods[index].pickup_location;
+          delete updatedMethods[index].warehouse_ids;
           delete updatedMethods[index].api_config;
           break;
         case 'api_calculated':
           delete updatedMethods[index].cost;
           delete updatedMethods[index].warehouse_id;
           delete updatedMethods[index].pickup_location;
+          delete updatedMethods[index].warehouse_ids;
           break;
         case 'local_pickup':
           delete updatedMethods[index].cost;
           delete updatedMethods[index].warehouse_id;
+          delete updatedMethods[index].pickup_location;
           delete updatedMethods[index].api_config;
+          // Initialize warehouse_ids if not present
+          if (!updatedMethods[index].warehouse_ids) {
+            updatedMethods[index].warehouse_ids = [];
+          }
           break;
       }
     }
@@ -155,7 +185,7 @@ export default function ShippingMethodsEditor({ value, onChange, warehouses = []
         type: 'local_pickup',
         name: '',
         description: '',
-        pickup_location: ''
+        warehouse_ids: []
       };
     } else {
       newMethod = {
@@ -335,14 +365,45 @@ export default function ShippingMethodsEditor({ value, onChange, warehouses = []
 
               {method.type === 'local_pickup' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Pickup Location</label>
-                  <input
-                    type="text"
-                    value={method.pickup_location || ''}
-                    onChange={(e) => handleMethodChange(index, 'pickup_location', e.target.value)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
-                    placeholder="e.g., 123 Main St, City, State 12345"
-                  />
+                  <label className="block text-sm font-medium text-gray-700">Pickup Warehouses</label>
+                  <div className="mt-1 space-y-2">
+                    {availableWarehouses.length === 0 ? (
+                      <p className="text-sm text-gray-500">No warehouses available. Please add warehouses first.</p>
+                    ) : (
+                      availableWarehouses.map((warehouse) => {
+                        const isSelected = (method.warehouse_ids || []).includes(warehouse.id);
+                        return (
+                          <label key={warehouse.id} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                const currentIds = method.warehouse_ids || [];
+                                const newIds = e.target.checked
+                                  ? [...currentIds, warehouse.id]
+                                  : currentIds.filter(id => id !== warehouse.id);
+                                handleMethodChange(index, 'warehouse_ids', newIds);
+                              }}
+                              className="mr-3 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                            />
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-gray-900">{warehouse.name}</span>
+                              {(warehouse.address || warehouse.city) && (
+                                <div className="text-xs text-gray-500">
+                                  {[warehouse.address, warehouse.city, warehouse.state, warehouse.zip]
+                                    .filter(Boolean)
+                                    .join(', ')}
+                                </div>
+                              )}
+                            </div>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                  {(method.warehouse_ids || []).length === 0 && (
+                    <p className="mt-1 text-sm text-red-600">Please select at least one warehouse for pickup.</p>
+                  )}
                 </div>
               )}
 

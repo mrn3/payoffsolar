@@ -473,7 +473,8 @@ export interface ShippingMethod {
   description?: string;
   cost?: number; // For fixed amount
   warehouse_id?: string; // For distance calculation
-  pickup_location?: string; // For local pickup
+  pickup_location?: string; // For local pickup (legacy - use warehouse_ids instead)
+  warehouse_ids?: string[]; // For local pickup - multiple warehouses
   api_config?: {
     provider: string;
     settings: Record<string, any>;

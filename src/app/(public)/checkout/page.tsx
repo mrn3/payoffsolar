@@ -24,6 +24,7 @@ interface CheckoutFormData {
   zip: string;
   shippingMethod: string;
   isLocalPickup?: boolean;
+  selectedWarehouse?: string;
 }
 
 // Initialize Stripe
@@ -47,9 +48,18 @@ export default function CheckoutPage() {
     name: string;
     cost: number;
     estimatedDays?: number;
+    warehouses?: Array<{
+      id: string;
+      name: string;
+      address?: string;
+      city?: string;
+      state?: string;
+      zip?: string;
+    }>;
   }>>([]);
   const [shippingCost, setShippingCost] = useState(0);
   const [loadingShipping, setLoadingShipping] = useState(false);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<string>('');
 
   // Track begin checkout event when page loads
   useEffect(() => {
@@ -175,13 +185,19 @@ export default function CheckoutPage() {
     if (!formData.firstName) errors.firstName = 'First name is required';
     if (!formData.lastName) errors.lastName = 'Last name is required';
 
-    // Only require address fields if not local pickup
+    // Check shipping method requirements
     const selectedMethod = shippingMethods.find(method =>
       method.name.toLowerCase().replace(/\s+/g, '-') === formData.shippingMethod
     );
-    const isLocalPickup = selectedMethod?.name.toLowerCase().includes('pickup');
+    const isLocalPickup = selectedMethod?.warehouses && selectedMethod.warehouses.length > 0;
 
-    if (!isLocalPickup) {
+    if (isLocalPickup) {
+      // For local pickup, require warehouse selection
+      if (!selectedWarehouse) {
+        errors.selectedWarehouse = 'Please select a pickup location';
+      }
+    } else {
+      // For shipping, require address fields
       if (!formData.address) errors.address = 'Address is required';
       if (!formData.city) errors.city = 'City is required';
       if (!formData.state) errors.state = 'State is required';
@@ -203,6 +219,9 @@ export default function CheckoutPage() {
       );
       if (selectedMethod) {
         setShippingCost(selectedMethod.cost);
+        // Reset warehouse selection when changing shipping methods
+        setSelectedWarehouse('');
+        setFormData(prev => ({ ...prev, selectedWarehouse: '' }));
       }
     }
 
@@ -439,26 +458,68 @@ export default function CheckoutPage() {
                   <div className="space-y-3">
                     {shippingMethods.map((method, index) => {
                       const methodValue = method.name.toLowerCase().replace(/\s+/g, '-');
+                      const isLocalPickup = method.warehouses && method.warehouses.length > 0;
+                      const isSelected = formData.shippingMethod === methodValue || (index === 0 && !shippingMethods.some(m => m.name.toLowerCase().replace(/\s+/g, '-') === formData.shippingMethod));
+
                       return (
-                        <label key={index} className="flex items-center">
-                          <input
-                            type="radio"
-                            name="shippingMethod"
-                            value={methodValue}
-                            checked={formData.shippingMethod === methodValue || (index === 0 && !shippingMethods.some(m => m.name.toLowerCase().replace(/\s+/g, '-') === formData.shippingMethod))}
-                            onChange={handleInputChange}
-                            className="mr-3"
-                          />
-                          <span className="flex-1">
-                            <span className="text-gray-900">{method.name}</span>
-                            {method.estimatedDays && (
-                              <span className="text-gray-700 text-sm ml-1">
-                                ({method.estimatedDays} business day{method.estimatedDays !== 1 ? 's' : ''})
-                              </span>
-                            )}
-                          </span>
-                          <span className="font-medium text-gray-900">{formatPrice(method.cost)}</span>
-                        </label>
+                        <div key={index} className="border border-gray-200 rounded-lg p-4">
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="shippingMethod"
+                              value={methodValue}
+                              checked={isSelected}
+                              onChange={handleInputChange}
+                              className="mr-3"
+                            />
+                            <span className="flex-1">
+                              <span className="text-gray-900">{method.name}</span>
+                              {method.estimatedDays && (
+                                <span className="text-gray-700 text-sm ml-1">
+                                  ({method.estimatedDays} business day{method.estimatedDays !== 1 ? 's' : ''})
+                                </span>
+                              )}
+                            </span>
+                            <span className="font-medium text-gray-900">{formatPrice(method.cost)}</span>
+                          </label>
+
+                          {/* Warehouse selection for local pickup */}
+                          {isLocalPickup && isSelected && (
+                            <div className="mt-4 ml-6 space-y-2">
+                              <h4 className="text-sm font-medium text-gray-900">Select Pickup Location:</h4>
+                              {method.warehouses!.map((warehouse) => {
+                                const warehouseAddress = [warehouse.address, warehouse.city, warehouse.state, warehouse.zip]
+                                  .filter(Boolean)
+                                  .join(', ');
+
+                                return (
+                                  <label key={warehouse.id} className="flex items-start">
+                                    <input
+                                      type="radio"
+                                      name="selectedWarehouse"
+                                      value={warehouse.id}
+                                      checked={selectedWarehouse === warehouse.id}
+                                      onChange={(e) => {
+                                        setSelectedWarehouse(e.target.value);
+                                        setFormData(prev => ({ ...prev, selectedWarehouse: e.target.value }));
+                                      }}
+                                      className="mr-3 mt-1"
+                                    />
+                                    <div className="flex-1">
+                                      <div className="text-sm font-medium text-gray-900">{warehouse.name}</div>
+                                      {warehouseAddress && (
+                                        <div className="text-xs text-gray-600">{warehouseAddress}</div>
+                                      )}
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                              {formErrors.selectedWarehouse && (
+                                <div className="mt-2 text-sm text-red-600">{formErrors.selectedWarehouse}</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
