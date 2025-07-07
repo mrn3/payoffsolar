@@ -137,7 +137,9 @@ export default function CheckoutPage() {
         setShippingMethods(result.methods);
 
         // Set the cost of the selected method or the cheapest one
-        const selectedMethod = result.methods.find(m => m.name.toLowerCase().includes(formData.shippingMethod));
+        const selectedMethod = result.methods.find(m =>
+          m.name.toLowerCase().replace(/\s+/g, '-') === formData.shippingMethod
+        );
         const defaultMethod = selectedMethod || result.methods[0];
         setShippingCost(defaultMethod?.cost || 0);
 
@@ -187,27 +189,44 @@ export default function CheckoutPage() {
 
           if (fallbackMethods.length > 0) {
             setShippingMethods(fallbackMethods);
-            setShippingCost(fallbackMethods[0]?.cost || 0);
+            // Set the cost of the selected method or the first one
+            const selectedMethod = fallbackMethods.find(m =>
+              m.name.toLowerCase().replace(/\s+/g, '-') === formData.shippingMethod
+            );
+            const defaultMethod = selectedMethod || fallbackMethods[0];
+            setShippingCost(defaultMethod?.cost || 0);
           } else {
             // Ultimate fallback to default methods
-            setShippingMethods([
+            const defaultMethods = [
               { name: 'Free Shipping', cost: 0, estimatedDays: 7 },
               { name: 'Standard Shipping', cost: 9.99, estimatedDays: 5 },
               { name: 'Express Shipping', cost: 29.99, estimatedDays: 2 },
               { name: 'Overnight Shipping', cost: 49.99, estimatedDays: 1 }
-            ]);
-            setShippingCost(0);
+            ];
+            setShippingMethods(defaultMethods);
+            // Set the cost of the selected method or the first one
+            const selectedMethod = defaultMethods.find(m =>
+              m.name.toLowerCase().replace(/\s+/g, '-') === formData.shippingMethod
+            );
+            const defaultMethod = selectedMethod || defaultMethods[0];
+            setShippingCost(defaultMethod?.cost || 0);
           }
         } catch (fallbackError) {
           console.error('Fallback shipping calculation also failed:', fallbackError);
           // Ultimate fallback to default methods
-          setShippingMethods([
+          const ultimateFallbackMethods = [
             { name: 'Free Shipping', cost: 0, estimatedDays: 7 },
             { name: 'Standard Shipping', cost: 9.99, estimatedDays: 5 },
             { name: 'Express Shipping', cost: 29.99, estimatedDays: 2 },
             { name: 'Overnight Shipping', cost: 49.99, estimatedDays: 1 }
-          ]);
-          setShippingCost(0);
+          ];
+          setShippingMethods(ultimateFallbackMethods);
+          // Set the cost of the selected method or the first one
+          const selectedMethod = ultimateFallbackMethods.find(m =>
+            m.name.toLowerCase().replace(/\s+/g, '-') === formData.shippingMethod
+          );
+          const defaultMethod = selectedMethod || ultimateFallbackMethods[0];
+          setShippingCost(defaultMethod?.cost || 0);
         }
       } finally {
         setLoadingShipping(false);
