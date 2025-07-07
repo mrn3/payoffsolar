@@ -2504,6 +2504,14 @@ export const InventoryModel = {
     );
   },
 
+  async getTotalQuantityByProductId(productId: string): Promise<number> {
+    const result = await getOne<{ total_quantity: number }>(
+      'SELECT COALESCE(SUM(quantity), 0) as total_quantity FROM inventory WHERE product_id = ?',
+      [productId]
+    );
+    return result?.total_quantity || 0;
+  },
+
   async create(data: Omit<Inventory, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     await executeSingle(
       'INSERT INTO inventory (product_id, warehouse_id, quantity, min_quantity) VALUES (?, ?, ?, ?)',

@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 interface ProductWithDetails extends Product {
   category_name?: string;
   images?: ProductImage[];
+  quantity_available?: number;
 }
 
 export default function ProductDetailPage() {
@@ -107,6 +108,16 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (product) {
+      const availableQuantity = product.quantity_available || 0;
+      if (availableQuantity === 0) {
+        toast.error('This product is currently out of stock');
+        return;
+      }
+      if (quantity > availableQuantity) {
+        toast.error(`Only ${availableQuantity} items available in stock`);
+        return;
+      }
+
       addItem({
         product_id: product.id,
         product_name: product.name,
@@ -120,7 +131,11 @@ export default function ProductDetailPage() {
   };
 
   const handleQuantityChange = (delta: number) => {
-    setQuantity(prev => Math.max(1, prev + delta));
+    const availableQuantity = product?.quantity_available || 0;
+    setQuantity(prev => {
+      const newQuantity = prev + delta;
+      return Math.max(1, Math.min(newQuantity, availableQuantity));
+    });
   };
 
   if (loading) {
@@ -200,6 +215,9 @@ export default function ProductDetailPage() {
                   {product.name}
                 </h1>
                 <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                <p className="text-sm text-gray-500">
+                  Quantity Available: {product.quantity_available || 0}
+                </p>
               </div>
 
               {/* Price */}
@@ -293,7 +311,8 @@ export default function ProductDetailPage() {
                     </span>
                     <button
                       onClick={() => handleQuantityChange(1)}
-                      className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                      className="p-2 text-gray-500 hover:text-gray-700 transition-colors disabled:text-gray-300 disabled:cursor-not-allowed"
+                      disabled={quantity >= (product.quantity_available || 0)}
                       aria-label="Increase quantity"
                     >
                       <FaPlus className="h-3 w-3" />
@@ -303,10 +322,13 @@ export default function ProductDetailPage() {
 
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-colors font-medium flex items-center justify-center space-x-2"
+                  disabled={(product.quantity_available || 0) === 0}
+                  className="w-full bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-colors font-medium flex items-center justify-center space-x-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   <FaShoppingCart className="h-4 w-4" />
-                  <span>Add to Cart</span>
+                  <span>
+                    {(product.quantity_available || 0) === 0 ? 'Out of Stock' : 'Add to Cart'}
+                  </span>
                 </button>
               </div>
             </div>

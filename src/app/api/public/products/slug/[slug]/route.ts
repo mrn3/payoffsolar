@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ProductModel, ProductImageModel, ProductCategoryModel } from '@/lib/models';
+import { ProductModel, ProductImageModel, ProductCategoryModel, InventoryModel } from '@/lib/models';
 
 export async function GET(
   request: NextRequest,
@@ -24,10 +24,14 @@ export async function GET(
       categoryName = category?.name;
     }
 
+    // Fetch total quantity available across all warehouses
+    const quantityAvailable = await InventoryModel.getTotalQuantityByProductId(product.id);
+
     const productWithDetails = {
       ...product,
       category_name: categoryName,
       images,
+      quantity_available: quantityAvailable,
     };
 
     return NextResponse.json({ product: productWithDetails });
