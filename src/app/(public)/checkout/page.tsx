@@ -143,14 +143,72 @@ export default function CheckoutPage() {
 
       } catch (error) {
         console.error('Error calculating shipping:', error);
-        // Fall back to default shipping calculation
-        setShippingMethods([
-          { name: 'Free Shipping', cost: 0, estimatedDays: 7 },
-          { name: 'Standard Shipping', cost: 9.99, estimatedDays: 5 },
-          { name: 'Express Shipping', cost: 29.99, estimatedDays: 2 },
-          { name: 'Overnight Shipping', cost: 49.99, estimatedDays: 1 }
-        ]);
-        setShippingCost(0); // Default to free shipping
+        // Try to get shipping methods from products directly as fallback
+        try {
+          const fallbackMethods = [];
+
+          // Get shipping methods from each product in cart
+          for (const item of state.items) {
+            const response = await fetch(`/api/shipping/calculate?productId=${item.product_id}&quantity=${item.quantity}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.product?.shipping_methods?.length > 0) {
+                // Product has custom shipping methods
+                data.product.shipping_methods.forEach(method => {
+                  const existingMethod = fallbackMethods.find(m => m.name === method.name);
+                  if (!existingMethod) {
+                    fallbackMethods.push({
+                      name: method.name,
+                      cost: method.cost || 0,
+                      estimatedDays: method.type === 'free' ? 7 :
+                                   method.cost === 49.99 ? 1 :
+                                   method.cost === 29.99 ? 2 : 5
+                    });
+                  }
+                });
+              } else {
+                // Product uses default methods - add them if not already present
+                const defaultMethods = [
+                  { name: 'Free Shipping', cost: 0, estimatedDays: 7 },
+                  { name: 'Standard Shipping', cost: 9.99, estimatedDays: 5 },
+                  { name: 'Express Shipping', cost: 29.99, estimatedDays: 2 },
+                  { name: 'Overnight Shipping', cost: 49.99, estimatedDays: 1 }
+                ];
+
+                defaultMethods.forEach(method => {
+                  const existingMethod = fallbackMethods.find(m => m.name === method.name);
+                  if (!existingMethod) {
+                    fallbackMethods.push(method);
+                  }
+                });
+              }
+            }
+          }
+
+          if (fallbackMethods.length > 0) {
+            setShippingMethods(fallbackMethods);
+            setShippingCost(fallbackMethods[0]?.cost || 0);
+          } else {
+            // Ultimate fallback to default methods
+            setShippingMethods([
+              { name: 'Free Shipping', cost: 0, estimatedDays: 7 },
+              { name: 'Standard Shipping', cost: 9.99, estimatedDays: 5 },
+              { name: 'Express Shipping', cost: 29.99, estimatedDays: 2 },
+              { name: 'Overnight Shipping', cost: 49.99, estimatedDays: 1 }
+            ]);
+            setShippingCost(0);
+          }
+        } catch (fallbackError) {
+          console.error('Fallback shipping calculation also failed:', fallbackError);
+          // Ultimate fallback to default methods
+          setShippingMethods([
+            { name: 'Free Shipping', cost: 0, estimatedDays: 7 },
+            { name: 'Standard Shipping', cost: 9.99, estimatedDays: 5 },
+            { name: 'Express Shipping', cost: 29.99, estimatedDays: 2 },
+            { name: 'Overnight Shipping', cost: 49.99, estimatedDays: 1 }
+          ]);
+          setShippingCost(0);
+        }
       } finally {
         setLoadingShipping(false);
       }
@@ -160,6 +218,17 @@ export default function CheckoutPage() {
     const timeoutId = setTimeout(calculateShippingCosts, 500);
     return () => clearTimeout(timeoutId);
   }, [formData.address, formData.city, formData.state, formData.zip, formData.shippingMethod, state.items]);
+
+  // Set initial shipping cost when shipping methods are loaded
+  useEffect(() => {
+    if (shippingMethods.length > 0 && !formData.shippingMethod) {
+      // Auto-select the first method (usually the cheapest)
+      const firstMethod = shippingMethods[0];
+      const methodValue = firstMethod.name.toLowerCase().replace(/\s+/g, '-');
+      setFormData(prev => ({ ...prev, shippingMethod: methodValue }));
+      setShippingCost(firstMethod.cost);
+    }
+  }, [shippingMethods, formData.shippingMethod]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {

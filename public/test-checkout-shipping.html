@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Checkout Shipping</title>
+</head>
+<body>
+    <h1>Test Checkout Shipping</h1>
+    
+    <div>
+        <h2>Add Product to Cart</h2>
+        <button onclick="addProductToCart()">Add Fun Battery to Cart</button>
+        <button onclick="clearCart()">Clear Cart</button>
+        <button onclick="checkCart()">Check Cart</button>
+    </div>
+    
+    <div>
+        <h2>Test Shipping API</h2>
+        <button onclick="testShippingAPI()">Test Shipping API</button>
+        <div id="shipping-result"></div>
+    </div>
+    
+    <div>
+        <h2>Go to Checkout</h2>
+        <a href="/checkout" target="_blank">Open Checkout Page</a>
+    </div>
+
+    <script>
+        // Add product to cart using localStorage (simulating the cart context)
+        function addProductToCart() {
+            const cartItem = {
+                product_id: '1747b274-57f4-11f0-8c03-a2a02ebd4a15', // Fun Battery
+                product_name: 'Fun Battery',
+                product_sku: 'batt123',
+                product_price: 1170.00,
+                quantity: 1
+            };
+            
+            const cart = {
+                items: [cartItem],
+                isOpen: false,
+                affiliateCode: null
+            };
+            
+            localStorage.setItem('payoffsolar-cart', JSON.stringify(cart));
+            alert('Product added to cart!');
+        }
+        
+        function clearCart() {
+            localStorage.removeItem('payoffsolar-cart');
+            alert('Cart cleared!');
+        }
+        
+        function checkCart() {
+            const cart = localStorage.getItem('payoffsolar-cart');
+            console.log('Cart contents:', cart);
+            alert('Check console for cart contents');
+        }
+        
+        async function testShippingAPI() {
+            const resultDiv = document.getElementById('shipping-result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('/api/shipping/calculate-cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        items: [{
+                            productId: '1747b274-57f4-11f0-8c03-a2a02ebd4a15',
+                            quantity: 1
+                        }],
+                        shippingAddress: {
+                            address: '11483 S Wexford Way',
+                            city: 'South Jordan',
+                            state: 'UT',
+                            zip: '84009'
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('Shipping API result:', result);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <h3>Success!</h3>
+                        <p>Total Cost: $${result.totalCost}</p>
+                        <h4>Available Methods:</h4>
+                        <ul>
+                            ${result.methods.map(method => 
+                                `<li>${method.name}: $${method.cost} (${method.estimatedDays} days)</li>`
+                            ).join('')}
+                        </ul>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${result.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Error testing shipping API:', error);
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
