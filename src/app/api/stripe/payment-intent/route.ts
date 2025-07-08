@@ -59,6 +59,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Prepare items data for metadata (simplified for webhook processing)
+    const itemsData = items.map(item => ({
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.product_price
+    }));
+
     // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: formatAmountForStripe(total),
@@ -75,6 +82,7 @@ export async function POST(request: NextRequest) {
         items_count: items.length.toString(),
         affiliate_code: affiliateCode?.code || '',
         affiliate_code_id: affiliateCode?.id || '',
+        items_data: JSON.stringify(itemsData),
       },
     });
 

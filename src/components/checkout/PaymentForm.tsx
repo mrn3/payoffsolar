@@ -136,9 +136,9 @@ export default function PaymentForm({ customerInfo, shippingMethod, shippingCost
           console.error('Error tracking purchase:', error);
         }
 
-        // Create order in database
+        // Create order in database (backup to webhook)
         try {
-          await fetch('/api/orders/public', {
+          const orderResponse = await fetch('/api/orders/public', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -153,9 +153,17 @@ export default function PaymentForm({ customerInfo, shippingMethod, shippingCost
               },
             }),
           });
+
+          if (!orderResponse.ok) {
+            const errorData = await orderResponse.json();
+            console.error('Order creation failed:', errorData);
+          } else {
+            const orderData = await orderResponse.json();
+            console.log('Order created successfully:', orderData);
+          }
         } catch (error) {
           console.error('Error creating order:', error);
-          // Don't fail the payment for this error
+          // Don't fail the payment for this error - webhook should handle it
         }
 
         toast.success('Payment successful! Redirecting...');

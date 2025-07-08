@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import stripe from '@/lib/stripe';
-import { AffiliateCodeModel } from '@/lib/models';
+import { AffiliateCodeModel, OrderModel, OrderItemModel, ContactModel, ProductModel } from '@/lib/models';
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,8 +58,16 @@ export async function POST(request: NextRequest) {
           console.error('Error logging purchase for analytics:', error);
         }
 
+        // Create order record in database
+        try {
+          await createOrderFromPaymentIntent(paymentIntent);
+          console.log('Order created successfully for payment:', paymentIntent.id);
+        } catch (error) {
+          console.error('Error creating order from payment intent:', error);
+          // Don't fail the webhook for this error, but log it for investigation
+        }
+
         // Here you could also:
-        // - Create an order record in your database
         // - Send confirmation emails
         // - Update inventory
         break;
@@ -78,4 +86,81 @@ export async function POST(request: NextRequest) {
     console.error('Webhook error:', error);
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
+}
+
+async function createOrderFromPaymentIntent(paymentIntent: any) {
+  // Extract customer info from metadata
+  const customerEmail = paymentIntent.metadata.customer_email;
+  const customerName = paymentIntent.metadata.customer_name;
+  const total = parseFloat(paymentIntent.metadata.total || '0');
+
+  if (!customerEmail || !customerName) {
+    throw new Error('Missing customer information in payment intent metadata');
+  }
+
+  // Create or find contact
+  let contact = await ContactModel.getByEmail(customerEmail);
+
+  if (!contact) {
+    // Create new contact
+    const contactId = await ContactModel.create({
+      name: customerName,
+      email: customerEmail,
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zip: '',
+      notes: 'Created from online order',
+    });
+
+    contact = await ContactModel.getById(contactId);
+  }
+
+  if (!contact) {
+    throw new Error('Failed to create or find contact');
+  }
+
+  // Check if order already exists for this payment intent
+  const existingOrders = await OrderModel.getAll(1000, 0);
+  const existingOrder = existingOrders.find(order =>
+    order.notes && order.notes.includes(`Payment ID: ${paymentIntent.id}`)
+  );
+
+  if (existingOrder) {
+    console.log(`Order already exists for payment intent ${paymentIntent.id}`);
+    return existingOrder.id;
+  }
+
+  // Create order
+  const orderId = await OrderModel.create({
+    contact_id: contact.id,
+    status: 'confirmed',
+    total: total,
+    order_date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
+    notes: `Online order - Payment ID: ${paymentIntent.id}`,
+  });
+
+  // Create order items from metadata
+  const itemsData = paymentIntent.metadata.items_data;
+  if (itemsData) {
+    try {
+      const items = JSON.parse(itemsData);
+      for (const item of items) {
+        await OrderItemModel.create({
+          order_id: orderId,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: item.price,
+        });
+      }
+      console.log(`Created ${items.length} order items for order ${orderId}`);
+    } catch (error) {
+      console.error('Error parsing items data from payment intent metadata:', error);
+    }
+  } else {
+    console.warn('No items data found in payment intent metadata');
+  }
+
+  return orderId;
 }
