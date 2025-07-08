@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isContact } from '@/lib/auth';
-import { OrderModel } from '@/lib/models';
+import { OrderModel, SiteSettingsModel } from '@/lib/models';
 import { format } from 'date-fns';
 
 export async function GET(
@@ -27,8 +27,12 @@ export async function GET(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
+    // Fetch business address and phone number from settings
+    const businessAddress = await SiteSettingsModel.getValue('business_address') || '11483 S Wexford Way, South Jordan, UT 84009';
+    const businessPhone = await SiteSettingsModel.getValue('business_phone') || '(801) 448-6396';
+
     // Generate simple HTML for the order receipt
-    const html = generateOrderReceiptHTML(order);
+    const html = generateOrderReceiptHTML(order, businessAddress, businessPhone);
 
     // For now, return HTML. In a production app, you'd want to use a PDF library like puppeteer or jsPDF
     return new NextResponse(html, {
@@ -43,7 +47,7 @@ export async function GET(
   }
 }
 
-function generateOrderReceiptHTML(order: any): string {
+function generateOrderReceiptHTML(order: any, businessAddress: string, businessPhone: string): string {
   const orderDate = format(new Date(order.order_date), 'MMMM d, yyyy');
   const contactName = order.contact_name;
     
@@ -170,6 +174,12 @@ function generateOrderReceiptHTML(order: any): string {
     <div class="header">
         <div class="company-name">Payoff Solar</div>
         <div class="receipt-title">Order Receipt</div>
+    </div>
+
+    <div class="info-section" style="text-align: center; margin-bottom: 30px; padding: 20px; background-color: #f9fafb; border-radius: 8px;">
+        <h3 style="margin-bottom: 10px; color: #374151;">Business Information</h3>
+        <p style="margin: 5px 0; color: #6b7280;"><strong>Address:</strong> ${businessAddress}</p>
+        <p style="margin: 5px 0; color: #6b7280;"><strong>Phone:</strong> ${businessPhone}</p>
     </div>
 
     <div class="receipt-info">
