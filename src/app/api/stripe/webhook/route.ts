@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import stripe from '@/lib/stripe';
-import { AffiliateCodeModel, OrderModel, OrderItemModel, ContactModel, ProductModel } from '@/lib/models';
+import { AffiliateCodeModel, OrderModel, OrderItemModel, ContactModel, ProductModel, ProductCostBreakdownModel, CostItemModel } from '@/lib/models';
 
 export async function POST(request: NextRequest) {
   try {
@@ -135,7 +135,7 @@ async function createOrderFromPaymentIntent(paymentIntent: any) {
   // Create order
   const orderId = await OrderModel.create({
     contact_id: contact.id,
-    status: 'confirmed',
+    status: 'paid',
     total: total,
     order_date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
     notes: `Online order - Payment ID: ${paymentIntent.id}`,
@@ -143,9 +143,10 @@ async function createOrderFromPaymentIntent(paymentIntent: any) {
 
   // Create order items from metadata
   const itemsData = paymentIntent.metadata.items_data;
+  let items = [];
   if (itemsData) {
     try {
-      const items = JSON.parse(itemsData);
+      items = JSON.parse(itemsData);
       for (const item of items) {
         await OrderItemModel.create({
           order_id: orderId,
@@ -160,6 +161,47 @@ async function createOrderFromPaymentIntent(paymentIntent: any) {
     }
   } else {
     console.warn('No items data found in payment intent metadata');
+  }
+
+  // Generate cost items from product default cost breakdowns
+  if (items.length > 0) {
+    try {
+      const allCostItems = [];
+      for (const item of items) {
+        const productCostItems = await ProductCostBreakdownModel.calculateCostItems(
+          item.product_id,
+          parseInt(item.quantity),
+          parseFloat(item.price)
+        );
+        allCostItems.push(...productCostItems);
+      }
+
+      // Merge cost items by category (sum amounts for same category)
+      const mergedCostItems = new Map();
+      for (const costItem of allCostItems) {
+        const key = costItem.category_id;
+        if (mergedCostItems.has(key)) {
+          const existing = mergedCostItems.get(key);
+          existing.amount += costItem.amount;
+        } else {
+          mergedCostItems.set(key, { ...costItem });
+        }
+      }
+
+      // Create the merged cost items
+      for (const costItem of mergedCostItems.values()) {
+        await CostItemModel.create({
+          order_id: orderId,
+          category_id: costItem.category_id,
+          amount: costItem.amount
+        });
+      }
+
+      console.log(`Created ${mergedCostItems.size} cost items for order ${orderId}`);
+    } catch (error) {
+      console.error('Error generating cost breakdown for order:', error);
+      // Don't fail the webhook for this error, but log it for investigation
+    }
   }
 
   return orderId;
