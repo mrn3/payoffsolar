@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { FaBatteryFull, FaLeaf, FaSolarPanel } from 'react-icons/fa';
+import SolarCalculator from '@/components/SolarCalculator';
 
 export default function HomePage() {
   return (
@@ -30,6 +31,13 @@ export default function HomePage() {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Solar Calculator Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <SolarCalculator />
         </div>
       </section>
 

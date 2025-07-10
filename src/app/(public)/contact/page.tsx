@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { FaEnvelope, FaMapMarkerAlt, FaPhone } from 'react-icons/fa';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -17,14 +18,36 @@ const contactFormSchema = z.object({
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 export default function ContactPage() {
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Get solar calculator parameters
+  const systemType = searchParams.get('system');
+  const panels = searchParams.get('panels');
+  const savings = searchParams.get('savings');
+  const cost = searchParams.get('cost');
+
+  // Generate pre-filled message for solar calculator quotes
+  const generateSolarMessage = () => {
+    if (!systemType || !panels || !savings || !cost) return '';
+
+    return `I'm interested in a solar system quote based on the following specifications from your calculator:
+
+System Type: ${systemType}
+Number of Panels: ${panels}
+Monthly Savings Target: $${savings}
+Estimated Cost: $${parseInt(cost).toLocaleString()}
+
+Please provide me with a detailed quote and next steps for installation.`;
+  };
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -32,10 +55,18 @@ export default function ContactPage() {
       name: '',
       email: '',
       phone: '',
-      subject: '',
+      subject: systemType ? 'Solar System Quote Request' : '',
       message: '',
     },
   });
+
+  // Pre-fill form when solar calculator parameters are present
+  useEffect(() => {
+    if (systemType && panels && savings && cost) {
+      setValue('subject', 'Solar System Quote Request');
+      setValue('message', generateSolarMessage());
+    }
+  }, [systemType, panels, savings, cost, setValue]);
 
   const onSubmit = async (data: ContactFormValues) => {
     setIsSubmitting(true);
