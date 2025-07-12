@@ -48,21 +48,21 @@ const systemTypes: SystemType[] = [
     subcategories: [
       {
         id: 'powered',
-        name: 'Powered',
+        name: 'Powered (it is propelled by an engine or a motor)',
         icon: <FaCar className="h-4 w-4" />,
-        subtypes: ['RV', 'motor home', 'camper', 'van', 'bus', 'moving truck', 'truck camper']
+        subtypes: ['Recreational Vehicle (RV)', 'Motor Home', 'Camper', 'Van', 'Bus', 'Moving Truck', 'Truck Camper']
       },
       {
         id: 'non-powered-roofed',
-        name: 'Non-powered Roofed',
+        name: 'Non-Powered Roofed (it is pulled by a tow vehicle and has a roof)',
         icon: <FaTruck className="h-4 w-4" />,
-        subtypes: ['travel trailer', 'toy/car hauler', 'pop-up trailer', 'fifth wheel trailer', 'semi trailer']
+        subtypes: ['Travel Trailer', 'Toy Hauler', 'Car Hauler', 'Pop-Up Trailer', 'Fifth Wheel Trailer', 'Semi Trailer']
       },
       {
         id: 'non-powered-non-roofed',
-        name: 'Non-roofed',
+        name: 'Non-Roofed (it is pulled by a tow vehicle and does not have a roof)',
         icon: <FaTruck className="h-4 w-4" />,
-        subtypes: ['flatbed trailer', 'gooseneck trailer', 'solar trailer']
+        subtypes: ['Flatbed Trailer', 'Gooseneck Trailer', 'Solar Trailer']
       }
     ]
   }
@@ -91,8 +91,11 @@ export default function SolarCalculator() {
   const [selectedServices, setSelectedServices] = useState<string[]>(['equipment-purchase']);
   const [result, setResult] = useState<CalculatorResult | null>(null);
 
-  // Calculate panels based on monthly savings (every $10 = 2 panels)
-  const panels = Math.max(2, Math.floor(monthlySavings / 10) * 2);
+  // Calculate panels based on monthly savings
+  // Mobile: every $5 = 1 panel, Stationary: every $10 = 2 panels
+  const panels = selectedSystemType === 'mobile'
+    ? Math.max(1, Math.floor(monthlySavings / 5))
+    : Math.max(2, Math.floor(monthlySavings / 10) * 2);
 
   useEffect(() => {
     if (selectedSystemType && selectedSubcategory) {
@@ -202,6 +205,19 @@ export default function SolarCalculator() {
                 setSelectedSystemType(type.id);
                 setSelectedSubcategory('');
                 setSelectedSubtype('');
+                // Adjust monthly savings to fit the new system type's range
+                if (type.id === 'mobile') {
+                  // For mobile, default to $5 (1 panel)
+                  setMonthlySavings(5);
+                } else {
+                  // For stationary, ensure value is within range and on $10 increments
+                  if (monthlySavings < 10) {
+                    setMonthlySavings(10);
+                  } else {
+                    // Round to nearest $10 increment for stationary
+                    setMonthlySavings(Math.round(monthlySavings / 10) * 10);
+                  }
+                }
               }}
               className={`p-4 border-2 rounded-lg flex items-center gap-3 transition-colors ${
                 selectedSystemType === type.id
@@ -275,22 +291,32 @@ export default function SolarCalculator() {
           <h3 className="text-xl font-semibold text-gray-900 mb-4">2. How much do you want to save each month?</h3>
           <div className="bg-gray-50 p-6 rounded-lg">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-sm text-gray-600">$10 (2 panels)</span>
-              <span className="text-lg font-bold text-green-600">${monthlySavings} ({panels} panels)</span>
-              <span className="text-sm text-gray-600">$500 (100 panels)</span>
+              {selectedSystemType === 'mobile' ? (
+                <>
+                  <span className="text-sm text-gray-600">$5 (1 panel)</span>
+                  <span className="text-lg font-bold text-green-600">${monthlySavings} ({panels} {panels === 1 ? 'panel' : 'panels'})</span>
+                  <span className="text-sm text-gray-600">$300 (60 panels)</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm text-gray-600">$10 (2 panels)</span>
+                  <span className="text-lg font-bold text-green-600">${monthlySavings} ({panels} panels)</span>
+                  <span className="text-sm text-gray-600">$500 (100 panels)</span>
+                </>
+              )}
             </div>
             <input
               type="range"
-              min="10"
-              max="500"
-              step="10"
+              min={selectedSystemType === 'mobile' ? "5" : "10"}
+              max={selectedSystemType === 'mobile' ? "300" : "500"}
+              step={selectedSystemType === 'mobile' ? "5" : "10"}
               value={monthlySavings}
               onChange={(e) => setMonthlySavings(Number(e.target.value))}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
             />
             <div className="mt-3 text-center">
               <div className="text-sm text-gray-600">
-                Estimated {panels} solar panels for ${monthlySavings}/month savings
+                Estimated {panels} solar {panels === 1 ? 'panel' : 'panels'} for ${monthlySavings}/month savings
               </div>
               <div className="text-xs text-gray-500 mt-1">
                 Annual savings: ${(monthlySavings * 12).toLocaleString()}
