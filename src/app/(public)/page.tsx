@@ -11,10 +11,12 @@ export default function HomePage() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Make your home more energy efficient
+              Flooding The Earth With Affordable Solar
             </h1>
             <p className="text-xl mb-8">
-              Save money and the planet with our premium solar solutions. Harness the power of the sun to reduce your energy bills and carbon footprint.
+              Payoff Solar is a provider of solar energy equipment and services.
+              Our mission is to make solar energy accessible, affordable, and hassle-free for everyone.
+              While solar has benefits of saving the planet and energy independence, our main focus is to make it pay off financially.  
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link

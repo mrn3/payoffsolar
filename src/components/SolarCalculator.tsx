@@ -151,10 +151,12 @@ export default function SolarCalculator() {
       <div className="text-center mb-8">
         <div className="flex items-center justify-center gap-3 mb-4">
           <FaCalculator className="h-8 w-8 text-green-600" />
-          <h2 className="text-3xl font-bold text-gray-900">Solar System Calculator</h2>
+          <h2 className="text-3xl font-bold text-gray-900">30-Second Solar Energy System Calculator</h2>
         </div>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Design your perfect solar system based on your needs and budget. Get instant estimates for panels, costs, and savings.
+          Design your perfect solar system based on your needs, and get instant estimates for costs, and recommended solutions.
+          Each solar panel you purchase will save you approximately $5/month. 
+          Our goal is to help you find a solution that pays for itself in 5 years or less, since most solutions today are closer to 10-20 years. 
         </p>
       </div>
 
