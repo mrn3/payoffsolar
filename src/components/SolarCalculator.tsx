@@ -9,6 +9,7 @@ interface SystemType {
   name: string;
   icon: React.ReactNode;
   subcategories?: SystemType[];
+  subtypes?: string[];
 }
 
 interface ServiceOption {
@@ -45,9 +46,24 @@ const systemTypes: SystemType[] = [
     name: 'Mobile',
     icon: <FaCar className="h-6 w-6" />,
     subcategories: [
-      { id: 'powered', name: 'Powered (RV, motor home, camper, van, bus, moving truck, truck camper, etc.)', icon: <FaCar className="h-4 w-4" /> },
-      { id: 'non-powered-roofed', name: 'Non-powered Roofed (travel trailer, toy/car hauler, pop-up trailer, fifth wheel trailer, semi trailer, etc.)', icon: <FaTruck className="h-4 w-4" /> },
-      { id: 'non-powered-non-roofed', name: 'Non-roofed (flatbed trailer, gooseneck trailer, solar trailer, etc.)', icon: <FaTruck className="h-4 w-4" /> }
+      {
+        id: 'powered',
+        name: 'Powered',
+        icon: <FaCar className="h-4 w-4" />,
+        subtypes: ['RV', 'motor home', 'camper', 'van', 'bus', 'moving truck', 'truck camper']
+      },
+      {
+        id: 'non-powered-roofed',
+        name: 'Non-powered Roofed',
+        icon: <FaTruck className="h-4 w-4" />,
+        subtypes: ['travel trailer', 'toy/car hauler', 'pop-up trailer', 'fifth wheel trailer', 'semi trailer']
+      },
+      {
+        id: 'non-powered-non-roofed',
+        name: 'Non-roofed',
+        icon: <FaTruck className="h-4 w-4" />,
+        subtypes: ['flatbed trailer', 'gooseneck trailer', 'solar trailer']
+      }
     ]
   }
 ];
@@ -70,6 +86,7 @@ const serviceOptions: ServiceOption[] = [
 export default function SolarCalculator() {
   const [selectedSystemType, setSelectedSystemType] = useState<string>('');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const [selectedSubtype, setSelectedSubtype] = useState<string>('');
   const [monthlySavings, setMonthlySavings] = useState<number>(50);
   const [selectedServices, setSelectedServices] = useState<string[]>(['equipment-purchase']);
   const [result, setResult] = useState<CalculatorResult | null>(null);
@@ -79,9 +96,16 @@ export default function SolarCalculator() {
 
   useEffect(() => {
     if (selectedSystemType && selectedSubcategory) {
-      calculateSystem();
+      // For mobile systems, also require subtype selection
+      if (selectedSystemType === 'mobile') {
+        if (selectedSubtype) {
+          calculateSystem();
+        }
+      } else {
+        calculateSystem();
+      }
     }
-  }, [selectedSystemType, selectedSubcategory, monthlySavings, selectedServices]);
+  }, [selectedSystemType, selectedSubcategory, selectedSubtype, monthlySavings, selectedServices]);
 
   const calculateSystem = () => {
     const baseSystemCost = panels * 300; // $300 per panel base cost
@@ -96,10 +120,14 @@ export default function SolarCalculator() {
     const annualSavings = monthlySavings * 12;
     const paybackPeriod = Math.round(estimatedCost / annualSavings * 10) / 10; // Round to 1 decimal
 
+    const systemTypeDisplay = selectedSystemType === 'mobile' && selectedSubtype
+      ? `${selectedSystemType} - ${selectedSubcategory} - ${selectedSubtype}`
+      : `${selectedSystemType} - ${selectedSubcategory}`;
+
     setResult({
       panels,
       monthlySavings,
-      systemType: `${selectedSystemType} - ${selectedSubcategory}`,
+      systemType: systemTypeDisplay,
       services: selectedServices,
       estimatedCost,
       inverterType,
@@ -141,8 +169,11 @@ export default function SolarCalculator() {
   const getSystemTypeDisplay = () => {
     const mainType = systemTypes.find(t => t.id === selectedSystemType);
     if (!mainType) return '';
-    
+
     const subType = mainType.subcategories?.find(s => s.id === selectedSubcategory);
+    if (selectedSystemType === 'mobile' && selectedSubtype) {
+      return `${mainType.name} - ${subType?.name || ''} - ${selectedSubtype}`;
+    }
     return `${mainType.name} - ${subType?.name || ''}`;
   };
 
@@ -170,6 +201,7 @@ export default function SolarCalculator() {
               onClick={() => {
                 setSelectedSystemType(type.id);
                 setSelectedSubcategory('');
+                setSelectedSubtype('');
               }}
               className={`p-4 border-2 rounded-lg flex items-center gap-3 transition-colors ${
                 selectedSystemType === type.id
@@ -193,7 +225,10 @@ export default function SolarCalculator() {
                 ?.subcategories?.map((subtype) => (
                 <button
                   key={subtype.id}
-                  onClick={() => setSelectedSubcategory(subtype.id)}
+                  onClick={() => {
+                    setSelectedSubcategory(subtype.id);
+                    setSelectedSubtype('');
+                  }}
                   className={`w-full p-3 border rounded-lg flex items-center gap-3 text-left transition-colors ${
                     selectedSubcategory === subtype.id
                       ? 'border-green-500 bg-green-50 text-green-700'
@@ -207,10 +242,35 @@ export default function SolarCalculator() {
             </div>
           </div>
         )}
+
+        {/* Mobile Subtype Selection */}
+        {selectedSystemType === 'mobile' && selectedSubcategory && (
+          <div className="ml-8 mt-4">
+            <h4 className="text-lg font-medium text-gray-900 mb-3">Select Specific Vehicle/Trailer Type:</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              {systemTypes
+                .find(t => t.id === selectedSystemType)
+                ?.subcategories?.find(s => s.id === selectedSubcategory)
+                ?.subtypes?.map((subtype) => (
+                <button
+                  key={subtype}
+                  onClick={() => setSelectedSubtype(subtype)}
+                  className={`p-2 border rounded-lg text-left transition-colors text-sm ${
+                    selectedSubtype === subtype
+                      ? 'border-green-500 bg-green-50 text-green-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-800'
+                  }`}
+                >
+                  {subtype}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Step 2: Monthly Savings Slider */}
-      {selectedSubcategory && (
+      {selectedSubcategory && (selectedSystemType !== 'mobile' || selectedSubtype) && (
         <div className="mb-8">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">2. How much do you want to save each month?</h3>
           <div className="bg-gray-50 p-6 rounded-lg">
@@ -241,7 +301,7 @@ export default function SolarCalculator() {
       )}
 
       {/* Step 3: Service Selection */}
-      {selectedSubcategory && (
+      {selectedSubcategory && (selectedSystemType !== 'mobile' || selectedSubtype) && (
         <div className="mb-8">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">3. Select Services You Need</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -328,6 +388,7 @@ export default function SolarCalculator() {
                   onClick={() => {
                     setSelectedSystemType('');
                     setSelectedSubcategory('');
+                    setSelectedSubtype('');
                     setMonthlySavings(50);
                     setSelectedServices(['equipment-purchase']);
                     setResult(null);
