@@ -60,6 +60,7 @@ export default function RootLayout({
             style: {
               background: '#363636',
               color: '#fff',
+              marginTop: '80px', // Add top margin to avoid header overlap
             },
             success: {
               style: {
