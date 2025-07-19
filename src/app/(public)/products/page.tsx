@@ -7,6 +7,8 @@ import ProductCard from '@/components/products/ProductCard';
 import ProductCardSkeleton from '@/components/products/ProductCardSkeleton';
 import ProductSearch from '@/components/products/ProductSearch';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import { useCart } from '@/contexts/CartContext';
+import toast from 'react-hot-toast';
 
 interface ProductsResponse {
   products: ProductWithFirstImage[];
@@ -24,6 +26,7 @@ interface CategoriesResponse {
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
+  const { applyAffiliateCode, state } = useCart();
   const [products, setProducts] = useState<ProductWithFirstImage[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +109,29 @@ export default function ProductsPage() {
     console.log('currentPage changed to:', currentPage, 'calling fetchProducts');
     fetchProducts();
   }, [currentPage]);
+
+  // Check for affiliate code in URL
+  useEffect(() => {
+    const affiliateCode = searchParams.get('ref');
+    if (affiliateCode && !state.affiliateCode) {
+      handleAffiliateCode(affiliateCode);
+    }
+  }, [searchParams, state.affiliateCode]);
+
+  const handleAffiliateCode = async (code: string) => {
+    try {
+      const response = await fetch(`/api/public/affiliate-codes/${code}`);
+      if (response.ok) {
+        const data = await response.json();
+        applyAffiliateCode(data.affiliateCode);
+        toast.success(`Discount code "${code}" applied!`);
+      } else {
+        console.warn('Invalid affiliate code:', code);
+      }
+    } catch (error) {
+      console.error('Error applying affiliate code:', error);
+    }
+  };
 
   const handleSearchChange = useCallback((_query: string) => {
     setSearchQuery(_query);

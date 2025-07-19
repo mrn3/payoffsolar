@@ -1,8 +1,39 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaBatteryFull, FaLeaf, FaSolarPanel } from 'react-icons/fa';
 import SolarCalculator from '@/components/SolarCalculator';
+import { useCart } from '@/contexts/CartContext';
+import toast from 'react-hot-toast';
 
 export default function HomePage() {
+  const searchParams = useSearchParams();
+  const { applyAffiliateCode, state } = useCart();
+
+  // Check for affiliate code in URL
+  useEffect(() => {
+    const affiliateCode = searchParams.get('ref');
+    if (affiliateCode && !state.affiliateCode) {
+      handleAffiliateCode(affiliateCode);
+    }
+  }, [searchParams, state.affiliateCode]);
+
+  const handleAffiliateCode = async (code: string) => {
+    try {
+      const response = await fetch(`/api/public/affiliate-codes/${code}`);
+      if (response.ok) {
+        const data = await response.json();
+        applyAffiliateCode(data.affiliateCode);
+        toast.success(`Discount code "${code}" applied!`);
+      } else {
+        console.warn('Invalid affiliate code:', code);
+      }
+    } catch (error) {
+      console.error('Error applying affiliate code:', error);
+    }
+  };
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
