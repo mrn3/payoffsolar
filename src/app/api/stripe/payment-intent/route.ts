@@ -22,31 +22,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate totals with affiliate discount
+    // Calculate totals with affiliate discount and individual product taxes
     let subtotal = 0;
     let totalDiscount = 0;
+    let totalTax = 0;
 
     for (const item of items) {
       const itemTotal = item.product_price * item.quantity;
       subtotal += itemTotal;
 
       // Apply affiliate discount if present
+      let discountedItemPrice = item.product_price;
       if (affiliateCode) {
         let discount = 0;
         if (affiliateCode.discount_type === 'percentage') {
-          discount = (item.product_price * affiliateCode.discount_value / 100) * item.quantity;
+          discount = (item.product_price * affiliateCode.discount_value / 100);
         } else {
-          discount = Math.min(affiliateCode.discount_value, item.product_price) * item.quantity;
+          discount = Math.min(affiliateCode.discount_value, item.product_price);
         }
-        totalDiscount += discount;
+        totalDiscount += discount * item.quantity;
+        discountedItemPrice = Math.max(0, item.product_price - discount);
+      }
+
+      // Calculate tax for this item based on its individual tax percentage
+      if (item.product_tax_percentage > 0) {
+        const itemTax = (discountedItemPrice * item.quantity * item.product_tax_percentage) / 100;
+        totalTax += itemTax;
       }
     }
 
     const discountedSubtotal = subtotal - totalDiscount;
     const shippingCost = shipping?.cost || 0;
-    const taxRate = 0.085; // 8.5% tax rate
-    const tax = discountedSubtotal * taxRate;
-    const total = discountedSubtotal + shippingCost + tax;
+    const total = discountedSubtotal + shippingCost + totalTax;
 
     // Validate affiliate code if provided
     if (affiliateCode) {
@@ -75,7 +82,7 @@ export async function POST(request: NextRequest) {
         discount: totalDiscount.toString(),
         discounted_subtotal: discountedSubtotal.toString(),
         shipping: shippingCost.toString(),
-        tax: tax.toString(),
+        tax: totalTax.toString(),
         total: total.toString(),
         customer_email: customerInfo.email,
         customer_name: `${customerInfo.firstName} ${customerInfo.lastName}`,
