@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { ProductWithFirstImage } from '@/lib/models';
+import { ProductWithFirstImage } from '@/lib/types';
 import { ProductDuplicateGroup, smartMergeProducts } from '@/lib/utils/duplicates';
 import { FaTimes, FaExclamationTriangle, FaSync, FaCheck } from 'react-icons/fa';
 

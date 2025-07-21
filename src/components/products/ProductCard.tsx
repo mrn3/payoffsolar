@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ProductWithFirstImage } from '@/lib/models';
+import { ProductWithFirstImage } from '@/lib/types';
 import { useCart } from '@/contexts/CartContext';
 import { FaImage, FaShoppingCart, FaTag, FaBox } from 'react-icons/fa';
 import { createTextPreview } from '@/lib/utils/text';

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Product } from '@/lib/models';
+import { Product } from '@/lib/types';
 
 interface ProductAutocompleteProps {
   value: string;

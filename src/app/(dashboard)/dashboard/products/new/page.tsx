@@ -6,12 +6,7 @@ import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
 import PDFUpload from '@/components/ui/PDFUpload';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { FaArrowLeft } from 'react-icons/fa';
-import { ProductImage } from '@/lib/models';
-
-interface ProductCategory {
-  id: string;
-  name: string;
-}
+import { ProductImage, ProductCategory } from '@/lib/types';
 
 export default function NewProductPage() {
   const router = useRouter();

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ProductWithCategory } from '@/lib/models';
+import { ProductWithCategory } from '@/lib/types';
 import { FaExclamationTriangle } from 'react-icons/fa';
 
 interface DeleteProductModalProps {

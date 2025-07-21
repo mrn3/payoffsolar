@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShippingMethod, Warehouse } from '@/lib/models';
+import { ShippingMethod, Warehouse } from '@/lib/types';
 import { validateShippingMethod, DEFAULT_SHIPPING_METHODS } from '@/lib/utils/shipping';
 import { FaPlus, FaTrash, FaInfoCircle } from 'react-icons/fa';
 

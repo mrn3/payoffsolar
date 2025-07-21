@@ -1,4 +1,4 @@
-import { ProductModel, ProductBundleItemModel } from '@/lib/models';
+import { ProductModel, ProductBundleItemModel, InventoryModel } from '@/lib/models';
 
 export interface OrderItem {
   product_id: string;
@@ -87,10 +87,9 @@ async function calculateBundlePrice(bundleProductId: string, bundleProduct: any)
  * Update inventory for processed order items
  */
 export async function updateInventoryForOrder(
-  processedItems: ProcessedOrderItem[], 
+  processedItems: ProcessedOrderItem[],
   warehouseId?: string
 ): Promise<void> {
-  const { InventoryModel } = await import('@/lib/models');
   
   // Group items by product to handle multiple quantities
   const inventoryUpdates = new Map<string, number>();
@@ -130,10 +129,9 @@ export async function updateInventoryForOrder(
  * Validate that sufficient inventory exists for the order
  */
 export async function validateInventoryForOrder(
-  processedItems: ProcessedOrderItem[], 
+  processedItems: ProcessedOrderItem[],
   warehouseId?: string
 ): Promise<{ valid: boolean; errors: string[] }> {
-  const { InventoryModel } = await import('@/lib/models');
   const errors: string[] = [];
   
   // Group items by product to handle multiple quantities

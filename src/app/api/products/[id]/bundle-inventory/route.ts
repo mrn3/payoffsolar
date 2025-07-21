@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ProductModel, ProductBundleItemModel } from '@/lib/models';
+import { ProductModel, ProductBundleItemModel, InventoryModel } from '@/lib/models';
 import { requireAuth, isAdmin } from '@/lib/auth';
 
 export async function GET(
@@ -33,34 +33,17 @@ export async function GET(
     const componentInventory = [];
 
     for (const item of bundleItems) {
-      // Get inventory for this component
-      const inventoryQuery = warehouseId 
-        ? `SELECT i.*, w.name as warehouse_name 
-           FROM inventory i
-           LEFT JOIN warehouses w ON i.warehouse_id = w.id
-           WHERE i.product_id = ? AND i.warehouse_id = ?`
-        : `SELECT i.*, w.name as warehouse_name 
-           FROM inventory i
-           LEFT JOIN warehouses w ON i.warehouse_id = w.id
-           WHERE i.product_id = ?`;
-      
-      const params_query = warehouseId 
-        ? [item.component_product_id, warehouseId]
-        : [item.component_product_id];
+      // Get inventory for this component using InventoryModel
+      let totalQuantity = 0;
 
-      // For simplicity, let's get total quantity per component
-      const totalQuery = warehouseId 
-        ? `SELECT COALESCE(SUM(quantity), 0) as total_quantity 
-           FROM inventory 
-           WHERE product_id = ? AND warehouse_id = ?`
-        : `SELECT COALESCE(SUM(quantity), 0) as total_quantity 
-           FROM inventory 
-           WHERE product_id = ?`;
+      if (warehouseId) {
+        const inventory = await InventoryModel.getByProductAndWarehouse(item.component_product_id, warehouseId);
+        totalQuantity = inventory?.quantity || 0;
+      } else {
+        const inventories = await InventoryModel.getByProductId(item.component_product_id);
+        totalQuantity = inventories.reduce((sum, inv) => sum + inv.quantity, 0);
+      }
 
-      const { executeQuery, getOne } = await import('@/lib/mysql/connection');
-      const totalResult = await getOne<{ total_quantity: number }>(totalQuery, params_query);
-      const totalQuantity = totalResult?.total_quantity || 0;
-      
       const bundlesFromThisComponent = Math.floor(totalQuantity / item.quantity);
 
       componentInventory.push({

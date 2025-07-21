@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaPlus, FaTrash, FaEdit, FaBox, FaDollarSign } from 'react-icons/fa';
-import { ProductWithFirstImage, ProductBundleItemWithProduct } from '@/lib/models';
+import { ProductWithFirstImage, ProductBundleItemWithProduct } from '@/lib/types';
 
 interface BundleItemsManagerProps {
   bundleProductId: string;

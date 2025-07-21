@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {FaCopy, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload} from 'react-icons/fa';
 import { format } from 'date-fns';
-import { Contact } from '@/lib/models';
+import { Contact } from '@/lib/types';
 import DeleteContactModal from '@/components/contacts/DeleteContactModal';
 import DeleteAllContactsModal from '@/components/contacts/DeleteAllContactsModal';
 import ImportContactsModal from '@/components/contacts/ImportContactsModal';

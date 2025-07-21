@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Contact } from '@/lib/models';
+import { Contact } from '@/lib/types';
 import { DuplicateGroup, smartMergeContacts } from '@/lib/utils/duplicates';
 import { FaTimes, FaExclamationTriangle, FaSync, FaCheck } from 'react-icons/fa';
 import PhoneInput from '@/components/ui/PhoneInput';

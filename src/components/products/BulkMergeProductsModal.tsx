@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaCopy, FaSync } from 'react-icons/fa';
-import { ProductWithFirstImage } from '@/lib/models';
+import { ProductWithFirstImage } from '@/lib/types';
 import { format } from 'date-fns';
 
 interface BulkMergeProductsModalProps {

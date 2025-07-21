@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Contact } from '@/lib/models';
+import { Contact } from '@/lib/types';
 
 interface ContactAutocompleteProps {
   value: string;

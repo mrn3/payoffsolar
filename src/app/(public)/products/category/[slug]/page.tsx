@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import {ProductWithFirstImage, ProductCategory} from '@/lib/models';
+import {ProductWithFirstImage, ProductCategory} from '@/lib/types';
 import ProductCard from '@/components/products/ProductCard';
 import ProductCardSkeleton from '@/components/products/ProductCardSkeleton';
 import ProductSearch from '@/components/products/ProductSearch';

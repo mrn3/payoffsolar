@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Product, ProductImage, ProductCategory, ProductCostBreakdownWithCategory, CostCategory, ShippingMethod, Warehouse } from '@/lib/models';
+import { Product, ProductImage, ProductCategory, ProductCostBreakdownWithCategory, CostCategory, ShippingMethod, Warehouse } from '@/lib/types';
 import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
 import PDFUpload from '@/components/ui/PDFUpload';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import ShippingMethodsEditor from '@/components/ui/ShippingMethodsEditor';
-import BundleItemsManager from '@/components/products/BundleItemsManager';
+// import BundleItemsManager from '@/components/products/BundleItemsManager';
 import { generateProductSlug } from '@/lib/utils/slug';
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
 
@@ -923,13 +923,7 @@ export default function EditProductPage() {
             </p>
           </div>
           <div className="p-6">
-            <BundleItemsManager
-              bundleProductId={productId}
-              onBundleChange={() => {
-                // Optionally refresh product data when bundle changes
-                fetchProduct();
-              }}
-            />
+            <p className="text-gray-500">Bundle component management temporarily disabled for debugging.</p>
           </div>
         </div>
       )}

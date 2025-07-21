@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ProductWithFirstImage, ListingPlatform } from '@/lib/models';
+import { ProductWithFirstImage, ListingPlatform } from '@/lib/types';
 import { FaSpinner, FaTimes, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 
 interface BulkListingModalProps {

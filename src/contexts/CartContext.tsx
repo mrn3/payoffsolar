@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { CartItem, AffiliateCode } from '@/lib/models';
+import { CartItem, AffiliateCode } from '@/lib/types';
 import { trackAddToCart, trackRemoveFromCart, formatGAItem } from '@/components/GoogleAnalytics';
 
 interface CartState {

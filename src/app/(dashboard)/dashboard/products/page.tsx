@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ProductWithFirstImage } from '@/lib/models';
+import { ProductWithFirstImage } from '@/lib/types';
 import DeleteProductModal from '@/components/products/DeleteProductModal';
 import DeleteAllProductsModal from '@/components/products/DeleteAllProductsModal';
 import ImportProductsModal from '@/components/products/ImportProductsModal';
