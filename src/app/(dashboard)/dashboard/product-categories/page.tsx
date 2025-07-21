@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ProductCategory } from '@/lib/models';
+import { ProductCategory } from '@/lib/types';
 import { FaPlus, FaEdit, FaTrash, FaTags } from 'react-icons/fa';
 
 interface ProductCategoryWithUsage extends ProductCategory {

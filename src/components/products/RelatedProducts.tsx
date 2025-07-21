@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ProductWithFirstImage } from '@/lib/models';
+import { ProductWithFirstImage } from '@/lib/types';
 import ProductCard from './ProductCard';
 import ProductCardSkeleton from './ProductCardSkeleton';
 

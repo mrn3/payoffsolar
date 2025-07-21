@@ -4,7 +4,7 @@ import {useState, useEffect, useCallback} from 'react';
 import {useParams} from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { ContentWithDetails, ContentType } from '@/lib/models';
+import { ContentWithDetails, ContentType } from '@/lib/types';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 
 export default function EditContentPage() {

@@ -1,4 +1,5 @@
-import { ShippingMethod, Warehouse, WarehouseModel } from '@/lib/models';
+import { ShippingMethod, Warehouse } from '@/lib/types';
+import { WarehouseModel } from '@/lib/models';
 
 export interface ShippingCalculationRequest {
   productId: string;

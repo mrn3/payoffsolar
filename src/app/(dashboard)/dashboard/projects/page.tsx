@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaPlus, FaEye, FaEdit, FaTrash, FaSearch, FaFilter } from 'react-icons/fa';
 import { format } from 'date-fns';
-import { ProjectWithDetails } from '@/lib/models';
+import { ProjectWithDetails } from '@/lib/types';
 import toast from 'react-hot-toast';
 
 interface User {

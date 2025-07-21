@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {useParams, useSearchParams, useRouter} from 'next/navigation';
 import Link from 'next/link';
-import {Product, ProductImage, AffiliateCode} from '@/lib/models';
+import {Product, ProductImage, AffiliateCode} from '@/lib/types';
 import ImageCarousel from '@/components/ui/ImageCarousel';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import RelatedProducts from '@/components/products/RelatedProducts';

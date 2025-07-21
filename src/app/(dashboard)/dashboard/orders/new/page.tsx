@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { OrderItem, Contact, Product } from '@/lib/models';
+import { OrderItem, Contact, Product } from '@/lib/types';
 import ContactAutocomplete from '@/components/ui/ContactAutocomplete';
 import ProductAutocomplete from '@/components/ui/ProductAutocomplete';
 import {FaArrowLeft, FaPlus, FaTrash} from 'react-icons/fa';

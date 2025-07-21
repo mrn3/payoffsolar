@@ -13,7 +13,7 @@ import {
   ActiveElement,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { OrderWithContact } from '@/lib/models';
+import { OrderWithContact } from '@/lib/types';
 import { FaTimes } from 'react-icons/fa';
 
 ChartJS.register(

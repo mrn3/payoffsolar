@@ -139,6 +139,11 @@ export interface OrderWithContact extends Order {
   contact_phone?: string;
 }
 
+export interface OrderWithItems extends OrderWithContact {
+  items?: OrderItemWithProduct[];
+  costItems?: CostItemWithCategory[];
+}
+
 // Cart item interface for frontend cart management
 export interface CartItem {
   product_id: string;
@@ -337,4 +342,86 @@ export interface ProductListingWithDetails extends ProductListing {
   platform_name?: string;
   platform_display_name?: string;
   template_name?: string;
+}
+
+// Project model
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  status: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  start_date?: string;
+  due_date?: string;
+  completion_date?: string;
+  budget?: number;
+  owner_id?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectWithDetails extends Project {
+  owner_name?: string;
+  created_by_name?: string;
+  task_count?: number;
+  completed_task_count?: number;
+  member_count?: number;
+}
+
+// Task model
+export interface Task {
+  id: string;
+  project_id: string;
+  title: string;
+  description?: string;
+  status: 'todo' | 'in_progress' | 'review' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  assigned_to?: string;
+  created_by: string;
+  start_date?: string;
+  due_date?: string;
+  completion_date?: string;
+  estimated_hours?: number;
+  actual_hours?: number;
+  parent_task_id?: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskWithDetails extends Task {
+  assigned_to_name?: string;
+  created_by_name?: string;
+  project_name?: string;
+  subtask_count?: number;
+  completed_subtask_count?: number;
+}
+
+// Project Member model
+export interface ProjectMember {
+  id: string;
+  project_id: string;
+  user_id: string;
+  role: 'owner' | 'manager' | 'member' | 'viewer';
+  joined_at: string;
+}
+
+export interface ProjectMemberWithDetails extends ProjectMember {
+  user_name?: string;
+  user_email?: string;
+}
+
+// Task Comment model
+export interface TaskComment {
+  id: string;
+  task_id: string;
+  user_id: string;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskCommentWithDetails extends TaskComment {
+  user_name?: string;
 }

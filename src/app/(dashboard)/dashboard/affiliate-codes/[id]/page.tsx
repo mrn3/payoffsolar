@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { AffiliateCode } from '@/lib/models';
+import { AffiliateCode } from '@/lib/types';
 import { FaArrowLeft, FaEdit, FaTag, FaCalendar, FaUsers, FaChartLine, FaCopy } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 

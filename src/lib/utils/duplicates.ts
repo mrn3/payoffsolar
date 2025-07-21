@@ -1,4 +1,4 @@
-import { Contact, OrderWithContact, OrderWithItems, ProductWithFirstImage, Product, Order } from '@/lib/models';
+import { Contact, OrderWithContact, OrderWithItems, ProductWithFirstImage, Product, Order } from '@/lib/types';
 
 export interface DuplicateGroup {
   id: string;

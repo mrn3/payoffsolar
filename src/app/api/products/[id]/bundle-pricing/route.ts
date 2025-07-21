@@ -4,7 +4,7 @@ import { requireAuth, isAdmin } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
@@ -13,7 +13,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const bundleProduct = await ProductModel.getById(params.id);
+    const { id } = await params;
+    const bundleProduct = await ProductModel.getById(id);
     if (!bundleProduct) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
@@ -23,37 +24,39 @@ export async function GET(
     }
 
     // Get bundle items with component product details
-    const bundleItems = await ProductBundleItemModel.getByBundleId(params.id);
-    
+    const bundleItems = await ProductBundleItemModel.getByBundleId(id);
+
     // Calculate pricing
-    const bundlePricing = await ProductBundleItemModel.calculateBundlePrice(params.id);
+    const bundlePricing = await ProductBundleItemModel.calculateBundlePrice(id);
     
-    let finalPrice = bundleProduct.price;
-    let calculatedPrice = bundlePricing.totalPrice;
-    
+    let finalPrice = parseFloat(bundleProduct.price) || 0;
+    let calculatedPrice = parseFloat(bundlePricing.totalPrice) || 0;
+
     if (bundleProduct.bundle_pricing_type === 'calculated') {
-      const discountAmount = (bundlePricing.totalPrice * bundleProduct.bundle_discount_percentage) / 100;
-      calculatedPrice = bundlePricing.totalPrice - discountAmount;
+      const discountAmount = (parseFloat(bundlePricing.totalPrice) * parseFloat(bundleProduct.bundle_discount_percentage)) / 100;
+      calculatedPrice = parseFloat(bundlePricing.totalPrice) - discountAmount;
       finalPrice = calculatedPrice;
     }
 
-    return NextResponse.json({
+    const response = {
       bundleItems,
       pricing: {
         componentCount: bundlePricing.componentCount,
-        totalComponentPrice: bundlePricing.totalPrice,
-        discountPercentage: bundleProduct.bundle_discount_percentage,
-        discountAmount: bundleProduct.bundle_pricing_type === 'calculated' 
-          ? (bundlePricing.totalPrice * bundleProduct.bundle_discount_percentage) / 100 
+        totalComponentPrice: parseFloat(bundlePricing.totalPrice) || 0,
+        discountPercentage: parseFloat(bundleProduct.bundle_discount_percentage) || 0,
+        discountAmount: bundleProduct.bundle_pricing_type === 'calculated'
+          ? (parseFloat(bundlePricing.totalPrice) * parseFloat(bundleProduct.bundle_discount_percentage)) / 100
           : 0,
         calculatedPrice,
         finalPrice,
         pricingType: bundleProduct.bundle_pricing_type,
-        savings: bundleProduct.bundle_pricing_type === 'calculated' 
-          ? bundlePricing.totalPrice - calculatedPrice 
+        savings: bundleProduct.bundle_pricing_type === 'calculated'
+          ? parseFloat(bundlePricing.totalPrice) - calculatedPrice
           : 0
       }
-    });
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Error calculating bundle pricing:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

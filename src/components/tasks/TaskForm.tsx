@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { TaskWithDetails } from '@/lib/models';
+import { TaskWithDetails } from '@/lib/types';
 import toast from 'react-hot-toast';
 
 interface User {

@@ -7,7 +7,7 @@ import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
 import PDFUpload from '@/components/ui/PDFUpload';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import ShippingMethodsEditor from '@/components/ui/ShippingMethodsEditor';
-// import BundleItemsManager from '@/components/products/BundleItemsManager';
+import BundleItemsManager from '@/components/products/BundleItemsManager';
 import { generateProductSlug } from '@/lib/utils/slug';
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
 
@@ -923,7 +923,13 @@ export default function EditProductPage() {
             </p>
           </div>
           <div className="p-6">
-            <p className="text-gray-500">Bundle component management temporarily disabled for debugging.</p>
+            <BundleItemsManager
+              bundleProductId={productId}
+              onBundleChange={() => {
+                // Refresh product data when bundle changes
+                fetchProduct();
+              }}
+            />
           </div>
         </div>
       )}

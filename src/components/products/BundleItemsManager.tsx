@@ -11,13 +11,13 @@ interface BundleItemsManagerProps {
 
 interface BundlePricing {
   componentCount: number;
-  totalComponentPrice: number;
+  totalComponentPrice: number | null;
   discountPercentage: number;
-  discountAmount: number;
-  calculatedPrice: number;
-  finalPrice: number;
+  discountAmount: number | null;
+  calculatedPrice: number | null;
+  finalPrice: number | null;
   pricingType: 'calculated' | 'fixed';
-  savings: number;
+  savings: number | null;
 }
 
 export default function BundleItemsManager({ bundleProductId, onBundleChange }: BundleItemsManagerProps) {
@@ -162,22 +162,22 @@ export default function BundleItemsManager({ bundleProductId, onBundleChange }: 
             </div>
             <div>
               <span className="text-green-600 font-medium">Total Component Price:</span>
-              <div className="text-green-800">${pricing.totalComponentPrice.toFixed(2)}</div>
+              <div className="text-green-800">${(pricing.totalComponentPrice || 0).toFixed(2)}</div>
             </div>
             {pricing.pricingType === 'calculated' && pricing.discountPercentage > 0 && (
               <div>
                 <span className="text-green-600 font-medium">Discount ({pricing.discountPercentage}%):</span>
-                <div className="text-green-800">-${pricing.discountAmount.toFixed(2)}</div>
+                <div className="text-green-800">-${(pricing.discountAmount || 0).toFixed(2)}</div>
               </div>
             )}
             <div>
               <span className="text-green-600 font-medium">Final Price:</span>
-              <div className="text-green-800 font-bold">${pricing.finalPrice.toFixed(2)}</div>
+              <div className="text-green-800 font-bold">${(pricing.finalPrice || 0).toFixed(2)}</div>
             </div>
           </div>
-          {pricing.savings > 0 && (
+          {(pricing.savings || 0) > 0 && (
             <div className="mt-2 text-sm text-green-700">
-              Customer saves ${pricing.savings.toFixed(2)} with this bundle!
+              Customer saves ${(pricing.savings || 0).toFixed(2)} with this bundle!
             </div>
           )}
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ProductWithImages, ListingPlatform, ProductListingWithDetails } from '@/lib/models';
+import { ProductWithImages, ListingPlatform, ProductListingWithDetails } from '@/lib/types';
 import { FaPlus, FaSync, FaTrash, FaExternalLinkAlt, FaSpinner, FaCheck, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
 import DeleteListingModal from './DeleteListingModal';
 

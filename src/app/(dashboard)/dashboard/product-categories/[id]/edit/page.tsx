@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ProductCategory } from '@/lib/models';
+import { ProductCategory } from '@/lib/types';
 import { FaArrowLeft } from 'react-icons/fa';
 
 export default function EditProductCategoryPage() {

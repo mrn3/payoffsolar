@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaEdit, FaPlus, FaCalendar, FaDollarSign, FaUser, FaTasks, FaCheck, FaClock } from 'react-icons/fa';
 import { format } from 'date-fns';
-import { ProjectWithDetails, TaskWithDetails } from '@/lib/models';
+import { ProjectWithDetails, TaskWithDetails } from '@/lib/types';
 import TaskList from '@/components/tasks/TaskList';
 import toast from 'react-hot-toast';
 

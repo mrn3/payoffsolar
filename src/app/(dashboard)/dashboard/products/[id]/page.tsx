@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {useParams, useRouter} from 'next/navigation';
-import {Product, ProductImage, ProductCategory, ProductWithImages} from '@/lib/models';
+import {Product, ProductImage, ProductCategory, ProductWithImages} from '@/lib/types';
 import ImageCarousel from '@/components/ui/ImageCarousel';
 import ProductListingManager from '@/components/listings/ProductListingManager';
 import {FaArrowLeft, FaEdit} from 'react-icons/fa';

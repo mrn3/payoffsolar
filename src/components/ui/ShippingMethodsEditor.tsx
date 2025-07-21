@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ShippingMethod, Warehouse } from '@/lib/types';
-import { validateShippingMethod, DEFAULT_SHIPPING_METHODS } from '@/lib/utils/shipping';
+import { validateShippingMethod, DEFAULT_SHIPPING_METHODS } from '@/lib/utils/shipping-client';
 import { FaPlus, FaTrash, FaInfoCircle } from 'react-icons/fa';
 
 interface ShippingMethodsEditorProps {
