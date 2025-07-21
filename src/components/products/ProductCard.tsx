@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ProductWithFirstImage } from '@/lib/models';
 import { useCart } from '@/contexts/CartContext';
-import { FaImage, FaShoppingCart, FaTag } from 'react-icons/fa';
+import { FaImage, FaShoppingCart, FaTag, FaBox } from 'react-icons/fa';
 import { createTextPreview } from '@/lib/utils/text';
 
 interface ProductCardProps {
@@ -37,7 +37,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <Link href={productUrl} className="block">
-        <div className="aspect-w-16 aspect-h-9 bg-gray-200">
+        <div className="aspect-w-16 aspect-h-9 bg-gray-200 relative">
           {product.first_image_url ? (
             <img
               src={product.first_image_url}
@@ -47,6 +47,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           ) : (
             <div className="w-full h-48 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200">
               <FaImage className="h-12 w-12 text-gray-400" />
+            </div>
+          )}
+          {/* Bundle Indicator */}
+          {product.is_bundle && (
+            <div className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
+              <FaBox className="h-3 w-3 mr-1" />
+              Bundle
             </div>
           )}
         </div>

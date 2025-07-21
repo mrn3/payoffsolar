@@ -7,6 +7,7 @@ import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
 import PDFUpload from '@/components/ui/PDFUpload';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import ShippingMethodsEditor from '@/components/ui/ShippingMethodsEditor';
+import BundleItemsManager from '@/components/products/BundleItemsManager';
 import { generateProductSlug } from '@/lib/utils/slug';
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
 
@@ -27,6 +28,9 @@ export default function EditProductPage() {
     slug: '',
     tax_percentage: '',
     shipping_methods: [] as ShippingMethod[],
+    is_bundle: false,
+    bundle_pricing_type: 'calculated' as 'calculated' | 'fixed',
+    bundle_discount_percentage: '',
     is_active: true
   });
   const [categories, setCategories] = useState<ProductCategory[]>([]);
@@ -77,6 +81,9 @@ export default function EditProductPage() {
         slug: data.product.slug || '',
         tax_percentage: data.product.tax_percentage?.toString() || '',
         shipping_methods: data.product.shipping_methods || [],
+        is_bundle: data.product.is_bundle || false,
+        bundle_pricing_type: data.product.bundle_pricing_type || 'calculated',
+        bundle_discount_percentage: data.product.bundle_discount_percentage?.toString() || '',
         is_active: data.product.is_active
       });
     } catch (error) {
@@ -334,6 +341,13 @@ export default function EditProductPage() {
       }
     }
 
+    if (formData.bundle_discount_percentage.trim()) {
+      const discountPercentage = parseFloat(formData.bundle_discount_percentage);
+      if (isNaN(discountPercentage) || discountPercentage < 0 || discountPercentage > 100) {
+        newErrors.bundle_discount_percentage = 'Bundle discount must be a valid number between 0 and 100';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -428,8 +442,19 @@ export default function EditProductPage() {
       } else {
         delete newErrors.tax_percentage;
       }
+    } else if (name === 'bundle_discount_percentage') {
+      if (formData.bundle_discount_percentage.trim()) {
+        const discountPercentage = parseFloat(formData.bundle_discount_percentage);
+        if (isNaN(discountPercentage) || discountPercentage < 0 || discountPercentage > 100) {
+          newErrors.bundle_discount_percentage = 'Bundle discount must be a valid number between 0 and 100';
+        } else {
+          delete newErrors.bundle_discount_percentage;
+        }
+      } else {
+        delete newErrors.bundle_discount_percentage;
+      }
     }
-    
+
     setErrors(newErrors);
   };
 
@@ -448,6 +473,7 @@ export default function EditProductPage() {
           ...formData,
           price: parseFloat(formData.price),
           tax_percentage: formData.tax_percentage ? parseFloat(formData.tax_percentage) : 0,
+          bundle_discount_percentage: formData.bundle_discount_percentage ? parseFloat(formData.bundle_discount_percentage) : 0,
           category_id: formData.category_id || null,
           image_url: formData.image_url || null,
           data_sheet_url: formData.data_sheet_url || null
@@ -644,6 +670,75 @@ export default function EditProductPage() {
               </select>
             </div>
 
+            {/* Bundle Configuration */}
+            <div className="sm:col-span-2">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="is_bundle"
+                  checked={formData.is_bundle}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm font-medium text-gray-700">
+                  This is a bundle product (composed of multiple products)
+                </label>
+              </div>
+            </div>
+
+            {formData.is_bundle && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Bundle Pricing</label>
+                  <select
+                    name="bundle_pricing_type"
+                    value={formData.bundle_pricing_type}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                  >
+                    <option value="calculated">Calculated from components</option>
+                    <option value="fixed">Fixed price (override)</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {formData.bundle_pricing_type === 'calculated'
+                      ? 'Price will be calculated from component products minus any discount'
+                      : 'Use the fixed price entered above, ignoring component prices'
+                    }
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Bundle Discount</label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <input
+                      type="number"
+                      name="bundle_discount_percentage"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.bundle_discount_percentage}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`block w-full pl-3 pr-12 py-2 border rounded-md ${
+                        errors.bundle_discount_percentage ? 'border-red-300' : 'border-gray-300'
+                      } focus:outline-none focus:ring-green-500 focus:border-green-500`}
+                      placeholder="0.00"
+                    />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">%</span>
+                    </div>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {formData.bundle_pricing_type === 'calculated'
+                      ? 'Percentage discount applied to total component price'
+                      : 'This field is ignored when using fixed pricing'
+                    }
+                  </p>
+                  {errors.bundle_discount_percentage && <p className="mt-1 text-sm text-red-600">{errors.bundle_discount_percentage}</p>}
+                </div>
+              </>
+            )}
+
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
               <DragDropImageUpload
@@ -817,6 +912,27 @@ export default function EditProductPage() {
           </div>
         </form>
       </div>
+
+      {/* Bundle Items Management */}
+      {formData.is_bundle && (
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900">Bundle Components</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Manage the products that make up this bundle.
+            </p>
+          </div>
+          <div className="p-6">
+            <BundleItemsManager
+              bundleProductId={productId}
+              onBundleChange={() => {
+                // Optionally refresh product data when bundle changes
+                fetchProduct();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

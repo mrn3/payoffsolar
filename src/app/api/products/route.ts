@@ -136,6 +136,9 @@ export async function POST(request: NextRequest) {
       sku: data.sku,
       slug: data.slug,
       shipping_methods: data.shipping_methods || [],
+      is_bundle: data.is_bundle || false,
+      bundle_pricing_type: data.bundle_pricing_type || 'calculated',
+      bundle_discount_percentage: data.bundle_discount_percentage !== undefined ? parseFloat(data.bundle_discount_percentage) : 0,
       is_active: data.is_active !== undefined ? data.is_active : true
     });
 

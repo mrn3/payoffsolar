@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {OrderModel, OrderItemModel, ContactModel, ProductModel, ProductCostBreakdownModel, CostItemModel} from '@/lib/models';
 import { requireAuth , isAdmin} from '@/lib/auth';
+import { processOrderItems, validateInventoryForOrder } from '@/lib/utils/orderProcessing';
 
 export async function GET(request: NextRequest) {
   try {
@@ -104,8 +105,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate items and calculate total
-    let total = 0;
+    // Validate items and process bundles
     for (const item of data.items) {
       if (!item.product_id || !item.quantity || item.quantity <= 0 || !item.price || item.price < 0) {
         return NextResponse.json({
@@ -119,8 +119,27 @@ export async function POST(request: NextRequest) {
           error: `Product with ID ${item.product_id} not found`
         }, { status: 404 });
       }
+    }
 
-      total += parseFloat(item.price) * parseInt(item.quantity);
+    // Process order items (expand bundles if needed)
+    const processedItems = await processOrderItems(data.items, {
+      expandBundles: data.expandBundles !== false, // Default to true unless explicitly false
+      preserveBundleStructure: false
+    });
+
+    // Validate inventory for processed items
+    const inventoryValidation = await validateInventoryForOrder(processedItems);
+    if (!inventoryValidation.valid) {
+      return NextResponse.json({
+        error: 'Insufficient inventory',
+        details: inventoryValidation.errors
+      }, { status: 400 });
+    }
+
+    // Calculate total from processed items
+    let total = 0;
+    for (const item of processedItems) {
+      total += parseFloat(item.price.toString()) * parseInt(item.quantity.toString());
     }
 
     // Create order
@@ -132,23 +151,23 @@ export async function POST(request: NextRequest) {
       notes: data.notes || null
     });
 
-    // Create order items
-    for (const item of data.items) {
+    // Create order items from processed items
+    for (const item of processedItems) {
       await OrderItemModel.create({
         order_id: orderId,
         product_id: item.product_id,
-        quantity: parseInt(item.quantity),
-        price: parseFloat(item.price)
+        quantity: parseInt(item.quantity.toString()),
+        price: parseFloat(item.price.toString())
       });
     }
 
     // Generate cost items from product default cost breakdowns
     const allCostItems = [];
-    for (const item of data.items) {
+    for (const item of processedItems) {
       const productCostItems = await ProductCostBreakdownModel.calculateCostItems(
         item.product_id,
-        parseInt(item.quantity),
-        parseFloat(item.price)
+        parseInt(item.quantity.toString()),
+        parseFloat(item.price.toString())
       );
       allCostItems.push(...productCostItems);
     }

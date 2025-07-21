@@ -95,6 +95,9 @@ CREATE TABLE IF NOT EXISTS products (
   sku VARCHAR(100) UNIQUE NOT NULL,
   tax_percentage DECIMAL(5, 2) DEFAULT 0.00,
   shipping_methods JSON,
+  is_bundle BOOLEAN DEFAULT FALSE,
+  bundle_pricing_type ENUM('calculated', 'fixed') DEFAULT 'calculated',
+  bundle_discount_percentage DECIMAL(5, 2) DEFAULT 0.00,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -110,6 +113,20 @@ CREATE TABLE IF NOT EXISTS product_images (
   sort_order INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+-- Create product bundle items table for bundle composition
+CREATE TABLE IF NOT EXISTS product_bundle_items (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  bundle_product_id VARCHAR(36) NOT NULL,
+  component_product_id VARCHAR(36) NOT NULL,
+  quantity INT NOT NULL DEFAULT 1,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (bundle_product_id) REFERENCES products(id) ON DELETE CASCADE,
+  FOREIGN KEY (component_product_id) REFERENCES products(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_bundle_component (bundle_product_id, component_product_id)
 );
 
 -- Create warehouses table
@@ -335,6 +352,9 @@ CREATE INDEX IF NOT EXISTS idx_cost_items_category ON cost_items(category_id);
 CREATE INDEX IF NOT EXISTS idx_cost_categories_active ON cost_categories(is_active);
 CREATE INDEX IF NOT EXISTS idx_product_cost_breakdowns_product ON product_cost_breakdowns(product_id);
 CREATE INDEX IF NOT EXISTS idx_product_cost_breakdowns_category ON product_cost_breakdowns(category_id);
+CREATE INDEX IF NOT EXISTS idx_product_bundle_items_bundle ON product_bundle_items(bundle_product_id);
+CREATE INDEX IF NOT EXISTS idx_product_bundle_items_component ON product_bundle_items(component_product_id);
+CREATE INDEX IF NOT EXISTS idx_products_is_bundle ON products(is_bundle);
 
 CREATE INDEX IF NOT EXISTS idx_content_type ON content(type_id);
 CREATE INDEX IF NOT EXISTS idx_content_author ON content(author_id);

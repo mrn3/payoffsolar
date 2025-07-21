@@ -494,6 +494,9 @@ export interface Product {
   slug?: string;
   tax_percentage: number;
   shipping_methods?: ShippingMethod[];
+  is_bundle: boolean;
+  bundle_pricing_type: 'calculated' | 'fixed';
+  bundle_discount_percentage: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -519,6 +522,30 @@ export interface ProductWithImages extends ProductWithCategory {
 
 export interface ProductWithFirstImage extends ProductWithCategory {
   first_image_url?: string;
+}
+
+// Product Bundle Item model
+export interface ProductBundleItem {
+  id: string;
+  bundle_product_id: string;
+  component_product_id: string;
+  quantity: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductBundleItemWithProduct extends ProductBundleItem {
+  component_product_name?: string;
+  component_product_sku?: string;
+  component_product_price?: number;
+  component_product_image_url?: string;
+}
+
+export interface ProductWithBundleItems extends ProductWithImages {
+  bundle_items?: ProductBundleItemWithProduct[];
+  calculated_price?: number;
+  total_component_price?: number;
 }
 
 // Helper function to parse shipping methods from JSON
@@ -684,8 +711,23 @@ export const ProductModel = {
     const slug = data.slug || generateProductSlug(data.name, data.sku);
 
     await executeSingle(
-      'INSERT INTO products (name, description, price, image_url, data_sheet_url, category_id, sku, slug, tax_percentage, shipping_methods, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [data.name, data.description, data.price, data.image_url || null, data.data_sheet_url || null, data.category_id || null, data.sku, slug, data.tax_percentage || 0, data.shipping_methods ? JSON.stringify(data.shipping_methods) : null, data.is_active]
+      'INSERT INTO products (name, description, price, image_url, data_sheet_url, category_id, sku, slug, tax_percentage, shipping_methods, is_bundle, bundle_pricing_type, bundle_discount_percentage, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        data.name,
+        data.description,
+        data.price,
+        data.image_url || null,
+        data.data_sheet_url || null,
+        data.category_id || null,
+        data.sku,
+        slug,
+        data.tax_percentage || 0,
+        data.shipping_methods ? JSON.stringify(data.shipping_methods) : null,
+        data.is_bundle || false,
+        data.bundle_pricing_type || 'calculated',
+        data.bundle_discount_percentage || 0,
+        data.is_active
+      ]
     );
 
     const product = await getOne<{ id: string }>(
@@ -738,6 +780,18 @@ export const ProductModel = {
     if (data.shipping_methods !== undefined) {
       fields.push('shipping_methods = ?');
       values.push(data.shipping_methods ? JSON.stringify(data.shipping_methods) : null);
+    }
+    if (data.is_bundle !== undefined) {
+      fields.push('is_bundle = ?');
+      values.push(data.is_bundle);
+    }
+    if (data.bundle_pricing_type !== undefined) {
+      fields.push('bundle_pricing_type = ?');
+      values.push(data.bundle_pricing_type);
+    }
+    if (data.bundle_discount_percentage !== undefined) {
+      fields.push('bundle_discount_percentage = ?');
+      values.push(data.bundle_discount_percentage);
     }
     if (data.is_active !== undefined) {
       fields.push('is_active = ?');
@@ -985,6 +1039,175 @@ export const ProductModel = {
       [categoryId, searchTerm, searchTerm, searchTerm]
     );
     return result?.count || 0;
+  },
+
+  async getWithBundleItems(id: string): Promise<ProductWithBundleItems | null> {
+    const product = await this.getById(id);
+    if (!product) return null;
+
+    const productWithCategory = product as ProductWithBundleItems;
+
+    if (product.is_bundle) {
+      const bundleItems = await ProductBundleItemModel.getByBundleId(id);
+      const bundlePricing = await ProductBundleItemModel.calculateBundlePrice(id);
+
+      productWithCategory.bundle_items = bundleItems;
+      productWithCategory.total_component_price = bundlePricing.totalPrice;
+
+      // Calculate final price based on pricing type
+      if (product.bundle_pricing_type === 'calculated') {
+        const discountAmount = (bundlePricing.totalPrice * product.bundle_discount_percentage) / 100;
+        productWithCategory.calculated_price = bundlePricing.totalPrice - discountAmount;
+      } else {
+        productWithCategory.calculated_price = product.price;
+      }
+    }
+
+    return productWithCategory;
+  }
+};
+
+// Product Bundle Item model
+export const ProductBundleItemModel = {
+  async getByBundleId(bundleProductId: string): Promise<ProductBundleItemWithProduct[]> {
+    return executeQuery<ProductBundleItemWithProduct>(
+      `SELECT pbi.*, p.name as component_product_name, p.sku as component_product_sku,
+              p.price as component_product_price, p.image_url as component_product_image_url
+       FROM product_bundle_items pbi
+       LEFT JOIN products p ON pbi.component_product_id = p.id
+       WHERE pbi.bundle_product_id = ?
+       ORDER BY pbi.sort_order ASC, pbi.created_at ASC`,
+      [bundleProductId]
+    );
+  },
+
+  async getByComponentId(componentProductId: string): Promise<ProductBundleItem[]> {
+    return executeQuery<ProductBundleItem>(
+      'SELECT * FROM product_bundle_items WHERE component_product_id = ?',
+      [componentProductId]
+    );
+  },
+
+  async create(data: Omit<ProductBundleItem, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO product_bundle_items (bundle_product_id, component_product_id, quantity, sort_order) VALUES (?, ?, ?, ?)',
+      [data.bundle_product_id, data.component_product_id, data.quantity, data.sort_order || 0]
+    );
+
+    const item = await getOne<{ id: string }>(
+      'SELECT id FROM product_bundle_items WHERE bundle_product_id = ? AND component_product_id = ? ORDER BY created_at DESC LIMIT 1',
+      [data.bundle_product_id, data.component_product_id]
+    );
+    return item!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<ProductBundleItem, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.quantity !== undefined) {
+      fields.push('quantity = ?');
+      values.push(data.quantity);
+    }
+    if (data.sort_order !== undefined) {
+      fields.push('sort_order = ?');
+      values.push(data.sort_order);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE product_bundle_items SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM product_bundle_items WHERE id = ?', [id]);
+  },
+
+  async deleteByBundleId(bundleProductId: string): Promise<void> {
+    await executeSingle('DELETE FROM product_bundle_items WHERE bundle_product_id = ?', [bundleProductId]);
+  },
+
+  async deleteByComponentId(componentProductId: string): Promise<void> {
+    await executeSingle('DELETE FROM product_bundle_items WHERE component_product_id = ?', [componentProductId]);
+  },
+
+  async calculateBundlePrice(bundleProductId: string): Promise<{ totalPrice: number; componentCount: number }> {
+    const result = await getOne<{ total_price: number; component_count: number }>(
+      `SELECT COALESCE(SUM(p.price * pbi.quantity), 0) as total_price,
+              COUNT(pbi.id) as component_count
+       FROM product_bundle_items pbi
+       LEFT JOIN products p ON pbi.component_product_id = p.id
+       WHERE pbi.bundle_product_id = ? AND p.is_active = TRUE`,
+      [bundleProductId]
+    );
+
+    return {
+      totalPrice: result?.total_price || 0,
+      componentCount: result?.component_count || 0
+    };
+  },
+
+  async calculateBundleInventory(bundleProductId: string, warehouseId?: string): Promise<{ availableQuantity: number; limitingComponent?: string }> {
+    const bundleItems = await this.getByBundleId(bundleProductId);
+
+    if (bundleItems.length === 0) {
+      return { availableQuantity: 0 };
+    }
+
+    let minAvailableQuantity = Infinity;
+    let limitingComponent = '';
+
+    for (const item of bundleItems) {
+      // Get inventory for this component
+      const inventoryQuery = warehouseId
+        ? `SELECT COALESCE(SUM(quantity), 0) as total_quantity
+           FROM inventory
+           WHERE product_id = ? AND warehouse_id = ?`
+        : `SELECT COALESCE(SUM(quantity), 0) as total_quantity
+           FROM inventory
+           WHERE product_id = ?`;
+
+      const params = warehouseId
+        ? [item.component_product_id, warehouseId]
+        : [item.component_product_id];
+
+      const inventoryResult = await getOne<{ total_quantity: number }>(inventoryQuery, params);
+      const availableQuantity = inventoryResult?.total_quantity || 0;
+
+      // Calculate how many bundles we can make with this component
+      const bundlesFromThisComponent = Math.floor(availableQuantity / item.quantity);
+
+      if (bundlesFromThisComponent < minAvailableQuantity) {
+        minAvailableQuantity = bundlesFromThisComponent;
+        limitingComponent = item.component_product_name || item.component_product_id;
+      }
+    }
+
+    return {
+      availableQuantity: minAvailableQuantity === Infinity ? 0 : minAvailableQuantity,
+      limitingComponent: minAvailableQuantity === Infinity ? undefined : limitingComponent
+    };
+  },
+
+  async expandBundleForOrder(bundleProductId: string, bundleQuantity: number): Promise<Array<{product_id: string, quantity: number, price: number}>> {
+    const bundleItems = await this.getByBundleId(bundleProductId);
+    const expandedItems = [];
+
+    for (const item of bundleItems) {
+      if (item.component_product_price !== undefined) {
+        expandedItems.push({
+          product_id: item.component_product_id,
+          quantity: item.quantity * bundleQuantity,
+          price: item.component_product_price
+        });
+      }
+    }
+
+    return expandedItems;
   }
 };
 

@@ -12,7 +12,7 @@ import ImportProductsModal from '@/components/products/ImportProductsModal';
 import BulkMergeProductsModal from '@/components/products/BulkMergeProductsModal';
 import DuplicateProductsModal from '@/components/products/DuplicateProductsModal';
 import BulkListingModal from '@/components/listings/BulkListingModal';
-import {FaEdit, FaEye, FaImage, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload, FaCopy, FaTimes, FaGlobe} from 'react-icons/fa';
+import {FaEdit, FaEye, FaImage, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload, FaCopy, FaTimes, FaGlobe, FaBox} from 'react-icons/fa';
 import { createTextPreview } from '@/lib/utils/text';
 
 interface ProductsResponse {
@@ -457,13 +457,21 @@ export default function ProductsPage() {
                   <span className="text-xl font-bold text-gray-900">
                     {formatPrice(product.price)}
                   </span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    product.is_active
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {product.is_active ? 'Active' : 'Inactive' }
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    {product.is_bundle && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <FaBox className="h-3 w-3 mr-1" />
+                        Bundle
+                      </span>
+                    )}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      product.is_active
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {product.is_active ? 'Active' : 'Inactive' }
+                    </span>
+                  </div>
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-sm text-gray-500 truncate" title={`SKU: ${product.sku}`}>

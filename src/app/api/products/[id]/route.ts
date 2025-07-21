@@ -112,17 +112,29 @@ export async function PUT(
       }
     }
 
+    // Validate bundle discount percentage if provided
+    if (data.bundle_discount_percentage !== undefined && data.bundle_discount_percentage !== null) {
+      const discountPercentage = parseFloat(data.bundle_discount_percentage);
+      if (isNaN(discountPercentage) || discountPercentage < 0 || discountPercentage > 100) {
+        return NextResponse.json({
+          error: 'Bundle discount percentage must be a valid number between 0 and 100' }, { status: 400 });
+      }
+    }
+
     await ProductModel.update(id, {
       name: data.name,
       description: data.description,
       price: data.price !== undefined ? parseFloat(data.price) : undefined,
       tax_percentage: data.tax_percentage !== undefined ? parseFloat(data.tax_percentage) : undefined,
+      bundle_discount_percentage: data.bundle_discount_percentage !== undefined ? parseFloat(data.bundle_discount_percentage) : undefined,
       image_url: data.image_url,
       data_sheet_url: data.data_sheet_url,
       category_id: data.category_id,
       sku: data.sku,
       slug: data.slug,
       shipping_methods: data.shipping_methods,
+      is_bundle: data.is_bundle,
+      bundle_pricing_type: data.bundle_pricing_type,
       is_active: data.is_active
     });
 
