@@ -220,7 +220,7 @@ export default function BundleItemsManager({ bundleProductId, onBundleChange }: 
                   <div>
                     <h4 className="font-medium text-gray-900">{item.component_product_name}</h4>
                     <p className="text-sm text-gray-500">{item.component_product_sku}</p>
-                    <p className="text-sm text-gray-600">${item.component_product_price?.toFixed(2)} each</p>
+                    <p className="text-sm text-gray-600">${(parseFloat(item.component_product_price) || 0).toFixed(2)} each</p>
                   </div>
                 </div>
 
@@ -266,7 +266,7 @@ export default function BundleItemsManager({ bundleProductId, onBundleChange }: 
                   </div>
 
                   <div className="text-sm font-medium text-gray-900">
-                    ${((item.component_product_price || 0) * item.quantity).toFixed(2)}
+                    ${((parseFloat(item.component_product_price) || 0) * item.quantity).toFixed(2)}
                   </div>
 
                   <button

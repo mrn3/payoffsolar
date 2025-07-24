@@ -1202,7 +1202,7 @@ export const ProductBundleItemModel = {
         expandedItems.push({
           product_id: item.component_product_id,
           quantity: item.quantity * bundleQuantity,
-          price: item.component_product_price
+          price: parseFloat(item.component_product_price) || 0
         });
       }
     }

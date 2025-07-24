@@ -44,7 +44,7 @@ export async function processOrderItems(
             processedItems.push({
               product_id: bundleItem.component_product_id,
               quantity: bundleItem.quantity * item.quantity,
-              price: bundleItem.component_product_price,
+              price: parseFloat(bundleItem.component_product_price) || 0,
               is_bundle_component: true,
               parent_bundle_id: item.product_id,
               parent_bundle_name: product.name
