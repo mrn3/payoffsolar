@@ -2257,6 +2257,21 @@ export const OrderModel = {
     );
   },
 
+  async getOrdersByMonthAndCategory(month: string, categoryName: string): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       INNER JOIN cost_items ci ON o.id = ci.order_id
+       INNER JOIN cost_categories cc ON ci.category_id = cc.id
+       WHERE o.status = 'complete'
+         AND DATE_FORMAT(o.order_date, '%Y-%m') = ?
+         AND cc.name = ?
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      [month, categoryName]
+    );
+  },
+
   async getWithItems(_id: string): Promise<OrderWithItems | null> {
     const order = await getOne<OrderWithContact>(
       `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone
