@@ -13,7 +13,7 @@ import {
   ActiveElement,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { OrderWithContact } from '@/lib/types';
+import { OrderWithContact, CostItemWithCategory } from '@/lib/types';
 import { FaTimes } from 'react-icons/fa';
 
 ChartJS.register(
@@ -41,12 +41,16 @@ interface CostBreakdownChartProps {
   categories: CostCategory[];
 }
 
+interface OrderWithCostBreakdown extends OrderWithContact {
+  costItems?: CostItemWithCategory[];
+}
+
 interface OrdersModalProps {
   isOpen: boolean;
   onClose: () => void;
   month: string;
   category: string;
-  orders: OrderWithContact[];
+  orders: OrderWithCostBreakdown[];
   loading: boolean;
 }
 
@@ -134,34 +138,47 @@ function OrdersModal({ isOpen, onClose, month, category, orders, loading }: Orde
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Total
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {category} Amount
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(order.order_date)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order.contact_name || 'Unknown Contact'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          order.status === 'Complete' ? 'bg-green-100 text-green-800' :
-                          order.status === 'Paid' ? 'bg-purple-100 text-purple-800' :
-                          order.status === 'Proposed' ? 'bg-blue-100 text-blue-800' :
-                          order.status === 'Scheduled' ? 'bg-yellow-100 text-yellow-800' :
-                          order.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatCurrency(parseFloat(order.total))}
-                      </td>
-                    </tr>
-                  ))}
+                  {orders.map((order) => {
+                    // Find the cost item for the selected category
+                    const categoryAmount = order.costItems?.find(
+                      item => item.category_name === category
+                    )?.amount || 0;
+
+                    return (
+                      <tr key={order.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatDate(order.order_date)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {order.contact_name || 'Unknown Contact'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            order.status === 'Complete' ? 'bg-green-100 text-green-800' :
+                            order.status === 'Paid' ? 'bg-purple-100 text-purple-800' :
+                            order.status === 'Proposed' ? 'bg-blue-100 text-blue-800' :
+                            order.status === 'Scheduled' ? 'bg-yellow-100 text-yellow-800' :
+                            order.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatCurrency(parseFloat(order.total))}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatCurrency(categoryAmount)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -192,7 +209,7 @@ export default function CostBreakdownChart({ data, categories }: CostBreakdownCh
   const [filteredData, setFilteredData] = useState<CostBreakdownData[]>(data);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [modalOrders, setModalOrders] = useState<OrderWithContact[]>([]);
+  const [modalOrders, setModalOrders] = useState<OrderWithCostBreakdown[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
 
   // Filter data when category selection changes

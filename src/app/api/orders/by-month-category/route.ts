@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OrderModel } from '@/lib/models';
+import { OrderModel, CostItemModel } from '@/lib/models';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +22,19 @@ export async function GET(request: NextRequest) {
     }
 
     const orders = await OrderModel.getOrdersByMonthAndCategory(month, category);
-    return NextResponse.json(orders);
+
+    // Add cost breakdown details for each order
+    const ordersWithCostBreakdown = await Promise.all(
+      orders.map(async (order) => {
+        const costItems = await CostItemModel.getByOrderId(order.id);
+        return {
+          ...order,
+          costItems
+        };
+      })
+    );
+
+    return NextResponse.json(ordersWithCostBreakdown);
   } catch (error) {
     console.error('Error fetching orders by month and category:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
