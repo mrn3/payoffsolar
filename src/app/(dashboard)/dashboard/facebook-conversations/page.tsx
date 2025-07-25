@@ -120,6 +120,31 @@ export default function FacebookConversationsPage() {
     return new Date(dateString).toLocaleString();
   };
 
+  const testFacebookConnection = async () => {
+    setImporting(true);
+    try {
+      const response = await fetch('/api/facebook/test-connection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to test connection');
+      }
+
+      const result = await response.json();
+      toast.success(`Connection test completed! Page: ${result.pageName}, Available conversations: ${result.conversationCount}`);
+    } catch (error) {
+      console.error('Error testing connection:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to test connection');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const importMessages = async () => {
     if (!confirm('This will import all existing Facebook messages. This may take several minutes. Continue?')) {
       return;
@@ -176,13 +201,22 @@ export default function FacebookConversationsPage() {
             Manage conversations from Facebook Marketplace and Messenger
           </p>
         </div>
-        <button
-          onClick={importMessages}
-          disabled={importing}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          {importing ? 'Importing...' : 'Import Historical Messages'}
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={testFacebookConnection}
+            disabled={importing}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            {importing ? 'Testing...' : 'Test Connection'}
+          </button>
+          <button
+            onClick={importMessages}
+            disabled={importing}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            {importing ? 'Importing...' : 'Import Historical Messages'}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">

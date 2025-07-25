@@ -32,7 +32,8 @@ export async function POST(request: NextRequest) {
     while (conversationsUrl) {
       try {
         const conversationsData = await fetchFacebookAPI(conversationsUrl.replace('https://graph.facebook.com/v18.0/', ''), accessToken);
-        
+        console.log(`📊 Found ${conversationsData.data?.length || 0} conversations in this page`);
+
         for (const conversation of conversationsData.data || []) {
           try {
             console.log(`🔄 Processing conversation ${conversation.id}...`);
@@ -67,7 +68,8 @@ export async function POST(request: NextRequest) {
 
             while (messagesUrl) {
               const messagesData = await fetchFacebookAPI(messagesUrl.replace('https://graph.facebook.com/v18.0/', ''), accessToken);
-              
+              console.log(`   📨 Found ${messagesData.data?.length || 0} messages in this page`);
+
               for (const message of messagesData.data || []) {
                 try {
                   const isFromPage = message.from?.id === pageInfo.id;
@@ -143,7 +145,7 @@ export async function POST(request: NextRequest) {
 async function fetchFacebookAPI(endpoint: string, accessToken: string) {
   const url = `https://graph.facebook.com/v18.0/${endpoint}`;
   console.log(`📡 Fetching: ${url}`);
-  
+
   const response = await fetch(url, {
     headers: {
       'Authorization': `Bearer ${accessToken}`
