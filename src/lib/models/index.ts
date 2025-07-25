@@ -2245,6 +2245,58 @@ export const OrderModel = {
     );
   },
 
+  async getCostBreakdownByWeek(weeks = 20, categoryId?: string | null): Promise<Array<{ week: string; category_name: string; total_amount: number }>> {
+    const params = [weeks];
+    let categoryFilter = '';
+
+    if (categoryId) {
+      categoryFilter = 'AND cc.id = ?';
+      params.push(categoryId);
+    }
+
+    return executeQuery<{ week: string; category_name: string; total_amount: number }>(
+      `SELECT
+         DATE_FORMAT(o.order_date, '%Y-%u') as week,
+         cc.name as category_name,
+         SUM(ci.amount) as total_amount
+       FROM orders o
+       INNER JOIN cost_items ci ON o.id = ci.order_id
+       INNER JOIN cost_categories cc ON ci.category_id = cc.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? WEEK)
+         ${categoryFilter}
+       GROUP BY DATE_FORMAT(o.order_date, '%Y-%u'), cc.id, cc.name
+       ORDER BY week ASC, cc.name ASC`,
+      params
+    );
+  },
+
+  async getCostBreakdownByDay(days = 31, categoryId?: string | null): Promise<Array<{ day: string; category_name: string; total_amount: number }>> {
+    const params = [days];
+    let categoryFilter = '';
+
+    if (categoryId) {
+      categoryFilter = 'AND cc.id = ?';
+      params.push(categoryId);
+    }
+
+    return executeQuery<{ day: string; category_name: string; total_amount: number }>(
+      `SELECT
+         DATE_FORMAT(o.order_date, '%Y-%m-%d') as day,
+         cc.name as category_name,
+         SUM(ci.amount) as total_amount
+       FROM orders o
+       INNER JOIN cost_items ci ON o.id = ci.order_id
+       INNER JOIN cost_categories cc ON ci.category_id = cc.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+         ${categoryFilter}
+       GROUP BY DATE_FORMAT(o.order_date, '%Y-%m-%d'), cc.id, cc.name
+       ORDER BY day ASC, cc.name ASC`,
+      params
+    );
+  },
+
   async getOrdersByMonthAndStatus(month: string, status: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
@@ -2269,6 +2321,36 @@ export const OrderModel = {
          AND cc.name = ?
        ORDER BY o.order_date DESC, o.created_at DESC`,
       [month, categoryName]
+    );
+  },
+
+  async getOrdersByWeekAndCategory(week: string, categoryName: string): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       INNER JOIN cost_items ci ON o.id = ci.order_id
+       INNER JOIN cost_categories cc ON ci.category_id = cc.id
+       WHERE o.status = 'complete'
+         AND DATE_FORMAT(o.order_date, '%Y-%u') = ?
+         AND cc.name = ?
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      [week, categoryName]
+    );
+  },
+
+  async getOrdersByDayAndCategory(day: string, categoryName: string): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       INNER JOIN cost_items ci ON o.id = ci.order_id
+       INNER JOIN cost_categories cc ON ci.category_id = cc.id
+       WHERE o.status = 'complete'
+         AND DATE_FORMAT(o.order_date, '%Y-%m-%d') = ?
+         AND cc.name = ?
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      [day, categoryName]
     );
   },
 

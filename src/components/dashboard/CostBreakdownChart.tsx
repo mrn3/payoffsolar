@@ -26,7 +26,9 @@ ChartJS.register(
 );
 
 interface CostBreakdownData {
-  month: string;
+  month?: string;
+  week?: string;
+  day?: string;
   category_name: string;
   total_amount: number;
 }
@@ -36,8 +38,10 @@ interface CostCategory {
   name: string;
 }
 
+type TimePeriod = 'month' | 'week' | 'day';
+
 interface CostBreakdownChartProps {
-  data: CostBreakdownData[];
+  initialData: CostBreakdownData[];
   categories: CostCategory[];
 }
 
@@ -48,7 +52,8 @@ interface OrderWithCostBreakdown extends OrderWithContact {
 interface OrdersModalProps {
   isOpen: boolean;
   onClose: () => void;
-  month: string;
+  period: string;
+  periodType: TimePeriod;
   category: string;
   orders: OrderWithCostBreakdown[];
   loading: boolean;
@@ -70,13 +75,26 @@ const categoryColors = [
   '#6B7280', // gray-500
 ];
 
-function OrdersModal({ isOpen, onClose, month, category, orders, loading }: OrdersModalProps) {
+function OrdersModal({ isOpen, onClose, period, periodType, category, orders, loading }: OrdersModalProps) {
   if (!isOpen) return null;
 
-  const formatMonth = (monthStr: string) => {
-    const [year, month] = monthStr.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const formatPeriod = (periodStr: string, type: TimePeriod) => {
+    if (type === 'month') {
+      const [year, month] = periodStr.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1);
+      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    } else if (type === 'week') {
+      const [year, week] = periodStr.split('-');
+      return `Week ${week}, ${year}`;
+    } else if (type === 'day') {
+      return new Date(periodStr).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    }
+    return periodStr;
   };
 
   const formatCurrency = (amount: number) => {
@@ -101,7 +119,7 @@ function OrdersModal({ isOpen, onClose, month, category, orders, loading }: Orde
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
-            Orders for {formatMonth(month)} - {category}
+            Orders for {formatPeriod(period, periodType)} - {category}
           </h2>
           <button
             onClick={onClose}
@@ -204,13 +222,63 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export default function CostBreakdownChart({ data, categories }: CostBreakdownChartProps) {
+export default function CostBreakdownChart({ initialData, categories }: CostBreakdownChartProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [filteredData, setFilteredData] = useState<CostBreakdownData[]>(data);
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
+  const [data, setData] = useState<CostBreakdownData[]>(initialData);
+  const [filteredData, setFilteredData] = useState<CostBreakdownData[]>(initialData);
+  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [modalOrders, setModalOrders] = useState<OrderWithCostBreakdown[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(false);
+
+  // Fetch data based on time period
+  const fetchData = async (period: TimePeriod, categoryId?: string) => {
+    setDataLoading(true);
+    try {
+      let endpoint = '';
+      let params = new URLSearchParams();
+
+      if (categoryId) {
+        params.append('categoryId', categoryId);
+      }
+
+      switch (period) {
+        case 'month':
+          endpoint = '/api/orders/cost-breakdown-by-month';
+          params.append('months', '12');
+          break;
+        case 'week':
+          endpoint = '/api/orders/cost-breakdown-by-week';
+          params.append('weeks', '20');
+          break;
+        case 'day':
+          endpoint = '/api/orders/cost-breakdown-by-day';
+          params.append('days', '31');
+          break;
+      }
+
+      const response = await fetch(`${endpoint}?${params.toString()}`);
+      if (response.ok) {
+        const newData = await response.json();
+        setData(newData);
+      } else {
+        console.error('Failed to fetch cost breakdown data');
+        setData([]);
+      }
+    } catch (error) {
+      console.error('Error fetching cost breakdown data:', error);
+      setData([]);
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  // Fetch data when time period changes
+  useEffect(() => {
+    fetchData(timePeriod, selectedCategoryId || undefined);
+  }, [timePeriod]);
 
   // Filter data when category selection changes
   useEffect(() => {
@@ -225,6 +293,15 @@ export default function CostBreakdownChart({ data, categories }: CostBreakdownCh
     }
   }, [selectedCategoryId, data, categories]);
 
+  if (dataLoading) {
+    return (
+      <div className="h-64 flex items-center justify-center text-gray-500">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2">Loading...</span>
+      </div>
+    );
+  }
+
   if (!data || data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-gray-500">
@@ -233,17 +310,38 @@ export default function CostBreakdownChart({ data, categories }: CostBreakdownCh
     );
   }
 
-  // Get unique months and categories from filtered data
-  const months = [...new Set(filteredData.map(item => item.month))].sort();
+  // Get unique periods and categories from filtered data
+  const periods = [...new Set(filteredData.map(item => {
+    if (timePeriod === 'month') return item.month;
+    if (timePeriod === 'week') return item.week;
+    return item.day;
+  }))].filter(Boolean).sort();
+
   const categoryNames = [...new Set(filteredData.map(item => item.category_name))].sort();
+
+  // Format period labels
+  const formatPeriodLabel = (period: string) => {
+    if (timePeriod === 'month') {
+      return formatMonth(period);
+    } else if (timePeriod === 'week') {
+      const [year, week] = period.split('-');
+      return `W${week}`;
+    } else {
+      return new Date(period).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
 
   // Prepare chart data
   const chartData = {
-    labels: months.map(formatMonth),
+    labels: periods.map(formatPeriodLabel),
     datasets: categoryNames.map((category, index) => ({
       label: category,
-      data: months.map(month => {
-        const item = filteredData.find(d => d.month === month && d.category_name === category);
+      data: periods.map(period => {
+        const item = filteredData.find(d => {
+          const itemPeriod = timePeriod === 'month' ? d.month :
+                           timePeriod === 'week' ? d.week : d.day;
+          return itemPeriod === period && d.category_name === category;
+        });
         return item ? Number(item.total_amount) : 0;
       }),
       backgroundColor: categoryColors[index % categoryColors.length],
@@ -304,21 +402,39 @@ export default function CostBreakdownChart({ data, categories }: CostBreakdownCh
       if (elements.length > 0) {
         const elementIndex = elements[0].index;
         const datasetIndex = elements[0].datasetIndex;
-        const month = months[elementIndex];
+        const period = periods[elementIndex];
         const category = categoryNames[datasetIndex];
 
-        if (month && category) {
-          setSelectedMonth(month);
+        if (period && category) {
+          setSelectedPeriod(period);
           setSelectedCategory(category);
           setModalLoading(true);
 
           try {
-            const response = await fetch(`/api/orders/by-month-category?month=${month}&category=${encodeURIComponent(category)}`);
+            let endpoint = '';
+            let paramName = '';
+
+            switch (timePeriod) {
+              case 'month':
+                endpoint = '/api/orders/by-month-category';
+                paramName = 'month';
+                break;
+              case 'week':
+                endpoint = '/api/orders/by-week-category';
+                paramName = 'week';
+                break;
+              case 'day':
+                endpoint = '/api/orders/by-day-category';
+                paramName = 'day';
+                break;
+            }
+
+            const response = await fetch(`${endpoint}?${paramName}=${period}&category=${encodeURIComponent(category)}`);
             if (response.ok) {
               const orders = await response.json();
               setModalOrders(orders);
             } else {
-              console.error('Failed to fetch orders for month and category:', month, category);
+              console.error(`Failed to fetch orders for ${timePeriod} and category:`, period, category);
               setModalOrders([]);
             }
           } catch (error) {
@@ -333,31 +449,49 @@ export default function CostBreakdownChart({ data, categories }: CostBreakdownCh
   };
 
   const closeModal = () => {
-    setSelectedMonth(null);
+    setSelectedPeriod(null);
     setSelectedCategory(null);
     setModalOrders([]);
   };
 
   return (
     <div>
-      {/* Category Filter Dropdown */}
-      <div className="mb-4">
-        <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-2">
-          Filter by Category
-        </label>
-        <select
-          id="category-filter"
-          value={selectedCategoryId}
-          onChange={(e) => setSelectedCategoryId(e.target.value)}
-          className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-        >
-          <option value="">All Categories</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+      {/* Time Period and Category Filter Dropdowns */}
+      <div className="mb-4 flex flex-wrap gap-4">
+        <div>
+          <label htmlFor="time-period-filter" className="block text-sm font-medium text-gray-700 mb-2">
+            Time Period
+          </label>
+          <select
+            id="time-period-filter"
+            value={timePeriod}
+            onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
+            className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="month">By Month (Last 12 months)</option>
+            <option value="week">By Week (Last 20 weeks)</option>
+            <option value="day">By Day (Last 31 days)</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-2">
+            Filter by Category
+          </label>
+          <select
+            id="category-filter"
+            value={selectedCategoryId}
+            onChange={(e) => setSelectedCategoryId(e.target.value)}
+            className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="">All Categories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Chart */}
@@ -366,9 +500,10 @@ export default function CostBreakdownChart({ data, categories }: CostBreakdownCh
       </div>
 
       <OrdersModal
-        isOpen={!!(selectedMonth && selectedCategory)}
+        isOpen={!!(selectedPeriod && selectedCategory)}
         onClose={closeModal}
-        month={selectedMonth || ''}
+        period={selectedPeriod || ''}
+        periodType={timePeriod}
         category={selectedCategory || ''}
         orders={modalOrders}
         loading={modalLoading}

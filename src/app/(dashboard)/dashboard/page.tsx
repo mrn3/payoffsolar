@@ -502,9 +502,9 @@ export default async function DashboardPage() {
           <div className="mt-5">
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">Cost Breakdown by Month (Complete Orders)</h3>
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Cost Breakdown Over Time (Complete Orders)</h3>
                 <div className="mt-4">
-                  <CostBreakdownChart data={costBreakdownData} categories={costCategories} />
+                  <CostBreakdownChart initialData={costBreakdownData} categories={costCategories} />
                 </div>
               </div>
             </div>
