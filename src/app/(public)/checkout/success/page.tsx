@@ -121,7 +121,11 @@ function CheckoutSuccessContent() {
               </Link>
               <Link
                 href="/contact"
-                className="w-full bg-gray-100 text-gray-900 px-6 py-3 rounded-md hover:bg-gray-200 transition-colors font-medium block"
+                className="w-full bg-gray-100 text-gray-900 px-6 py-3 rounded-md hover:bg-gray-200 transition-colors font-medium block cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = '/contact';
+                }}
               >
                 Contact Support
               </Link>
