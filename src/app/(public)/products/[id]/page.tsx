@@ -3,19 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import {useParams, useSearchParams, useRouter} from 'next/navigation';
 import Link from 'next/link';
-import {Product, ProductImage, AffiliateCode} from '@/lib/types';
+import {Product, ProductImage, AffiliateCode, ProductBundleItemWithProduct} from '@/lib/types';
 import ImageCarousel from '@/components/ui/ImageCarousel';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import RelatedProducts from '@/components/products/RelatedProducts';
 import { useCart } from '@/contexts/CartContext';
 import { trackViewItem, formatGAItem } from '@/components/GoogleAnalytics';
-import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaSpinner, FaFilePdf, FaDownload, FaTag} from 'react-icons/fa';
+import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaSpinner, FaFilePdf, FaDownload, FaTag, FaBox} from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 interface ProductWithDetails extends Product {
   category_name?: string;
   images?: ProductImage[];
   quantity_available?: number;
+  bundle_items?: ProductBundleItemWithProduct[];
 }
 
 export default function ProductDetailPage() {
@@ -287,6 +288,69 @@ export default function ProductDetailPage() {
                   />
                 </div>
               </div>
+
+              {/* Bundle Components */}
+              {product.is_bundle && product.bundle_items && product.bundle_items.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <FaBox className="mr-2" />
+                    Bundle Components
+                  </h3>
+                  <div className="bg-gray-50 rounded-lg overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Image</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Product</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Description</th>
+                          <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Quantity</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {product.bundle_items.map((item) => (
+                          <tr key={item.id} className="bg-white">
+                            <td className="px-4 py-3">
+                              {item.component_product_image_url ? (
+                                <img
+                                  src={item.component_product_image_url}
+                                  alt={item.component_product_name || 'Component'}
+                                  className="h-12 w-12 object-cover rounded border"
+                                />
+                              ) : (
+                                <div className="h-12 w-12 bg-gray-100 rounded border flex items-center justify-center">
+                                  <FaImage className="h-4 w-4 text-gray-400" />
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {item.component_product_name || 'Unknown Product'}
+                                </p>
+                                {item.component_product_sku && (
+                                  <p className="text-xs text-gray-500">
+                                    SKU: {item.component_product_sku}
+                                  </p>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="text-sm text-gray-600">
+                                Component of this bundle package
+                              </p>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span className="text-sm font-medium text-gray-900">
+                                {item.quantity}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
               {/* Data Sheet Section */}
               {product.data_sheet_url && (

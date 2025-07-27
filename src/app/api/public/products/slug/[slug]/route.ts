@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ProductModel, ProductImageModel, ProductCategoryModel, InventoryModel } from '@/lib/models';
+import { ProductModel, ProductImageModel, ProductCategoryModel, InventoryModel, ProductBundleItemModel } from '@/lib/models';
 
 export async function GET(
   request: NextRequest,
@@ -33,6 +33,12 @@ export async function GET(
       images,
       quantity_available: quantityAvailable,
     };
+
+    // If this is a bundle product, fetch bundle items
+    if (product.is_bundle) {
+      const bundleItems = await ProductBundleItemModel.getByBundleId(product.id);
+      productWithDetails.bundle_items = bundleItems;
+    }
 
     return NextResponse.json({ product: productWithDetails });
   } catch (error) {
