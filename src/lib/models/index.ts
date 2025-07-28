@@ -1295,6 +1295,30 @@ export interface OrderWithItems extends OrderWithContact {
   costItems?: CostItemWithCategory[];
 }
 
+// Invoice model
+export interface Invoice {
+  id: string;
+  order_id: string;
+  invoice_number: string;
+  amount: number | string;
+  status: 'pending' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  due_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceWithOrder extends Invoice {
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  contact_city?: string;
+  contact_state?: string;
+  contact_address?: string;
+  order_date?: string;
+  order_status?: string;
+  order_notes?: string;
+}
+
 // Cost Category model
 export interface CostCategory {
   id: string;
@@ -4099,5 +4123,187 @@ export const CommunicationHistoryModel = {
     );
 
     return (facebookCount?.count || 0) + (emailCount?.count || 0) + (smsCount?.count || 0);
+  }
+};
+
+// Invoice Model
+export const InvoiceModel = {
+  async getAll(limit = 50, offset = 0): Promise<InvoiceWithOrder[]> {
+    return executeQuery<InvoiceWithOrder>(
+      `SELECT i.*,
+              o.order_date,
+              o.status as order_status,
+              o.notes as order_notes,
+              c.name as contact_name,
+              c.email as contact_email,
+              c.phone as contact_phone,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address
+       FROM invoices i
+       LEFT JOIN orders o ON i.order_id = o.id
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       ORDER BY i.created_at DESC LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+  },
+
+  async getById(id: string): Promise<InvoiceWithOrder | null> {
+    return getOne<InvoiceWithOrder>(
+      `SELECT i.*,
+              o.order_date,
+              o.status as order_status,
+              o.notes as order_notes,
+              c.name as contact_name,
+              c.email as contact_email,
+              c.phone as contact_phone,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address
+       FROM invoices i
+       LEFT JOIN orders o ON i.order_id = o.id
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE i.id = ?`,
+      [id]
+    );
+  },
+
+  async getByOrderId(orderId: string): Promise<InvoiceWithOrder | null> {
+    return getOne<InvoiceWithOrder>(
+      `SELECT i.*,
+              o.order_date,
+              o.status as order_status,
+              o.notes as order_notes,
+              c.name as contact_name,
+              c.email as contact_email,
+              c.phone as contact_phone,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address
+       FROM invoices i
+       LEFT JOIN orders o ON i.order_id = o.id
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE i.order_id = ?`,
+      [orderId]
+    );
+  },
+
+  async getByInvoiceNumber(invoiceNumber: string): Promise<InvoiceWithOrder | null> {
+    return getOne<InvoiceWithOrder>(
+      `SELECT i.*,
+              o.order_date,
+              o.status as order_status,
+              o.notes as order_notes,
+              c.name as contact_name,
+              c.email as contact_email,
+              c.phone as contact_phone,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address
+       FROM invoices i
+       LEFT JOIN orders o ON i.order_id = o.id
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE i.invoice_number = ?`,
+      [invoiceNumber]
+    );
+  },
+
+  async create(data: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO invoices (order_id, invoice_number, amount, status, due_date) VALUES (?, ?, ?, ?, ?)',
+      [data.order_id, data.invoice_number, data.amount, data.status, data.due_date]
+    );
+
+    const invoice = await getOne<{ id: string }>(
+      'SELECT id FROM invoices WHERE invoice_number = ? ORDER BY created_at DESC LIMIT 1',
+      [data.invoice_number]
+    );
+    return invoice!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<Invoice, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields: string[] = [];
+    const values: unknown[] = [];
+
+    if (data.invoice_number !== undefined) {
+      fields.push('invoice_number = ?');
+      values.push(data.invoice_number);
+    }
+    if (data.amount !== undefined) {
+      fields.push('amount = ?');
+      values.push(data.amount);
+    }
+    if (data.status !== undefined) {
+      fields.push('status = ?');
+      values.push(data.status);
+    }
+    if (data.due_date !== undefined) {
+      fields.push('due_date = ?');
+      values.push(data.due_date);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE invoices SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM invoices WHERE id = ?', [id]);
+  },
+
+  async getCount(): Promise<number> {
+    const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM invoices');
+    return result?.count || 0;
+  },
+
+  async generateInvoiceNumber(): Promise<string> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    return `INV-${year}${month}-${timestamp}-${random}`;
+  },
+
+  async createFromOrder(orderId: string): Promise<string> {
+    // Get order details
+    const order = await OrderModel.getWithItems(orderId);
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    // Check if invoice already exists for this order
+    const existingInvoice = await this.getByOrderId(orderId);
+    if (existingInvoice) {
+      throw new Error('Invoice already exists for this order');
+    }
+
+    // Generate invoice number
+    const invoiceNumber = await this.generateInvoiceNumber();
+
+    // Set due date (30 days from now)
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30);
+
+    // Determine status based on order status
+    let status: Invoice['status'] = 'pending';
+    if (order.status.toLowerCase() === 'paid') {
+      status = 'paid';
+    } else if (order.status.toLowerCase() === 'completed') {
+      status = 'sent';
+    }
+
+    // Create invoice
+    return await this.create({
+      order_id: orderId,
+      invoice_number: invoiceNumber,
+      amount: order.total,
+      status: status,
+      due_date: dueDate.toISOString().split('T')[0]
+    });
   }
 };

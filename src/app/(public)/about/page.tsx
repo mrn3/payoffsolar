@@ -27,7 +27,7 @@ export default function AboutPage() {
             <div>
               <h2 className="text-3xl font-bold mb-6">Our Story</h2>
               <p className="text-gray-600 mb-4">
-                Founded in 2010, Payoff Solar began with a simple mission: to make solar energy accessible, affordable, and hassle-free for homeowners and businesses alike.
+                Founded in 2024, Payoff Solar began with a simple mission: to make solar energy accessible, affordable, and hassle-free for homeowners and businesses alike.
               </p>
               <p className="text-gray-600 mb-4">
                 What started as a small team of passionate renewable energy advocates has grown into a full-service solar provider, offering everything from consultation and system design to installation and ongoing maintenance.
@@ -100,7 +100,7 @@ export default function AboutPage() {
                 <span className="text-gray-500">Photo Placeholder</span>
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-bold mb-1">John Doe</h3>
+                <h3 className="text-xl font-bold mb-1">Matt Newman</h3>
                 <p className="text-green-600 mb-4">Founder & CEO</p>
                 <p className="text-gray-600">
                   With over 15 years of experience in renewable energy, John leads our team with passion and expertise.
@@ -113,8 +113,8 @@ export default function AboutPage() {
                 <span className="text-gray-500">Photo Placeholder</span>
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-bold mb-1">Jane Smith</h3>
-                <p className="text-green-600 mb-4">Chief Technical Officer</p>
+                <h3 className="text-xl font-bold mb-1">JD McBride</h3>
+                <p className="text-green-600 mb-4">Partner</p>
                 <p className="text-gray-600">
                   Jane ensures that we stay at the forefront of solar technology and installation best practices.
                 </p>
@@ -126,8 +126,8 @@ export default function AboutPage() {
                 <span className="text-gray-500">Photo Placeholder</span>
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-bold mb-1">Mike Johnson</h3>
-                <p className="text-green-600 mb-4">Customer Success Manager</p>
+                <h3 className="text-xl font-bold mb-1">Kip Denning</h3>
+                <p className="text-green-600 mb-4">Partner</p>
                 <p className="text-gray-600">
                   Mike and his team ensure that every customer has a seamless experience from consultation to installation.
                 </p>

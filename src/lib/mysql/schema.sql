@@ -190,6 +190,19 @@ CREATE TABLE IF NOT EXISTS cost_categories (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Create invoices table
+CREATE TABLE IF NOT EXISTS invoices (
+  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  order_id VARCHAR(36) NOT NULL,
+  invoice_number VARCHAR(100) UNIQUE NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL,
+  status ENUM('pending', 'sent', 'paid', 'overdue', 'cancelled') DEFAULT 'pending',
+  due_date DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+
 -- Create cost items table
 CREATE TABLE IF NOT EXISTS cost_items (
   id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),

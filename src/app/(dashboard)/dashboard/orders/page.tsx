@@ -9,7 +9,7 @@ import DuplicateOrdersModal from '@/components/orders/DuplicateOrdersModal';
 import BulkMergeOrdersModal from '@/components/orders/BulkMergeOrdersModal';
 import OrderFiltersComponent, { OrderFilters } from '@/components/orders/OrderFilters';
 import toast from 'react-hot-toast';
-import {FaDownload, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaUpload, FaCopy} from 'react-icons/fa';
+import {FaDownload, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaUpload, FaCopy, FaFileInvoice} from 'react-icons/fa';
 
 interface Order {
   id: string;
@@ -607,6 +607,13 @@ export default function OrdersPage() {
                               title="Download receipt"
                             >
                               <FaDownload className="h-4 w-4" />
+                            </Link>
+                            <Link
+                              href={`/api/orders/${_order.id}/invoice`}
+                              className="text-purple-600 hover:text-purple-900"
+                              title="View invoice"
+                            >
+                              <FaFileInvoice className="h-4 w-4" />
                             </Link>
                             {!isContact(profile.role) && (
                               <>

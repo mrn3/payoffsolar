@@ -47,6 +47,7 @@ export default function HomePage() {
             <p className="text-xl mb-8">
               Payoff Solar is a provider of solar energy equipment and services.
               Our mission is to make solar energy accessible, affordable, and hassle-free for everyone.
+              <br /><br />
               While solar has benefits of saving the planet and energy independence, our main focus is to make it pay off financially
               within 3-4 years, rather than the industry-standard 15-20 years.
             </p>
