@@ -135,7 +135,7 @@ async function createOrderFromPaymentIntent(paymentIntent: any) {
   // Create order
   const orderId = await OrderModel.create({
     contact_id: contact.id,
-    status: 'paid',
+    status: 'Paid',
     total: total,
     order_date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
     notes: `Online order - Payment ID: ${paymentIntent.id}`,
