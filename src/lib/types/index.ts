@@ -100,6 +100,7 @@ export interface ProductBundleItemWithProduct extends ProductBundleItem {
   component_product_sku?: string;
   component_product_price?: number;
   component_product_image_url?: string;
+  component_product_description?: string;
 }
 
 export interface ProductWithBundleItems extends ProductWithImages {

@@ -11,6 +11,7 @@ import { useCart } from '@/contexts/CartContext';
 import { trackViewItem, formatGAItem } from '@/components/GoogleAnalytics';
 import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaSpinner, FaFilePdf, FaDownload, FaTag, FaBox} from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { createTextPreview } from '@/lib/utils/text';
 
 
 
@@ -303,7 +304,10 @@ export default function ProductDetailPage() {
                             </td>
                             <td className="px-4 py-3">
                               <p className="text-sm text-gray-600">
-                                Component of this bundle package
+                                {item.component_product_description
+                                  ? createTextPreview(item.component_product_description, 100)
+                                  : 'Component of this bundle package'
+                                }
                               </p>
                             </td>
                             <td className="px-4 py-3 text-center">

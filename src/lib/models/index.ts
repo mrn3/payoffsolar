@@ -540,6 +540,7 @@ export interface ProductBundleItemWithProduct extends ProductBundleItem {
   component_product_sku?: string;
   component_product_price?: number;
   component_product_image_url?: string;
+  component_product_description?: string;
 }
 
 export interface ProductWithBundleItems extends ProductWithImages {
@@ -1072,7 +1073,14 @@ export const ProductBundleItemModel = {
   async getByBundleId(bundleProductId: string): Promise<ProductBundleItemWithProduct[]> {
     return executeQuery<ProductBundleItemWithProduct>(
       `SELECT pbi.*, p.name as component_product_name, p.sku as component_product_sku,
-              p.price as component_product_price, p.image_url as component_product_image_url
+              p.price as component_product_price, p.description as component_product_description,
+              COALESCE(
+                (SELECT pi.image_url FROM product_images pi
+                 WHERE pi.product_id = p.id
+                 ORDER BY pi.sort_order ASC, pi.created_at ASC
+                 LIMIT 1),
+                p.image_url
+              ) as component_product_image_url
        FROM product_bundle_items pbi
        LEFT JOIN products p ON pbi.component_product_id = p.id
        WHERE pbi.bundle_product_id = ?
