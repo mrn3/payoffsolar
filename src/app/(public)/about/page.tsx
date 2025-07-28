@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FaLeaf, FaMoneyBillWave, FaSolarPanel } from 'react-icons/fa';
 
 export default function AboutPage() {
@@ -36,8 +37,13 @@ export default function AboutPage() {
                 Over the years, we&apos;ve helped thousands of customers reduce their energy bills and carbon footprint, contributing to a cleaner, more sustainable future for all.
               </p>
             </div>
-            <div className="bg-gray-200 h-80 rounded-lg flex items-center justify-center">
-              <span className="text-gray-500">Company Image Placeholder</span>
+            <div className="relative h-80 rounded-lg overflow-hidden">
+              <Image
+                src="/solar_roofs.png"
+                alt="Aerial view of residential neighborhood with solar panels on multiple homes"
+                fill
+                className="object-cover"
+              />
             </div>
           </div>
         </div>
@@ -96,40 +102,55 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Team Member 1 */}
             <div className="bg-gray-50 rounded-lg overflow-hidden">
-              <div className="bg-gray-200 h-64 flex items-center justify-center">
-                <span className="text-gray-500">Photo Placeholder</span>
+              <div className="relative h-80">
+                <Image
+                  src="/matt_newman.png"
+                  alt="Matt Newman - Founder & CEO"
+                  fill
+                  className="object-cover"
+                />
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1">Matt Newman</h3>
                 <p className="text-green-600 mb-4">Founder & CEO</p>
                 <p className="text-gray-600">
-                  With over 15 years of experience in renewable energy, John leads our team with passion and expertise.
+                  With over 15 years of experience in renewable energy, Matt leads our team with passion and expertise.
                 </p>
               </div>
             </div>
             {/* Team Member 2 */}
             <div className="bg-gray-50 rounded-lg overflow-hidden">
-              <div className="bg-gray-200 h-64 flex items-center justify-center">
-                <span className="text-gray-500">Photo Placeholder</span>
+              <div className="relative h-80">
+                <Image
+                  src="/jd_mcbride.png"
+                  alt="JD McBride - Partner"
+                  fill
+                  className="object-cover"
+                />
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1">JD McBride</h3>
                 <p className="text-green-600 mb-4">Partner</p>
                 <p className="text-gray-600">
-                  Jane ensures that we stay at the forefront of solar technology and installation best practices.
+                  JD ensures that we stay at the forefront of solar technology and installation best practices.
                 </p>
               </div>
             </div>
             {/* Team Member 3 */}
             <div className="bg-gray-50 rounded-lg overflow-hidden">
-              <div className="bg-gray-200 h-64 flex items-center justify-center">
-                <span className="text-gray-500">Photo Placeholder</span>
+              <div className="relative h-80">
+                <Image
+                  src="/kip_denning.png"
+                  alt="Kip Denning - Partner"
+                  fill
+                  className="object-cover"
+                />
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1">Kip Denning</h3>
                 <p className="text-green-600 mb-4">Partner</p>
                 <p className="text-gray-600">
-                  Mike and his team ensure that every customer has a seamless experience from consultation to installation.
+                  Kip and his team ensure that every customer has a seamless experience from consultation to installation.
                 </p>
               </div>
             </div>
