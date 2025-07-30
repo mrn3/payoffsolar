@@ -5,6 +5,7 @@ import {ContactModel, ProductModel, InventoryModel, OrderModel, CostCategoryMode
 import { formatDistanceToNow } from 'date-fns';
 import { FaUsers, FaBoxes, FaShoppingCart, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import RevenueChart from '@/components/dashboard/RevenueChart';
+import RevenueByStateChart from '@/components/dashboard/RevenueByStateChart';
 import OrderCountsChart from '@/components/dashboard/OrderCountsChart';
 import CostBreakdownChart from '@/components/dashboard/CostBreakdownChart';
 
@@ -130,6 +131,24 @@ async function getRevenueData(userRole?: string) {
   }
 }
 
+async function getRevenueByStateData(userRole?: string) {
+  try {
+    console.log('🗺️ Getting revenue by state data...');
+
+    // Only show revenue data to admin/staff users
+    if (userRole === 'contact') {
+      return [];
+    }
+
+    const revenueByStateData = await OrderModel.getRevenueByMonthAndState(12);
+    console.log('🗺️ Revenue by state data:', revenueByStateData?.length || 0, 'records');
+    return revenueByStateData || [];
+  } catch (error) {
+    console.error('❌ Error getting revenue by state data:', error);
+    return [];
+  }
+}
+
 async function getOrderCountsData(userRole?: string) {
   try {
     console.log('📊 Getting order counts data...');
@@ -187,7 +206,7 @@ async function getCostCategories(userRole?: string) {
 export default async function DashboardPage() {
   console.log('🏠 Loading dashboard page...');
 
-  let profile, stats, activity, revenueData, orderCountsData, costBreakdownData, costCategories;
+  let profile, stats, activity, revenueData, revenueByStateData, orderCountsData, costBreakdownData, costCategories;
 
   try {
     profile = await getUserProfile();
@@ -196,6 +215,7 @@ export default async function DashboardPage() {
     stats = await getStats(profile?.id, profile?.role || undefined);
     activity = await getRecentActivity(profile?.id, profile?.role || undefined);
     revenueData = await getRevenueData(profile?.role || undefined);
+    revenueByStateData = await getRevenueByStateData(profile?.role || undefined);
     orderCountsData = await getOrderCountsData(profile?.role || undefined);
     costBreakdownData = await getCostBreakdownData(profile?.role || undefined);
     costCategories = await getCostCategories(profile?.role || undefined);
@@ -213,6 +233,15 @@ export default async function DashboardPage() {
       </div>
     );
   }
+
+  // Set default values if data is missing
+  stats = stats || { contactCount: 0, contactCountWithEmail: 0, contactCountWithPhone: 0, productCount: 0, totalProductCount: 0, orderCount: 0, orderCompletionStats: { complete: 0, incomplete: 0, total: 0 } };
+  activity = activity || { recentOrders: [], recentContacts: [], lowStockItems: [] };
+  revenueData = revenueData || [];
+  revenueByStateData = revenueByStateData || [];
+  orderCountsData = orderCountsData || [];
+  costBreakdownData = costBreakdownData || [];
+  costCategories = costCategories || [];
 
   // Combine recent activities and sort by date
   const allActivities = [
@@ -505,6 +534,18 @@ export default async function DashboardPage() {
                 <h3 className="text-lg leading-6 font-medium text-gray-900">Cost Breakdown Over Time (Complete Orders)</h3>
                 <div className="mt-4">
                   <CostBreakdownChart initialData={costBreakdownData} categories={costCategories} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Revenue by State Chart */}
+          <div className="mt-5">
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Monthly Revenue by Customer State (Complete Orders)</h3>
+                <div className="mt-4">
+                  <RevenueByStateChart data={revenueByStateData} />
                 </div>
               </div>
             </div>

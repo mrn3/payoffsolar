@@ -2225,6 +2225,23 @@ export const OrderModel = {
     );
   },
 
+  async getRevenueByMonthAndState(months = 12): Promise<Array<{ month: string; state: string; revenue: number; count: number }>> {
+    return executeQuery<{ month: string; state: string; revenue: number; count: number }>(
+      `SELECT
+         DATE_FORMAT(o.order_date, '%Y-%m') as month,
+         COALESCE(c.state, 'Unknown') as state,
+         SUM(CAST(o.total AS DECIMAL(10,2))) as revenue,
+         COUNT(*) as count
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+       GROUP BY DATE_FORMAT(o.order_date, '%Y-%m'), COALESCE(c.state, 'Unknown')
+       ORDER BY month ASC, state ASC`,
+      [months]
+    );
+  },
+
   async getOrdersByMonth(month: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT o.*, c.name as contact_name
@@ -2234,6 +2251,19 @@ export const OrderModel = {
          AND DATE_FORMAT(o.order_date, '%Y-%m') = ?
        ORDER BY o.order_date DESC, o.created_at DESC`,
       [month]
+    );
+  },
+
+  async getOrdersByMonthAndState(month: string, state: string): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE o.status = 'complete'
+         AND DATE_FORMAT(o.order_date, '%Y-%m') = ?
+         AND COALESCE(c.state, 'Unknown') = ?
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      [month, state]
     );
   },
 
