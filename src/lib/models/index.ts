@@ -2521,6 +2521,186 @@ export const OrderModel = {
     }
 
     return count;
+  },
+
+  // Units sold analytics methods
+  async getUnitsSoldByMonthAndState(months = 12, categoryId?: string | null): Promise<Array<{ month: string; state: string; units_sold: number; order_count: number }>> {
+    const params = [months];
+    let categoryFilter = '';
+
+    if (categoryId) {
+      categoryFilter = 'AND p.category_id = ?';
+      params.push(categoryId);
+    }
+
+    return executeQuery<{ month: string; state: string; units_sold: number; order_count: number }>(
+      `SELECT
+         DATE_FORMAT(o.order_date, '%Y-%m') as month,
+         COALESCE(c.state, 'Unknown') as state,
+         SUM(oi.quantity) as units_sold,
+         COUNT(DISTINCT o.id) as order_count
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+         ${categoryFilter}
+       GROUP BY DATE_FORMAT(o.order_date, '%Y-%m'), COALESCE(c.state, 'Unknown')
+       ORDER BY month ASC, state ASC`,
+      params
+    );
+  },
+
+  async getUnitsSoldByWeekAndState(weeks = 20, categoryId?: string | null): Promise<Array<{ week: string; state: string; units_sold: number; order_count: number }>> {
+    const params = [weeks];
+    let categoryFilter = '';
+
+    if (categoryId) {
+      categoryFilter = 'AND p.category_id = ?';
+      params.push(categoryId);
+    }
+
+    return executeQuery<{ week: string; state: string; units_sold: number; order_count: number }>(
+      `SELECT
+         CONCAT(YEAR(o.order_date), '-', LPAD(WEEK(o.order_date, 1), 2, '0')) as week,
+         COALESCE(c.state, 'Unknown') as state,
+         SUM(oi.quantity) as units_sold,
+         COUNT(DISTINCT o.id) as order_count
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? WEEK)
+         ${categoryFilter}
+       GROUP BY YEAR(o.order_date), WEEK(o.order_date, 1), COALESCE(c.state, 'Unknown')
+       ORDER BY week ASC, state ASC`,
+      params
+    );
+  },
+
+  async getUnitsSoldByDayAndState(days = 31, categoryId?: string | null): Promise<Array<{ day: string; state: string; units_sold: number; order_count: number }>> {
+    const params = [days];
+    let categoryFilter = '';
+
+    if (categoryId) {
+      categoryFilter = 'AND p.category_id = ?';
+      params.push(categoryId);
+    }
+
+    return executeQuery<{ day: string; state: string; units_sold: number; order_count: number }>(
+      `SELECT
+         DATE_FORMAT(o.order_date, '%Y-%m-%d') as day,
+         COALESCE(c.state, 'Unknown') as state,
+         SUM(oi.quantity) as units_sold,
+         COUNT(DISTINCT o.id) as order_count
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+         ${categoryFilter}
+       GROUP BY DATE_FORMAT(o.order_date, '%Y-%m-%d'), COALESCE(c.state, 'Unknown')
+       ORDER BY day ASC, state ASC`,
+      params
+    );
+  },
+
+  // Methods for getting orders by time period and state (for modal functionality)
+  async getOrdersByMonthAndState(month: string, state: string, categoryId?: string | null): Promise<OrderWithContact[]> {
+    const params = [month, state];
+    let categoryFilter = '';
+
+    if (categoryId) {
+      categoryFilter = 'AND p.category_id = ?';
+      params.push(categoryId);
+    }
+
+    return executeQuery<OrderWithContact>(
+      `SELECT DISTINCT o.*,
+              c.name as contact_name,
+              c.email as contact_email,
+              c.phone as contact_phone,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE DATE_FORMAT(o.order_date, '%Y-%m') = ?
+         AND COALESCE(c.state, 'Unknown') = ?
+         AND o.status = 'complete'
+         ${categoryFilter}
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      params
+    );
+  },
+
+  async getOrdersByWeekAndState(week: string, state: string, categoryId?: string | null): Promise<OrderWithContact[]> {
+    const params = [week, state];
+    let categoryFilter = '';
+
+    if (categoryId) {
+      categoryFilter = 'AND p.category_id = ?';
+      params.push(categoryId);
+    }
+
+    // Parse week format YYYY-WW
+    const [year, weekNum] = week.split('-');
+
+    return executeQuery<OrderWithContact>(
+      `SELECT DISTINCT o.*,
+              c.name as contact_name,
+              c.email as contact_email,
+              c.phone as contact_phone,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE YEAR(o.order_date) = ?
+         AND WEEK(o.order_date, 1) = ?
+         AND COALESCE(c.state, 'Unknown') = ?
+         AND o.status = 'complete'
+         ${categoryFilter}
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      [year, weekNum, state, ...(categoryId ? [categoryId] : [])]
+    );
+  },
+
+  async getOrdersByDayAndState(day: string, state: string, categoryId?: string | null): Promise<OrderWithContact[]> {
+    const params = [day, state];
+    let categoryFilter = '';
+
+    if (categoryId) {
+      categoryFilter = 'AND p.category_id = ?';
+      params.push(categoryId);
+    }
+
+    return executeQuery<OrderWithContact>(
+      `SELECT DISTINCT o.*,
+              c.name as contact_name,
+              c.email as contact_email,
+              c.phone as contact_phone,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE DATE_FORMAT(o.order_date, '%Y-%m-%d') = ?
+         AND COALESCE(c.state, 'Unknown') = ?
+         AND o.status = 'complete'
+         ${categoryFilter}
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      params
+    );
   }
 };
 

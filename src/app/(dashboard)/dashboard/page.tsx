@@ -1,13 +1,14 @@
 import React from 'react';
 import Link from 'next/link';
 import { getUserProfile, isContact } from '@/lib/auth';
-import {ContactModel, ProductModel, InventoryModel, OrderModel, CostCategoryModel} from '@/lib/models';
+import {ContactModel, ProductModel, InventoryModel, OrderModel, CostCategoryModel, ProductCategoryModel} from '@/lib/models';
 import { formatDistanceToNow } from 'date-fns';
 import { FaUsers, FaBoxes, FaShoppingCart, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import RevenueChart from '@/components/dashboard/RevenueChart';
 import RevenueByStateChart from '@/components/dashboard/RevenueByStateChart';
 import OrderCountsChart from '@/components/dashboard/OrderCountsChart';
 import CostBreakdownChart from '@/components/dashboard/CostBreakdownChart';
+import UnitsSoldChart from '@/components/dashboard/UnitsSoldChart';
 
 async function getStats(userId?: string, userRole?: string) {
   try {
@@ -203,10 +204,28 @@ async function getCostCategories(userRole?: string) {
   }
 }
 
+async function getProductCategories(userRole?: string) {
+  try {
+    console.log('📊 Getting product categories...');
+
+    // Only show product categories to admin/staff users
+    if (userRole === 'contact') {
+      return [];
+    }
+
+    const categories = await ProductCategoryModel.getAll();
+    console.log('📊 Product categories:', categories?.length || 0, 'found');
+    return categories || [];
+  } catch (error) {
+    console.error('❌ Error getting product categories:', error);
+    return [];
+  }
+}
+
 export default async function DashboardPage() {
   console.log('🏠 Loading dashboard page...');
 
-  let profile, stats, activity, revenueData, revenueByStateData, orderCountsData, costBreakdownData, costCategories;
+  let profile, stats, activity, revenueData, revenueByStateData, orderCountsData, costBreakdownData, costCategories, productCategories;
 
   try {
     profile = await getUserProfile();
@@ -219,6 +238,7 @@ export default async function DashboardPage() {
     orderCountsData = await getOrderCountsData(profile?.role || undefined);
     costBreakdownData = await getCostBreakdownData(profile?.role || undefined);
     costCategories = await getCostCategories(profile?.role || undefined);
+    productCategories = await getProductCategories(profile?.role || undefined);
 
     console.log('✅ Dashboard data loaded successfully');
   } catch (error) {
@@ -242,6 +262,7 @@ export default async function DashboardPage() {
   orderCountsData = orderCountsData || [];
   costBreakdownData = costBreakdownData || [];
   costCategories = costCategories || [];
+  productCategories = productCategories || [];
 
   // Combine recent activities and sort by date
   const allActivities = [
@@ -546,6 +567,18 @@ export default async function DashboardPage() {
                 <h3 className="text-lg leading-6 font-medium text-gray-900">Monthly Revenue by Customer State (Complete Orders)</h3>
                 <div className="mt-4">
                   <RevenueByStateChart data={revenueByStateData} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Units Sold Chart */}
+          <div className="mt-5">
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Units Sold Over Time by Customer State (Complete Orders)</h3>
+                <div className="mt-4">
+                  <UnitsSoldChart categories={productCategories} />
                 </div>
               </div>
             </div>
