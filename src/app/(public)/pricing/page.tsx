@@ -141,12 +141,10 @@ export default function PricingPage() {
               Solar Installation Packages
             </h1>
             <p className="text-xl mb-8">
-              Choose the perfect solar solution for your home or business. All packages include professional installation, warranties, and ongoing support.
+              Choose the perfect solar solution for your home or business. All packages include professional installation, warranties, and ongoing support.  
+              <br /><br />
+              We primarily serve the Utah, Nevada, and Alaska areas, but we are expanding to other states, so please contact us if you are in another state.
             </p>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 inline-block">
-              <p className="text-lg font-semibold mb-2">Limited Time Offer</p>
-              <p className="text-sm">Save up to $15,000 on your solar installation</p>
-            </div>
           </div>
         </div>
       </section>
