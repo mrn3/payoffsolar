@@ -1,8 +1,31 @@
 import Link from 'next/link';
-import { FaHome, FaSolarPanel, FaBolt, FaIndustry, FaCheck } from 'react-icons/fa';
+import { FaHome, FaSolarPanel, FaBolt, FaIndustry, FaCheck, FaLeaf } from 'react-icons/fa';
 
 export default function PricingPage() {
   const packages = [
+    {
+      _id: 'tiny',
+      name: 'Tiny Package',
+      icon: <FaLeaf className="h-8 w-8" />,
+      price: '$2,400',
+      originalPrice: '$4,800',
+      priceWithTaxCredit: '$1,680',
+      description: 'Perfect for small spaces and minimal energy needs',
+      power: '1.2 kW',
+      panels: '3 panels',
+      coverage: '500 sq ft',
+      features: [
+        'High-efficiency solar panels',
+        'Micro inverter system',
+        'Basic monitoring system',
+        'Professional installation',
+        '10-year warranty',
+        'Net metering setup',
+        'Permit assistance',
+        'Basic maintenance guide'
+      ],
+      popular: false
+    },
     {
       _id: 'small',
       name: 'Small Package',
@@ -142,7 +165,7 @@ export default function PricingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
             {packages.map((pkg) => (
               <div
                 key={pkg._id}
