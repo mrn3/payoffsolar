@@ -7,13 +7,13 @@ export default function PricingPage() {
       _id: 'small',
       name: 'Small Package',
       icon: <FaHome className="h-8 w-8" />,
-      price: '$8,999',
+      price: '$6,000',
       originalPrice: '$12,000',
-      savings: '$3,001',
+      priceWithTaxCredit: '$4,200',
       description: 'Perfect for small homes and apartments',
-      power: '3-5 kW',
-      panels: '8-12 panels',
-      coverage: 'Up to 1,200 sq ft',
+      power: '4 kW',
+      panels: '10 panels',
+      coverage: '1500 sq ft',
       features: [
         'High-efficiency solar panels',
         'String inverter system',
@@ -30,13 +30,13 @@ export default function PricingPage() {
       _id: 'medium',
       name: 'Medium Package',
       icon: <FaSolarPanel className="h-8 w-8" />,
-      price: '$15,999',
-      originalPrice: '$22,000',
-      savings: '$6,001',
+      price: '$9,000',
+      originalPrice: '$18,000',
+      priceWithTaxCredit: '$6,300',
       description: 'Ideal for average-sized homes',
-      power: '6-8 kW',
-      panels: '15-20 panels',
-      coverage: 'Up to 2,000 sq ft',
+      power: '8 kW',
+      panels: '20 panels',
+      coverage: '2500 sq ft',
       features: [
         'Premium solar panels',
         'Power optimizers',
@@ -55,13 +55,13 @@ export default function PricingPage() {
       _id: 'large',
       name: 'Large Package',
       icon: <FaBolt className="h-8 w-8" />,
-      price: '$24,999',
-      originalPrice: '$35,000',
-      savings: '$10,001',
+      price: '$12,000',
+      originalPrice: '$24,000',
+      priceWithTaxCredit: '$8,400',
       description: 'Great for large homes and high energy usage',
-      power: '9-12 kW',
-      panels: '25-30 panels',
-      coverage: 'Up to 3,500 sq ft',
+      power: '12 kW',
+      panels: '30 panels',
+      coverage: '4000 sq ft',
       features: [
         'Premium high-efficiency panels',
         'Microinverter system',
@@ -82,13 +82,13 @@ export default function PricingPage() {
       _id: 'extra-large',
       name: 'Extra Large Package',
       icon: <FaIndustry className="h-8 w-8" />,
-      price: '$39,999',
-      originalPrice: '$55,000',
-      savings: '$15,001',
+      price: '$15,000',
+      originalPrice: '$30,000',
+      priceWithTaxCredit: '$10,500',
       description: 'Perfect for large properties and commercial use',
-      power: '15+ kW',
-      panels: '35+ panels',
-      coverage: '5,000+ sq ft',
+      power: '16 kW',
+      panels: '40 panels',
+      coverage: '6000 sq ft',
       features: [
         'Commercial-grade solar panels',
         'Microinverter system',
@@ -137,6 +137,8 @@ export default function PricingPage() {
             <h2 className="text-3xl font-bold mb-4 text-gray-900">Choose Your Solar Package</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Our solar installation packages are designed to meet different energy needs and budgets. Each package includes everything you need to start saving on your energy bills.
+              <br /><br />
+              Note that you can also get a 30% federal tax credit for solar installations (off of the prices shown below), which can further reduce your out-of-pocket costs.  This tax credit is only available for installations completed before the end of 2025.
             </p>
           </div>
 
@@ -168,7 +170,7 @@ export default function PricingPage() {
                       <span className="text-3xl font-bold text-gray-900">{pkg.price}</span>
                       <span className="text-lg text-gray-500 line-through">{pkg.originalPrice}</span>
                     </div>
-                    <p className="text-green-600 font-semibold">Save {pkg.savings}</p>
+                    <p className="text-green-600 font-semibold">With 30% tax credit: {pkg.priceWithTaxCredit}</p>
                   </div>
 
                   <div className="space-y-2 mb-6">
