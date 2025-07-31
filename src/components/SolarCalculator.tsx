@@ -104,7 +104,7 @@ const serviceOptions: ServiceOption[] = [
   {
     id: 'batteries',
     name: 'Batteries (Optional)',
-    description: 'Batteries to store energy for use at night or during power outages',
+    description: 'Batteries to store energy for use at night or during power outages.  Only choose this if you are not connected to the power grid or want to use the system during power outages, as it adds significant cost.',
     costPerWatt: 0.50,
     costPerPanel: 200.00
   },
@@ -141,10 +141,12 @@ export default function SolarCalculator() {
   const [result, setResult] = useState<CalculatorResult | null>(null);
 
   // Calculate panels based on monthly savings
-  // Mobile: every $5 = 1 panel, Stationary: every $10 = 2 panels
+  // Mobile: every $5 = 1 panel, Ground Mount: every $5 = 1 panel, Rooftop: every $10 = 2 panels
   const panels = selectedSystemType === 'mobile'
     ? Math.max(1, Math.floor(monthlySavings / 5))
-    : Math.max(2, Math.floor(monthlySavings / 10) * 2);
+    : selectedSubcategory === 'ground-mount'
+      ? Math.max(1, Math.floor(monthlySavings / 5))
+      : Math.max(2, Math.floor(monthlySavings / 10) * 2);
 
   useEffect(() => {
     if (selectedSystemType && selectedSubcategory) {
@@ -297,6 +299,14 @@ export default function SolarCalculator() {
                   onClick={() => {
                     setSelectedSubcategory(subtype.id);
                     setSelectedSubtype('');
+                    // Adjust monthly savings for ground mount to use $5 increments
+                    if (subtype.id === 'ground-mount') {
+                      // Convert current savings to $5 increments
+                      setMonthlySavings(Math.max(5, Math.round(monthlySavings / 5) * 5));
+                    } else if (subtype.id === 'rooftop') {
+                      // Ensure rooftop uses $10 increments
+                      setMonthlySavings(Math.max(10, Math.round(monthlySavings / 10) * 10));
+                    }
                   }}
                   className={`w-full p-3 border rounded-lg flex items-center gap-3 text-left transition-colors ${
                     selectedSubcategory === subtype.id
@@ -344,11 +354,11 @@ export default function SolarCalculator() {
           <h3 className="text-xl font-semibold text-gray-900 mb-4">2. How much do you want to save each month?</h3>
           <div className="bg-gray-50 p-6 rounded-lg">
             <div className="flex justify-between items-center mb-4">
-              {selectedSystemType === 'mobile' ? (
+              {selectedSystemType === 'mobile' || selectedSubcategory === 'ground-mount' ? (
                 <>
                   <span className="text-sm text-gray-600">$5 (1 panel)</span>
                   <span className="text-lg font-bold text-green-600">${monthlySavings} ({panels} {panels === 1 ? 'panel' : 'panels'})</span>
-                  <span className="text-sm text-gray-600">$300 (60 panels)</span>
+                  <span className="text-sm text-gray-600">{selectedSystemType === 'mobile' ? '$300 (60 panels)' : '$500 (100 panels)'}</span>
                 </>
               ) : (
                 <>
@@ -360,9 +370,9 @@ export default function SolarCalculator() {
             </div>
             <input
               type="range"
-              min={selectedSystemType === 'mobile' ? "5" : "10"}
+              min={selectedSystemType === 'mobile' || selectedSubcategory === 'ground-mount' ? "5" : "10"}
               max={selectedSystemType === 'mobile' ? "300" : "500"}
-              step={selectedSystemType === 'mobile' ? "5" : "10"}
+              step={selectedSystemType === 'mobile' || selectedSubcategory === 'ground-mount' ? "5" : "10"}
               value={monthlySavings}
               onChange={(e) => setMonthlySavings(Number(e.target.value))}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
