@@ -16,7 +16,10 @@ interface ServiceOption {
   id: string;
   name: string;
   description: string;
+  costPerWatt: number;
+  costPerPanel: number;
   required?: boolean;
+  disabledFor?: string[]; // Array of system types where this service should be disabled
 }
 
 interface CalculatorResult {
@@ -69,18 +72,64 @@ const systemTypes: SystemType[] = [
 ];
 
 const serviceOptions: ServiceOption[] = [
-  { id: 'equipment-purchase', name: 'Equipment Purchase', description: 'Solar panels, inverters, and mounting hardware', required: true },
-  { id: 'equipment-delivery', name: 'Equipment Delivery', description: 'Professional delivery to your location' },
-  { id: 'permitting', name: 'Permitting', description: 'Handle all necessary permits and paperwork' },
-  { id: 'city-permit', name: 'City Permit', description: 'Local city building permits' },
-  { id: 'grid-tie-approval', name: 'Power Company Grid-Tie Approval', description: 'Utility company interconnection approval' },
-  { id: 'installation', name: 'Installation', description: 'Professional installation service' },
-  { id: 'racking-installation', name: 'Racking/Mounting Hardware Installation', description: 'Professional mounting system installation' },
-  { id: 'panel-mounting', name: 'Solar Panel Mounting', description: 'Expert panel installation and positioning' },
-  { id: 'wiring', name: 'Wiring', description: 'Electrical connections and system wiring' },
-  { id: 'financing', name: 'Financing', description: 'Flexible payment options and financing plans' },
-  { id: 'warranty', name: 'Warranty', description: 'Comprehensive system warranty coverage' },
-  { id: 'tax-credit', name: 'Tax Credit', description: 'Assistance with federal and state tax credit applications' }
+  {
+    id: 'solar-panels',
+    name: 'Solar Panels (Required)',
+    description: '405 Watt Solar Panels',
+    costPerWatt: 0.22,
+    costPerPanel: 90.00,
+    required: true
+  },
+  {
+    id: 'inverter',
+    name: 'Inverter (Recommended)',
+    description: 'Equipment to convert direct current to alternating current (e.g., APsystems DS3-L Microinverters, trunk cable w/ drops, ECU-R for monitoring, etc.)',
+    costPerWatt: 0.25,
+    costPerPanel: 100.00
+  },
+  {
+    id: 'racking',
+    name: 'Racking (Recommended)',
+    description: 'Equipment to mount panels (e.g., brackets, clamps, Snap N Rack, sealant, etc.)',
+    costPerWatt: 0.12,
+    costPerPanel: 50.00
+  },
+  {
+    id: 'wiring',
+    name: 'Wiring (Recommended)',
+    description: 'Equipment to hook it all together (e.g., 10 guage wire, conduit, junction boxes, combiner boxes, circuit breakers, etc.)',
+    costPerWatt: 0.12,
+    costPerPanel: 50.00
+  },
+  {
+    id: 'batteries',
+    name: 'Batteries (Optional)',
+    description: 'Batteries to store energy for use at night or during power outages',
+    costPerWatt: 0.50,
+    costPerPanel: 200.00
+  },
+  {
+    id: 'installation-labor',
+    name: 'Installation Labor (Optional)',
+    description: 'Labor to install panels on roof, do wiring (through attic), etc.',
+    costPerWatt: 0.62,
+    costPerPanel: 250.00
+  },
+  {
+    id: 'tax-credit-assistance',
+    name: 'Tax Credit Assistance (Optional)',
+    description: 'Assistance with tax credit application and paperwork',
+    costPerWatt: 0.05,
+    costPerPanel: 50.00,
+  },
+  {
+    id: 'permitting-interconnection',
+    name: 'Permitting/Interconnection (Optional)',
+    description: 'Service to help with your system design, permitting, inspection, and net metering with your power company',
+    costPerWatt: 0.12,
+    costPerPanel: 50.00,
+    disabledFor: ['ground-mount', 'mobile']
+  }
 ];
 
 export default function SolarCalculator() {
@@ -88,7 +137,7 @@ export default function SolarCalculator() {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [selectedSubtype, setSelectedSubtype] = useState<string>('');
   const [monthlySavings, setMonthlySavings] = useState<number>(50);
-  const [selectedServices, setSelectedServices] = useState<string[]>(['equipment-purchase']);
+  const [selectedServices, setSelectedServices] = useState<string[]>(['solar-panels']);
   const [result, setResult] = useState<CalculatorResult | null>(null);
 
   // Calculate panels based on monthly savings
@@ -111,15 +160,21 @@ export default function SolarCalculator() {
   }, [selectedSystemType, selectedSubcategory, selectedSubtype, monthlySavings, selectedServices]);
 
   const calculateSystem = () => {
-    const baseSystemCost = panels * 300; // $300 per panel base cost
+    // Calculate total watts (assuming 405W panels)
+    const totalWatts = panels * 405;
+
     const serviceCosts = selectedServices.reduce((total, serviceId) => {
-      const serviceCost = getServiceCost(serviceId);
+      const service = serviceOptions.find(s => s.id === serviceId);
+      if (!service) return total;
+
+      // Use cost per panel for the calculation
+      const serviceCost = service.costPerPanel * panels;
       return total + serviceCost;
     }, 0);
 
-    const estimatedCost = baseSystemCost + serviceCosts;
+    const estimatedCost = serviceCosts;
     const inverterType = panels <= 10 ? 'String Inverter' : 'Power Optimizers';
-    const batteriesNeeded = selectedSubcategory.includes('mobile') || selectedServices.includes('equipment-purchase');
+    const batteriesNeeded = selectedSubcategory.includes('mobile') || selectedServices.includes('batteries');
     const annualSavings = monthlySavings * 12;
     const paybackPeriod = Math.round(estimatedCost / annualSavings * 10) / 10; // Round to 1 decimal
 
@@ -140,29 +195,24 @@ export default function SolarCalculator() {
     });
   };
 
-  const getServiceCost = (serviceId: string): number => {
-    const costs: Record<string, number> = {
-      'equipment-purchase': 0, // Base cost included in panel cost
-      'equipment-delivery': 200,
-      'permitting': 500,
-      'city-permit': 300,
-      'grid-tie-approval': 400,
-      'installation': panels * 100,
-      'racking-installation': panels * 50,
-      'panel-mounting': panels * 75,
-      'wiring': panels * 25,
-      'financing': 0, // Percentage-based, not added to base cost
-      'warranty': panels * 20,
-      'tax-credit': 150
-    };
-    return costs[serviceId] || 0;
+  const isServiceDisabled = (service: ServiceOption): boolean => {
+    if (!service.disabledFor) return false;
+
+    // Check if current system type should disable this service
+    if (selectedSystemType === 'mobile') {
+      return service.disabledFor.includes('mobile');
+    }
+
+    // For stationary systems, check the subcategory
+    return service.disabledFor.includes(selectedSubcategory);
   };
 
   const handleServiceToggle = (serviceId: string) => {
     const service = serviceOptions.find(s => s.id === serviceId);
     if (service?.required) return; // Can't toggle required services
+    if (service && isServiceDisabled(service)) return; // Can't toggle disabled services
 
-    setSelectedServices(prev => 
+    setSelectedServices(prev =>
       prev.includes(serviceId)
         ? prev.filter(id => id !== serviceId)
         : [...prev, serviceId]
@@ -329,38 +379,60 @@ export default function SolarCalculator() {
       {/* Step 3: Service Selection */}
       {selectedSubcategory && (selectedSystemType !== 'mobile' || selectedSubtype) && (
         <div className="mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">3. Select Services You Need</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">3. Select Products And Services You Need</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {serviceOptions.map((service) => (
-              <div
-                key={service.id}
-                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                  selectedServices.includes(service.id)
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                } ${service.required ? 'opacity-75' : ''}`}
-                onClick={() => handleServiceToggle(service.id)}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`mt-1 w-5 h-5 border-2 rounded flex items-center justify-center ${
-                    selectedServices.includes(service.id)
-                      ? 'border-green-500 bg-green-500'
-                      : 'border-gray-300'
-                  }`}>
-                    {selectedServices.includes(service.id) && (
-                      <FaCheck className="h-3 w-3 text-white" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">
-                      {service.name}
-                      {service.required && <span className="text-red-500 ml-1">*</span>}
-                    </h4>
-                    <p className="text-sm text-gray-700 mt-1">{service.description}</p>
+            {serviceOptions.map((service) => {
+              const isDisabled = isServiceDisabled(service);
+              const isSelected = selectedServices.includes(service.id);
+
+              return (
+                <div
+                  key={service.id}
+                  className={`p-4 border rounded-lg transition-colors ${
+                    isDisabled
+                      ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
+                      : isSelected
+                        ? 'border-green-500 bg-green-50 cursor-pointer'
+                        : 'border-gray-200 hover:border-gray-300 cursor-pointer'
+                  } ${service.required ? 'opacity-75' : ''}`}
+                  onClick={() => !isDisabled && handleServiceToggle(service.id)}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-1 w-5 h-5 border-2 rounded flex items-center justify-center ${
+                      isDisabled
+                        ? 'border-gray-300 bg-gray-200'
+                        : isSelected
+                          ? 'border-green-500 bg-green-500'
+                          : 'border-gray-300'
+                    }`}>
+                      {isSelected && !isDisabled && (
+                        <FaCheck className="h-3 w-3 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h4 className={`font-medium ${isDisabled ? 'text-gray-500' : 'text-gray-900'}`}>
+                          {service.name}
+                          {service.required && <span className="text-red-500 ml-1">*</span>}
+                          {isDisabled && <span className="text-gray-400 ml-1">(Not available for this system type)</span>}
+                        </h4>
+                        <div className="text-right text-sm">
+                          <div className={`font-medium ${isDisabled ? 'text-gray-400' : 'text-gray-900'}`}>
+                            ${service.costPerPanel.toFixed(2)}/panel
+                          </div>
+                          <div className={`text-xs ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`}>
+                            ${service.costPerWatt.toFixed(2)}/watt
+                          </div>
+                        </div>
+                      </div>
+                      <p className={`text-sm mt-1 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
+                        {service.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -416,7 +488,7 @@ export default function SolarCalculator() {
                     setSelectedSubcategory('');
                     setSelectedSubtype('');
                     setMonthlySavings(50);
-                    setSelectedServices(['equipment-purchase']);
+                    setSelectedServices(['solar-panels']);
                     setResult(null);
                   }}
                   className="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors text-sm"
