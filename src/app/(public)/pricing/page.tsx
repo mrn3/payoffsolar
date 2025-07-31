@@ -4,13 +4,13 @@ import { FaHome, FaSolarPanel, FaBolt, FaIndustry, FaCheck, FaLeaf } from 'react
 export default function PricingPage() {
   const packages = [
     {
-      _id: 'tiny',
-      name: 'Tiny Package',
+      _id: 'starter',
+      name: 'Starter Package',
       icon: <FaLeaf className="h-8 w-8" />,
       price: '$2,400',
       originalPrice: '$4,800',
       priceWithTaxCredit: '$1,680',
-      description: 'Perfect for small spaces and minimal energy needs',
+      description: 'Perfect way to get started - in Utah, complies with House Bill 340 so you don\t need to pay for permits.',
       power: '1.2 kW',
       panels: '3 panels',
       coverage: '500 sq ft',
@@ -20,8 +20,6 @@ export default function PricingPage() {
         'Basic monitoring system',
         'Professional installation',
         '10-year warranty',
-        'Net metering setup',
-        'Permit assistance',
         'Basic maintenance guide'
       ],
       popular: false
