@@ -219,7 +219,7 @@ export default function PricingPage() {
                   </ul>
 
                   <Link
-                    href="/contact"
+                    href={`/contact?package=${encodeURIComponent(pkg.name)}&price=${encodeURIComponent(pkg.price)}&power=${encodeURIComponent(pkg.power)}&panels=${encodeURIComponent(pkg.panels)}`}
                     className={`block w-full text-center py-3 px-4 rounded-md font-medium transition-colors ${
                       pkg.popular
                         ? 'bg-green-600 text-white hover:bg-green-700'
@@ -288,7 +288,7 @@ export default function PricingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/contact"
+              href="/contact?source=pricing"
               className="bg-white text-green-600 px-8 py-3 rounded-md font-medium inline-block hover:bg-gray-100"
             >
               Get Free Quote

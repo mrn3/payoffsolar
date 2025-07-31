@@ -29,6 +29,13 @@ export default function ContactPage() {
   const savings = searchParams.get('savings');
   const cost = searchParams.get('cost');
 
+  // Get pricing package parameters
+  const packageName = searchParams.get('package');
+  const packagePrice = searchParams.get('price');
+  const packagePower = searchParams.get('power');
+  const packagePanels = searchParams.get('panels');
+  const source = searchParams.get('source');
+
   // Generate pre-filled message for solar calculator quotes
   const generateSolarMessage = () => {
     if (!systemType || !panels || !savings || !cost) return '';
@@ -43,6 +50,29 @@ Estimated Cost: $${parseInt(cost).toLocaleString()}
 Please provide me with a detailed quote and next steps for installation.`;
   };
 
+  // Generate pre-filled message for pricing package quotes
+  const generatePricingMessage = () => {
+    if (!packageName) return '';
+
+    let message = `I'm interested in getting a quote for the ${packageName}`;
+
+    if (packagePrice || packagePower || packagePanels) {
+      message += ' with the following specifications:';
+      if (packagePrice) message += `\nPrice: ${packagePrice}`;
+      if (packagePower) message += `\nSystem Size: ${packagePower}`;
+      if (packagePanels) message += `\nPanels: ${packagePanels}`;
+    }
+
+    message += '\n\nPlease provide me with a detailed quote and next steps for installation.';
+    return message;
+  };
+
+  // Generate general pricing inquiry message
+  const generateGeneralPricingMessage = () => {
+    if (source !== 'pricing') return '';
+    return 'I\'m interested in learning more about your solar installation packages. Please provide me with information about pricing and next steps.';
+  };
+
   const {
     register,
     handleSubmit,
@@ -55,18 +85,27 @@ Please provide me with a detailed quote and next steps for installation.`;
       name: '',
       email: '',
       phone: '',
-      subject: systemType ? 'Solar System Quote Request' : '',
+      subject: systemType ? 'Solar System Quote Request' : packageName ? `${packageName} Quote Request` : source === 'pricing' ? 'Solar Package Inquiry' : '',
       message: '',
     },
   });
 
-  // Pre-fill form when solar calculator parameters are present
+  // Pre-fill form when parameters are present
   useEffect(() => {
     if (systemType && panels && savings && cost) {
+      // Solar calculator parameters
       setValue('subject', 'Solar System Quote Request');
       setValue('message', generateSolarMessage());
+    } else if (packageName) {
+      // Pricing package parameters
+      setValue('subject', `${packageName} Quote Request`);
+      setValue('message', generatePricingMessage());
+    } else if (source === 'pricing') {
+      // General pricing inquiry
+      setValue('subject', 'Solar Package Inquiry');
+      setValue('message', generateGeneralPricingMessage());
     }
-  }, [systemType, panels, savings, cost, setValue]);
+  }, [systemType, panels, savings, cost, packageName, packagePrice, packagePower, packagePanels, source, setValue]);
 
   const onSubmit = async (data: ContactFormValues) => {
     setIsSubmitting(true);
