@@ -325,15 +325,7 @@ Please provide me with a detailed quote and next steps for installation.`;
         </div>
       </section>
 
-      {/* Map Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-8 text-center">Find Us</h2>
-          <div className="bg-gray-200 h-96 rounded-lg flex items-center justify-center">
-            <span className="text-gray-500">Map Placeholder</span>
-          </div>
-        </div>
-      </section>
+
     </div>
   );
 }
