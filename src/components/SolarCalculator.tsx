@@ -241,6 +241,9 @@ export default function SolarCalculator() {
           Design your perfect solar system based on your needs, and get instant estimates for costs, and recommended solutions.
           Each solar panel you purchase will save you approximately $5/month. 
           Our goal is to help you find a solution that pays for itself in 5 years or less, since most solutions today are closer to 10-20 years. 
+          <br /><br />
+          We provide everything for $1.50 per watt, which is less than half of the $3-4 per watt that most installers charge.  
+          You can choose to do some of the work yourself (and save money), or we can provide all the services you need.
         </p>
       </div>
 
