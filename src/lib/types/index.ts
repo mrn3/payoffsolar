@@ -138,6 +138,10 @@ export interface OrderWithContact extends Order {
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
+  contact_city?: string;
+  contact_state?: string;
+  contact_address?: string;
+  units_sold?: number;
 }
 
 export interface OrderWithItems extends OrderWithContact {

@@ -2619,13 +2619,14 @@ export const OrderModel = {
     }
 
     return executeQuery<OrderWithContact>(
-      `SELECT DISTINCT o.*,
+      `SELECT o.*,
               c.name as contact_name,
               c.email as contact_email,
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address
+              c.address as contact_address,
+              SUM(oi.quantity) as units_sold
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -2634,6 +2635,7 @@ export const OrderModel = {
          AND COALESCE(c.state, 'Unknown') = ?
          AND o.status = 'complete'
          ${categoryFilter}
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
        ORDER BY o.order_date DESC, o.created_at DESC`,
       params
     );
@@ -2652,13 +2654,14 @@ export const OrderModel = {
     const [year, weekNum] = week.split('-');
 
     return executeQuery<OrderWithContact>(
-      `SELECT DISTINCT o.*,
+      `SELECT o.*,
               c.name as contact_name,
               c.email as contact_email,
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address
+              c.address as contact_address,
+              SUM(oi.quantity) as units_sold
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -2668,6 +2671,7 @@ export const OrderModel = {
          AND COALESCE(c.state, 'Unknown') = ?
          AND o.status = 'complete'
          ${categoryFilter}
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
        ORDER BY o.order_date DESC, o.created_at DESC`,
       [year, weekNum, state, ...(categoryId ? [categoryId] : [])]
     );
@@ -2683,13 +2687,14 @@ export const OrderModel = {
     }
 
     return executeQuery<OrderWithContact>(
-      `SELECT DISTINCT o.*,
+      `SELECT o.*,
               c.name as contact_name,
               c.email as contact_email,
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address
+              c.address as contact_address,
+              SUM(oi.quantity) as units_sold
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -2698,6 +2703,7 @@ export const OrderModel = {
          AND COALESCE(c.state, 'Unknown') = ?
          AND o.status = 'complete'
          ${categoryFilter}
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
        ORDER BY o.order_date DESC, o.created_at DESC`,
       params
     );
