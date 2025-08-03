@@ -4,7 +4,7 @@ import {requireAuth, isAdmin} from '@/lib/auth';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ _id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
@@ -13,9 +13,9 @@ export async function GET(
       return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { _id } = await params;
-    
-    const content = await ContentModel.getById(_id);
+    const { id } = await params;
+
+    const content = await ContentModel.getById(id);
     if (!content) {
       return NextResponse.json({ _error: 'Content not found' }, { status: 404 });
     }
@@ -29,7 +29,7 @@ export async function GET(
 
 export async function PUT(
   _request: NextRequest,
-  { params }: { params: Promise<{ _id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
@@ -38,22 +38,23 @@ export async function PUT(
       return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { _id } = await params;
-    
+    const { id } = await params;
+    const _data = await _request.json();
+
     // Check if content exists
-    const existingContent = await ContentModel.getById(_id);
+    const existingContent = await ContentModel.getById(id);
     if (!existingContent) {
       return NextResponse.json({ _error: 'Content not found' }, { status: 404 });
     }
 
     // Validate required fields if provided
-    if (_data.title !== undefined && (!data.title || !data.title.trim())) {
-      return NextResponse.json({ 
+    if (_data.title !== undefined && (!_data.title || !_data.title.trim())) {
+      return NextResponse.json({
         _error: 'Title cannot be empty' }, { status: 400 });
     }
 
-    if (_data.slug !== undefined && (!data.slug || !data.slug.trim())) {
-      return NextResponse.json({ 
+    if (_data.slug !== undefined && (!_data.slug || !_data.slug.trim())) {
+      return NextResponse.json({
         _error: 'Slug cannot be empty' }, { status: 400 });
     }
 
@@ -67,24 +68,24 @@ export async function PUT(
     }
 
     // Check if slug already exists (if changing slug)
-    if (_data.slug !== undefined && data.slug !== existingContent.slug) {
+    if (_data.slug !== undefined && _data.slug !== existingContent.slug) {
       const slugExists = await ContentModel.getBySlug(_data.slug);
       if (slugExists) {
-        return NextResponse.json({ 
+        return NextResponse.json({
           _error: 'Slug already exists' }, { status: 400 });
       }
     }
 
     // Update content
-    await ContentModel.update(_id, {
-      title: data.title?.trim(),
-      slug: data.slug?.trim(),
-      content: data.content,
-      type_id: data.type_id,
-      published: data.published
+    await ContentModel.update(id, {
+      title: _data.title?.trim(),
+      slug: _data.slug?.trim(),
+      content: _data.content,
+      type_id: _data.type_id,
+      published: _data.published
     });
 
-    const updatedContent = await ContentModel.getById(_id);
+    const updatedContent = await ContentModel.getById(id);
     return NextResponse.json({ content: updatedContent });
   } catch (_error) {
     console.error('Error updating content:', _error);
@@ -94,7 +95,7 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ _id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
@@ -103,15 +104,15 @@ export async function DELETE(
       return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { _id } = await params;
+    const { id } = await params;
 
     // Check if content exists
-    const content = await ContentModel.getById(_id);
+    const content = await ContentModel.getById(id);
     if (!content) {
       return NextResponse.json({ _error: 'Content not found' }, { status: 404 });
     }
 
-    await ContentModel.delete(_id);
+    await ContentModel.delete(id);
     return NextResponse.json({ message: 'Content deleted successfully' });
   } catch (_error) {
     console.error('Error deleting content:', _error);
