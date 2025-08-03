@@ -69,7 +69,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
     if (content.type_name === 'blog') {
       return { href: '/blog', label: 'Back to Blog' };
     }
-    return { href: '/', label: 'Back to Home' };
+    return null; // No back link for CMS pages
   };
 
   const backLink = getBackLink();
@@ -81,15 +81,17 @@ export default async function ContentPage({ params }: ContentPageProps) {
         <Breadcrumb items={getBreadcrumbItems()} className="mb-6" />
 
         {/* Back Button */}
-        <div className="mb-6">
-          <Link
-            href={backLink.href}
-            className="inline-flex items-center text-green-600 hover:text-green-700 transition-colors"
-          >
-            <FaArrowLeft className="h-4 w-4 mr-2" />
-            {backLink.label}
-          </Link>
-        </div>
+        {backLink && (
+          <div className="mb-6">
+            <Link
+              href={backLink.href}
+              className="inline-flex items-center text-green-600 hover:text-green-700 transition-colors"
+            >
+              <FaArrowLeft className="h-4 w-4 mr-2" />
+              {backLink.label}
+            </Link>
+          </div>
+        )}
 
         {/* Content */}
         <article className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -144,15 +146,17 @@ export default async function ContentPage({ params }: ContentPageProps) {
         </article>
 
         {/* Navigation */}
-        <div className="mt-8 flex justify-center">
-          <Link
-            href={backLink.href}
-            className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-colors inline-flex items-center"
-          >
-            <FaArrowLeft className="h-4 w-4 mr-2" />
-            {backLink.label}
-          </Link>
-        </div>
+        {backLink && (
+          <div className="mt-8 flex justify-center">
+            <Link
+              href={backLink.href}
+              className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-colors inline-flex items-center"
+            >
+              <FaArrowLeft className="h-4 w-4 mr-2" />
+              {backLink.label}
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
