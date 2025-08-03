@@ -185,9 +185,10 @@ export default function ViewContentPage() {
           <h3 className="text-lg font-medium text-gray-900 mb-4">Content</h3>
           {content.content ? (
             <div className="prose max-w-none">
-              <div className="whitespace-pre-wrap text-gray-700">
-                {content.content}
-              </div>
+              <div
+                className="text-gray-700 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: content.content }}
+              />
             </div>
           ) : (
             <p className="text-gray-500 italic">No content available</p>

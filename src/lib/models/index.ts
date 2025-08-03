@@ -3476,7 +3476,10 @@ export const AffiliateCodeModel = {
 
 export const ContentTypeModel = {
   async getAll(): Promise<ContentType[]> {
-    return executeQuery<ContentType>('SELECT * FROM content_types ORDER BY name');
+    return executeQuery<ContentType>(
+      'SELECT * FROM content_types WHERE name NOT IN (?, ?, ?) ORDER BY name',
+      ['faq', 'product', 'service']
+    );
   },
 
   async getById(id: string): Promise<ContentType | null> {

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { ContentType } from '@/lib/models';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -212,17 +213,16 @@ export default function CreateContentPage() {
             </div>
 
             <div className="sm:col-span-2">
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700">
                 Content
               </label>
-              <textarea
-                id="content"
-                rows={12}
-                value={formData.content}
-                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
-                placeholder="Enter your content here..."
-              />
+              <div className="mt-1">
+                <RichTextEditor
+                  value={formData.content}
+                  onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+                  placeholder="Enter your content here with rich formatting..."
+                />
+              </div>
             </div>
 
             <div className="sm:col-span-2">
