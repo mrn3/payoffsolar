@@ -91,6 +91,7 @@ export async function POST(_request: NextRequest) {
       title: data.title.trim(),
       slug: data.slug.trim(),
       content: data.content || '',
+      content_mode: data.content_mode || 'rich_text',
       type_id: data.type_id,
       published: data.published || false,
       author_id: session.profile.id

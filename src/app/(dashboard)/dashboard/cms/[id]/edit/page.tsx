@@ -4,9 +4,10 @@ import {useState, useEffect, useCallback} from 'react';
 import {useParams, useRouter} from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { ContentWithDetails, ContentType } from '@/lib/types';
+import { ContentWithDetails, ContentType, ContentBlockWithType } from '@/lib/models';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import BlockEditor from '@/components/cms/BlockEditor';
 
 export default function EditContentPage() {
   const params = useParams();
@@ -19,9 +20,11 @@ export default function EditContentPage() {
     title: '',
     slug: '',
     content: '',
+    content_mode: 'rich_text' as 'rich_text' | 'blocks',
     type_id: '',
     published: false
   });
+  const [contentBlocks, setContentBlocks] = useState<ContentBlockWithType[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const fetchContent = useCallback(async (_id: string) => {
@@ -34,9 +37,19 @@ export default function EditContentPage() {
           title: _data.content.title,
           slug: _data.content.slug,
           content: _data.content.content || '',
+          content_mode: _data.content.content_mode || 'rich_text',
           type_id: _data.content.type_id,
           published: _data.content.published
         });
+
+        // If content mode is blocks, fetch the content blocks
+        if (_data.content.content_mode === 'blocks') {
+          const blocksResponse = await fetch(`/api/content-blocks?contentId=${_id}`);
+          if (blocksResponse.ok) {
+            const blocksData = await blocksResponse.json();
+            setContentBlocks(blocksData.blocks || []);
+          }
+        }
       } else if (_response.status === 404) {
         router.push('/dashboard/cms');
       }
@@ -98,7 +111,7 @@ export default function EditContentPage() {
 
   const handleSubmit = async (_e: React.FormEvent) => {
     _e.preventDefault();
-    
+
     if (!content) return;
 
     // Validate form
@@ -129,6 +142,30 @@ export default function EditContentPage() {
       });
 
       if (_response.ok) {
+        // If using blocks mode, update the content blocks
+        if (formData.content_mode === 'blocks') {
+          // Delete existing blocks first
+          await fetch(`/api/content-blocks?contentId=${content.id}`, {
+            method: 'DELETE',
+          });
+
+          // Create new blocks
+          for (const block of contentBlocks) {
+            await fetch('/api/content-blocks', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                content_id: content.id,
+                block_type_id: block.block_type_id,
+                block_order: block.block_order,
+                configuration: block.configuration
+              }),
+            });
+          }
+        }
+
         router.push(`/dashboard/cms/${content.id}`);
       } else {
         const errorData = await _response.json();
@@ -280,12 +317,50 @@ export default function EditContentPage() {
               <label className="block text-sm font-medium text-gray-700">
                 Content
               </label>
-              <div className="mt-1">
-                <RichTextEditor
-                  value={formData.content}
-                  onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
-                  placeholder="Enter your content here with rich formatting..."
-                />
+
+              <div className="mt-3 space-y-4">
+                <div className="flex items-center space-x-6">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="content_mode"
+                      value="rich_text"
+                      checked={formData.content_mode === 'rich_text'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, content_mode: e.target.value as 'rich_text' | 'blocks' }))}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Rich Text</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="content_mode"
+                      value="blocks"
+                      checked={formData.content_mode === 'blocks'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, content_mode: e.target.value as 'rich_text' | 'blocks' }))}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Content Blocks</span>
+                  </label>
+                </div>
+
+                {formData.content_mode === 'rich_text' ? (
+                  <div className="mt-1">
+                    <RichTextEditor
+                      value={formData.content}
+                      onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+                      placeholder="Enter your content here with rich formatting..."
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-1">
+                    <BlockEditor
+                      blocks={contentBlocks}
+                      onBlocksChange={setContentBlocks}
+                      className="border border-gray-300 rounded-md p-4"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

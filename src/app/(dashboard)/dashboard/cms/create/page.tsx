@@ -4,9 +4,10 @@ import {useState, useEffect} from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { ContentType } from '@/lib/models';
+import { ContentType, ContentBlockWithType } from '@/lib/models';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import BlockEditor from '@/components/cms/BlockEditor';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -19,9 +20,11 @@ export default function CreateContentPage() {
     title: '',
     slug: '',
     content: '',
+    content_mode: 'rich_text' as 'rich_text' | 'blocks',
     type_id: '',
     published: false
   });
+  const [contentBlocks, setContentBlocks] = useState<ContentBlockWithType[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -91,6 +94,7 @@ export default function CreateContentPage() {
 
     setLoading(true);
     try {
+      // Create the content first
       const response = await fetch('/api/content', {
         method: 'POST',
         headers: {
@@ -101,18 +105,55 @@ export default function CreateContentPage() {
 
       if (response.ok) {
         const data = await response.json();
-        router.push(`/dashboard/cms/${data.content.id}`);
+        const contentId = data.content.id;
+
+        // If using blocks mode, save the content blocks
+        if (formData.content_mode === 'blocks' && contentBlocks.length > 0) {
+          for (const block of contentBlocks) {
+            // Skip temporary blocks that don't have real IDs
+            if (block.id.startsWith('temp-')) {
+              console.log('Creating block:', {
+                content_id: contentId,
+                block_type_id: block.block_type_id,
+                block_order: block.block_order,
+                configuration: block.configuration
+              });
+
+              const blockResponse = await fetch('/api/content-blocks', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  content_id: contentId,
+                  block_type_id: block.block_type_id,
+                  block_order: block.block_order,
+                  configuration: block.configuration
+                }),
+              });
+
+              if (!blockResponse.ok) {
+                const blockError = await blockResponse.json();
+                console.error('Error creating block:', blockError);
+                throw new Error(`Failed to create block: ${blockError.error || 'Unknown error'}`);
+              }
+            }
+          }
+        }
+
+        router.push(`/dashboard/cms/${contentId}`);
       } else {
         const errorData = await response.json();
-        if (errorData.error === 'Slug already exists') {
+        console.error('Content creation failed:', errorData);
+        if (errorData._error === 'Slug already exists') {
           setErrors({ slug: 'This slug is already in use' });
         } else {
-          toast.error(errorData.error || 'Failed to create content');
+          toast.error(errorData._error || 'Failed to create content');
         }
       }
     } catch (error) {
       console.error('Error creating content:', error);
-      toast.error('Failed to create content');
+      toast.error(error instanceof Error ? error.message : 'Failed to create content');
     } finally {
       setLoading(false);
     }
@@ -213,16 +254,53 @@ export default function CreateContentPage() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Content
-              </label>
-              <div className="mt-1">
-                <RichTextEditor
-                  value={formData.content}
-                  onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
-                  placeholder="Enter your content here with rich formatting..."
-                />
+              <div className="flex items-center justify-between mb-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  Content
+                </label>
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="content_mode"
+                      value="rich_text"
+                      checked={formData.content_mode === 'rich_text'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, content_mode: e.target.value as 'rich_text' | 'blocks' }))}
+                      className="mr-2"
+                    />
+                    Rich Text
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="content_mode"
+                      value="blocks"
+                      checked={formData.content_mode === 'blocks'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, content_mode: e.target.value as 'rich_text' | 'blocks' }))}
+                      className="mr-2"
+                    />
+                    Content Blocks
+                  </label>
+                </div>
               </div>
+
+              {formData.content_mode === 'rich_text' ? (
+                <div className="mt-1">
+                  <RichTextEditor
+                    value={formData.content}
+                    onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+                    placeholder="Enter your content here with rich formatting..."
+                  />
+                </div>
+              ) : (
+                <div className="mt-1">
+                  <BlockEditor
+                    blocks={contentBlocks}
+                    onBlocksChange={setContentBlocks}
+                    className="border border-gray-300 rounded-md p-4"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="sm:col-span-2">

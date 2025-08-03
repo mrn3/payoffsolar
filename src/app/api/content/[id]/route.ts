@@ -81,6 +81,7 @@ export async function PUT(
       title: _data.title?.trim(),
       slug: _data.slug?.trim(),
       content: _data.content,
+      content_mode: _data.content_mode,
       type_id: _data.type_id,
       published: _data.published
     });

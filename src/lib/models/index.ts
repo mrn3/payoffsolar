@@ -3497,6 +3497,7 @@ export interface Content {
   title: string;
   slug: string;
   content?: string;
+  content_mode: 'rich_text' | 'blocks';
   type_id: string;
   published: boolean;
   author_id?: string;
@@ -3507,6 +3508,74 @@ export interface Content {
 export interface ContentWithDetails extends Content {
   type_name?: string;
   author_name?: string;
+}
+
+// Block Types
+export interface BlockType {
+  id: string;
+  name: string;
+  display_name: string;
+  description?: string;
+  icon?: string;
+  schema_config?: any;
+  created_at: string;
+}
+
+// Content Blocks
+export interface ContentBlock {
+  id: string;
+  content_id: string;
+  block_type_id: string;
+  block_order: number;
+  configuration: any;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContentBlockWithType extends ContentBlock {
+  block_type_name?: string;
+  block_type_display_name?: string;
+  block_type_icon?: string;
+}
+
+// Block Configuration Types
+export interface HeroBlockConfig {
+  title: string;
+  subtitle?: string;
+  backgroundImage?: string;
+  textAlign?: 'left' | 'center' | 'right';
+}
+
+export interface CardGridBlockConfig {
+  title?: string;
+  subtitle?: string;
+  columns?: number;
+  cards: Array<{
+    image?: string;
+    title: string;
+    description?: string;
+    link?: string;
+    linkText?: string;
+  }>;
+}
+
+export interface TextBlockConfig {
+  content: string;
+  textAlign?: 'left' | 'center' | 'right';
+}
+
+export interface ImageBlockConfig {
+  image: string;
+  caption?: string;
+  alt?: string;
+  size?: 'small' | 'medium' | 'large' | 'full';
+}
+
+export interface VideoBlockConfig {
+  url: string;
+  title?: string;
+  description?: string;
+  autoplay?: boolean;
 }
 
 export const ContentModel = {
@@ -3601,8 +3670,8 @@ export const ContentModel = {
 
   async create(data: Omit<Content, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     await executeSingle(
-      'INSERT INTO content (title, slug, content, type_id, published, author_id) VALUES (?, ?, ?, ?, ?, ?)',
-      [data.title, data.slug, data.content || null, data.type_id, data.published, data.author_id || null]
+      'INSERT INTO content (title, slug, content, content_mode, type_id, published, author_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [data.title, data.slug, data.content || null, data.content_mode || 'rich_text', data.type_id, data.published, data.author_id || null]
     );
 
     const content = await getOne<{ id: string }>(
@@ -3627,6 +3696,10 @@ export const ContentModel = {
     if (data.content !== undefined) {
       fields.push('content = ?');
       values.push(data.content || null);
+    }
+    if (data.content_mode !== undefined) {
+      fields.push('content_mode = ?');
+      values.push(data.content_mode);
     }
     if (data.type_id !== undefined) {
       fields.push('type_id = ?');
@@ -3672,6 +3745,126 @@ export const ContentModel = {
   async getPublishedCount(): Promise<number> {
     const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM content WHERE published = TRUE');
     return result?.count || 0;
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM content WHERE id = ?', [id]);
+  }
+};
+
+// Block Types model
+export const BlockTypeModel = {
+  async getAll(): Promise<BlockType[]> {
+    return executeQuery<BlockType>(
+      'SELECT * FROM block_types ORDER BY display_name'
+    );
+  },
+
+  async getById(id: string): Promise<BlockType | null> {
+    return getOne<BlockType>('SELECT * FROM block_types WHERE id = ?', [id]);
+  },
+
+  async getByName(name: string): Promise<BlockType | null> {
+    return getOne<BlockType>('SELECT * FROM block_types WHERE name = ?', [name]);
+  }
+};
+
+// Helper function to parse configuration JSON
+function parseBlockConfiguration(block: any): ContentBlockWithType {
+  if (block.configuration && typeof block.configuration === 'string') {
+    try {
+      block.configuration = JSON.parse(block.configuration);
+    } catch (e) {
+      console.error('Failed to parse block configuration JSON:', e);
+      block.configuration = {};
+    }
+  }
+  return block;
+}
+
+// Content Blocks model
+export const ContentBlockModel = {
+  async getByContentId(contentId: string): Promise<ContentBlockWithType[]> {
+    const blocks = await executeQuery<ContentBlockWithType>(
+      `SELECT cb.*, bt.name as block_type_name, bt.display_name as block_type_display_name, bt.icon as block_type_icon
+       FROM content_blocks cb
+       LEFT JOIN block_types bt ON cb.block_type_id = bt.id
+       WHERE cb.content_id = ?
+       ORDER BY cb.block_order ASC`,
+      [contentId]
+    );
+
+    // Parse configuration JSON for each block
+    return blocks.map(parseBlockConfiguration);
+  },
+
+  async getById(id: string): Promise<ContentBlockWithType | null> {
+    const block = await getOne<ContentBlockWithType>(
+      `SELECT cb.*, bt.name as block_type_name, bt.display_name as block_type_display_name, bt.icon as block_type_icon
+       FROM content_blocks cb
+       LEFT JOIN block_types bt ON cb.block_type_id = bt.id
+       WHERE cb.id = ?`,
+      [id]
+    );
+
+    return block ? parseBlockConfiguration(block) : null;
+  },
+
+  async create(data: Omit<ContentBlock, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO content_blocks (content_id, block_type_id, block_order, configuration) VALUES (?, ?, ?, ?)',
+      [data.content_id, data.block_type_id, data.block_order, JSON.stringify(data.configuration)]
+    );
+
+    const block = await getOne<{ id: string }>(
+      'SELECT id FROM content_blocks WHERE content_id = ? AND block_order = ? ORDER BY created_at DESC LIMIT 1',
+      [data.content_id, data.block_order]
+    );
+    return block!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<ContentBlock, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields: string[] = [];
+    const values: unknown[] = [];
+
+    if (data.block_type_id !== undefined) {
+      fields.push('block_type_id = ?');
+      values.push(data.block_type_id);
+    }
+    if (data.block_order !== undefined) {
+      fields.push('block_order = ?');
+      values.push(data.block_order);
+    }
+    if (data.configuration !== undefined) {
+      fields.push('configuration = ?');
+      values.push(JSON.stringify(data.configuration));
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE content_blocks SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM content_blocks WHERE id = ?', [id]);
+  },
+
+  async reorderBlocks(contentId: string, blockIds: string[]): Promise<void> {
+    // Update block order for all blocks in the content
+    for (let i = 0; i < blockIds.length; i++) {
+      await executeSingle(
+        'UPDATE content_blocks SET block_order = ? WHERE id = ? AND content_id = ?',
+        [i, blockIds[i], contentId]
+      );
+    }
+  },
+
+  async deleteByContentId(contentId: string): Promise<void> {
+    await executeSingle('DELETE FROM content_blocks WHERE content_id = ?', [contentId]);
   }
 };
 

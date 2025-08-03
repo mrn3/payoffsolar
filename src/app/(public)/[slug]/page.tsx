@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import { BlockRenderer } from '@/components/content-blocks';
 import { FaArrowLeft, FaCalendar, FaUser } from 'react-icons/fa';
 
 interface ContentPageProps {
@@ -13,13 +14,14 @@ interface ContentData {
   title: string;
   slug: string;
   content?: string;
+  content_mode?: 'rich_text' | 'blocks';
   type_name?: string;
   author_name?: string;
   created_at: string;
   updated_at: string;
 }
 
-async function getContent(slug: string): Promise<ContentData | null> {
+async function getContent(slug: string): Promise<{ content: ContentData; blocks?: any[] } | null> {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/public/content/${slug}`, {
       cache: 'no-store' // Ensure fresh data
@@ -30,7 +32,25 @@ async function getContent(slug: string): Promise<ContentData | null> {
     }
 
     const data = await response.json();
-    return data.content;
+    const content = data.content;
+
+    // If content uses blocks mode, fetch the blocks
+    let blocks = [];
+    if (content.content_mode === 'blocks') {
+      try {
+        const blocksResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/public/content-blocks/${content.id}`, {
+          cache: 'no-store'
+        });
+        if (blocksResponse.ok) {
+          const blocksData = await blocksResponse.json();
+          blocks = blocksData.blocks;
+        }
+      } catch (error) {
+        console.error('Error fetching content blocks:', error);
+      }
+    }
+
+    return { content, blocks };
   } catch (error) {
     console.error('Error fetching content:', error);
     return null;
@@ -39,11 +59,13 @@ async function getContent(slug: string): Promise<ContentData | null> {
 
 export default async function ContentPage({ params }: ContentPageProps) {
   const { slug } = await params;
-  const content = await getContent(slug);
+  const result = await getContent(slug);
 
-  if (!content) {
+  if (!result) {
     notFound();
   }
+
+  const { content, blocks } = result;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -132,16 +154,28 @@ export default async function ContentPage({ params }: ContentPageProps) {
             </header>
 
             {/* Content Body */}
-            <div className="prose prose-lg max-w-none">
-              {content.content ? (
-                <div 
-                  dangerouslySetInnerHTML={{ __html: content.content }}
-                  className="text-gray-700 leading-relaxed"
-                />
+            {content.content_mode === 'blocks' ? (
+              // Render content blocks
+              blocks && blocks.length > 0 ? (
+                <BlockRenderer blocks={blocks} />
               ) : (
-                <p className="text-gray-500 italic">No content available.</p>
-              )}
-            </div>
+                <div className="text-center py-12 text-gray-500">
+                  <p>No content blocks available.</p>
+                </div>
+              )
+            ) : (
+              // Render rich text content
+              <div className="prose prose-lg max-w-none">
+                {content.content ? (
+                  <div
+                    dangerouslySetInnerHTML={{ __html: content.content }}
+                    className="text-gray-700 leading-relaxed"
+                  />
+                ) : (
+                  <p className="text-gray-500 italic">No content available.</p>
+                )}
+              </div>
+            )}
           </div>
         </article>
 
@@ -165,17 +199,19 @@ export default async function ContentPage({ params }: ContentPageProps) {
 // Generate metadata for SEO
 export async function generateMetadata({ params }: ContentPageProps) {
   const { slug } = await params;
-  const content = await getContent(slug);
+  const result = await getContent(slug);
 
-  if (!content) {
+  if (!result) {
     return {
       title: 'Content Not Found',
     };
   }
 
+  const { content } = result;
+
   return {
     title: content.title,
-    description: content.content 
+    description: content.content && typeof content.content === 'string'
       ? content.content.replace(/<[^>]*>/g, '').substring(0, 160) + '...'
       : `Read ${content.title} on Payoff Solar`,
   };
