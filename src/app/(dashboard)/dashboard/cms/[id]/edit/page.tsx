@@ -1,7 +1,7 @@
 'use client';
 
 import {useState, useEffect, useCallback} from 'react';
-import {useParams} from 'next/navigation';
+import {useParams, useRouter} from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { ContentWithDetails, ContentType } from '@/lib/types';
@@ -23,25 +23,18 @@ export default function EditContentPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (_params.id) {
-      fetchContent(_params.id as string);
-      fetchContentTypes();
-    }
-  }, [params.id]);
-
   const fetchContent = useCallback(async (_id: string) => {
     try {
-      const _response = await fetch(`/api/content/${id}`);
+      const _response = await fetch(`/api/content/${_id}`);
       if (_response.ok) {
-        const _data = await response.json();
+        const _data = await _response.json();
         setContent(_data.content);
         setFormData({
-          title: data.content.title,
-          slug: data.content.slug,
-          content: data.content.content || '',
-          type_id: data.content.type_id,
-          published: data.content.published
+          title: _data.content.title,
+          slug: _data.content.slug,
+          content: _data.content.content || '',
+          type_id: _data.content.type_id,
+          published: _data.content.published
         });
       } else if (_response.status === 404) {
         router.push('/dashboard/cms');
@@ -51,19 +44,26 @@ export default function EditContentPage() {
     } finally {
       setLoading(false);
     }
-  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
 
   const fetchContentTypes = async () => {
     try {
       const _response = await fetch('/api/content-types');
       if (_response.ok) {
-        const _data = await response.json();
+        const _data = await _response.json();
         setContentTypes(_data.contentTypes);
       }
     } catch (_error) {
       console.error('Error fetching content types:', _error);
     }
   };
+
+  useEffect(() => {
+    if (params.id) {
+      fetchContent(params.id as string);
+      fetchContentTypes();
+    }
+  }, [params.id, fetchContent]);
 
   const generateSlug = (title: string) => {
     return title
@@ -75,7 +75,7 @@ export default function EditContentPage() {
   };
 
   const handleTitleChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
-    const title = e.target.value;
+    const title = _e.target.value;
     setFormData(prev => ({
       ...prev,
       title,
@@ -96,7 +96,7 @@ export default function EditContentPage() {
   };
 
   const handleSubmit = async (_e: React.FormEvent) => {
-    e.preventDefault();
+    _e.preventDefault();
     
     if (!content) return;
 
@@ -130,7 +130,7 @@ export default function EditContentPage() {
       if (_response.ok) {
         router.push(`/dashboard/cms/${content.id}`);
       } else {
-        const errorData = await response.json();
+        const errorData = await _response.json();
         if (errorData.error === 'Slug already exists') {
           setErrors({ slug: 'This slug is already in use' });
         } else {
@@ -232,7 +232,7 @@ export default function EditContentPage() {
                 id="type_id"
                 value={formData.type_id}
                 onChange={(_e) => {
-                  setFormData(prev => ({ ...prev, type_id: e.target.value }));
+                  setFormData(prev => ({ ...prev, type_id: _e.target.value }));
                   if (errors.type_id) {
                     setErrors(prev => ({ ...prev, type_id: '' }));
                   }
@@ -283,7 +283,7 @@ export default function EditContentPage() {
                 id="content"
                 rows={12}
                 value={formData.content}
-                onChange={(_e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                onChange={(_e) => setFormData(prev => ({ ...prev, content: _e.target.value }))}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
                 placeholder="Enter your content here..."
               />
@@ -295,7 +295,7 @@ export default function EditContentPage() {
                   id="published"
                   type="checkbox"
                   checked={formData.published}
-                  onChange={(_e) => setFormData(prev => ({ ...prev, published: e.target.checked }))}
+                  onChange={(_e) => setFormData(prev => ({ ...prev, published: _e.target.checked }))}
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                 />
                 <label htmlFor="published" className="ml-2 block text-sm text-gray-900">

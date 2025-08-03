@@ -13,17 +13,11 @@ export default function ViewContentPage() {
   const [content, setContent] = useState<ContentWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (_params.id) {
-      fetchContent(_params.id as string);
-    }
-  }, [params.id, fetchContent]);
-
   const fetchContent = useCallback(async (_id: string) => {
     try {
-      const _response = await fetch(`/api/content/${id}`);
+      const _response = await fetch(`/api/content/${_id}`);
       if (_response.ok) {
-        const _data = await response.json();
+        const _data = await _response.json();
         setContent(_data.content);
       } else if (_response.status === 404) {
         router.push('/dashboard/cms');
@@ -34,6 +28,12 @@ export default function ViewContentPage() {
       setLoading(false);
     }
   }, [router]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchContent(params.id as string);
+    }
+  }, [params.id, fetchContent]);
 
   const handleDelete = async () => {
     if (!content || !confirm('Are you sure you want to delete this content?')) {
