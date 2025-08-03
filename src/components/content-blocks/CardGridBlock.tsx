@@ -9,7 +9,7 @@ interface CardGridBlockProps {
 }
 
 export default function CardGridBlock({ config, className = '' }: CardGridBlockProps) {
-  const { title, subtitle, columns = 3, cards = [] } = config;
+  const { title, subtitle, columns = 3, cards = [] } = config || {};
 
   const gridClasses = {
     1: 'grid-cols-1',
@@ -45,7 +45,7 @@ export default function CardGridBlock({ config, className = '' }: CardGridBlockP
 
         {/* Cards Grid */}
         <div className={`grid ${gridClasses[columns as keyof typeof gridClasses]} gap-8`}>
-          {cards && cards.length > 0 ? cards.map((card, index) => (
+          {Array.isArray(cards) && cards.length > 0 ? cards.map((card, index) => (
             <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
               {/* Card Image */}
               <div className="aspect-w-16 aspect-h-9 bg-gray-200 relative">

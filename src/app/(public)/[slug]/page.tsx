@@ -123,33 +123,38 @@ export default async function ContentPage({ params }: ContentPageProps) {
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
                 {content.title}
               </h1>
-              
-              <div className="flex items-center space-x-6 text-sm text-gray-500">
-                <div className="flex items-center">
-                  <FaCalendar className="h-4 w-4 mr-2" />
-                  <span>Published {formatDate(content.created_at)}</span>
-                </div>
-                
-                {content.author_name && (
-                  <div className="flex items-center">
-                    <FaUser className="h-4 w-4 mr-2" />
-                    <span>By {content.author_name}</span>
+
+              {/* Only show metadata for blog posts */}
+              {content.type_name === 'blog' && (
+                <>
+                  <div className="flex items-center space-x-6 text-sm text-gray-500">
+                    <div className="flex items-center">
+                      <FaCalendar className="h-4 w-4 mr-2" />
+                      <span>Published {formatDate(content.created_at)}</span>
+                    </div>
+
+                    {content.author_name && (
+                      <div className="flex items-center">
+                        <FaUser className="h-4 w-4 mr-2" />
+                        <span>By {content.author_name}</span>
+                      </div>
+                    )}
+
+                    {content.type_name && (
+                      <div className="flex items-center">
+                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium capitalize">
+                          {content.type_name}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
-                
-                {content.type_name && (
-                  <div className="flex items-center">
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium capitalize">
-                      {content.type_name}
-                    </span>
-                  </div>
-                )}
-              </div>
-              
-              {content.updated_at !== content.created_at && (
-                <div className="mt-2 text-sm text-gray-500">
-                  Last updated {formatDate(content.updated_at)}
-                </div>
+
+                  {content.updated_at !== content.created_at && (
+                    <div className="mt-2 text-sm text-gray-500">
+                      Last updated {formatDate(content.updated_at)}
+                    </div>
+                  )}
+                </>
               )}
             </header>
 
@@ -209,10 +214,16 @@ export async function generateMetadata({ params }: ContentPageProps) {
 
   const { content } = result;
 
+  if (!content) {
+    return {
+      title: 'Content Not Found',
+    };
+  }
+
   return {
-    title: content.title,
+    title: content.title || 'Untitled',
     description: content.content && typeof content.content === 'string'
       ? content.content.replace(/<[^>]*>/g, '').substring(0, 160) + '...'
-      : `Read ${content.title} on Payoff Solar`,
+      : `Read ${content.title || 'this content'} on Payoff Solar`,
   };
 }
