@@ -1,4 +1,10 @@
-require('dotenv').config({ path: '.env.local' });
+// Load environment variables from .env file (production) or .env.local (development)
+const fs = require('fs');
+if (fs.existsSync('.env')) {
+  require('dotenv').config({ path: '.env' });
+} else if (fs.existsSync('.env.local')) {
+  require('dotenv').config({ path: '.env.local' });
+}
 const mysql = require('mysql2/promise');
 
 async function addPublishedDateToContent() {
