@@ -84,7 +84,8 @@ export async function PUT(
       content_mode: _data.content_mode,
       image_url: _data.image_url,
       type_id: _data.type_id,
-      published: _data.published
+      published: _data.published,
+      published_date: _data.published_date
     });
 
     const updatedContent = await ContentModel.getById(id);

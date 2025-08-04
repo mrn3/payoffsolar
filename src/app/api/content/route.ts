@@ -95,6 +95,7 @@ export async function POST(_request: NextRequest) {
       image_url: data.image_url || null,
       type_id: data.type_id,
       published: data.published || false,
+      published_date: data.published_date || null,
       author_id: session.profile.id
     });
 

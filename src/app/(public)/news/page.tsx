@@ -167,7 +167,7 @@ export default function NewsPage() {
                     <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                       <div className="flex items-center">
                         <FaCalendar className="h-4 w-4 mr-2" />
-                        {formatDate(post.created_at)}
+                        {formatDate(post.published_date || post.created_at)}
                       </div>
                       {post.author_name && (
                         <div className="flex items-center">

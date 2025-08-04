@@ -24,7 +24,8 @@ export default function CreateContentPage() {
     content_mode: 'rich_text' as 'rich_text' | 'blocks',
     image_url: '',
     type_id: '',
-    published: false
+    published: false,
+    published_date: ''
   });
   const [contentBlocks, setContentBlocks] = useState<ContentBlockWithType[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -369,6 +370,22 @@ export default function CreateContentPage() {
               </div>
               <p className="mt-1 text-sm text-gray-500">
                 If unchecked, content will be saved as a draft.
+              </p>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label htmlFor="published_date" className="block text-sm font-medium text-gray-700">
+                Published Date
+              </label>
+              <input
+                type="date"
+                id="published_date"
+                value={formData.published_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, published_date: e.target.value }))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                The date this content was or will be published. Leave empty to use the creation date.
               </p>
             </div>
           </div>

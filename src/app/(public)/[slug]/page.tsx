@@ -117,6 +117,17 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
         {/* Content */}
         <article className="bg-white rounded-lg shadow-md overflow-hidden">
+          {/* Featured Image Banner for blog posts */}
+          {content.type_name === 'blog' && content.image_url && (
+            <div className="w-full h-64 md:h-80 lg:h-96 overflow-hidden">
+              <img
+                src={content.image_url}
+                alt={content.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
           <div className="p-8">
             {/* Header */}
             <header className="mb-8">
@@ -130,7 +141,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
                   <div className="flex items-center space-x-6 text-sm text-gray-500">
                     <div className="flex items-center">
                       <FaCalendar className="h-4 w-4 mr-2" />
-                      <span>Published {formatDate(content.created_at)}</span>
+                      <span>Published {formatDate(content.published_date || content.created_at)}</span>
                     </div>
 
                     {content.author_name && (

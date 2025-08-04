@@ -3594,6 +3594,7 @@ export interface Content {
   image_url?: string;
   type_id: string;
   published: boolean;
+  published_date?: string;
   author_id?: string;
   created_at: string;
   updated_at: string;
@@ -3764,8 +3765,8 @@ export const ContentModel = {
 
   async create(data: Omit<Content, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     await executeSingle(
-      'INSERT INTO content (title, slug, content, content_mode, image_url, type_id, published, author_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [data.title, data.slug, data.content || null, data.content_mode || 'rich_text', data.image_url || null, data.type_id, data.published, data.author_id || null]
+      'INSERT INTO content (title, slug, content, content_mode, image_url, type_id, published, published_date, author_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.title, data.slug, data.content || null, data.content_mode || 'rich_text', data.image_url || null, data.type_id, data.published, data.published_date || null, data.author_id || null]
     );
 
     const content = await getOne<{ id: string }>(
@@ -3806,6 +3807,10 @@ export const ContentModel = {
     if (data.published !== undefined) {
       fields.push('published = ?');
       values.push(data.published);
+    }
+    if (data.published_date !== undefined) {
+      fields.push('published_date = ?');
+      values.push(data.published_date || null);
     }
     if (data.author_id !== undefined) {
       fields.push('author_id = ?');
