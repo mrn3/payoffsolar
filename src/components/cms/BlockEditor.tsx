@@ -23,6 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import ImageUpload from '@/components/ui/ImageUpload';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface BlockEditorProps {
   contentId?: string;
@@ -507,12 +508,11 @@ function BlockConfigModal({ block, onSave, onCancel }: BlockConfigModalProps) {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-              <textarea
+              <RichTextEditor
                 value={config.content || ''}
-                onChange={(e) => setConfig({ ...config, content: e.target.value })}
-                rows={8}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                onChange={(value) => setConfig({ ...config, content: value })}
                 placeholder="Enter your text content here..."
+                className="w-full"
               />
             </div>
             <div>
