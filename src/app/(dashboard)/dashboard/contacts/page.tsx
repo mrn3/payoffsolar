@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {FaCopy, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload, FaDownload} from 'react-icons/fa';
+import {FaCopy, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload, FaDownload, FaChevronDown, FaChevronUp} from 'react-icons/fa';
 import { format } from 'date-fns';
 import { Contact } from '@/lib/types';
 import DeleteContactModal from '@/components/contacts/DeleteContactModal';
@@ -31,6 +31,7 @@ export default function ContactsPage() {
   const [cityFilter, setCityFilter] = useState('');
   const [stateFilter, setStateFilter] = useState('');
   const [zipFilter, setZipFilter] = useState('');
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
@@ -303,49 +304,22 @@ export default function ContactsPage() {
           />
         </div>
 
-        {/* Filter inputs and export button */}
-        <div className="flex flex-col sm:flex-row gap-4 items-end">
-          <div className="flex flex-col sm:flex-row gap-4 flex-grow">
-            <div className="flex-1">
-              <label htmlFor="city-filter" className="block text-sm font-medium text-gray-700 mb-1">
-                City
-              </label>
-              <input
-                id="city-filter"
-                type="text"
-                value={cityFilter}
-                onChange={(e) => setCityFilter(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                placeholder="Filter by city"
-              />
-            </div>
-            <div className="flex-1">
-              <label htmlFor="state-filter" className="block text-sm font-medium text-gray-700 mb-1">
-                State
-              </label>
-              <input
-                id="state-filter"
-                type="text"
-                value={stateFilter}
-                onChange={(e) => setStateFilter(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                placeholder="Filter by state"
-              />
-            </div>
-            <div className="flex-1">
-              <label htmlFor="zip-filter" className="block text-sm font-medium text-gray-700 mb-1">
-                Zip Code
-              </label>
-              <input
-                id="zip-filter"
-                type="text"
-                value={zipFilter}
-                onChange={(e) => setZipFilter(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                placeholder="Filter by zip code"
-              />
-            </div>
-          </div>
+        {/* Additional filters toggle and export button */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setFiltersExpanded(!filtersExpanded)}
+            className="inline-flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none"
+          >
+            {filtersExpanded ? <FaChevronUp className="h-4 w-4" /> : <FaChevronDown className="h-4 w-4" />}
+            Additional Filters
+            {(cityFilter || stateFilter || zipFilter) && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                {[cityFilter, stateFilter, zipFilter].filter(Boolean).length} active
+              </span>
+            )}
+          </button>
+
           <div className="flex gap-2">
             <button
               type="button"
@@ -357,6 +331,71 @@ export default function ContactsPage() {
             </button>
           </div>
         </div>
+
+        {/* Expandable filter inputs */}
+        {filtersExpanded && (
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <label htmlFor="city-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                  City
+                </label>
+                <input
+                  id="city-filter"
+                  type="text"
+                  value={cityFilter}
+                  onChange={(e) => setCityFilter(e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                  placeholder="Filter by city"
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="state-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                  State
+                </label>
+                <input
+                  id="state-filter"
+                  type="text"
+                  value={stateFilter}
+                  onChange={(e) => setStateFilter(e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                  placeholder="Filter by state"
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="zip-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                  Zip Code
+                </label>
+                <input
+                  id="zip-filter"
+                  type="text"
+                  value={zipFilter}
+                  onChange={(e) => setZipFilter(e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                  placeholder="Filter by zip code"
+                />
+              </div>
+            </div>
+
+            {/* Clear filters button */}
+            {(cityFilter || stateFilter || zipFilter) && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCityFilter('');
+                    setStateFilter('');
+                    setZipFilter('');
+                  }}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  <FaTrash className="h-3 w-3" />
+                  Clear Filters
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Error message */}
