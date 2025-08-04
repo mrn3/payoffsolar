@@ -8,6 +8,7 @@ import { ContentWithDetails, ContentType, ContentBlockWithType } from '@/lib/mod
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import BlockEditor from '@/components/cms/BlockEditor';
+import ImageUpload from '@/components/ui/ImageUpload';
 
 export default function EditContentPage() {
   const params = useParams();
@@ -21,6 +22,7 @@ export default function EditContentPage() {
     slug: '',
     content: '',
     content_mode: 'rich_text' as 'rich_text' | 'blocks',
+    image_url: '',
     type_id: '',
     published: false
   });
@@ -38,6 +40,7 @@ export default function EditContentPage() {
           slug: _data.content.slug,
           content: _data.content.content || '',
           content_mode: _data.content.content_mode || 'rich_text',
+          image_url: _data.content.image_url || '',
           type_id: _data.content.type_id,
           published: _data.content.published
         });
@@ -107,6 +110,16 @@ export default function EditContentPage() {
     if (errors.slug) {
       setErrors(prev => ({ ...prev, slug: '' }));
     }
+  };
+
+  const handleImageUpload = (images: any[]) => {
+    if (images.length > 0) {
+      setFormData(prev => ({ ...prev, image_url: images[0].url }));
+    }
+  };
+
+  const handleImageRemove = () => {
+    setFormData(prev => ({ ...prev, image_url: '' }));
   };
 
   const handleSubmit = async (_e: React.FormEvent) => {
@@ -310,6 +323,44 @@ export default function EditContentPage() {
               )}
               <p className="mt-1 text-sm text-gray-500">
                 This will be used in the URL.
+              </p>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Featured Image
+              </label>
+              <div className="mt-1">
+                {formData.image_url ? (
+                  <div className="space-y-4">
+                    <div className="relative inline-block">
+                      <img
+                        src={formData.image_url}
+                        alt="Featured image"
+                        className="w-48 h-32 object-cover rounded-lg border border-gray-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleImageRemove}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      Click the × to remove the current image and upload a new one.
+                    </p>
+                  </div>
+                ) : (
+                  <ImageUpload
+                    onImagesUploaded={handleImageUpload}
+                    maxImages={1}
+                    className="max-w-md"
+                  />
+                )}
+              </div>
+              <p className="mt-2 text-sm text-gray-500">
+                Upload a featured image for this content. This will be displayed on listing pages.
               </p>
             </div>
 

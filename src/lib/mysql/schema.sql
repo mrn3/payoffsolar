@@ -274,6 +274,7 @@ CREATE TABLE IF NOT EXISTS content (
   slug VARCHAR(255) UNIQUE NOT NULL,
   content TEXT,
   content_mode ENUM('rich_text', 'blocks') DEFAULT 'rich_text',
+  image_url VARCHAR(500),
   type_id VARCHAR(36),
   published BOOLEAN DEFAULT FALSE,
   author_id VARCHAR(36),

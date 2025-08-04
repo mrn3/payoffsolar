@@ -92,6 +92,7 @@ export async function POST(_request: NextRequest) {
       slug: data.slug.trim(),
       content: data.content || '',
       content_mode: data.content_mode || 'rich_text',
+      image_url: data.image_url || null,
       type_id: data.type_id,
       published: data.published || false,
       author_id: session.profile.id

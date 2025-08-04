@@ -10,6 +10,7 @@ interface NewsPost {
   title: string;
   slug: string;
   content?: string;
+  image_url?: string;
   type_name?: string;
   author_name?: string;
   created_at: string;
@@ -136,9 +137,20 @@ export default function NewsPage() {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {posts.map((post) => (
                 <article key={post.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  {/* Featured Image */}
+                  {post.image_url && (
+                    <div className="aspect-video w-full overflow-hidden">
+                      <img
+                        src={post.image_url}
+                        alt={post.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+
                   <div className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2">
-                      <Link 
+                      <Link
                         href={`/${post.slug}`}
                         className="hover:text-green-600 transition-colors"
                       >

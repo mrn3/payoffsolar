@@ -3591,6 +3591,7 @@ export interface Content {
   slug: string;
   content?: string;
   content_mode: 'rich_text' | 'blocks';
+  image_url?: string;
   type_id: string;
   published: boolean;
   author_id?: string;
@@ -3763,8 +3764,8 @@ export const ContentModel = {
 
   async create(data: Omit<Content, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     await executeSingle(
-      'INSERT INTO content (title, slug, content, content_mode, type_id, published, author_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [data.title, data.slug, data.content || null, data.content_mode || 'rich_text', data.type_id, data.published, data.author_id || null]
+      'INSERT INTO content (title, slug, content, content_mode, image_url, type_id, published, author_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.title, data.slug, data.content || null, data.content_mode || 'rich_text', data.image_url || null, data.type_id, data.published, data.author_id || null]
     );
 
     const content = await getOne<{ id: string }>(
@@ -3793,6 +3794,10 @@ export const ContentModel = {
     if (data.content_mode !== undefined) {
       fields.push('content_mode = ?');
       values.push(data.content_mode);
+    }
+    if (data.image_url !== undefined) {
+      fields.push('image_url = ?');
+      values.push(data.image_url || null);
     }
     if (data.type_id !== undefined) {
       fields.push('type_id = ?');
