@@ -49,16 +49,34 @@ export default function CardGridBlock({ config, className = '' }: CardGridBlockP
             <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
               {/* Card Image */}
               <div className="aspect-w-16 aspect-h-9 bg-gray-200 relative">
-                {card.image ? (
-                  <img
-                    src={card.image}
-                    alt={card.title}
-                    className="w-full h-48 object-cover"
-                  />
+                {card.link ? (
+                  <Link href={card.link} className="block">
+                    {card.image ? (
+                      <img
+                        src={card.image}
+                        alt={card.title}
+                        className="w-full h-48 object-cover hover:opacity-90 transition-opacity duration-200"
+                      />
+                    ) : (
+                      <div className="w-full h-48 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200">
+                        <FaImage className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
+                  </Link>
                 ) : (
-                  <div className="w-full h-48 flex items-center justify-center bg-gray-100">
-                    <FaImage className="h-12 w-12 text-gray-400" />
-                  </div>
+                  <>
+                    {card.image ? (
+                      <img
+                        src={card.image}
+                        alt={card.title}
+                        className="w-full h-48 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-48 flex items-center justify-center bg-gray-100">
+                        <FaImage className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
