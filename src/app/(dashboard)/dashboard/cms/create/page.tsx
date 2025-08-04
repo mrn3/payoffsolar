@@ -254,11 +254,12 @@ export default function CreateContentPage() {
             </div>
 
             <div className="sm:col-span-2">
-              <div className="flex items-center justify-between mb-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  Content
-                </label>
-                <div className="flex items-center space-x-4">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Content
+              </label>
+
+              <div className="mt-3 space-y-4">
+                <div className="flex items-center space-x-6">
                   <label className="flex items-center">
                     <input
                       type="radio"
@@ -266,9 +267,9 @@ export default function CreateContentPage() {
                       value="rich_text"
                       checked={formData.content_mode === 'rich_text'}
                       onChange={(e) => setFormData(prev => ({ ...prev, content_mode: e.target.value as 'rich_text' | 'blocks' }))}
-                      className="mr-2"
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
                     />
-                    Rich Text
+                    <span className="ml-2 text-sm text-gray-700">Rich Text</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -277,30 +278,30 @@ export default function CreateContentPage() {
                       value="blocks"
                       checked={formData.content_mode === 'blocks'}
                       onChange={(e) => setFormData(prev => ({ ...prev, content_mode: e.target.value as 'rich_text' | 'blocks' }))}
-                      className="mr-2"
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
                     />
-                    Content Blocks
+                    <span className="ml-2 text-gray-700">Content Blocks</span>
                   </label>
                 </div>
-              </div>
 
-              {formData.content_mode === 'rich_text' ? (
-                <div className="mt-1">
-                  <RichTextEditor
-                    value={formData.content}
-                    onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
-                    placeholder="Enter your content here with rich formatting..."
-                  />
-                </div>
-              ) : (
-                <div className="mt-1">
-                  <BlockEditor
-                    blocks={contentBlocks}
-                    onBlocksChange={setContentBlocks}
-                    className="border border-gray-300 rounded-md p-4"
-                  />
-                </div>
-              )}
+                {formData.content_mode === 'rich_text' ? (
+                  <div className="mt-1">
+                    <RichTextEditor
+                      value={formData.content}
+                      onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+                      placeholder="Enter your content here with rich formatting..."
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-1">
+                    <BlockEditor
+                      blocks={contentBlocks}
+                      onBlocksChange={setContentBlocks}
+                      className="border border-gray-300 rounded-md p-4"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="sm:col-span-2">
