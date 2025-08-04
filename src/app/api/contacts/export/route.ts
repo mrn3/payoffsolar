@@ -46,16 +46,16 @@ export async function GET(request: NextRequest) {
       'Zip',
       'Notes',
       'Created At',
-      'Display Name <Email>'
+      'Formatted Email'
     ];
 
     const csvRows = [
       headers.join(','),
       ...contacts.map(contact => {
-        // Create the special "Display Name <email>" field
-        const displayNameEmail = contact.email 
+        // Create the "Formatted Email" field - only populate if email exists
+        const formattedEmail = contact.email
           ? `"${contact.name} <${contact.email}>"`
-          : `"${contact.name}"`;
+          : '';
 
         return [
           `"${contact.name || ''}"`,
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
           `"${contact.zip || ''}"`,
           `"${(contact.notes || '').replace(/"/g, '""')}"`, // Escape quotes in notes
           `"${new Date(contact.created_at).toLocaleDateString()}"`,
-          displayNameEmail
+          formattedEmail
         ].join(',');
       })
     ];
