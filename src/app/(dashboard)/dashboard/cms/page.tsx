@@ -105,7 +105,7 @@ export default function CMSPage() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Content Management</h1>
           <p className="mt-2 text-sm text-gray-700">
-            Manage your website content, blog posts, and pages.
+            Manage your website content, news posts, and pages.
           </p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">

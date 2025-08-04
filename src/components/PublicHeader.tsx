@@ -27,7 +27,7 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
     { href: '/pricing', label: 'Pricing' },
     { href: '/about', label: 'About Us' },
     { href: '/how-to', label: 'How To' },
-    { href: '/blog', label: 'Blog' },
+    { href: '/news', label: 'News' },
     { href: '/contact', label: 'Contact' },
   ];
 

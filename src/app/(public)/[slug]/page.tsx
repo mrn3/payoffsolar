@@ -77,19 +77,19 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   const getBreadcrumbItems = () => {
     const items = [];
-    
-    // If it&apos;s a blog post, add blog to breadcrumb
-    if (content.type_name === 'blog') {
-      items.push({ label: 'Blog', href: '/blog' });
+
+    // If it's a news post, add news to breadcrumb
+    if (content.type_name === 'news') {
+      items.push({ label: 'News', href: '/news' });
     }
-    
+
     items.push({ label: content.title });
     return items;
   };
 
   const getBackLink = () => {
-    if (content.type_name === 'blog') {
-      return { href: '/blog', label: 'Back to Blog' };
+    if (content.type_name === 'news') {
+      return { href: '/news', label: 'Back to News' };
     }
     return null; // No back link for CMS pages
   };

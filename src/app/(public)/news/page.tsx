@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import { FaCalendar, FaUser, FaArrowRight } from 'react-icons/fa';
 
-interface BlogPost {
+interface NewsPost {
   id: string;
   title: string;
   slug: string;
@@ -16,8 +16,8 @@ interface BlogPost {
   updated_at: string;
 }
 
-interface BlogResponse {
-  content: BlogPost[];
+interface NewsResponse {
+  content: NewsPost[];
   pagination: {
     page: number;
     limit: number;
@@ -26,8 +26,8 @@ interface BlogResponse {
   };
 }
 
-export default function BlogPage() {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
+export default function NewsPage() {
+  const [posts, setPosts] = useState<NewsPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,18 +41,18 @@ export default function BlogPage() {
   const fetchPosts = async (page: number = 1) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/public/content?type=blog&page=${page}&limit=10`);
+      const response = await fetch(`/api/public/content?type=news&page=${page}&limit=10`);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch blog posts');
+        throw new Error('Failed to fetch news posts');
       }
 
-      const data: BlogResponse = await response.json();
+      const data: NewsResponse = await response.json();
       setPosts(data.content);
       setPagination(data.pagination);
     } catch (err) {
-      console.error('Error fetching blog posts:', err);
-      setError('Failed to load blog posts');
+      console.error('Error fetching news posts:', err);
+      setError('Failed to load news posts');
     } finally {
       setLoading(false);
     }
@@ -82,10 +82,10 @@ export default function BlogPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-8">
-          <Breadcrumb items={[{ label: 'Blog' }]} className="mb-6" />
+          <Breadcrumb items={[{ label: 'News' }]} className="mb-6" />
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading blog posts...</p>
+            <p className="mt-4 text-gray-600">Loading news posts...</p>
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@ export default function BlogPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-8">
-          <Breadcrumb items={[{ label: 'Blog' }]} className="mb-6" />
+          <Breadcrumb items={[{ label: 'News' }]} className="mb-6" />
           <div className="text-center py-12">
             <p className="text-red-600 mb-4">{error}</p>
             <button
@@ -115,20 +115,20 @@ export default function BlogPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <Breadcrumb items={[{ label: 'Blog' }]} className="mb-6" />
+        <Breadcrumb items={[{ label: 'News' }]} className="mb-6" />
 
         {/* Page Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Our Blog</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Latest News</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Stay updated with the latest news, insights, and tips about solar energy and sustainable living.
           </p>
         </div>
 
-        {/* Blog Posts */}
+        {/* News Posts */}
         {posts.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">No blog posts found.</p>
+            <p className="text-gray-600 text-lg">No news posts found.</p>
             <p className="text-gray-500 mt-2">Check back later for new content!</p>
           </div>
         ) : (
