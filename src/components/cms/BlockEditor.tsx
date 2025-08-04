@@ -22,6 +22,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import ImageUpload from '@/components/ui/ImageUpload';
 
 interface BlockEditorProps {
   contentId?: string;
@@ -339,13 +340,36 @@ function BlockConfigModal({ block, onSave, onCancel }: BlockConfigModalProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Background Image URL</label>
-              <input
-                type="url"
-                value={config.backgroundImage || ''}
-                onChange={(e) => setConfig({ ...config, backgroundImage: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Background Image</label>
+              {config.backgroundImage ? (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <img
+                      src={config.backgroundImage}
+                      alt="Background preview"
+                      className="w-full max-w-md h-auto rounded-lg border border-gray-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setConfig({ ...config, backgroundImage: '' })}
+                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                    >
+                      <FaTrash className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-600">Click the trash icon to remove and upload a new image</p>
+                </div>
+              ) : (
+                <ImageUpload
+                  onImagesUploaded={(images) => {
+                    if (images.length > 0) {
+                      setConfig({ ...config, backgroundImage: images[0].url });
+                    }
+                  }}
+                  maxImages={1}
+                  className="mb-4"
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Text Alignment</label>
@@ -402,6 +426,153 @@ function BlockConfigModal({ block, onSave, onCancel }: BlockConfigModalProps) {
                 cards={config.cards || []}
                 onChange={(cards) => setConfig({ ...config, cards })}
               />
+            </div>
+          </div>
+        );
+
+      case 'image_block':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+              {config.image ? (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <img
+                      src={config.image}
+                      alt={config.alt || 'Preview'}
+                      className="w-full max-w-md h-auto rounded-lg border border-gray-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setConfig({ ...config, image: '' })}
+                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                    >
+                      <FaTrash className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-600">Click the trash icon to remove and upload a new image</p>
+                </div>
+              ) : (
+                <ImageUpload
+                  onImagesUploaded={(images) => {
+                    if (images.length > 0) {
+                      setConfig({ ...config, image: images[0].url });
+                    }
+                  }}
+                  maxImages={1}
+                  className="mb-4"
+                />
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Caption</label>
+              <input
+                type="text"
+                value={config.caption || ''}
+                onChange={(e) => setConfig({ ...config, caption: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Optional image caption"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Alt Text</label>
+              <input
+                type="text"
+                value={config.alt || ''}
+                onChange={(e) => setConfig({ ...config, alt: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Descriptive text for accessibility"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+              <select
+                value={config.size || 'medium'}
+                onChange={(e) => setConfig({ ...config, size: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+                <option value="full">Full Width</option>
+              </select>
+            </div>
+          </div>
+        );
+
+      case 'text_block':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+              <textarea
+                value={config.content || ''}
+                onChange={(e) => setConfig({ ...config, content: e.target.value })}
+                rows={8}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Enter your text content here..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Text Alignment</label>
+              <select
+                value={config.textAlign || 'left'}
+                onChange={(e) => setConfig({ ...config, textAlign: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+          </div>
+        );
+
+      case 'video_block':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Video URL</label>
+              <input
+                type="url"
+                value={config.url || ''}
+                onChange={(e) => setConfig({ ...config, url: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="YouTube or Vimeo URL"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <input
+                type="text"
+                value={config.title || ''}
+                onChange={(e) => setConfig({ ...config, title: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Optional video title"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea
+                value={config.description || ''}
+                onChange={(e) => setConfig({ ...config, description: e.target.value })}
+                rows={3}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Optional video description"
+              />
+            </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="autoplay"
+                checked={config.autoplay || false}
+                onChange={(e) => setConfig({ ...config, autoplay: e.target.checked })}
+                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+              />
+              <label htmlFor="autoplay" className="ml-2 block text-sm text-gray-700">
+                Autoplay video
+              </label>
             </div>
           </div>
         );
@@ -499,13 +670,38 @@ function CardGridEditor({ cards, onChange }: CardGridEditorProps) {
               rows={2}
               className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
-            <input
-              type="url"
-              placeholder="Image URL"
-              value={card.image || ''}
-              onChange={(e) => updateCard(index, 'image', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Card Image</label>
+              {card.image ? (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <img
+                      src={card.image}
+                      alt="Card preview"
+                      className="w-full max-w-xs h-auto rounded-lg border border-gray-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updateCard(index, 'image', '')}
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                    >
+                      <FaTrash className="h-2 w-2" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-600">Click trash to remove and upload new image</p>
+                </div>
+              ) : (
+                <ImageUpload
+                  onImagesUploaded={(images) => {
+                    if (images.length > 0) {
+                      updateCard(index, 'image', images[0].url);
+                    }
+                  }}
+                  maxImages={1}
+                  className="mb-2"
+                />
+              )}
+            </div>
             <input
               type="url"
               placeholder="Link URL"
