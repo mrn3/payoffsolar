@@ -3,8 +3,19 @@ import path from 'path';
 import { config } from 'dotenv';
 import {testConnection} from './connection';
 
-// Load environment variables from .env.local
-config({ path: path.join(process.cwd(), '.env.local') });
+// Load environment variables from .env.local or .env
+const envLocalPath = path.join(process.cwd(), '.env.local');
+const envPath = path.join(process.cwd(), '.env');
+
+if (fs.existsSync(envLocalPath)) {
+  config({ path: envLocalPath });
+  console.log('📄 Loaded environment from .env.local');
+} else if (fs.existsSync(envPath)) {
+  config({ path: envPath });
+  console.log('📄 Loaded environment from .env');
+} else {
+  console.log('⚠️  No .env.local or .env file found, using system environment variables');
+}
 
 export async function initializeDatabase() {
   console.log('🔄 Initializing MySQL database...');

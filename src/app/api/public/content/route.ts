@@ -16,9 +16,19 @@ export async function GET(request: NextRequest) {
       // Get content by type name (convert type name to type_id)
       const { ContentTypeModel } = await import('@/lib/models');
       const contentType = await ContentTypeModel.getByName(type);
+
       if (!contentType) {
-        return NextResponse.json({ error: 'Invalid content type' }, { status: 400 });
+        console.error(`❌ Content type "${type}" not found`);
+        // Get all available content types for debugging
+        const allTypes = await ContentTypeModel.getAll();
+        console.log(`🔍 Available content types:`, allTypes.map(t => t.name));
+        return NextResponse.json({
+          error: 'Invalid content type',
+          requestedType: type,
+          availableTypes: allTypes.map(t => t.name)
+        }, { status: 400 });
       }
+
       content = await ContentModel.getPublishedByType(contentType.id, limit, offset);
       total = await ContentModel.getPublishedCountByType(contentType.id);
     } else {
