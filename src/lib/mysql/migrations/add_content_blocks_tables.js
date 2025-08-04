@@ -1,4 +1,6 @@
 const mysql = require('mysql2/promise');
+// Load environment variables from .env first (for server), then .env.local (for local development)
+require('dotenv').config({ path: '.env' });
 require('dotenv').config({ path: '.env.local' });
 
 async function addContentBlocksTables() {
