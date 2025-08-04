@@ -206,9 +206,9 @@ export const ContactModel = {
     const searchTerm = `%${query}%`;
     return executeQuery<Contact>(
       `SELECT * FROM contacts
-       WHERE name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ?
+       WHERE name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ? OR city LIKE ? OR state LIKE ? OR zip LIKE ?
        ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [searchTerm, searchTerm, searchTerm, searchTerm, limit, offset]
+      [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, limit, offset]
     );
   },
 
@@ -230,8 +230,101 @@ export const ContactModel = {
   async getSearchCount(query: string): Promise<number> {
     const searchTerm = `%${query}%`;
     const result = await getOne<{ count: number }>(
-      'SELECT COUNT(*) as count FROM contacts WHERE name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ?',
-      [searchTerm, searchTerm, searchTerm, searchTerm]
+      'SELECT COUNT(*) as count FROM contacts WHERE name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ? OR city LIKE ? OR state LIKE ? OR zip LIKE ?',
+      [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm]
+    );
+    return result?.count || 0;
+  },
+
+  async getWithFilters(filters: {
+    search?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+  }, limit = 50, offset = 0): Promise<Contact[]> {
+    let whereClause = '';
+    const params: any[] = [];
+
+    const conditions: string[] = [];
+
+    if (filters.search) {
+      const searchTerm = `%${filters.search}%`;
+      conditions.push('(name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ? OR city LIKE ? OR state LIKE ? OR zip LIKE ?)');
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+    }
+
+    if (filters.city) {
+      const cityTerm = `%${filters.city}%`;
+      conditions.push('city LIKE ?');
+      params.push(cityTerm);
+    }
+
+    if (filters.state) {
+      const stateTerm = `%${filters.state}%`;
+      conditions.push('state LIKE ?');
+      params.push(stateTerm);
+    }
+
+    if (filters.zip) {
+      const zipTerm = `%${filters.zip}%`;
+      conditions.push('zip LIKE ?');
+      params.push(zipTerm);
+    }
+
+    if (conditions.length > 0) {
+      whereClause = 'WHERE ' + conditions.join(' AND ');
+    }
+
+    params.push(limit, offset);
+
+    return executeQuery<Contact>(
+      `SELECT * FROM contacts ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      params
+    );
+  },
+
+  async getFilteredCount(filters: {
+    search?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+  }): Promise<number> {
+    let whereClause = '';
+    const params: any[] = [];
+
+    const conditions: string[] = [];
+
+    if (filters.search) {
+      const searchTerm = `%${filters.search}%`;
+      conditions.push('(name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ? OR city LIKE ? OR state LIKE ? OR zip LIKE ?)');
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+    }
+
+    if (filters.city) {
+      const cityTerm = `%${filters.city}%`;
+      conditions.push('city LIKE ?');
+      params.push(cityTerm);
+    }
+
+    if (filters.state) {
+      const stateTerm = `%${filters.state}%`;
+      conditions.push('state LIKE ?');
+      params.push(stateTerm);
+    }
+
+    if (filters.zip) {
+      const zipTerm = `%${filters.zip}%`;
+      conditions.push('zip LIKE ?');
+      params.push(zipTerm);
+    }
+
+    if (conditions.length > 0) {
+      whereClause = 'WHERE ' + conditions.join(' AND ');
+    }
+
+    const result = await getOne<{ count: number }>(
+      `SELECT COUNT(*) as count FROM contacts ${whereClause}`,
+      params
     );
     return result?.count || 0;
   },

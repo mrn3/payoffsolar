@@ -15,14 +15,26 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
+    const city = searchParams.get('city') || '';
+    const state = searchParams.get('state') || '';
+    const zip = searchParams.get('zip') || '';
     const offset = (page - 1) * limit;
 
     let contacts;
     let total;
 
-    if (search) {
-      contacts = await ContactModel.search(search, limit, offset);
-      total = await ContactModel.getSearchCount(search);
+    // Check if any filters are applied
+    const hasFilters = search || city || state || zip;
+
+    if (hasFilters) {
+      const filters = {
+        ...(search && { search }),
+        ...(city && { city }),
+        ...(state && { state }),
+        ...(zip && { zip })
+      };
+      contacts = await ContactModel.getWithFilters(filters, limit, offset);
+      total = await ContactModel.getFilteredCount(filters);
     } else {
       contacts = await ContactModel.getAll(limit, offset);
       total = await ContactModel.getCount();

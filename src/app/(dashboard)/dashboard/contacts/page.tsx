@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {FaCopy, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload} from 'react-icons/fa';
+import {FaCopy, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload, FaDownload} from 'react-icons/fa';
 import { format } from 'date-fns';
 import { Contact } from '@/lib/types';
 import DeleteContactModal from '@/components/contacts/DeleteContactModal';
@@ -28,6 +28,9 @@ export default function ContactsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+  const [stateFilter, setStateFilter] = useState('');
+  const [zipFilter, setZipFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
@@ -49,13 +52,16 @@ export default function ContactsPage() {
   const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
   const [isSelectAllChecked, setIsSelectAllChecked] = useState(false);
 
-  const fetchContacts = async (page = 1, search = '') => {
+  const fetchContacts = async (page = 1, search = '', city = '', state = '', zip = '') => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '10',
-        ...(search && { search })
+        ...(search && { search }),
+        ...(city && { city }),
+        ...(state && { state }),
+        ...(zip && { zip })
       });
 
       const _response = await fetch(`/api/contacts?${params}`);
@@ -86,8 +92,8 @@ export default function ContactsPage() {
   }, [localSearchQuery]);
 
   useEffect(() => {
-    fetchContacts(1, searchQuery);
-  }, [searchQuery]);
+    fetchContacts(1, searchQuery, cityFilter, stateFilter, zipFilter);
+  }, [searchQuery, cityFilter, stateFilter, zipFilter]);
 
   const handleSearch = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalSearchQuery(_e.target.value);
@@ -111,7 +117,7 @@ export default function ContactsPage() {
         throw new Error(errorData.error || 'Failed to delete contact');
       }
 
-      await fetchContacts(currentPage, searchQuery);
+      await fetchContacts(currentPage, searchQuery, cityFilter, stateFilter, zipFilter);
       setIsDeleteModalOpen(false);
       setSelectedContact(null);
     } catch (err) {
@@ -131,9 +137,12 @@ export default function ContactsPage() {
         throw new Error(errorData.error || 'Failed to delete all contacts');
       }
 
-      await fetchContacts(1, '');
+      await fetchContacts(1, '', '', '', '');
       setSearchQuery('');
       setLocalSearchQuery('');
+      setCityFilter('');
+      setStateFilter('');
+      setZipFilter('');
       setCurrentPage(1);
       setIsDeleteAllModalOpen(false);
     } catch (err) {
@@ -152,11 +161,47 @@ export default function ContactsPage() {
   };
 
   const handleImportComplete = () => {
-    fetchContacts(1, searchQuery);
+    fetchContacts(1, searchQuery, cityFilter, stateFilter, zipFilter);
   };
 
   const handleDuplicatesComplete = () => {
-    fetchContacts(currentPage, searchQuery);
+    fetchContacts(currentPage, searchQuery, cityFilter, stateFilter, zipFilter);
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      const params = new URLSearchParams({
+        ...(searchQuery && { search: searchQuery }),
+        ...(cityFilter && { city: cityFilter }),
+        ...(stateFilter && { state: stateFilter }),
+        ...(zipFilter && { zip: zipFilter })
+      });
+
+      const response = await fetch(`/api/contacts/export?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to export contacts');
+      }
+
+      // Get the filename from the response headers
+      const contentDisposition = response.headers.get('content-disposition');
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+        : 'contacts-export.csv';
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error exporting contacts:', error);
+      alert('Failed to export contacts. Please try again.');
+    }
   };
 
   // Bulk selection functions
@@ -243,8 +288,9 @@ export default function ContactsPage() {
       </div>
 
       {/* Search and filters */}
-      <div className="mt-6 flex flex-col sm:flex-row">
-        <div className="relative flex-grow">
+      <div className="mt-6 space-y-4">
+        {/* Search bar */}
+        <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <FaSearch className="h-5 w-5 text-gray-400" />
           </div>
@@ -255,6 +301,61 @@ export default function ContactsPage() {
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
             placeholder="Search contacts by name, email, phone, or notes"
           />
+        </div>
+
+        {/* Filter inputs and export button */}
+        <div className="flex flex-col sm:flex-row gap-4 items-end">
+          <div className="flex flex-col sm:flex-row gap-4 flex-grow">
+            <div className="flex-1">
+              <label htmlFor="city-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                City
+              </label>
+              <input
+                id="city-filter"
+                type="text"
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                placeholder="Filter by city"
+              />
+            </div>
+            <div className="flex-1">
+              <label htmlFor="state-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                State
+              </label>
+              <input
+                id="state-filter"
+                type="text"
+                value={stateFilter}
+                onChange={(e) => setStateFilter(e.target.value)}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                placeholder="Filter by state"
+              />
+            </div>
+            <div className="flex-1">
+              <label htmlFor="zip-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                Zip Code
+              </label>
+              <input
+                id="zip-filter"
+                type="text"
+                value={zipFilter}
+                onChange={(e) => setZipFilter(e.target.value)}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                placeholder="Filter by zip code"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+              <FaDownload className="mr-2 h-4 w-4" />
+              Export CSV
+            </button>
+          </div>
         </div>
       </div>
 
@@ -273,7 +374,7 @@ export default function ContactsPage() {
           onClearSelection={clearSelection}
           onBulkComplete={() => {
             clearSelection();
-            fetchContacts(currentPage, searchQuery);
+            fetchContacts(currentPage, searchQuery, cityFilter, stateFilter, zipFilter);
           }}
         />
       )}
@@ -541,14 +642,14 @@ export default function ContactsPage() {
         <div className="mt-8 flex items-center justify-between">
           <div className="flex-1 flex justify-between sm:hidden">
             <button
-              onClick={() => currentPage > 1 && fetchContacts(currentPage - 1, searchQuery)}
+              onClick={() => currentPage > 1 && fetchContacts(currentPage - 1, searchQuery, cityFilter, stateFilter, zipFilter)}
               disabled={currentPage <= 1}
               className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
-              onClick={() => currentPage < totalPages && fetchContacts(currentPage + 1, searchQuery)}
+              onClick={() => currentPage < totalPages && fetchContacts(currentPage + 1, searchQuery, cityFilter, stateFilter, zipFilter)}
               disabled={currentPage >= totalPages}
               className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -566,7 +667,7 @@ export default function ContactsPage() {
             <div>
               <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                 <button
-                  onClick={() => currentPage > 1 && fetchContacts(currentPage - 1, searchQuery)}
+                  onClick={() => currentPage > 1 && fetchContacts(currentPage - 1, searchQuery, cityFilter, stateFilter, zipFilter)}
                   disabled={currentPage <= 1}
                   className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -577,7 +678,7 @@ export default function ContactsPage() {
                   return (
                     <button
                       key={page}
-                      onClick={() => fetchContacts(page, searchQuery)}
+                      onClick={() => fetchContacts(page, searchQuery, cityFilter, stateFilter, zipFilter)}
                       className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                         page === currentPage
                           ? 'bg-green-50 border-green-500 text-green-600'
@@ -589,7 +690,7 @@ export default function ContactsPage() {
                   );
                 })}
                 <button
-                  onClick={() => currentPage < totalPages && fetchContacts(currentPage + 1, searchQuery)}
+                  onClick={() => currentPage < totalPages && fetchContacts(currentPage + 1, searchQuery, cityFilter, stateFilter, zipFilter)}
                   disabled={currentPage >= totalPages}
                   className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
