@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { BlockType, ContentBlockWithType } from '@/lib/models';
-import { FaPlus, FaGripVertical, FaEdit, FaTrash, FaImage, FaThLarge, FaAlignLeft, FaVideo } from 'react-icons/fa';
+import { FaPlus, FaGripVertical, FaEdit, FaTrash, FaImage, FaThLarge, FaAlignLeft, FaVideo, FaBullhorn } from 'react-icons/fa';
 import {
   DndContext,
   closestCenter,
@@ -55,7 +55,7 @@ function SortableBlockItem({ block, onEdit, onDelete }: SortableBlockItemProps) 
 
   const getBlockIcon = (blockType: string) => {
     switch (blockType) {
-      case 'hero': return <FaImage className="h-4 w-4" />;
+      case 'hero': return <FaBullhorn className="h-4 w-4" />;
       case 'card_grid': return <FaThLarge className="h-4 w-4" />;
       case 'text_block': return <FaAlignLeft className="h-4 w-4" />;
       case 'image_block': return <FaImage className="h-4 w-4" />;
@@ -242,6 +242,7 @@ export default function BlockEditor({ contentId, blocks, onBlocksChange, classNa
                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     <span className="mr-3">
+                      {blockType.icon === 'FaBullhorn' && <FaBullhorn className="h-4 w-4" />}
                       {blockType.icon === 'FaImage' && <FaImage className="h-4 w-4" />}
                       {blockType.icon === 'FaThLarge' && <FaThLarge className="h-4 w-4" />}
                       {blockType.icon === 'FaAlignLeft' && <FaAlignLeft className="h-4 w-4" />}

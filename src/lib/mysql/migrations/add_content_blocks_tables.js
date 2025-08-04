@@ -46,7 +46,7 @@ async function addContentBlocksTables() {
     // Insert default block types
     await connection.execute(`
       INSERT IGNORE INTO block_types (id, name, display_name, description, icon, schema_config) VALUES
-      (UUID(), 'hero', 'Hero Block', 'Large banner with title, subtitle, and background image', 'FaImage', JSON_OBJECT(
+      (UUID(), 'hero', 'Hero Block', 'Large banner with title, subtitle, and background image', 'FaBullhorn', JSON_OBJECT(
         'properties', JSON_OBJECT(
           'title', JSON_OBJECT('type', 'string', 'required', true),
           'subtitle', JSON_OBJECT('type', 'string', 'required', false),
@@ -54,7 +54,7 @@ async function addContentBlocksTables() {
           'textAlign', JSON_OBJECT('type', 'string', 'enum', JSON_ARRAY('left', 'center', 'right'), 'default', 'center')
         )
       )),
-      (UUID(), 'card_grid', 'Card Grid', 'Grid of cards with images, titles, and descriptions', 'FaTh', JSON_OBJECT(
+      (UUID(), 'card_grid', 'Card Grid', 'Grid of cards with images, titles, and descriptions', 'FaThLarge', JSON_OBJECT(
         'properties', JSON_OBJECT(
           'title', JSON_OBJECT('type', 'string', 'required', false),
           'subtitle', JSON_OBJECT('type', 'string', 'required', false),

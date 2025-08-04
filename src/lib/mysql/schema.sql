@@ -310,7 +310,7 @@ CREATE TABLE IF NOT EXISTS content_blocks (
 
 -- Insert default block types
 INSERT IGNORE INTO block_types (id, name, display_name, description, icon, schema_config) VALUES
-  (UUID(), 'hero', 'Hero Section', 'Large banner with title, subtitle, and optional background image', 'FaImage', JSON_OBJECT(
+  (UUID(), 'hero', 'Hero Section', 'Large banner with title, subtitle, and optional background image', 'FaBullhorn', JSON_OBJECT(
     'properties', JSON_OBJECT(
       'title', JSON_OBJECT('type', 'string', 'required', true),
       'subtitle', JSON_OBJECT('type', 'string', 'required', false),
