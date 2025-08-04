@@ -10,10 +10,12 @@ export default function PricingPage() {
       price: '$2,400',
       originalPrice: '$4,800',
       priceWithTaxCredit: '$1,680',
-      description: 'Perfect way to get started - in Utah, complies with House Bill 340 so you don\t need to pay for permits.',
+      description: 'Perfect way to get started. In Utah, complies with House Bill 340 so no need for permits.',
       power: '1.2 kW',
       panels: '3 panels',
       coverage: '500 sq ft',
+      billReduction: '$15',
+      installTime: '1 hour',
       features: [
         'High-efficiency solar panels',
         'Micro inverter system',
@@ -31,10 +33,12 @@ export default function PricingPage() {
       price: '$6,000',
       originalPrice: '$12,000',
       priceWithTaxCredit: '$4,200',
-      description: 'Perfect for small homes and apartments',
+      description: 'Perfect for small homes and apartments, and can even be installed on balconies.',
       power: '4 kW',
       panels: '10 panels',
       coverage: '1500 sq ft',
+      billReduction: '$50',
+      installTime: '3-4 weeks',
       features: [
         'High-efficiency solar panels',
         'String inverter system',
@@ -54,10 +58,12 @@ export default function PricingPage() {
       price: '$9,000',
       originalPrice: '$18,000',
       priceWithTaxCredit: '$6,300',
-      description: 'Ideal for average-sized homes',
+      description: 'Ideal for average-sized homes.  This is our most popular package.',
       power: '8 kW',
       panels: '20 panels',
       coverage: '2500 sq ft',
+      billReduction: '$100',
+      installTime: '3-4 weeks',
       features: [
         'Premium solar panels',
         'Power optimizers',
@@ -79,10 +85,12 @@ export default function PricingPage() {
       price: '$12,000',
       originalPrice: '$24,000',
       priceWithTaxCredit: '$8,400',
-      description: 'Great for large homes and high energy usage',
+      description: 'Great for large homes and high energy users with electric vehicles.',
       power: '12 kW',
       panels: '30 panels',
       coverage: '4000 sq ft',
+      billReduction: '$150',
+      installTime: '3-4 weeks',
       features: [
         'Premium high-efficiency panels',
         'Microinverter system',
@@ -106,10 +114,12 @@ export default function PricingPage() {
       price: '$15,000',
       originalPrice: '$30,000',
       priceWithTaxCredit: '$10,500',
-      description: 'Perfect for large properties and commercial use',
+      description: 'Perfect for large properties and commercial use that have large energy needs.',
       power: '16 kW',
       panels: '40 panels',
       coverage: '6000 sq ft',
+      billReduction: '$200',
+      installTime: '3-4 weeks',
       features: [
         'Commercial-grade solar panels',
         'Microinverter system',
@@ -204,6 +214,14 @@ export default function PricingPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Coverage:</span>
                       <span className="font-semibold text-gray-900">{pkg.coverage}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Bill Reduction:</span>
+                      <span className="font-semibold text-gray-900">{pkg.billReduction} / month</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Install Time:</span>
+                      <span className="font-semibold text-gray-900">{pkg.installTime}</span>
                     </div>
                   </div>
 
