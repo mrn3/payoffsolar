@@ -8,12 +8,21 @@ if (fs.existsSync('.env')) {
 const mysql = require('mysql2/promise');
 
 async function addPublishedDateToContent() {
-  const connection = await mysql.createConnection({
+  // For Bitnami servers, try different connection methods
+  const connectionOptions = {
     host: process.env.MYSQL_HOST || 'localhost',
     user: process.env.MYSQL_USER || 'root',
     password: process.env.MYSQL_PASSWORD || '',
-    database: process.env.MYSQL_DATABASE || 'payoffsolar'
-  });
+    database: process.env.MYSQL_DATABASE || 'payoffsolar',
+    socketPath: process.env.MYSQL_SOCKET || '/opt/bitnami/mysql/tmp/mysql.sock'
+  };
+
+  // Remove socketPath if password is provided
+  if (process.env.MYSQL_PASSWORD) {
+    delete connectionOptions.socketPath;
+  }
+
+  const connection = await mysql.createConnection(connectionOptions);
 
   try {
     console.log('Adding published_date column to content table...');
