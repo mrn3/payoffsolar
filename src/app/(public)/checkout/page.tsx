@@ -626,6 +626,8 @@ export default function CheckoutPage() {
                     customerInfo={formData}
                     shippingMethod={formData.shippingMethod}
                     shippingCost={shippingCost}
+                    shippingMethods={shippingMethods}
+                    selectedWarehouse={selectedWarehouse}
                     onSuccess={handlePaymentSuccess}
                     onValidationError={handleValidationError}
                   />

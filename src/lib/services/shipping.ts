@@ -72,6 +72,7 @@ export class ShippingService {
       name: string;
       cost: number;
       estimatedDays?: number;
+      warehouses?: any[];
     }>;
     breakdown: Array<{
       productId: string;
@@ -80,7 +81,7 @@ export class ShippingService {
     }>;
   }> {
     const breakdown = [];
-    const methodTotals = new Map<string, { cost: number; estimatedDays?: number }>();
+    const productMethodsMap = new Map<string, Map<string, { cost: number; estimatedDays?: number; warehouses?: any[] }>>();
 
     // Calculate shipping for each product
     for (const item of items) {
@@ -154,39 +155,73 @@ export class ShippingService {
         quote
       });
 
-      // Aggregate shipping methods
+      // Track which shipping methods this product supports
+      const productMethods = new Map<string, { cost: number; estimatedDays?: number; warehouses?: any[] }>();
       for (const method of quote.methods) {
         const key = method.method.name;
-        const existing = methodTotals.get(key);
+        productMethods.set(key, {
+          cost: method.cost,
+          estimatedDays: method.estimatedDays,
+          warehouses: method.warehouses
+        });
+      }
+      productMethodsMap.set(item.productId, productMethods);
+    }
 
-        if (existing) {
-          // Special handling for free shipping - if any product has free shipping for this method,
-          // the entire cart gets free shipping for this method
-          if (method.method.type === 'free' || method.cost === 0) {
-            existing.cost = 0;
-          } else if (existing.cost > 0) {
-            // Only add costs if the existing method isn't already free
-            existing.cost += method.cost;
+    // Find shipping methods that ALL products support
+    const commonMethods = new Map<string, { cost: number; estimatedDays?: number; warehouses?: any[] }>();
+
+    if (items.length > 0) {
+      // Start with methods from the first product
+      const firstProductMethods = productMethodsMap.get(items[0].productId);
+      if (firstProductMethods) {
+        for (const [methodName, methodData] of firstProductMethods) {
+          // Check if ALL other products also support this method
+          let allProductsSupport = true;
+          let totalCost = methodData.cost;
+          let maxEstimatedDays = methodData.estimatedDays;
+          let combinedWarehouses = methodData.warehouses;
+
+          for (let i = 1; i < items.length; i++) {
+            const productMethods = productMethodsMap.get(items[i].productId);
+            if (!productMethods || !productMethods.has(methodName)) {
+              allProductsSupport = false;
+              break;
+            }
+
+            const otherMethodData = productMethods.get(methodName)!;
+            totalCost += otherMethodData.cost;
+
+            if (otherMethodData.estimatedDays && maxEstimatedDays) {
+              maxEstimatedDays = Math.max(maxEstimatedDays, otherMethodData.estimatedDays);
+            }
+
+            // For local pickup, combine warehouses (intersection of available warehouses)
+            if (otherMethodData.warehouses && combinedWarehouses) {
+              // Find common warehouses
+              combinedWarehouses = combinedWarehouses.filter(w1 =>
+                otherMethodData.warehouses!.some(w2 => w1.id === w2.id)
+              );
+            }
           }
 
-          // Use the longest estimated delivery time
-          if (method.estimatedDays && existing.estimatedDays) {
-            existing.estimatedDays = Math.max(existing.estimatedDays, method.estimatedDays);
+          if (allProductsSupport) {
+            commonMethods.set(methodName, {
+              cost: totalCost,
+              estimatedDays: maxEstimatedDays,
+              warehouses: combinedWarehouses
+            });
           }
-        } else {
-          methodTotals.set(key, {
-            cost: method.cost,
-            estimatedDays: method.estimatedDays
-          });
         }
       }
     }
 
-    // Convert aggregated methods to array
-    const methods = Array.from(methodTotals.entries()).map(([name, data]) => ({
+    // Convert common methods to array
+    const methods = Array.from(commonMethods.entries()).map(([name, data]) => ({
       name,
       cost: data.cost,
-      estimatedDays: data.estimatedDays
+      estimatedDays: data.estimatedDays,
+      warehouses: data.warehouses
     }));
 
     // Sort by cost

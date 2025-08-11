@@ -20,11 +20,18 @@ interface PaymentFormProps {
   };
   shippingMethod: string;
   shippingCost: number;
+  shippingMethods: Array<{
+    name: string;
+    cost: number;
+    estimatedDays?: number;
+    warehouses?: Array<{ id: string; name: string; address: string }>;
+  }>;
+  selectedWarehouse?: { id: string; name: string; address: string } | null;
   onSuccess: (paymentIntentId: string) => void;
   onValidationError: (message: string) => void;
 }
 
-export default function PaymentForm({ customerInfo, shippingMethod, shippingCost, onSuccess, onValidationError }: PaymentFormProps) {
+export default function PaymentForm({ customerInfo, shippingMethod, shippingCost, shippingMethods, selectedWarehouse, onSuccess, onValidationError }: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { state, getTotalPrice, getTotalDiscount, getTotalTax, clearCart } = useCart();
@@ -59,12 +66,35 @@ export default function PaymentForm({ customerInfo, shippingMethod, shippingCost
     }
 
     // Validate required customer info
-    if (!customerInfo.email || !customerInfo.firstName || !customerInfo.lastName ||
-        !customerInfo.address || !customerInfo.city || !customerInfo.state || !customerInfo.zip) {
+    if (!customerInfo.email || !customerInfo.firstName || !customerInfo.lastName) {
       const message = 'Please fill in all required customer information before proceeding with payment.';
       setPaymentError(message);
       onValidationError(message);
       return;
+    }
+
+    // Check shipping method requirements
+    const selectedMethod = shippingMethods.find(method =>
+      method.name.toLowerCase().replace(/\s+/g, '-') === shippingMethod
+    );
+    const isLocalPickup = selectedMethod?.warehouses && selectedMethod.warehouses.length > 0;
+
+    if (isLocalPickup) {
+      // For local pickup, require warehouse selection
+      if (!selectedWarehouse) {
+        const message = 'Please select a pickup location before proceeding with payment.';
+        setPaymentError(message);
+        onValidationError(message);
+        return;
+      }
+    } else {
+      // For shipping, require address fields
+      if (!customerInfo.address || !customerInfo.city || !customerInfo.state || !customerInfo.zip) {
+        const message = 'Please fill in all required shipping address information before proceeding with payment.';
+        setPaymentError(message);
+        onValidationError(message);
+        return;
+      }
     }
 
     setIsProcessing(true);
