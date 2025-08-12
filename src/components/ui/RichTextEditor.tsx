@@ -25,7 +25,13 @@ import {
   FaQuoteLeft,
   FaTable,
   FaPlus,
-  FaMinus
+  FaMinus,
+  FaArrowUp,
+  FaArrowDown,
+  FaArrowLeft,
+  FaArrowRight,
+  FaTrash,
+  FaPalette
 } from 'react-icons/fa';
 
 interface RichTextEditorProps {
@@ -55,24 +61,54 @@ const TableStylingExtension = Extension.create({
             cells.forEach(cell => {
               const element = cell as HTMLElement;
 
+              // Get computed styles from the element
+              const computedStyle = window.getComputedStyle ? null : null;
+
               // Preserve background color from style attribute
               const style = element.getAttribute('style');
-              if (style && style.includes('background')) {
-                // Keep the style attribute
-                element.setAttribute('style', style);
+              let backgroundColor = '';
+
+              // Extract background color from various sources
+              if (style) {
+                const bgColorMatch = style.match(/background-color\s*:\s*([^;]+)/i);
+                const bgMatch = style.match(/background\s*:\s*([^;]+)/i);
+                if (bgColorMatch) {
+                  backgroundColor = bgColorMatch[1].trim();
+                } else if (bgMatch && !bgMatch[1].includes('url(')) {
+                  backgroundColor = bgMatch[1].trim();
+                }
               }
 
               // Preserve bgcolor attribute (legacy)
               const bgcolor = element.getAttribute('bgcolor');
-              if (bgcolor) {
-                element.setAttribute('bgcolor', bgcolor);
-                // Also add to style for better compatibility
-                const existingStyle = element.getAttribute('style') || '';
-                element.setAttribute('style', `${existingStyle}; background-color: ${bgcolor};`);
+              if (bgcolor && !backgroundColor) {
+                backgroundColor = bgcolor;
+              }
+
+              // Check for CSS classes that might indicate background colors
+              const className = element.getAttribute('class');
+              if (className) {
+                // Handle common color classes
+                const colorClasses = className.split(' ').filter(cls =>
+                  cls.includes('bg-') || cls.includes('background') || cls.includes('color')
+                );
+                if (colorClasses.length > 0) {
+                  element.setAttribute('class', className);
+                }
+              }
+
+              // Set the final background color
+              if (backgroundColor) {
+                const cleanStyle = style ? style.replace(/background[^;]*;?/gi, '').trim() : '';
+                const newStyle = cleanStyle ?
+                  `${cleanStyle}; background-color: ${backgroundColor}` :
+                  `background-color: ${backgroundColor}`;
+                element.setAttribute('style', newStyle);
+                element.setAttribute('bgcolor', backgroundColor);
               }
 
               // Preserve other common styling attributes
-              ['width', 'height', 'align', 'valign'].forEach(attr => {
+              ['width', 'height', 'align', 'valign', 'colspan', 'rowspan'].forEach(attr => {
                 const value = element.getAttribute(attr);
                 if (value) {
                   element.setAttribute(attr, value);
@@ -81,6 +117,12 @@ const TableStylingExtension = Extension.create({
             });
 
             return tempDiv.innerHTML;
+          },
+
+          // Also handle paste events directly
+          handlePaste: (view, event, slice) => {
+            // Let the default paste handler work, but ensure our transform is applied
+            return false;
           }
         }
       })
@@ -92,12 +134,14 @@ const ToolbarButton = ({
   onClick,
   isActive,
   children,
-  title
+  title,
+  className = ''
 }: {
   onClick: () => void;
   isActive?: boolean;
   children: React.ReactNode;
   title: string;
+  className?: string;
 }) => (
   <button
     type="button"
@@ -105,7 +149,7 @@ const ToolbarButton = ({
     title={title}
     className={`p-2 rounded hover:bg-gray-100 transition-colors ${
       isActive ? 'bg-gray-200 text-green-600' : 'text-gray-600'
-    }`}
+    } ${className}`}
   >
     {children}
   </button>
@@ -146,10 +190,69 @@ export default function RichTextEditor({
         HTMLAttributes: {
           class: 'border border-gray-300 bg-gray-50 font-semibold p-2',
         },
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            style: {
+              default: null,
+              parseHTML: element => element.getAttribute('style'),
+              renderHTML: attributes => {
+                if (!attributes.style) {
+                  return {};
+                }
+                return {
+                  style: attributes.style,
+                };
+              },
+            },
+            bgcolor: {
+              default: null,
+              parseHTML: element => element.getAttribute('bgcolor'),
+              renderHTML: attributes => {
+                if (!attributes.bgcolor) {
+                  return {};
+                }
+                return {
+                  bgcolor: attributes.bgcolor,
+                };
+              },
+            },
+          };
+        },
       }),
       TableCell.configure({
         HTMLAttributes: {
           class: 'border border-gray-300 p-2',
+        },
+        allowGapCursor: false,
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            style: {
+              default: null,
+              parseHTML: element => element.getAttribute('style'),
+              renderHTML: attributes => {
+                if (!attributes.style) {
+                  return {};
+                }
+                return {
+                  style: attributes.style,
+                };
+              },
+            },
+            bgcolor: {
+              default: null,
+              parseHTML: element => element.getAttribute('bgcolor'),
+              renderHTML: attributes => {
+                if (!attributes.bgcolor) {
+                  return {};
+                }
+                return {
+                  bgcolor: attributes.bgcolor,
+                };
+              },
+            },
+          };
         },
       }),
       TableStylingExtension,
@@ -160,12 +263,8 @@ export default function RichTextEditor({
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[120px] p-3',
+        class: 'prose prose-sm mx-auto focus:outline-none min-h-[120px] p-3',
         placeholder: placeholder,
-      },
-      handlePaste: (view, event, slice) => {
-        // Allow default paste behavior to preserve table formatting
-        return false;
       },
     },
     immediatelyRender: false,
@@ -175,6 +274,44 @@ export default function RichTextEditor({
     const url = window.prompt('Enter URL:');
     if (url && editor) {
       editor.chain().focus().setLink({ href: url }).run();
+    }
+  }, [editor]);
+
+  const setCellBackgroundColor = useCallback((color: string) => {
+    if (editor) {
+      // Get the current selection
+      const { selection } = editor.state;
+      const { $from } = selection;
+
+      // Find the table cell node
+      const cellPos = $from.pos;
+      const resolvedPos = editor.state.doc.resolve(cellPos);
+
+      // Find the cell node by traversing up the tree
+      let cellNode = null;
+      let cellNodePos = null;
+
+      for (let depth = resolvedPos.depth; depth > 0; depth--) {
+        const node = resolvedPos.node(depth);
+        if (node.type.name === 'tableCell' || node.type.name === 'tableHeader') {
+          cellNode = node;
+          cellNodePos = resolvedPos.before(depth);
+          break;
+        }
+      }
+
+      if (cellNode && cellNodePos !== null) {
+        // Update the cell's attributes
+        const tr = editor.state.tr;
+        const newAttrs = {
+          ...cellNode.attrs,
+          style: color === 'transparent' ? null : `background-color: ${color}`,
+          bgcolor: color === 'transparent' ? null : color
+        };
+
+        tr.setNodeMarkup(cellNodePos, null, newAttrs);
+        editor.view.dispatch(tr);
+      }
     }
   }, [editor]);
 
@@ -312,55 +449,114 @@ export default function RichTextEditor({
 
         {editor.isActive('table') && (
           <>
-            <ToolbarButton
-              onClick={() => editor.chain().focus().addRowBefore().run()}
-              isActive={false}
-              title="Add Row Above"
-            >
-              <FaPlus />
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => editor.chain().focus().addRowAfter().run()}
-              isActive={false}
-              title="Add Row Below"
-            >
-              <FaPlus />
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => editor.chain().focus().deleteRow().run()}
-              isActive={false}
-              title="Delete Row"
-            >
-              <FaMinus />
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => editor.chain().focus().addColumnBefore().run()}
-              isActive={false}
-              title="Add Column Before"
-            >
-              <FaPlus />
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => editor.chain().focus().addColumnAfter().run()}
-              isActive={false}
-              title="Add Column After"
-            >
-              <FaPlus />
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => editor.chain().focus().deleteColumn().run()}
-              isActive={false}
-              title="Delete Column"
-            >
-              <FaMinus />
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => editor.chain().focus().deleteTable().run()}
-              isActive={false}
-              title="Delete Table"
-            >
-              <FaMinus />
-            </ToolbarButton>
+            <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded border border-blue-200">
+              <span className="text-xs font-medium text-blue-700 mr-2">Table:</span>
+
+              <ToolbarButton
+                onClick={() => editor.chain().focus().addRowBefore().run()}
+                isActive={false}
+                title="Add Row Above"
+                className="text-xs"
+              >
+                <div className="flex items-center gap-1">
+                  <FaArrowUp className="text-xs" />
+                  <span className="text-xs">Row</span>
+                </div>
+              </ToolbarButton>
+
+              <ToolbarButton
+                onClick={() => editor.chain().focus().addRowAfter().run()}
+                isActive={false}
+                title="Add Row Below"
+                className="text-xs"
+              >
+                <div className="flex items-center gap-1">
+                  <FaArrowDown className="text-xs" />
+                  <span className="text-xs">Row</span>
+                </div>
+              </ToolbarButton>
+
+              <ToolbarButton
+                onClick={() => editor.chain().focus().addColumnBefore().run()}
+                isActive={false}
+                title="Add Column Before"
+                className="text-xs"
+              >
+                <div className="flex items-center gap-1">
+                  <FaArrowLeft className="text-xs" />
+                  <span className="text-xs">Col</span>
+                </div>
+              </ToolbarButton>
+
+              <ToolbarButton
+                onClick={() => editor.chain().focus().addColumnAfter().run()}
+                isActive={false}
+                title="Add Column After"
+                className="text-xs"
+              >
+                <div className="flex items-center gap-1">
+                  <FaArrowRight className="text-xs" />
+                  <span className="text-xs">Col</span>
+                </div>
+              </ToolbarButton>
+
+              <div className="w-px h-4 bg-blue-300 mx-1" />
+
+              <div className="flex items-center gap-1">
+                <FaPalette className="text-xs text-blue-700" />
+                <input
+                  type="color"
+                  onChange={(e) => setCellBackgroundColor(e.target.value)}
+                  className="w-6 h-6 rounded border border-gray-300 cursor-pointer"
+                  title="Cell Background Color"
+                />
+                <button
+                  onClick={() => setCellBackgroundColor('transparent')}
+                  className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-600"
+                  title="Remove Background Color"
+                >
+                  Clear
+                </button>
+              </div>
+
+              <div className="w-px h-4 bg-blue-300 mx-1" />
+
+              <ToolbarButton
+                onClick={() => editor.chain().focus().deleteRow().run()}
+                isActive={false}
+                title="Delete Current Row"
+                className="text-xs text-red-600 hover:bg-red-50"
+              >
+                <div className="flex items-center gap-1">
+                  <FaTrash className="text-xs" />
+                  <span className="text-xs">Row</span>
+                </div>
+              </ToolbarButton>
+
+              <ToolbarButton
+                onClick={() => editor.chain().focus().deleteColumn().run()}
+                isActive={false}
+                title="Delete Current Column"
+                className="text-xs text-red-600 hover:bg-red-50"
+              >
+                <div className="flex items-center gap-1">
+                  <FaTrash className="text-xs" />
+                  <span className="text-xs">Col</span>
+                </div>
+              </ToolbarButton>
+
+              <ToolbarButton
+                onClick={() => editor.chain().focus().deleteTable().run()}
+                isActive={false}
+                title="Delete Entire Table"
+                className="text-xs text-red-600 hover:bg-red-50"
+              >
+                <div className="flex items-center gap-1">
+                  <FaTrash className="text-xs" />
+                  <span className="text-xs">Table</span>
+                </div>
+              </ToolbarButton>
+            </div>
           </>
         )}
       </div>
@@ -408,6 +604,8 @@ export default function RichTextEditor({
         .rich-text-editor .ProseMirror p {
           margin: 0.5rem 0;
           color: #111827;
+          font-size: 14px;
+          line-height: 1.5;
         }
         .rich-text-editor .ProseMirror table {
           border-collapse: collapse;
