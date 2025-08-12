@@ -449,6 +449,16 @@ export default function RichTextEditor({
 
         {editor.isActive('table') && (
           <>
+            {/* Instruction banner */}
+            <div className="w-full bg-green-50 border border-green-200 rounded px-3 py-2 mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm font-medium text-green-800">
+                  Table Mode: Click on any cell, then use the color options below to change its background
+                </span>
+              </div>
+            </div>
+
             <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded border border-blue-200">
               <span className="text-xs font-medium text-blue-700 mr-2">Table:</span>
 
@@ -502,17 +512,41 @@ export default function RichTextEditor({
 
               <div className="w-px h-4 bg-blue-300 mx-1" />
 
-              <div className="flex items-center gap-1">
-                <FaPalette className="text-xs text-blue-700" />
+              <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded px-2 py-1">
+                <FaPalette className="text-sm text-yellow-700" />
+                <span className="text-xs font-medium text-yellow-800">Cell Color:</span>
+
+                {/* Preset color buttons */}
+                <div className="flex gap-1">
+                  {[
+                    { color: '#ffebee', label: 'Light Red' },
+                    { color: '#e8f5e8', label: 'Light Green' },
+                    { color: '#e3f2fd', label: 'Light Blue' },
+                    { color: '#fff8e1', label: 'Light Yellow' },
+                    { color: '#f3e5f5', label: 'Light Purple' },
+                    { color: '#fafafa', label: 'Light Gray' }
+                  ].map(({ color, label }) => (
+                    <button
+                      key={color}
+                      onClick={() => setCellBackgroundColor(color)}
+                      className="w-5 h-5 rounded border border-gray-400 hover:border-gray-600 transition-colors"
+                      style={{ backgroundColor: color }}
+                      title={label}
+                    />
+                  ))}
+                </div>
+
+                {/* Custom color picker */}
                 <input
                   type="color"
                   onChange={(e) => setCellBackgroundColor(e.target.value)}
-                  className="w-6 h-6 rounded border border-gray-300 cursor-pointer"
-                  title="Cell Background Color"
+                  className="w-6 h-6 rounded border border-gray-400 cursor-pointer hover:border-gray-600"
+                  title="Choose Custom Color"
                 />
+
                 <button
                   onClick={() => setCellBackgroundColor('transparent')}
-                  className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded border text-gray-600"
+                  className="text-xs px-2 py-1 bg-white hover:bg-gray-50 rounded border border-gray-300 text-gray-700 font-medium"
                   title="Remove Background Color"
                 >
                   Clear
@@ -621,13 +655,20 @@ export default function RichTextEditor({
           padding: 8px;
           position: relative;
           vertical-align: top;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .rich-text-editor .ProseMirror table td:hover,
+        .rich-text-editor .ProseMirror table th:hover {
+          border-color: #22c55e;
+          box-shadow: inset 0 0 0 1px #22c55e;
         }
         .rich-text-editor .ProseMirror table th {
           background-color: #f9fafb;
           font-weight: 600;
         }
         .rich-text-editor .ProseMirror table .selectedCell:after {
-          background: rgba(200, 200, 255, 0.4);
+          background: rgba(34, 197, 94, 0.3);
           content: "";
           left: 0;
           right: 0;
@@ -636,6 +677,11 @@ export default function RichTextEditor({
           pointer-events: none;
           position: absolute;
           z-index: 2;
+          border: 2px solid #22c55e;
+          box-sizing: border-box;
+        }
+        .rich-text-editor .ProseMirror table .selectedCell {
+          position: relative;
         }
         .rich-text-editor .ProseMirror table .column-resize-handle {
           background-color: #adf;
