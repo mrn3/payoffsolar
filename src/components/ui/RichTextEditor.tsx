@@ -5,6 +5,12 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
+import { Extension } from '@tiptap/core';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 import {
   FaBold,
   FaItalic,
@@ -16,7 +22,10 @@ import {
   FaAlignLeft,
   FaAlignCenter,
   FaAlignRight,
-  FaQuoteLeft
+  FaQuoteLeft,
+  FaTable,
+  FaPlus,
+  FaMinus
 } from 'react-icons/fa';
 
 interface RichTextEditorProps {
@@ -26,6 +35,58 @@ interface RichTextEditorProps {
   className?: string;
   error?: boolean;
 }
+
+// Custom extension to preserve table styling when pasting
+const TableStylingExtension = Extension.create({
+  name: 'tableStyling',
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('tableStyling'),
+        props: {
+          transformPastedHTML(html: string) {
+            // Create a temporary DOM element to parse the HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+
+            // Find all table cells and preserve their styling
+            const cells = tempDiv.querySelectorAll('td, th');
+            cells.forEach(cell => {
+              const element = cell as HTMLElement;
+
+              // Preserve background color from style attribute
+              const style = element.getAttribute('style');
+              if (style && style.includes('background')) {
+                // Keep the style attribute
+                element.setAttribute('style', style);
+              }
+
+              // Preserve bgcolor attribute (legacy)
+              const bgcolor = element.getAttribute('bgcolor');
+              if (bgcolor) {
+                element.setAttribute('bgcolor', bgcolor);
+                // Also add to style for better compatibility
+                const existingStyle = element.getAttribute('style') || '';
+                element.setAttribute('style', `${existingStyle}; background-color: ${bgcolor};`);
+              }
+
+              // Preserve other common styling attributes
+              ['width', 'height', 'align', 'valign'].forEach(attr => {
+                const value = element.getAttribute(attr);
+                if (value) {
+                  element.setAttribute(attr, value);
+                }
+              });
+            });
+
+            return tempDiv.innerHTML;
+          }
+        }
+      })
+    ];
+  }
+});
 
 const ToolbarButton = ({
   onClick,
@@ -69,6 +130,29 @@ export default function RichTextEditor({
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'table-auto border-collapse border border-gray-300',
+        },
+        allowTableNodeSelection: true,
+      }),
+      TableRow.configure({
+        HTMLAttributes: {
+          class: '',
+        },
+      }),
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: 'border border-gray-300 bg-gray-50 font-semibold p-2',
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'border border-gray-300 p-2',
+        },
+      }),
+      TableStylingExtension,
     ],
     content: value,
     onUpdate: ({ editor }) => {
@@ -78,6 +162,10 @@ export default function RichTextEditor({
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[120px] p-3',
         placeholder: placeholder,
+      },
+      handlePaste: (view, event, slice) => {
+        // Allow default paste behavior to preserve table formatting
+        return false;
       },
     },
     immediatelyRender: false,
@@ -211,6 +299,70 @@ export default function RichTextEditor({
         >
           <FaQuoteLeft />
         </ToolbarButton>
+
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+
+        <ToolbarButton
+          onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+          isActive={false}
+          title="Insert Table"
+        >
+          <FaTable />
+        </ToolbarButton>
+
+        {editor.isActive('table') && (
+          <>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().addRowBefore().run()}
+              isActive={false}
+              title="Add Row Above"
+            >
+              <FaPlus />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+              isActive={false}
+              title="Add Row Below"
+            >
+              <FaPlus />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().deleteRow().run()}
+              isActive={false}
+              title="Delete Row"
+            >
+              <FaMinus />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().addColumnBefore().run()}
+              isActive={false}
+              title="Add Column Before"
+            >
+              <FaPlus />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().addColumnAfter().run()}
+              isActive={false}
+              title="Add Column After"
+            >
+              <FaPlus />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().deleteColumn().run()}
+              isActive={false}
+              title="Delete Column"
+            >
+              <FaMinus />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().deleteTable().run()}
+              isActive={false}
+              title="Delete Table"
+            >
+              <FaMinus />
+            </ToolbarButton>
+          </>
+        )}
       </div>
 
       {/* Editor Content */}
@@ -256,6 +408,57 @@ export default function RichTextEditor({
         .rich-text-editor .ProseMirror p {
           margin: 0.5rem 0;
           color: #111827;
+        }
+        .rich-text-editor .ProseMirror table {
+          border-collapse: collapse;
+          margin: 1rem 0;
+          table-layout: fixed;
+          width: 100%;
+        }
+        .rich-text-editor .ProseMirror table td,
+        .rich-text-editor .ProseMirror table th {
+          border: 1px solid #d1d5db;
+          box-sizing: border-box;
+          min-width: 1em;
+          padding: 8px;
+          position: relative;
+          vertical-align: top;
+        }
+        .rich-text-editor .ProseMirror table th {
+          background-color: #f9fafb;
+          font-weight: 600;
+        }
+        .rich-text-editor .ProseMirror table .selectedCell:after {
+          background: rgba(200, 200, 255, 0.4);
+          content: "";
+          left: 0;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          pointer-events: none;
+          position: absolute;
+          z-index: 2;
+        }
+        .rich-text-editor .ProseMirror table .column-resize-handle {
+          background-color: #adf;
+          bottom: -2px;
+          position: absolute;
+          right: -2px;
+          pointer-events: none;
+          top: 0;
+          width: 4px;
+        }
+        .rich-text-editor .ProseMirror table p {
+          margin: 0;
+        }
+        /* Preserve background colors and other inline styles */
+        .rich-text-editor .ProseMirror table td[style],
+        .rich-text-editor .ProseMirror table th[style] {
+          /* Allow inline styles to override defaults */
+        }
+        .rich-text-editor .ProseMirror table td[bgcolor],
+        .rich-text-editor .ProseMirror table th[bgcolor] {
+          /* Support legacy bgcolor attribute */
         }
         .rich-text-editor .ProseMirror ul,
         .rich-text-editor .ProseMirror ol {
