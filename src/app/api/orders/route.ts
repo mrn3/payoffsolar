@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {OrderModel, OrderItemModel, ContactModel, ProductModel, ProductCostBreakdownModel, CostItemModel} from '@/lib/models';
-import { requireAuth , isAdmin} from '@/lib/auth';
+import { requireAuth , isAdmin, isContact} from '@/lib/auth';
 import { processOrderItems, validateInventoryForOrder } from '@/lib/utils/orderProcessing';
 
 export async function GET(request: NextRequest) {
   try {
-    // Require admin access
+    // Require authentication (admin or contact)
     const session = await requireAuth();
-    if (!isAdmin(session.profile.role)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
+    const profile = session.profile;
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -23,6 +21,8 @@ export async function GET(request: NextRequest) {
     const maxTotal = searchParams.get('maxTotal') ? parseFloat(searchParams.get('maxTotal')!) : null;
     const startDate = searchParams.get('startDate') || '';
     const endDate = searchParams.get('endDate') || '';
+    const sortField = searchParams.get('sortField') || 'order_date';
+    const sortDirection = searchParams.get('sortDirection') || 'desc';
     const offset = (page - 1) * limit;
 
     // Build filter object
@@ -46,12 +46,21 @@ export async function GET(request: NextRequest) {
     let orders;
     let total;
 
-    if (hasFilters) {
-      orders = await OrderModel.searchWithFilters(filters, limit, offset);
-      total = await OrderModel.getFilteredCount(filters);
+    if (isContact(profile.role)) {
+      // Contact users only see their own orders
+      orders = await OrderModel.getAllByUser(profile.id, limit, offset, sortField, sortDirection);
+      total = await OrderModel.getCountByUser(profile.id);
+    } else if (isAdmin(profile.role)) {
+      // Admin users see all orders with filtering
+      if (hasFilters) {
+        orders = await OrderModel.searchWithFilters(filters, limit, offset, sortField, sortDirection);
+        total = await OrderModel.getFilteredCount(filters);
+      } else {
+        orders = await OrderModel.getAll(limit, offset, sortField, sortDirection);
+        total = await OrderModel.getCount();
+      }
     } else {
-      orders = await OrderModel.getAll(limit, offset);
-      total = await OrderModel.getCount();
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     return NextResponse.json({

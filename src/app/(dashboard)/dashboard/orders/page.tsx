@@ -9,7 +9,7 @@ import DuplicateOrdersModal from '@/components/orders/DuplicateOrdersModal';
 import BulkMergeOrdersModal from '@/components/orders/BulkMergeOrdersModal';
 import OrderFiltersComponent, { OrderFilters } from '@/components/orders/OrderFilters';
 import toast from 'react-hot-toast';
-import {FaDownload, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaUpload, FaCopy, FaFileInvoice} from 'react-icons/fa';
+import {FaDownload, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaUpload, FaCopy, FaFileInvoice, FaSort, FaSortUp, FaSortDown} from 'react-icons/fa';
 
 interface Order {
   id: string;
@@ -44,6 +44,11 @@ interface OrdersResponse {
   };
 }
 
+interface SortConfig {
+  field: string;
+  direction: 'asc' | 'desc';
+}
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -74,6 +79,12 @@ export default function OrdersPage() {
     endDate: ''
   });
 
+  // Sort state
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    field: 'order_date',
+    direction: 'desc'
+  });
+
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -90,7 +101,7 @@ export default function OrdersPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, filters]); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, filters, sortConfig]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   const fetchOrders = async (page: number) => {
     try {
@@ -143,6 +154,10 @@ export default function OrdersPage() {
         params.append('endDate', filters.endDate);
       }
 
+      // Add sort parameters
+      params.append('sortField', sortConfig.field);
+      params.append('sortDirection', sortConfig.direction);
+
       const ordersRes = await fetch(`/api/orders?${params}`);
       if (ordersRes.ok) {
         const ordersData: OrdersResponse = await ordersRes.json();
@@ -183,6 +198,23 @@ export default function OrdersPage() {
       endDate: ''
     });
     setCurrentPage(1);
+  };
+
+  const handleSort = (field: string) => {
+    setSortConfig(prevSort => ({
+      field,
+      direction: prevSort.field === field && prevSort.direction === 'asc' ? 'desc' : 'asc'
+    }));
+    setCurrentPage(1);
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortConfig.field !== field) {
+      return <FaSort className="ml-1 h-3 w-3 text-gray-400" />;
+    }
+    return sortConfig.direction === 'asc'
+      ? <FaSortUp className="ml-1 h-3 w-3 text-gray-600" />
+      : <FaSortDown className="ml-1 h-3 w-3 text-gray-600" />;
   };
 
   const handleDeleteOrder = async (orderId: string) => {
@@ -504,31 +536,73 @@ export default function OrdersPage() {
                       </th>
                     )}
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                      Order ID
+                      <button
+                        className="flex items-center hover:text-gray-600"
+                        onClick={() => handleSort('id')}
+                      >
+                        Order ID
+                        {getSortIcon('id')}
+                      </button>
                     </th>
                     {!isContact(profile.role) && (
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                        Contact
+                        <button
+                          className="flex items-center hover:text-gray-600"
+                          onClick={() => handleSort('contact_name')}
+                        >
+                          Contact
+                          {getSortIcon('contact_name')}
+                        </button>
                       </th>
                     )}
                     {!isContact(profile.role) && (
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                        Location
+                        <button
+                          className="flex items-center hover:text-gray-600"
+                          onClick={() => handleSort('contact_city')}
+                        >
+                          Location
+                          {getSortIcon('contact_city')}
+                        </button>
                       </th>
                     )}
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Status
+                      <button
+                        className="flex items-center hover:text-gray-600"
+                        onClick={() => handleSort('status')}
+                      >
+                        Status
+                        {getSortIcon('status')}
+                      </button>
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Total
+                      <button
+                        className="flex items-center hover:text-gray-600"
+                        onClick={() => handleSort('total')}
+                      >
+                        Total
+                        {getSortIcon('total')}
+                      </button>
                     </th>
                     {!isContact(profile.role) && (
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                        Internal Cost
+                        <button
+                          className="flex items-center hover:text-gray-600"
+                          onClick={() => handleSort('total_internal_cost')}
+                        >
+                          Internal Cost
+                          {getSortIcon('total_internal_cost')}
+                        </button>
                       </th>
                     )}
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Date
+                      <button
+                        className="flex items-center hover:text-gray-600"
+                        onClick={() => handleSort('order_date')}
+                      >
+                        Date
+                        {getSortIcon('order_date')}
+                      </button>
                     </th>
                     <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                       <span className="sr-only">Actions</span>

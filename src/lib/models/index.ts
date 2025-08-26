@@ -1981,8 +1981,28 @@ export interface CartItem {
   quantity: number;
 }
 
+// Helper function to build ORDER BY clause for orders
+const buildOrderByClause = (sortField: string, sortDirection: string): string => {
+  const validFields = {
+    'id': 'o.id',
+    'contact_name': 'c.name',
+    'contact_city': 'c.city',
+    'status': 'o.status',
+    'total': 'o.total',
+    'total_internal_cost': 'total_internal_cost',
+    'order_date': 'o.order_date',
+    'created_at': 'o.created_at'
+  };
+
+  const field = validFields[sortField as keyof typeof validFields] || 'o.order_date';
+  const direction = sortDirection.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+  return `ORDER BY ${field} ${direction}, o.created_at DESC`;
+};
+
 export const OrderModel = {
-  async getAll(limit = 50, offset = 0): Promise<OrderWithContact[]> {
+  async getAll(limit = 50, offset = 0, sortField = 'order_date', sortDirection = 'desc'): Promise<OrderWithContact[]> {
+    const orderByClause = buildOrderByClause(sortField, sortDirection);
     return executeQuery<OrderWithContact>(
       `SELECT o.*,
               c.name as contact_name,
@@ -1994,7 +2014,7 @@ export const OrderModel = {
        LEFT JOIN contacts c ON o.contact_id = c.id
        LEFT JOIN cost_items ci ON o.id = ci.order_id
        GROUP BY o.id, c.name, c.city, c.state, c.address
-       ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
+       ${orderByClause} LIMIT ? OFFSET ?`,
       [limit, offset]
     );
   },
@@ -2033,7 +2053,7 @@ export const OrderModel = {
     maxTotal?: number | null;
     startDate?: string;
     endDate?: string;
-  }, limit = 50, offset = 0): Promise<OrderWithContact[]> {
+  }, limit = 50, offset = 0, sortField = 'order_date', sortDirection = 'desc'): Promise<OrderWithContact[]> {
     const conditions = [];
     const params = [];
 
@@ -2088,6 +2108,7 @@ export const OrderModel = {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const orderByClause = buildOrderByClause(sortField, sortDirection);
 
     const query = `
       SELECT o.*,
@@ -2101,7 +2122,7 @@ export const OrderModel = {
       LEFT JOIN cost_items ci ON o.id = ci.order_id
       ${whereClause}
       GROUP BY o.id, c.name, c.city, c.state, c.address
-      ORDER BY o.order_date DESC, o.created_at DESC
+      ${orderByClause}
       LIMIT ? OFFSET ?
     `;
 
@@ -2186,7 +2207,8 @@ export const OrderModel = {
     return result?.count || 0;
   },
 
-  async getAllByUser(_userId: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
+  async getAllByUser(_userId: string, limit = 50, offset = 0, sortField = 'order_date', sortDirection = 'desc'): Promise<OrderWithContact[]> {
+    const orderByClause = buildOrderByClause(sortField, sortDirection);
     return executeQuery<OrderWithContact>(
       `SELECT o.*,
               c.name as contact_name,
@@ -2199,7 +2221,7 @@ export const OrderModel = {
        LEFT JOIN cost_items ci ON o.id = ci.order_id
        WHERE c.user_id = ?
        GROUP BY o.id, c.name, c.city, c.state, c.address
-       ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
+       ${orderByClause} LIMIT ? OFFSET ?`,
       [_userId, limit, offset]
     );
   },
