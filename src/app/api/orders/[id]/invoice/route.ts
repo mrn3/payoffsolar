@@ -64,6 +64,11 @@ function generateInvoiceHTML(order: any, invoice: any, businessAddress: string, 
   const invoiceDate = format(new Date(invoice.created_at), 'MMMM d, yyyy');
   const dueDate = format(new Date(invoice.due_date), 'MMMM d, yyyy');
   const contactName = order.contact_name;
+
+  // Calculate total from line items instead of using stored invoice amount
+  const calculatedTotal = order.items?.reduce((total: number, item: any) => {
+    return total + (Number(item.price) * item.quantity);
+  }, 0) || 0;
     
   return `
 <!DOCTYPE html>
@@ -276,7 +281,7 @@ function generateInvoiceHTML(order: any, invoice: any, businessAddress: string, 
     <div class="total-section">
         <div class="total-row">
             <div class="total-label">Invoice Total:</div>
-            <div class="total-amount">$${Number(invoice.amount).toFixed(2)}</div>
+            <div class="total-amount">$${calculatedTotal.toFixed(2)}</div>
         </div>
     </div>
 
