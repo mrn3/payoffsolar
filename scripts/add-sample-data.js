@@ -127,7 +127,7 @@ async function addSampleData() {
       
       const invoiceStatus = order.status === 'completed' ? 'paid' : 'pending';
       const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 30); // 30 days from now
+      dueDate.setDate(dueDate.getDate() + 1); // 1 day from now
 
       await connection.execute(
         'INSERT INTO invoices (id, order_id, invoice_number, amount, status, due_date) VALUES (?, ?, ?, ?, ?, ?)',

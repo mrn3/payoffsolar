@@ -4822,9 +4822,9 @@ export const InvoiceModel = {
     // Generate invoice number
     const invoiceNumber = await this.generateInvoiceNumber();
 
-    // Set due date (30 days from now)
+    // Set due date (1 day from now)
     const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 30);
+    dueDate.setDate(dueDate.getDate() + 1);
 
     // Determine status based on order status
     let status: Invoice['status'] = 'pending';

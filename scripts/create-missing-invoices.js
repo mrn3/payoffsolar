@@ -43,10 +43,10 @@ async function createMissingInvoices() {
       const orderSuffix = order.id.substring(0, 4);
       const invoiceNumber = `INV-${year}${month}-${timestamp}-${random}-${orderSuffix}`;
 
-      // Set due date (30 days from order date)
+      // Set due date (1 day from order date)
       const orderDate = new Date(order.order_date);
       const dueDate = new Date(orderDate);
-      dueDate.setDate(dueDate.getDate() + 30);
+      dueDate.setDate(dueDate.getDate() + 1);
 
       // Determine status based on order status
       let status = 'pending';
