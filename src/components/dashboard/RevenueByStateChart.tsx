@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -25,33 +25,45 @@ ChartJS.register(
   Legend
 );
 
+type TimePeriod = 'month' | 'week' | 'day';
+
 interface RevenueByStateData {
-  month: string;
+  month?: string;
+  week?: string;
+  day?: string;
   state: string;
   revenue: number;
   count: number;
 }
 
 interface RevenueByStateChartProps {
-  data: RevenueByStateData[];
+  initialData?: RevenueByStateData[];
 }
 
 interface OrdersModalProps {
   isOpen: boolean;
   onClose: () => void;
-  month: string;
+  period: string;
   state: string;
+  timePeriod: TimePeriod;
   orders: OrderWithContact[];
   loading: boolean;
 }
 
-function OrdersModal({ isOpen, onClose, month, state, orders, loading }: OrdersModalProps) {
+function OrdersModal({ isOpen, onClose, period, state, timePeriod, orders, loading }: OrdersModalProps) {
   if (!isOpen) return null;
 
-  const formatMonth = (monthStr: string) => {
-    const [year, month] = monthStr.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+  const formatPeriod = (period: string, timePeriod: TimePeriod) => {
+    if (timePeriod === 'month') {
+      const [year, month] = period.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+    } else if (timePeriod === 'week') {
+      return `Week ${period}`;
+    } else {
+      const date = new Date(period);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
   };
 
   const formatCurrency = (amount: number | string) => {
@@ -75,7 +87,7 @@ function OrdersModal({ isOpen, onClose, month, state, orders, loading }: OrdersM
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-900">
-            Complete Orders - {formatMonth(month)} - {state}
+            Complete Orders - {formatPeriod(period, timePeriod)} - {state}
           </h2>
           <button
             onClick={onClose}
@@ -92,7 +104,7 @@ function OrdersModal({ isOpen, onClose, month, state, orders, loading }: OrdersM
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              No complete orders found for {state} in {formatMonth(month)}.
+              No complete orders found for {state} in {formatPeriod(period, timePeriod)}.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -155,15 +167,66 @@ function OrdersModal({ isOpen, onClose, month, state, orders, loading }: OrdersM
   );
 }
 
-export default function RevenueByStateChart({ data }: RevenueByStateChartProps) {
-  const [selectedMonthState, setSelectedMonthState] = useState<{ month: string; state: string } | null>(null);
+export default function RevenueByStateChart({ initialData }: RevenueByStateChartProps) {
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
+  const [data, setData] = useState<RevenueByStateData[]>(initialData || []);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [selectedPeriodState, setSelectedPeriodState] = useState<{ period: string; state: string } | null>(null);
   const [modalOrders, setModalOrders] = useState<OrderWithContact[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
 
-  const formatMonth = (monthStr: string) => {
-    const [year, month] = monthStr.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  // Fetch data based on time period
+  const fetchData = async (period: TimePeriod) => {
+    setDataLoading(true);
+    try {
+      let endpoint = '/api/dashboard/revenue-by-state';
+      let params = new URLSearchParams();
+      params.append('timePeriod', period);
+
+      switch (period) {
+        case 'month':
+          params.append('months', '12');
+          break;
+        case 'week':
+          params.append('weeks', '20');
+          break;
+        case 'day':
+          params.append('days', '31');
+          break;
+      }
+
+      const response = await fetch(`${endpoint}?${params.toString()}`);
+      if (response.ok) {
+        const newData = await response.json();
+        setData(newData);
+      } else {
+        console.error('Failed to fetch revenue by state data');
+        setData([]);
+      }
+    } catch (error) {
+      console.error('Error fetching revenue by state data:', error);
+      setData([]);
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  // Initial data fetch and when time period changes
+  useEffect(() => {
+    fetchData(timePeriod);
+  }, [timePeriod]);
+
+  const formatPeriodLabel = (period: string) => {
+    if (timePeriod === 'month') {
+      const [year, month] = period.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1);
+      return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    } else if (timePeriod === 'week') {
+      return `W${period.split('-')[1]}`;
+    } else {
+      const date = new Date(period);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -175,8 +238,10 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
     }).format(amount);
   };
 
-  // Get unique months and calculate state totals
-  const months = [...new Set(data.map(item => item.month))].sort();
+  // Get unique periods and calculate state totals
+  const periods = [...new Set(data.map(item =>
+    item.month || item.week || item.day || ''
+  ))].sort();
 
   // Calculate total revenue by state to determine top 4
   const stateTotals = data.reduce((acc, item) => {
@@ -198,24 +263,28 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
 
   // Add "Others" data points by combining all non-top states
   if (otherStates.length > 0) {
-    months.forEach(month => {
+    periods.forEach(period => {
       const othersRevenue = otherStates.reduce((sum, state) => {
-        const item = data.find(d => d.month === month && d.state === state);
+        const item = data.find(d =>
+          (d.month === period || d.week === period || d.day === period) && d.state === state
+        );
         return sum + (item ? item.revenue : 0);
       }, 0);
 
       const othersCount = otherStates.reduce((sum, state) => {
-        const item = data.find(d => d.month === month && d.state === state);
+        const item = data.find(d =>
+          (d.month === period || d.week === period || d.day === period) && d.state === state
+        );
         return sum + (item ? item.count : 0);
       }, 0);
 
       if (othersRevenue > 0) {
         processedData.push({
-          month,
+          [timePeriod === 'month' ? 'month' : timePeriod === 'week' ? 'week' : 'day']: period,
           state: 'Others',
           revenue: othersRevenue,
           count: othersCount
-        });
+        } as any);
       }
     });
   }
@@ -242,11 +311,13 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
 
   // Prepare chart data
   const chartData = {
-    labels: months.map(formatMonth),
+    labels: periods.map(formatPeriodLabel),
     datasets: displayStates.map((state, index) => ({
       label: state,
-      data: months.map(month => {
-        const item = processedData.find(d => d.month === month && d.state === state);
+      data: periods.map(period => {
+        const item = processedData.find(d =>
+          (d.month === period || d.week === period || d.day === period) && d.state === state
+        );
         return item ? item.revenue : 0;
       }),
       backgroundColor: stateColors[index % stateColors.length],
@@ -302,20 +373,25 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
       if (elements.length > 0) {
         const elementIndex = elements[0].index;
         const datasetIndex = elements[0].datasetIndex;
-        const month = months[elementIndex];
+        const period = periods[elementIndex];
         const state = displayStates[datasetIndex];
-        
-        if (month && state) {
-          setSelectedMonthState({ month, state });
+
+        if (period && state) {
+          setSelectedPeriodState({ period, state });
           setModalLoading(true);
-          
+
           try {
             // For "Others" group, we need to fetch orders for all other states
             if (state === 'Others') {
               // Fetch orders for all other states and combine them
               const allOrders = [];
               for (const otherState of otherStates) {
-                const response = await fetch(`/api/orders/by-month-and-state?month=${month}&state=${encodeURIComponent(otherState)}`);
+                let params = new URLSearchParams();
+                params.append('timePeriod', timePeriod);
+                params.append('period', period);
+                params.append('state', otherState);
+
+                const response = await fetch(`/api/orders/by-period-and-state?${params.toString()}`);
                 if (response.ok) {
                   const orders = await response.json();
                   allOrders.push(...orders);
@@ -323,12 +399,17 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
               }
               setModalOrders(allOrders);
             } else {
-              const response = await fetch(`/api/orders/by-month-and-state?month=${month}&state=${encodeURIComponent(state)}`);
+              let params = new URLSearchParams();
+              params.append('timePeriod', timePeriod);
+              params.append('period', period);
+              params.append('state', state);
+
+              const response = await fetch(`/api/orders/by-period-and-state?${params.toString()}`);
               if (response.ok) {
                 const orders = await response.json();
                 setModalOrders(orders);
               } else {
-                console.error('Failed to fetch orders for month and state:', month, state);
+                console.error('Failed to fetch orders for period and state:', period, state);
                 setModalOrders([]);
               }
             }
@@ -344,24 +425,49 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
   };
 
   const closeModal = () => {
-    setSelectedMonthState(null);
+    setSelectedPeriodState(null);
     setModalOrders([]);
   };
 
   return (
-    <>
-      <div className="h-64">
-        <Bar data={chartData} options={options} />
+    <div>
+      {/* Time Period Filter Dropdown */}
+      <div className="mb-4">
+        <label htmlFor="time-period-filter" className="block text-sm font-medium text-gray-700 mb-2">
+          Time Period
+        </label>
+        <select
+          id="time-period-filter"
+          value={timePeriod}
+          onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
+          className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        >
+          <option value="month">By Month (Last 12 months)</option>
+          <option value="week">By Week (Last 20 weeks)</option>
+          <option value="day">By Day (Last 31 days)</option>
+        </select>
       </div>
-      
+
+      {/* Chart */}
+      <div className="h-64">
+        {dataLoading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : (
+          <Bar data={chartData} options={options} />
+        )}
+      </div>
+
       <OrdersModal
-        isOpen={!!selectedMonthState}
+        isOpen={!!selectedPeriodState}
         onClose={closeModal}
-        month={selectedMonthState?.month || ''}
-        state={selectedMonthState?.state || ''}
+        period={selectedPeriodState?.period || ''}
+        state={selectedPeriodState?.state || ''}
+        timePeriod={timePeriod}
         orders={modalOrders}
         loading={modalLoading}
       />
-    </>
+    </div>
   );
 }

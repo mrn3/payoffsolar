@@ -2357,6 +2357,40 @@ export const OrderModel = {
     );
   },
 
+  async getRevenueByWeekAndState(weeks = 20): Promise<Array<{ week: string; state: string; revenue: number; count: number }>> {
+    return executeQuery<{ week: string; state: string; revenue: number; count: number }>(
+      `SELECT
+         CONCAT(YEAR(o.order_date), '-', LPAD(WEEK(o.order_date, 1), 2, '0')) as week,
+         COALESCE(c.state, 'Unknown') as state,
+         SUM(CAST(o.total AS DECIMAL(10,2))) as revenue,
+         COUNT(*) as count
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? WEEK)
+       GROUP BY YEAR(o.order_date), WEEK(o.order_date, 1), COALESCE(c.state, 'Unknown')
+       ORDER BY week ASC, state ASC`,
+      [weeks]
+    );
+  },
+
+  async getRevenueByDayAndState(days = 31): Promise<Array<{ day: string; state: string; revenue: number; count: number }>> {
+    return executeQuery<{ day: string; state: string; revenue: number; count: number }>(
+      `SELECT
+         DATE_FORMAT(o.order_date, '%Y-%m-%d') as day,
+         COALESCE(c.state, 'Unknown') as state,
+         SUM(CAST(o.total AS DECIMAL(10,2))) as revenue,
+         COUNT(*) as count
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+       GROUP BY DATE_FORMAT(o.order_date, '%Y-%m-%d'), COALESCE(c.state, 'Unknown')
+       ORDER BY day ASC, state ASC`,
+      [days]
+    );
+  },
+
   async getOrdersByMonth(month: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT o.*, c.name as contact_name
@@ -2639,6 +2673,63 @@ export const OrderModel = {
   },
 
   // Units sold analytics methods
+  async getUnitsSoldByMonthAndCategory(months = 12): Promise<Array<{ month: string; category: string; units_sold: number; order_count: number }>> {
+    return executeQuery<{ month: string; category: string; units_sold: number; order_count: number }>(
+      `SELECT
+         DATE_FORMAT(o.order_date, '%Y-%m') as month,
+         COALESCE(pc.name, 'Uncategorized') as category,
+         SUM(oi.quantity) as units_sold,
+         COUNT(DISTINCT o.id) as order_count
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+       GROUP BY DATE_FORMAT(o.order_date, '%Y-%m'), COALESCE(pc.name, 'Uncategorized')
+       ORDER BY month ASC, category ASC`,
+      [months]
+    );
+  },
+
+  async getUnitsSoldByWeekAndCategory(weeks = 20): Promise<Array<{ week: string; category: string; units_sold: number; order_count: number }>> {
+    return executeQuery<{ week: string; category: string; units_sold: number; order_count: number }>(
+      `SELECT
+         CONCAT(YEAR(o.order_date), '-', LPAD(WEEK(o.order_date, 1), 2, '0')) as week,
+         COALESCE(pc.name, 'Uncategorized') as category,
+         SUM(oi.quantity) as units_sold,
+         COUNT(DISTINCT o.id) as order_count
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? WEEK)
+       GROUP BY YEAR(o.order_date), WEEK(o.order_date, 1), COALESCE(pc.name, 'Uncategorized')
+       ORDER BY week ASC, category ASC`,
+      [weeks]
+    );
+  },
+
+  async getUnitsSoldByDayAndCategory(days = 31): Promise<Array<{ day: string; category: string; units_sold: number; order_count: number }>> {
+    return executeQuery<{ day: string; category: string; units_sold: number; order_count: number }>(
+      `SELECT
+         DATE_FORMAT(o.order_date, '%Y-%m-%d') as day,
+         COALESCE(pc.name, 'Uncategorized') as category,
+         SUM(oi.quantity) as units_sold,
+         COUNT(DISTINCT o.id) as order_count
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+       GROUP BY DATE_FORMAT(o.order_date, '%Y-%m-%d'), COALESCE(pc.name, 'Uncategorized')
+       ORDER BY day ASC, category ASC`,
+      [days]
+    );
+  },
+
   async getUnitsSoldByMonthAndState(months = 12, categoryId?: string | null): Promise<Array<{ month: string; state: string; units_sold: number; order_count: number }>> {
     const params = [months];
     let categoryFilter = '';
@@ -2821,6 +2912,82 @@ export const OrderModel = {
        GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
        ORDER BY o.order_date DESC, o.created_at DESC`,
       params
+    );
+  },
+
+  async getOrdersByMonthAndCategory(month: string, category: string): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*,
+              c.name as contact_name,
+              c.email as contact_email,
+              c.phone as contact_phone,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address,
+              SUM(oi.quantity) as units_sold
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       WHERE DATE_FORMAT(o.order_date, '%Y-%m') = ?
+         AND COALESCE(pc.name, 'Uncategorized') = ?
+         AND o.status = 'complete'
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      [month, category]
+    );
+  },
+
+  async getOrdersByWeekAndCategory(week: string, category: string): Promise<OrderWithContact[]> {
+    // Parse week format YYYY-WW
+    const [year, weekNum] = week.split('-');
+
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*,
+              c.name as contact_name,
+              c.email as contact_email,
+              c.phone as contact_phone,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address,
+              SUM(oi.quantity) as units_sold
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       WHERE YEAR(o.order_date) = ?
+         AND WEEK(o.order_date, 1) = ?
+         AND COALESCE(pc.name, 'Uncategorized') = ?
+         AND o.status = 'complete'
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      [year, weekNum, category]
+    );
+  },
+
+  async getOrdersByDayAndCategory(day: string, category: string): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*,
+              c.name as contact_name,
+              c.email as contact_email,
+              c.phone as contact_phone,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address,
+              SUM(oi.quantity) as units_sold
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       WHERE DATE_FORMAT(o.order_date, '%Y-%m-%d') = ?
+         AND COALESCE(pc.name, 'Uncategorized') = ?
+         AND o.status = 'complete'
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      [day, category]
     );
   }
 };

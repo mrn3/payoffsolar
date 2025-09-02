@@ -564,9 +564,9 @@ export default async function DashboardPage() {
           <div className="mt-5">
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">Monthly Revenue by Customer State (Complete Orders)</h3>
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Revenue by Customer State (Complete Orders)</h3>
                 <div className="mt-4">
-                  <RevenueByStateChart data={revenueByStateData} />
+                  <RevenueByStateChart initialData={revenueByStateData} />
                 </div>
               </div>
             </div>
@@ -576,9 +576,9 @@ export default async function DashboardPage() {
           <div className="mt-5">
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">Units Sold Over Time by Customer State (Complete Orders)</h3>
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Units Sold Over Time by Product Category (Complete Orders)</h3>
                 <div className="mt-4">
-                  <UnitsSoldChart categories={productCategories} />
+                  <UnitsSoldChart />
                 </div>
               </div>
             </div>

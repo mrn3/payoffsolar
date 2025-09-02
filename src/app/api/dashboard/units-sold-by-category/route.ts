@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const timePeriod = searchParams.get('timePeriod') || 'month';
 
-    let revenueData;
+    let unitsSoldData;
 
     switch (timePeriod) {
       case 'month':
@@ -14,32 +14,32 @@ export async function GET(request: NextRequest) {
         if (months < 1 || months > 24) {
           return NextResponse.json({ error: 'Months must be between 1 and 24' }, { status: 400 });
         }
-        revenueData = await OrderModel.getRevenueByMonthAndState(months);
+        unitsSoldData = await OrderModel.getUnitsSoldByMonthAndCategory(months);
         break;
-
+      
       case 'week':
         const weeks = parseInt(searchParams.get('weeks') || '20');
         if (weeks < 1 || weeks > 52) {
           return NextResponse.json({ error: 'Weeks must be between 1 and 52' }, { status: 400 });
         }
-        revenueData = await OrderModel.getRevenueByWeekAndState(weeks);
+        unitsSoldData = await OrderModel.getUnitsSoldByWeekAndCategory(weeks);
         break;
-
+      
       case 'day':
         const days = parseInt(searchParams.get('days') || '31');
         if (days < 1 || days > 365) {
           return NextResponse.json({ error: 'Days must be between 1 and 365' }, { status: 400 });
         }
-        revenueData = await OrderModel.getRevenueByDayAndState(days);
+        unitsSoldData = await OrderModel.getUnitsSoldByDayAndCategory(days);
         break;
-
+      
       default:
         return NextResponse.json({ error: 'Invalid timePeriod. Must be month, week, or day' }, { status: 400 });
     }
 
-    return NextResponse.json(revenueData);
+    return NextResponse.json(unitsSoldData);
   } catch (error) {
-    console.error('Error fetching revenue by state data:', error);
+    console.error('Error fetching units sold by category data:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

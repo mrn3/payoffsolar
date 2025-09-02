@@ -31,26 +31,26 @@ interface UnitsSoldData {
   month?: string;
   week?: string;
   day?: string;
-  state: string;
+  category: string;
   units_sold: number;
   order_count: number;
 }
 
 interface UnitsSoldChartProps {
-  categories: ProductCategory[];
+  categories?: ProductCategory[];
 }
 
 interface OrdersModalProps {
   isOpen: boolean;
   onClose: () => void;
   period: string;
-  state: string;
+  category: string;
   timePeriod: TimePeriod;
   orders: OrderWithContact[];
   loading: boolean;
 }
 
-function OrdersModal({ isOpen, onClose, period, state, timePeriod, orders, loading }: OrdersModalProps) {
+function OrdersModal({ isOpen, onClose, period, category, timePeriod, orders, loading }: OrdersModalProps) {
   if (!isOpen) return null;
 
   const formatPeriod = (period: string, timePeriod: TimePeriod) => {
@@ -79,7 +79,7 @@ function OrdersModal({ isOpen, onClose, period, state, timePeriod, orders, loadi
       <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-900">
-            Orders for {formatPeriod(period, timePeriod)} - {state}
+            Orders for {formatPeriod(period, timePeriod)} - {category}
           </h3>
           <button
             onClick={onClose}
@@ -96,7 +96,7 @@ function OrdersModal({ isOpen, onClose, period, state, timePeriod, orders, loadi
         ) : (
           <div className="max-h-96 overflow-y-auto">
             {orders.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No orders found for this period and state.</p>
+              <p className="text-gray-500 text-center py-4">No orders found for this period and category.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -156,27 +156,21 @@ function OrdersModal({ isOpen, onClose, period, state, timePeriod, orders, loadi
   );
 }
 
-export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps) {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
   const [data, setData] = useState<UnitsSoldData[]>([]);
-  const [filteredData, setFilteredData] = useState<UnitsSoldData[]>([]);
-  const [selectedPeriodState, setSelectedPeriodState] = useState<{ period: string; state: string } | null>(null);
+  const [selectedPeriodCategory, setSelectedPeriodCategory] = useState<{ period: string; category: string } | null>(null);
   const [modalOrders, setModalOrders] = useState<OrderWithContact[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
 
-  // Fetch data based on time period and category
-  const fetchData = async (period: TimePeriod, categoryId?: string) => {
+  // Fetch data based on time period
+  const fetchData = async (period: TimePeriod) => {
     setDataLoading(true);
     try {
-      let endpoint = '/api/dashboard/units-sold-by-state';
+      let endpoint = '/api/dashboard/units-sold-by-category';
       let params = new URLSearchParams();
       params.append('timePeriod', period);
-
-      if (categoryId) {
-        params.append('categoryId', categoryId);
-      }
 
       switch (period) {
         case 'month':
@@ -194,16 +188,13 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
       if (response.ok) {
         const newData = await response.json();
         setData(newData);
-        setFilteredData(newData);
       } else {
         console.error('Failed to fetch units sold data');
         setData([]);
-        setFilteredData([]);
       }
     } catch (error) {
       console.error('Error fetching units sold data:', error);
       setData([]);
-      setFilteredData([]);
     } finally {
       setDataLoading(false);
     }
@@ -211,52 +202,52 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
 
   // Initial data fetch
   useEffect(() => {
-    fetchData(timePeriod, selectedCategoryId || undefined);
-  }, [timePeriod, selectedCategoryId]);
+    fetchData(timePeriod);
+  }, [timePeriod]);
 
-  // Color palette for states
-  const stateColors = [
+  // Color palette for categories
+  const categoryColors = [
     '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
     '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1',
     '#14B8A6', '#F43F5E', '#8B5A2B', '#6B7280', '#DC2626'
   ];
 
-  // Get unique periods and calculate state totals
-  const periods = [...new Set(filteredData.map(item =>
+  // Get unique periods and calculate category totals
+  const periods = [...new Set(data.map(item =>
     item.month || item.week || item.day || ''
   ))].sort();
 
-  // Calculate total units sold by state to determine top 4
-  const stateTotals = filteredData.reduce((acc, item) => {
-    acc[item.state] = (acc[item.state] || 0) + item.units_sold;
+  // Calculate total units sold by category to determine top 4
+  const categoryTotals = data.reduce((acc, item) => {
+    acc[item.category] = (acc[item.category] || 0) + item.units_sold;
     return acc;
   }, {} as Record<string, number>);
 
-  // Sort states by total units sold and get top 4
-  const sortedStates = Object.entries(stateTotals)
+  // Sort categories by total units sold and get top 4
+  const sortedCategories = Object.entries(categoryTotals)
     .sort(([, a], [, b]) => b - a)
-    .map(([state]) => state);
+    .map(([category]) => category);
 
-  const topStates = sortedStates.slice(0, 4);
-  const otherStates = sortedStates.slice(4);
+  const topCategories = sortedCategories.slice(0, 4);
+  const otherCategories = sortedCategories.slice(4);
 
   // Process data to group "Others"
-  // Start with only data for top states
-  const processedData = filteredData.filter(item => topStates.includes(item.state));
+  // Start with only data for top categories
+  const processedData = data.filter(item => topCategories.includes(item.category));
 
-  // Add "Others" data points by combining all non-top states
-  if (otherStates.length > 0) {
+  // Add "Others" data points by combining all non-top categories
+  if (otherCategories.length > 0) {
     periods.forEach(period => {
-      const othersUnits = otherStates.reduce((sum, state) => {
-        const item = filteredData.find(d =>
-          (d.month === period || d.week === period || d.day === period) && d.state === state
+      const othersUnits = otherCategories.reduce((sum, category) => {
+        const item = data.find(d =>
+          (d.month === period || d.week === period || d.day === period) && d.category === category
         );
         return sum + (item ? item.units_sold : 0);
       }, 0);
 
-      const othersOrderCount = otherStates.reduce((sum, state) => {
-        const item = filteredData.find(d =>
-          (d.month === period || d.week === period || d.day === period) && d.state === state
+      const othersOrderCount = otherCategories.reduce((sum, category) => {
+        const item = data.find(d =>
+          (d.month === period || d.week === period || d.day === period) && d.category === category
         );
         return sum + (item ? item.order_count : 0);
       }, 0);
@@ -264,7 +255,7 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
       if (othersUnits > 0) {
         processedData.push({
           [timePeriod === 'month' ? 'month' : timePeriod === 'week' ? 'week' : 'day']: period,
-          state: 'Others',
+          category: 'Others',
           units_sold: othersUnits,
           order_count: othersOrderCount
         } as any);
@@ -272,10 +263,10 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
     });
   }
 
-  // Final states list (top 4 + Others if applicable)
-  const displayStates = [...topStates];
-  if (otherStates.length > 0) {
-    displayStates.push('Others');
+  // Final categories list (top 4 + Others if applicable)
+  const displayCategories = [...topCategories];
+  if (otherCategories.length > 0) {
+    displayCategories.push('Others');
   }
 
   const formatPeriodLabel = (period: string) => {
@@ -294,16 +285,16 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
   // Prepare chart data
   const chartData = {
     labels: periods.map(formatPeriodLabel),
-    datasets: displayStates.map((state, index) => ({
-      label: state,
+    datasets: displayCategories.map((category, index) => ({
+      label: category,
       data: periods.map(period => {
         const item = processedData.find(d =>
-          (d.month === period || d.week === period || d.day === period) && d.state === state
+          (d.month === period || d.week === period || d.day === period) && d.category === category
         );
         return item ? item.units_sold : 0;
       }),
-      backgroundColor: stateColors[index % stateColors.length],
-      borderColor: stateColors[index % stateColors.length],
+      backgroundColor: categoryColors[index % categoryColors.length],
+      borderColor: categoryColors[index % categoryColors.length],
       borderWidth: 1,
     })),
   };
@@ -327,14 +318,14 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
           label: function(context: any) {
             const datasetIndex = context.datasetIndex;
             const periodIndex = context.dataIndex;
-            const state = displayStates[datasetIndex];
+            const category = displayCategories[datasetIndex];
             const period = periods[periodIndex];
             const item = processedData.find(d =>
-              (d.month === period || d.week === period || d.day === period) && d.state === state
+              (d.month === period || d.week === period || d.day === period) && d.category === category
             );
             const units = context.parsed.y;
             const orderCount = item?.order_count || 0;
-            return `${state}: ${units} units (${orderCount} orders)`;
+            return `${category}: ${units} units (${orderCount} orders)`;
           },
         },
       },
@@ -356,28 +347,24 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
         const elementIndex = elements[0].index;
         const datasetIndex = elements[0].datasetIndex;
         const period = periods[elementIndex];
-        const state = displayStates[datasetIndex];
-        
-        if (period && state) {
-          setSelectedPeriodState({ period, state });
+        const category = displayCategories[datasetIndex];
+
+        if (period && category) {
+          setSelectedPeriodCategory({ period, category });
           setModalLoading(true);
-          
+
           try {
-            // For "Others" group, we need to fetch orders for all other states
-            if (state === 'Others') {
-              // Fetch orders for all other states and combine them
+            // For "Others" group, we need to fetch orders for all other categories
+            if (category === 'Others') {
+              // Fetch orders for all other categories and combine them
               const allOrders = [];
-              for (const otherState of otherStates) {
+              for (const otherCategory of otherCategories) {
                 let params = new URLSearchParams();
                 params.append('timePeriod', timePeriod);
                 params.append('period', period);
-                params.append('state', otherState);
+                params.append('category', otherCategory);
 
-                if (selectedCategoryId) {
-                  params.append('categoryId', selectedCategoryId);
-                }
-
-                const response = await fetch(`/api/orders/by-period-and-state?${params.toString()}`);
+                const response = await fetch(`/api/orders/by-period-and-category?${params.toString()}`);
                 if (response.ok) {
                   const orders = await response.json();
                   allOrders.push(...orders);
@@ -388,18 +375,14 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
               let params = new URLSearchParams();
               params.append('timePeriod', timePeriod);
               params.append('period', period);
-              params.append('state', state);
+              params.append('category', category);
 
-              if (selectedCategoryId) {
-                params.append('categoryId', selectedCategoryId);
-              }
-
-              const response = await fetch(`/api/orders/by-period-and-state?${params.toString()}`);
+              const response = await fetch(`/api/orders/by-period-and-category?${params.toString()}`);
               if (response.ok) {
                 const orders = await response.json();
                 setModalOrders(orders);
               } else {
-                console.error('Failed to fetch orders for period and state:', period, state);
+                console.error('Failed to fetch orders for period and category:', period, category);
                 setModalOrders([]);
               }
             }
@@ -415,48 +398,27 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
   };
 
   const closeModal = () => {
-    setSelectedPeriodState(null);
+    setSelectedPeriodCategory(null);
     setModalOrders([]);
   };
 
   return (
     <div>
-      {/* Time Period and Category Filter Dropdowns */}
-      <div className="mb-4 flex flex-wrap gap-4">
-        <div>
-          <label htmlFor="time-period-filter" className="block text-sm font-medium text-gray-700 mb-2">
-            Time Period
-          </label>
-          <select
-            id="time-period-filter"
-            value={timePeriod}
-            onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
-            className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          >
-            <option value="month">By Month (Last 12 months)</option>
-            <option value="week">By Week (Last 20 weeks)</option>
-            <option value="day">By Day (Last 31 days)</option>
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-2">
-            Product Category
-          </label>
-          <select
-            id="category-filter"
-            value={selectedCategoryId}
-            onChange={(e) => setSelectedCategoryId(e.target.value)}
-            className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          >
-            <option value="">All Categories</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Time Period Filter Dropdown */}
+      <div className="mb-4">
+        <label htmlFor="time-period-filter" className="block text-sm font-medium text-gray-700 mb-2">
+          Time Period
+        </label>
+        <select
+          id="time-period-filter"
+          value={timePeriod}
+          onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
+          className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        >
+          <option value="month">By Month (Last 12 months)</option>
+          <option value="week">By Week (Last 20 weeks)</option>
+          <option value="day">By Day (Last 31 days)</option>
+        </select>
       </div>
 
       {/* Chart */}
@@ -469,12 +431,12 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
           <Bar data={chartData} options={options} />
         )}
       </div>
-      
+
       <OrdersModal
-        isOpen={!!selectedPeriodState}
+        isOpen={!!selectedPeriodCategory}
         onClose={closeModal}
-        period={selectedPeriodState?.period || ''}
-        state={selectedPeriodState?.state || ''}
+        period={selectedPeriodCategory?.period || ''}
+        category={selectedPeriodCategory?.category || ''}
         timePeriod={timePeriod}
         orders={modalOrders}
         loading={modalLoading}
