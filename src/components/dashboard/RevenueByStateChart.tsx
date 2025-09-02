@@ -193,7 +193,8 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
   const otherStates = sortedStates.slice(4);
 
   // Process data to group "Others"
-  const processedData = [...data];
+  // Start with only data for top states
+  const processedData = data.filter(item => topStates.includes(item.state));
 
   // Add "Others" data points by combining all non-top states
   if (otherStates.length > 0) {

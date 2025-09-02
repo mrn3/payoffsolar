@@ -241,7 +241,8 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
   const otherStates = sortedStates.slice(4);
 
   // Process data to group "Others"
-  const processedData = [...filteredData];
+  // Start with only data for top states
+  const processedData = filteredData.filter(item => topStates.includes(item.state));
 
   // Add "Others" data points by combining all non-top states
   if (otherStates.length > 0) {
