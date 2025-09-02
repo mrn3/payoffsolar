@@ -175,9 +175,55 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
     }).format(amount);
   };
 
-  // Get unique months and states
+  // Get unique months and calculate state totals
   const months = [...new Set(data.map(item => item.month))].sort();
-  const states = [...new Set(data.map(item => item.state))].sort();
+
+  // Calculate total revenue by state to determine top 4
+  const stateTotals = data.reduce((acc, item) => {
+    acc[item.state] = (acc[item.state] || 0) + item.revenue;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Sort states by total revenue and get top 4
+  const sortedStates = Object.entries(stateTotals)
+    .sort(([, a], [, b]) => b - a)
+    .map(([state]) => state);
+
+  const topStates = sortedStates.slice(0, 4);
+  const otherStates = sortedStates.slice(4);
+
+  // Process data to group "Others"
+  const processedData = [...data];
+
+  // Add "Others" data points by combining all non-top states
+  if (otherStates.length > 0) {
+    months.forEach(month => {
+      const othersRevenue = otherStates.reduce((sum, state) => {
+        const item = data.find(d => d.month === month && d.state === state);
+        return sum + (item ? item.revenue : 0);
+      }, 0);
+
+      const othersCount = otherStates.reduce((sum, state) => {
+        const item = data.find(d => d.month === month && d.state === state);
+        return sum + (item ? item.count : 0);
+      }, 0);
+
+      if (othersRevenue > 0) {
+        processedData.push({
+          month,
+          state: 'Others',
+          revenue: othersRevenue,
+          count: othersCount
+        });
+      }
+    });
+  }
+
+  // Final states list (top 4 + Others if applicable)
+  const displayStates = [...topStates];
+  if (otherStates.length > 0) {
+    displayStates.push('Others');
+  }
 
   // Generate colors for each state
   const stateColors = [
@@ -185,7 +231,7 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
     'rgba(59, 130, 246, 0.8)',  // Blue
     'rgba(239, 68, 68, 0.8)',   // Red
     'rgba(245, 158, 11, 0.8)',  // Yellow
-    'rgba(139, 92, 246, 0.8)',  // Purple
+    'rgba(139, 92, 246, 0.8)',  // Purple - for Others
     'rgba(236, 72, 153, 0.8)',  // Pink
     'rgba(20, 184, 166, 0.8)',  // Teal
     'rgba(251, 146, 60, 0.8)',  // Orange
@@ -196,10 +242,10 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
   // Prepare chart data
   const chartData = {
     labels: months.map(formatMonth),
-    datasets: states.map((state, index) => ({
+    datasets: displayStates.map((state, index) => ({
       label: state,
       data: months.map(month => {
-        const item = data.find(d => d.month === month && d.state === state);
+        const item = processedData.find(d => d.month === month && d.state === state);
         return item ? item.revenue : 0;
       }),
       backgroundColor: stateColors[index % stateColors.length],
@@ -227,9 +273,9 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
           label: function(context: any) {
             const datasetIndex = context.datasetIndex;
             const monthIndex = context.dataIndex;
-            const state = states[datasetIndex];
+            const state = displayStates[datasetIndex];
             const month = months[monthIndex];
-            const item = data.find(d => d.month === month && d.state === state);
+            const item = processedData.find(d => d.month === month && d.state === state);
             const revenue = formatCurrency(context.parsed.y);
             const count = item?.count || 0;
             return `${state}: ${revenue} (${count} orders)`;
@@ -256,20 +302,34 @@ export default function RevenueByStateChart({ data }: RevenueByStateChartProps) 
         const elementIndex = elements[0].index;
         const datasetIndex = elements[0].datasetIndex;
         const month = months[elementIndex];
-        const state = states[datasetIndex];
+        const state = displayStates[datasetIndex];
         
         if (month && state) {
           setSelectedMonthState({ month, state });
           setModalLoading(true);
           
           try {
-            const response = await fetch(`/api/orders/by-month-and-state?month=${month}&state=${encodeURIComponent(state)}`);
-            if (response.ok) {
-              const orders = await response.json();
-              setModalOrders(orders);
+            // For "Others" group, we need to fetch orders for all other states
+            if (state === 'Others') {
+              // Fetch orders for all other states and combine them
+              const allOrders = [];
+              for (const otherState of otherStates) {
+                const response = await fetch(`/api/orders/by-month-and-state?month=${month}&state=${encodeURIComponent(otherState)}`);
+                if (response.ok) {
+                  const orders = await response.json();
+                  allOrders.push(...orders);
+                }
+              }
+              setModalOrders(allOrders);
             } else {
-              console.error('Failed to fetch orders for month and state:', month, state);
-              setModalOrders([]);
+              const response = await fetch(`/api/orders/by-month-and-state?month=${month}&state=${encodeURIComponent(state)}`);
+              if (response.ok) {
+                const orders = await response.json();
+                setModalOrders(orders);
+              } else {
+                console.error('Failed to fetch orders for month and state:', month, state);
+                setModalOrders([]);
+              }
             }
           } catch (error) {
             console.error('Error fetching orders:', error);

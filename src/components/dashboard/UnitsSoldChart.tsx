@@ -221,12 +221,61 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
     '#14B8A6', '#F43F5E', '#8B5A2B', '#6B7280', '#DC2626'
   ];
 
-  // Get unique periods and states
-  const periods = [...new Set(filteredData.map(item => 
+  // Get unique periods and calculate state totals
+  const periods = [...new Set(filteredData.map(item =>
     item.month || item.week || item.day || ''
   ))].sort();
-  
-  const states = [...new Set(filteredData.map(item => item.state))].sort();
+
+  // Calculate total units sold by state to determine top 4
+  const stateTotals = filteredData.reduce((acc, item) => {
+    acc[item.state] = (acc[item.state] || 0) + item.units_sold;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Sort states by total units sold and get top 4
+  const sortedStates = Object.entries(stateTotals)
+    .sort(([, a], [, b]) => b - a)
+    .map(([state]) => state);
+
+  const topStates = sortedStates.slice(0, 4);
+  const otherStates = sortedStates.slice(4);
+
+  // Process data to group "Others"
+  const processedData = [...filteredData];
+
+  // Add "Others" data points by combining all non-top states
+  if (otherStates.length > 0) {
+    periods.forEach(period => {
+      const othersUnits = otherStates.reduce((sum, state) => {
+        const item = filteredData.find(d =>
+          (d.month === period || d.week === period || d.day === period) && d.state === state
+        );
+        return sum + (item ? item.units_sold : 0);
+      }, 0);
+
+      const othersOrderCount = otherStates.reduce((sum, state) => {
+        const item = filteredData.find(d =>
+          (d.month === period || d.week === period || d.day === period) && d.state === state
+        );
+        return sum + (item ? item.order_count : 0);
+      }, 0);
+
+      if (othersUnits > 0) {
+        processedData.push({
+          [timePeriod === 'month' ? 'month' : timePeriod === 'week' ? 'week' : 'day']: period,
+          state: 'Others',
+          units_sold: othersUnits,
+          order_count: othersOrderCount
+        } as any);
+      }
+    });
+  }
+
+  // Final states list (top 4 + Others if applicable)
+  const displayStates = [...topStates];
+  if (otherStates.length > 0) {
+    displayStates.push('Others');
+  }
 
   const formatPeriodLabel = (period: string) => {
     if (timePeriod === 'month') {
@@ -244,10 +293,10 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
   // Prepare chart data
   const chartData = {
     labels: periods.map(formatPeriodLabel),
-    datasets: states.map((state, index) => ({
+    datasets: displayStates.map((state, index) => ({
       label: state,
       data: periods.map(period => {
-        const item = filteredData.find(d => 
+        const item = processedData.find(d =>
           (d.month === period || d.week === period || d.day === period) && d.state === state
         );
         return item ? item.units_sold : 0;
@@ -277,9 +326,9 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
           label: function(context: any) {
             const datasetIndex = context.datasetIndex;
             const periodIndex = context.dataIndex;
-            const state = states[datasetIndex];
+            const state = displayStates[datasetIndex];
             const period = periods[periodIndex];
-            const item = filteredData.find(d => 
+            const item = processedData.find(d =>
               (d.month === period || d.week === period || d.day === period) && d.state === state
             );
             const units = context.parsed.y;
@@ -306,29 +355,52 @@ export default function UnitsSoldChart({ categories }: UnitsSoldChartProps) {
         const elementIndex = elements[0].index;
         const datasetIndex = elements[0].datasetIndex;
         const period = periods[elementIndex];
-        const state = states[datasetIndex];
+        const state = displayStates[datasetIndex];
         
         if (period && state) {
           setSelectedPeriodState({ period, state });
           setModalLoading(true);
           
           try {
-            let params = new URLSearchParams();
-            params.append('timePeriod', timePeriod);
-            params.append('period', period);
-            params.append('state', state);
-            
-            if (selectedCategoryId) {
-              params.append('categoryId', selectedCategoryId);
-            }
+            // For "Others" group, we need to fetch orders for all other states
+            if (state === 'Others') {
+              // Fetch orders for all other states and combine them
+              const allOrders = [];
+              for (const otherState of otherStates) {
+                let params = new URLSearchParams();
+                params.append('timePeriod', timePeriod);
+                params.append('period', period);
+                params.append('state', otherState);
 
-            const response = await fetch(`/api/orders/by-period-and-state?${params.toString()}`);
-            if (response.ok) {
-              const orders = await response.json();
-              setModalOrders(orders);
+                if (selectedCategoryId) {
+                  params.append('categoryId', selectedCategoryId);
+                }
+
+                const response = await fetch(`/api/orders/by-period-and-state?${params.toString()}`);
+                if (response.ok) {
+                  const orders = await response.json();
+                  allOrders.push(...orders);
+                }
+              }
+              setModalOrders(allOrders);
             } else {
-              console.error('Failed to fetch orders for period and state:', period, state);
-              setModalOrders([]);
+              let params = new URLSearchParams();
+              params.append('timePeriod', timePeriod);
+              params.append('period', period);
+              params.append('state', state);
+
+              if (selectedCategoryId) {
+                params.append('categoryId', selectedCategoryId);
+              }
+
+              const response = await fetch(`/api/orders/by-period-and-state?${params.toString()}`);
+              if (response.ok) {
+                const orders = await response.json();
+                setModalOrders(orders);
+              } else {
+                console.error('Failed to fetch orders for period and state:', period, state);
+                setModalOrders([]);
+              }
             }
           } catch (error) {
             console.error('Error fetching orders:', error);
