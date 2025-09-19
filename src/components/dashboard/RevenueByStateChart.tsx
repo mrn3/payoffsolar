@@ -175,7 +175,7 @@ function OrdersModal({ isOpen, onClose, period, state, timePeriod, orders, loadi
 }
 
 export default function RevenueByStateChart({ initialData }: RevenueByStateChartProps) {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('year');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
   const [data, setData] = useState<RevenueByStateData[]>(initialData || []);
   const [dataLoading, setDataLoading] = useState(false);
   const [selectedPeriodState, setSelectedPeriodState] = useState<{ period: string; state: string } | null>(null);

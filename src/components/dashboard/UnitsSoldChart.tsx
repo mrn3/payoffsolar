@@ -164,7 +164,7 @@ function OrdersModal({ isOpen, onClose, period, category, timePeriod, orders, lo
 }
 
 export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps) {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('year');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
   const [data, setData] = useState<UnitsSoldData[]>([]);
   const [selectedPeriodCategory, setSelectedPeriodCategory] = useState<{ period: string; category: string } | null>(null);
   const [modalOrders, setModalOrders] = useState<OrderWithContact[]>([]);

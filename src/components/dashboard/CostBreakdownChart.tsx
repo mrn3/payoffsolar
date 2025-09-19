@@ -239,7 +239,7 @@ function formatCurrency(value: number): string {
 
 export default function CostBreakdownChart({ initialData, categories }: CostBreakdownChartProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('year');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
   const [data, setData] = useState<CostBreakdownData[]>(initialData);
   const [filteredData, setFilteredData] = useState<CostBreakdownData[]>(initialData);
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
