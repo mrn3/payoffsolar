@@ -25,9 +25,10 @@ ChartJS.register(
   Legend
 );
 
-type TimePeriod = 'month' | 'week' | 'day';
+type TimePeriod = 'year' | 'month' | 'week' | 'day';
 
 interface RevenueByStateData {
+  year?: string;
   month?: string;
   week?: string;
   day?: string;
@@ -54,10 +55,16 @@ function OrdersModal({ isOpen, onClose, period, state, timePeriod, orders, loadi
   if (!isOpen) return null;
 
   const formatPeriod = (period: string, timePeriod: TimePeriod) => {
-    if (timePeriod === 'month') {
-      const [year, month] = period.split('-');
-      const date = new Date(parseInt(year), parseInt(month) - 1);
-      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+    if (timePeriod === 'year') {
+      return period;
+    } else if (timePeriod === 'month') {
+      const parts = period.split('-');
+      if (parts.length >= 2) {
+        const [year, month] = parts;
+        const date = new Date(parseInt(year), parseInt(month) - 1);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+      }
+      return period;
     } else if (timePeriod === 'week') {
       return `Week ${period}`;
     } else {
@@ -168,7 +175,7 @@ function OrdersModal({ isOpen, onClose, period, state, timePeriod, orders, loadi
 }
 
 export default function RevenueByStateChart({ initialData }: RevenueByStateChartProps) {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('year');
   const [data, setData] = useState<RevenueByStateData[]>(initialData || []);
   const [dataLoading, setDataLoading] = useState(false);
   const [selectedPeriodState, setSelectedPeriodState] = useState<{ period: string; state: string } | null>(null);
@@ -184,6 +191,9 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
       params.append('timePeriod', period);
 
       switch (period) {
+        case 'year':
+          params.append('years', '5');
+          break;
         case 'month':
           params.append('months', '12');
           break;
@@ -217,12 +227,19 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
   }, [timePeriod]);
 
   const formatPeriodLabel = (period: string) => {
-    if (timePeriod === 'month') {
-      const [year, month] = period.split('-');
-      const date = new Date(parseInt(year), parseInt(month) - 1);
-      return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    if (timePeriod === 'year') {
+      return period;
+    } else if (timePeriod === 'month') {
+      const parts = period.split('-');
+      if (parts.length >= 2) {
+        const [year, month] = parts;
+        const date = new Date(parseInt(year), parseInt(month) - 1);
+        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      }
+      return period;
     } else if (timePeriod === 'week') {
-      return `W${period.split('-')[1]}`;
+      const parts = period.split('-');
+      return parts.length > 1 ? `W${parts[1]}` : period;
     } else {
       const date = new Date(period);
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -240,7 +257,7 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
 
   // Get unique periods and calculate state totals
   const periods = [...new Set(data.map(item =>
-    item.month || item.week || item.day || ''
+    item.year || item.month || item.week || item.day || ''
   ))].sort();
 
   // Calculate total revenue by state to determine top 4
@@ -266,21 +283,21 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
     periods.forEach(period => {
       const othersRevenue = otherStates.reduce((sum, state) => {
         const item = data.find(d =>
-          (d.month === period || d.week === period || d.day === period) && d.state === state
+          (d.year === period || d.month === period || d.week === period || d.day === period) && d.state === state
         );
         return sum + (item ? item.revenue : 0);
       }, 0);
 
       const othersCount = otherStates.reduce((sum, state) => {
         const item = data.find(d =>
-          (d.month === period || d.week === period || d.day === period) && d.state === state
+          (d.year === period || d.month === period || d.week === period || d.day === period) && d.state === state
         );
         return sum + (item ? item.count : 0);
       }, 0);
 
       if (othersRevenue > 0) {
         processedData.push({
-          [timePeriod === 'month' ? 'month' : timePeriod === 'week' ? 'week' : 'day']: period,
+          [timePeriod === 'year' ? 'year' : timePeriod === 'month' ? 'month' : timePeriod === 'week' ? 'week' : 'day']: period,
           state: 'Others',
           revenue: othersRevenue,
           count: othersCount
@@ -316,7 +333,7 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
       label: state,
       data: periods.map(period => {
         const item = processedData.find(d =>
-          (d.month === period || d.week === period || d.day === period) && d.state === state
+          (d.year === period || d.month === period || d.week === period || d.day === period) && d.state === state
         );
         return item ? item.revenue : 0;
       }),
@@ -442,6 +459,7 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
           onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
           className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
         >
+          <option value="year">By Year (Last 5 years)</option>
           <option value="month">By Month (Last 12 months)</option>
           <option value="week">By Week (Last 20 weeks)</option>
           <option value="day">By Day (Last 31 days)</option>

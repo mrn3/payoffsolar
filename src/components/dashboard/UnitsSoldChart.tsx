@@ -25,9 +25,10 @@ ChartJS.register(
   Legend
 );
 
-type TimePeriod = 'month' | 'week' | 'day';
+type TimePeriod = 'year' | 'month' | 'week' | 'day';
 
 interface UnitsSoldData {
+  year?: string;
   month?: string;
   week?: string;
   day?: string;
@@ -54,10 +55,16 @@ function OrdersModal({ isOpen, onClose, period, category, timePeriod, orders, lo
   if (!isOpen) return null;
 
   const formatPeriod = (period: string, timePeriod: TimePeriod) => {
-    if (timePeriod === 'month') {
-      const [year, month] = period.split('-');
-      const date = new Date(parseInt(year), parseInt(month) - 1);
-      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+    if (timePeriod === 'year') {
+      return period;
+    } else if (timePeriod === 'month') {
+      const parts = period.split('-');
+      if (parts.length >= 2) {
+        const [year, month] = parts;
+        const date = new Date(parseInt(year), parseInt(month) - 1);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+      }
+      return period;
     } else if (timePeriod === 'week') {
       return `Week ${period}`;
     } else {
@@ -157,7 +164,7 @@ function OrdersModal({ isOpen, onClose, period, category, timePeriod, orders, lo
 }
 
 export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps) {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('year');
   const [data, setData] = useState<UnitsSoldData[]>([]);
   const [selectedPeriodCategory, setSelectedPeriodCategory] = useState<{ period: string; category: string } | null>(null);
   const [modalOrders, setModalOrders] = useState<OrderWithContact[]>([]);
@@ -173,6 +180,9 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
       params.append('timePeriod', period);
 
       switch (period) {
+        case 'year':
+          params.append('years', '5');
+          break;
         case 'month':
           params.append('months', '12');
           break;
@@ -214,7 +224,7 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
 
   // Get unique periods and calculate category totals
   const periods = [...new Set(data.map(item =>
-    item.month || item.week || item.day || ''
+    item.year || item.month || item.week || item.day || ''
   ))].sort();
 
   // Calculate total units sold by category to determine top 4
@@ -240,21 +250,21 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
     periods.forEach(period => {
       const othersUnits = otherCategories.reduce((sum, category) => {
         const item = data.find(d =>
-          (d.month === period || d.week === period || d.day === period) && d.category === category
+          (d.year === period || d.month === period || d.week === period || d.day === period) && d.category === category
         );
         return sum + (item ? item.units_sold : 0);
       }, 0);
 
       const othersOrderCount = otherCategories.reduce((sum, category) => {
         const item = data.find(d =>
-          (d.month === period || d.week === period || d.day === period) && d.category === category
+          (d.year === period || d.month === period || d.week === period || d.day === period) && d.category === category
         );
         return sum + (item ? item.order_count : 0);
       }, 0);
 
       if (othersUnits > 0) {
         processedData.push({
-          [timePeriod === 'month' ? 'month' : timePeriod === 'week' ? 'week' : 'day']: period,
+          [timePeriod === 'year' ? 'year' : timePeriod === 'month' ? 'month' : timePeriod === 'week' ? 'week' : 'day']: period,
           category: 'Others',
           units_sold: othersUnits,
           order_count: othersOrderCount
@@ -270,12 +280,19 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
   }
 
   const formatPeriodLabel = (period: string) => {
-    if (timePeriod === 'month') {
-      const [year, month] = period.split('-');
-      const date = new Date(parseInt(year), parseInt(month) - 1);
-      return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    if (timePeriod === 'year') {
+      return period;
+    } else if (timePeriod === 'month') {
+      const parts = period.split('-');
+      if (parts.length >= 2) {
+        const [year, month] = parts;
+        const date = new Date(parseInt(year), parseInt(month) - 1);
+        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      }
+      return period;
     } else if (timePeriod === 'week') {
-      return `W${period.split('-')[1]}`;
+      const parts = period.split('-');
+      return parts.length > 1 ? `W${parts[1]}` : period;
     } else {
       const date = new Date(period);
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -289,7 +306,7 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
       label: category,
       data: periods.map(period => {
         const item = processedData.find(d =>
-          (d.month === period || d.week === period || d.day === period) && d.category === category
+          (d.year === period || d.month === period || d.week === period || d.day === period) && d.category === category
         );
         return item ? item.units_sold : 0;
       }),
@@ -415,6 +432,7 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
           onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
           className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
         >
+          <option value="year">By Year (Last 5 years)</option>
           <option value="month">By Month (Last 12 months)</option>
           <option value="week">By Week (Last 20 weeks)</option>
           <option value="day">By Day (Last 31 days)</option>

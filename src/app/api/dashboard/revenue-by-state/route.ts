@@ -9,6 +9,14 @@ export async function GET(request: NextRequest) {
     let revenueData;
 
     switch (timePeriod) {
+      case 'year':
+        const years = parseInt(searchParams.get('years') || '5');
+        if (years < 1 || years > 10) {
+          return NextResponse.json({ error: 'Years must be between 1 and 10' }, { status: 400 });
+        }
+        revenueData = await OrderModel.getRevenueByYearAndState(years);
+        break;
+
       case 'month':
         const months = parseInt(searchParams.get('months') || '12');
         if (months < 1 || months > 24) {
@@ -34,7 +42,7 @@ export async function GET(request: NextRequest) {
         break;
 
       default:
-        return NextResponse.json({ error: 'Invalid timePeriod. Must be month, week, or day' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid timePeriod. Must be year, month, week, or day' }, { status: 400 });
     }
 
     return NextResponse.json(revenueData);

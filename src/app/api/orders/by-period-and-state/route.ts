@@ -16,6 +16,15 @@ export async function GET(request: NextRequest) {
     let orders;
 
     switch (timePeriod) {
+      case 'year':
+        // Validate year format (YYYY)
+        const yearRegex = /^\d{4}$/;
+        if (!yearRegex.test(period)) {
+          return NextResponse.json({ error: 'Invalid year format. Use YYYY' }, { status: 400 });
+        }
+        orders = await OrderModel.getOrdersByYearAndState(period, state, categoryId);
+        break;
+
       case 'month':
         // Validate month format (YYYY-MM)
         const monthRegex = /^\d{4}-\d{2}$/;
@@ -24,7 +33,7 @@ export async function GET(request: NextRequest) {
         }
         orders = await OrderModel.getOrdersByMonthAndState(period, state, categoryId);
         break;
-      
+
       case 'week':
         // Validate week format (YYYY-WW)
         const weekRegex = /^\d{4}-\d{1,2}$/;
@@ -33,7 +42,7 @@ export async function GET(request: NextRequest) {
         }
         orders = await OrderModel.getOrdersByWeekAndState(period, state, categoryId);
         break;
-      
+
       case 'day':
         // Validate day format (YYYY-MM-DD)
         const dayRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -42,9 +51,9 @@ export async function GET(request: NextRequest) {
         }
         orders = await OrderModel.getOrdersByDayAndState(period, state, categoryId);
         break;
-      
+
       default:
-        return NextResponse.json({ error: 'Invalid timePeriod. Must be month, week, or day' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid timePeriod. Must be year, month, week, or day' }, { status: 400 });
     }
 
     return NextResponse.json(orders);

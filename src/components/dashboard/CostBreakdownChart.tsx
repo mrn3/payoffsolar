@@ -26,6 +26,7 @@ ChartJS.register(
 );
 
 interface CostBreakdownData {
+  year?: string;
   month?: string;
   week?: string;
   day?: string;
@@ -38,7 +39,7 @@ interface CostCategory {
   name: string;
 }
 
-type TimePeriod = 'month' | 'week' | 'day';
+type TimePeriod = 'year' | 'month' | 'week' | 'day';
 
 interface CostBreakdownChartProps {
   initialData: CostBreakdownData[];
@@ -79,13 +80,23 @@ function OrdersModal({ isOpen, onClose, period, periodType, category, orders, lo
   if (!isOpen) return null;
 
   const formatPeriod = (periodStr: string, type: TimePeriod) => {
-    if (type === 'month') {
-      const [year, month] = periodStr.split('-');
-      const date = new Date(parseInt(year), parseInt(month) - 1);
-      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    if (type === 'year') {
+      return periodStr;
+    } else if (type === 'month') {
+      const parts = periodStr.split('-');
+      if (parts.length >= 2) {
+        const [year, month] = parts;
+        const date = new Date(parseInt(year), parseInt(month) - 1);
+        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      }
+      return periodStr;
     } else if (type === 'week') {
-      const [year, week] = periodStr.split('-');
-      return `Week ${week}, ${year}`;
+      const parts = periodStr.split('-');
+      if (parts.length >= 2) {
+        const [year, week] = parts;
+        return `Week ${week}, ${year}`;
+      }
+      return periodStr;
     } else if (type === 'day') {
       return new Date(periodStr).toLocaleDateString('en-US', {
         weekday: 'long',
@@ -208,9 +219,13 @@ function OrdersModal({ isOpen, onClose, period, periodType, category, orders, lo
 }
 
 function formatMonth(monthStr: string): string {
-  const [year, month] = monthStr.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1);
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const parts = monthStr.split('-');
+  if (parts.length >= 2) {
+    const [year, month] = parts;
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
+  return monthStr;
 }
 
 function formatCurrency(value: number): string {
@@ -224,7 +239,7 @@ function formatCurrency(value: number): string {
 
 export default function CostBreakdownChart({ initialData, categories }: CostBreakdownChartProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('year');
   const [data, setData] = useState<CostBreakdownData[]>(initialData);
   const [filteredData, setFilteredData] = useState<CostBreakdownData[]>(initialData);
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
@@ -245,6 +260,10 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
       }
 
       switch (period) {
+        case 'year':
+          endpoint = '/api/orders/cost-breakdown-by-year';
+          params.append('years', '5');
+          break;
         case 'month':
           endpoint = '/api/orders/cost-breakdown-by-month';
           params.append('months', '12');
@@ -312,6 +331,7 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
 
   // Get unique periods and categories from filtered data
   const periods = [...new Set(filteredData.map(item => {
+    if (timePeriod === 'year') return item.year;
     if (timePeriod === 'month') return item.month;
     if (timePeriod === 'week') return item.week;
     return item.day;
@@ -321,11 +341,13 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
 
   // Format period labels
   const formatPeriodLabel = (period: string) => {
-    if (timePeriod === 'month') {
+    if (timePeriod === 'year') {
+      return period;
+    } else if (timePeriod === 'month') {
       return formatMonth(period);
     } else if (timePeriod === 'week') {
-      const [year, week] = period.split('-');
-      return `W${week}`;
+      const parts = period.split('-');
+      return parts.length > 1 ? `W${parts[1]}` : period;
     } else {
       return new Date(period).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
@@ -468,6 +490,7 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
             onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
             className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
+            <option value="year">By Year (Last 5 years)</option>
             <option value="month">By Month (Last 12 months)</option>
             <option value="week">By Week (Last 20 weeks)</option>
             <option value="day">By Day (Last 31 days)</option>
