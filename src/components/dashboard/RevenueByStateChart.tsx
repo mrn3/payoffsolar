@@ -226,22 +226,23 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
     fetchData(timePeriod);
   }, [timePeriod]);
 
-  const formatPeriodLabel = (period: string) => {
+  const formatPeriodLabel = (period: string | number) => {
+    const periodStr = String(period);
     if (timePeriod === 'year') {
-      return period;
+      return periodStr;
     } else if (timePeriod === 'month') {
-      const parts = period.split('-');
+      const parts = periodStr.split('-');
       if (parts.length >= 2) {
         const [year, month] = parts;
         const date = new Date(parseInt(year), parseInt(month) - 1);
         return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       }
-      return period;
+      return periodStr;
     } else if (timePeriod === 'week') {
-      const parts = period.split('-');
-      return parts.length > 1 ? `W${parts[1]}` : period;
+      const parts = periodStr.split('-');
+      return parts.length > 1 ? `W${parts[1]}` : periodStr;
     } else {
-      const date = new Date(period);
+      const date = new Date(periodStr);
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
   };
@@ -257,7 +258,7 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
 
   // Get unique periods and calculate state totals
   const periods = [...new Set(data.map(item =>
-    item.year || item.month || item.week || item.day || ''
+    String(item.year || item.month || item.week || item.day || '')
   ))].sort();
 
   // Calculate total revenue by state to determine top 4

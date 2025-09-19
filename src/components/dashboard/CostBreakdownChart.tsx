@@ -331,25 +331,26 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
 
   // Get unique periods and categories from filtered data
   const periods = [...new Set(filteredData.map(item => {
-    if (timePeriod === 'year') return item.year;
-    if (timePeriod === 'month') return item.month;
-    if (timePeriod === 'week') return item.week;
-    return item.day;
+    if (timePeriod === 'year') return String(item.year);
+    if (timePeriod === 'month') return String(item.month);
+    if (timePeriod === 'week') return String(item.week);
+    return String(item.day);
   }))].filter(Boolean).sort();
 
   const categoryNames = [...new Set(filteredData.map(item => item.category_name))].sort();
 
   // Format period labels
-  const formatPeriodLabel = (period: string) => {
+  const formatPeriodLabel = (period: string | number) => {
+    const periodStr = String(period);
     if (timePeriod === 'year') {
-      return period;
+      return periodStr;
     } else if (timePeriod === 'month') {
-      return formatMonth(period);
+      return formatMonth(periodStr);
     } else if (timePeriod === 'week') {
-      const parts = period.split('-');
-      return parts.length > 1 ? `W${parts[1]}` : period;
+      const parts = periodStr.split('-');
+      return parts.length > 1 ? `W${parts[1]}` : periodStr;
     } else {
-      return new Date(period).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return new Date(periodStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
   };
 
