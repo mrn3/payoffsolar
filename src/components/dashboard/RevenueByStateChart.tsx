@@ -284,14 +284,14 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
     periods.forEach(period => {
       const othersRevenue = otherStates.reduce((sum, state) => {
         const item = data.find(d =>
-          (d.year === period || d.month === period || d.week === period || d.day === period) && d.state === state
+          (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.state === state
         );
         return sum + (item ? item.revenue : 0);
       }, 0);
 
       const othersCount = otherStates.reduce((sum, state) => {
         const item = data.find(d =>
-          (d.year === period || d.month === period || d.week === period || d.day === period) && d.state === state
+          (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.state === state
         );
         return sum + (item ? item.count : 0);
       }, 0);
@@ -334,7 +334,7 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
       label: state,
       data: periods.map(period => {
         const item = processedData.find(d =>
-          (d.year === period || d.month === period || d.week === period || d.day === period) && d.state === state
+          (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.state === state
         );
         return item ? item.revenue : 0;
       }),
@@ -362,10 +362,12 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
         callbacks: {
           label: function(context: any) {
             const datasetIndex = context.datasetIndex;
-            const monthIndex = context.dataIndex;
+            const periodIndex = context.dataIndex;
             const state = displayStates[datasetIndex];
-            const month = months[monthIndex];
-            const item = processedData.find(d => d.month === month && d.state === state);
+            const period = periods[periodIndex];
+            const item = processedData.find(d =>
+              (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.state === state
+            );
             const revenue = formatCurrency(context.parsed.y);
             const count = item?.count || 0;
             return `${state}: ${revenue} (${count} orders)`;

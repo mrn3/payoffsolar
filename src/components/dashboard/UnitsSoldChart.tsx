@@ -250,14 +250,14 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
     periods.forEach(period => {
       const othersUnits = otherCategories.reduce((sum, category) => {
         const item = data.find(d =>
-          (d.year === period || d.month === period || d.week === period || d.day === period) && d.category === category
+          (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.category === category
         );
         return sum + (item ? item.units_sold : 0);
       }, 0);
 
       const othersOrderCount = otherCategories.reduce((sum, category) => {
         const item = data.find(d =>
-          (d.year === period || d.month === period || d.week === period || d.day === period) && d.category === category
+          (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.category === category
         );
         return sum + (item ? item.order_count : 0);
       }, 0);
@@ -307,7 +307,7 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
       label: category,
       data: periods.map(period => {
         const item = processedData.find(d =>
-          (d.year === period || d.month === period || d.week === period || d.day === period) && d.category === category
+          (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.category === category
         );
         return item ? item.units_sold : 0;
       }),
@@ -339,7 +339,7 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
             const category = displayCategories[datasetIndex];
             const period = periods[periodIndex];
             const item = processedData.find(d =>
-              (d.month === period || d.week === period || d.day === period) && d.category === category
+              (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.category === category
             );
             const units = context.parsed.y;
             const orderCount = item?.order_count || 0;

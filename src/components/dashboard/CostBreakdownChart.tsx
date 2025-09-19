@@ -361,7 +361,8 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
       label: category,
       data: periods.map(period => {
         const item = filteredData.find(d => {
-          const itemPeriod = timePeriod === 'month' ? d.month :
+          const itemPeriod = timePeriod === 'year' ? String(d.year) :
+                           timePeriod === 'month' ? d.month :
                            timePeriod === 'week' ? d.week : d.day;
           return itemPeriod === period && d.category_name === category;
         });
