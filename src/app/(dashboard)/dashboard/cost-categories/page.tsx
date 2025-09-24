@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CostCategory } from '@/lib/models';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaTags } from 'react-icons/fa';
 
 export default function CostCategoriesPage() {
   const [categories, setCategories] = useState<CostCategory[]>([]);
@@ -221,7 +221,16 @@ export default function CostCategoriesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {usageStats[category.id] || 0} items
+                            {usageStats[category.id] > 0 ? (
+                              <Link
+                                href={`/dashboard/orders/by-cost-category?categoryId=${category.id}`}
+                                className="text-green-600 hover:text-green-900 hover:underline"
+                              >
+                                {usageStats[category.id]} items
+                              </Link>
+                            ) : (
+                              <span>{usageStats[category.id] || 0} items</span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -289,7 +298,16 @@ export default function CostCategoriesPage() {
                           )}
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-gray-500">
-                              Usage: {usageStats[category.id] || 0} items
+                              Usage: {usageStats[category.id] > 0 ? (
+                                <Link
+                                  href={`/dashboard/orders/by-cost-category?categoryId=${category.id}`}
+                                  className="text-green-600 hover:text-green-900 hover:underline"
+                                >
+                                  {usageStats[category.id]} items
+                                </Link>
+                              ) : (
+                                <span>{usageStats[category.id] || 0} items</span>
+                              )}
                             </span>
                             <button
                               onClick={() => handleToggleActive(category.id, category.is_active)}

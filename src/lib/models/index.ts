@@ -2637,6 +2637,36 @@ export const OrderModel = {
     );
   },
 
+  async getOrdersByCostCategory(categoryId: string, limit = 50, offset = 0, sortField = 'order_date', sortDirection = 'desc'): Promise<OrderWithContact[]> {
+    const orderByClause = buildOrderByClause(sortField, sortDirection);
+    return executeQuery<OrderWithContact>(
+      `SELECT DISTINCT o.*,
+              c.name as contact_name,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address,
+              COALESCE(SUM(ci.amount), 0) as total_internal_cost
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       INNER JOIN cost_items ci ON o.id = ci.order_id
+       WHERE ci.category_id = ?
+       GROUP BY o.id, c.name, c.city, c.state, c.address
+       ${orderByClause} LIMIT ? OFFSET ?`,
+      [categoryId, limit, offset]
+    );
+  },
+
+  async getOrdersByCostCategoryCount(categoryId: string): Promise<number> {
+    const result = await getOne<{ count: number }>(
+      `SELECT COUNT(DISTINCT o.id) as count
+       FROM orders o
+       INNER JOIN cost_items ci ON o.id = ci.order_id
+       WHERE ci.category_id = ?`,
+      [categoryId]
+    );
+    return result?.count || 0;
+  },
+
   async getWithItems(_id: string): Promise<OrderWithItems | null> {
     const order = await getOne<OrderWithContact>(
       `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone
