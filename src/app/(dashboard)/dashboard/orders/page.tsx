@@ -72,7 +72,7 @@ export default function OrdersPage() {
     contactName: '',
     city: '',
     state: '',
-    status: '',
+    status: [],
     minTotal: '',
     maxTotal: '',
     startDate: '',
@@ -138,8 +138,8 @@ export default function OrdersPage() {
       if (filters.state) {
         params.append('state', filters.state);
       }
-      if (filters.status) {
-        params.append('status', filters.status);
+      if (filters.status && filters.status.length > 0) {
+        params.append('status', filters.status.join(','));
       }
       if (filters.minTotal) {
         params.append('minTotal', filters.minTotal);
@@ -191,7 +191,7 @@ export default function OrdersPage() {
       contactName: '',
       city: '',
       state: '',
-      status: '',
+      status: [],
       minTotal: '',
       maxTotal: '',
       startDate: '',

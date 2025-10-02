@@ -8,7 +8,7 @@ export interface OrderFilters {
   contactName: string;
   city: string;
   state: string;
-  status: string;
+  status: string[];
   minTotal: string;
   maxTotal: string;
   startDate: string;
@@ -39,15 +39,29 @@ export default function OrderFiltersComponent({
 
   // Check if any filters are active
   useEffect(() => {
-    const active = Object.values(filters).some(value => value !== '');
+    const active = Object.entries(filters).some(([key, value]) => {
+      if (key === 'status') {
+        return Array.isArray(value) && value.length > 0;
+      }
+      return value !== '';
+    });
     setHasActiveFilters(active);
   }, [filters]);
 
-  const handleFilterChange = (field: keyof OrderFilters, value: string) => {
+  const handleFilterChange = (field: keyof OrderFilters, value: string | string[]) => {
     onFiltersChange({
       ...filters,
       [field]: value
     });
+  };
+
+  const handleStatusToggle = (status: string) => {
+    const currentStatuses = filters.status || [];
+    const newStatuses = currentStatuses.includes(status)
+      ? currentStatuses.filter(s => s !== status)
+      : [...currentStatuses, status];
+
+    handleFilterChange('status', newStatuses);
   };
 
   const handleClearFilters = () => {
@@ -140,22 +154,22 @@ export default function OrderFiltersComponent({
           {/* Row 2: Status and Total Range */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Order Status
               </label>
-              <select
-                id="status"
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm"
-              >
-                <option value="">All statuses</option>
+              <div className="space-y-2">
                 {ORDER_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
+                  <label key={status} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={filters.status.includes(status)}
+                      onChange={() => handleStatusToggle(status)}
+                      className="mr-2 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-900">{status}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
             <div>
               <label htmlFor="minTotal" className="block text-sm font-medium text-gray-700 mb-1">

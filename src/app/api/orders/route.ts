@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
     const contactName = searchParams.get('contactName') || '';
     const city = searchParams.get('city') || '';
     const state = searchParams.get('state') || '';
-    const status = searchParams.get('status') || '';
+    const statusParam = searchParams.get('status') || '';
+    const status = statusParam ? statusParam.split(',').map(s => s.trim()).filter(s => s) : [];
     const minTotal = searchParams.get('minTotal') ? parseFloat(searchParams.get('minTotal')!) : null;
     const maxTotal = searchParams.get('maxTotal') ? parseFloat(searchParams.get('maxTotal')!) : null;
     const startDate = searchParams.get('startDate') || '';
@@ -39,9 +40,12 @@ export async function GET(request: NextRequest) {
     };
 
     // Check if any filters are applied
-    const hasFilters = Object.values(filters).some(value =>
-      value !== '' && value !== null && value !== undefined
-    );
+    const hasFilters = Object.entries(filters).some(([key, value]) => {
+      if (key === 'status') {
+        return Array.isArray(value) && value.length > 0;
+      }
+      return value !== '' && value !== null && value !== undefined;
+    });
 
     let orders;
     let total;

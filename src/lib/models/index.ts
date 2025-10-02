@@ -2048,7 +2048,7 @@ export const OrderModel = {
     contactName?: string;
     city?: string;
     state?: string;
-    status?: string;
+    status?: string | string[];
     minTotal?: number | null;
     maxTotal?: number | null;
     startDate?: string;
@@ -2083,8 +2083,14 @@ export const OrderModel = {
 
     // Status filter
     if (filters.status) {
-      conditions.push('o.status = ?');
-      params.push(filters.status);
+      if (Array.isArray(filters.status) && filters.status.length > 0) {
+        const placeholders = filters.status.map(() => '?').join(',');
+        conditions.push(`o.status IN (${placeholders})`);
+        params.push(...filters.status);
+      } else if (typeof filters.status === 'string' && filters.status) {
+        conditions.push('o.status = ?');
+        params.push(filters.status);
+      }
     }
 
     // Total amount range filter
@@ -2135,7 +2141,7 @@ export const OrderModel = {
     contactName?: string;
     city?: string;
     state?: string;
-    status?: string;
+    status?: string | string[];
     minTotal?: number | null;
     maxTotal?: number | null;
     startDate?: string;
@@ -2170,8 +2176,14 @@ export const OrderModel = {
 
     // Status filter
     if (filters.status) {
-      conditions.push('o.status = ?');
-      params.push(filters.status);
+      if (Array.isArray(filters.status) && filters.status.length > 0) {
+        const placeholders = filters.status.map(() => '?').join(',');
+        conditions.push(`o.status IN (${placeholders})`);
+        params.push(...filters.status);
+      } else if (typeof filters.status === 'string' && filters.status) {
+        conditions.push('o.status = ?');
+        params.push(filters.status);
+      }
     }
 
     // Total amount range filter
