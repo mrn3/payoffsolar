@@ -52,7 +52,7 @@ export default function EditOrderPage() {
     try {
       const [contactsRes, productsRes, costCategoriesRes, orderRes] = await Promise.all([
         fetch('/api/contacts'),
-        fetch('/api/products'),
+        fetch('/api/products?limit=1000'),
         fetch('/api/cost-categories'),
         fetch(`/api/orders/${orderId}`)
       ]);
@@ -181,13 +181,34 @@ export default function EditOrderPage() {
     }, 100);
   };
 
-  const handleProductChange = (__index: number, productId: string) => {
+  const handleProductChange = async (__index: number, productId: string) => {
+    // Always set selected product id first
+    updateItem(__index, 'product_id', productId);
+
+    // Try to find product locally
     const product = products.find(p => p.id === productId);
     if (product) {
-      updateItem(__index, 'product_id', productId);
       updateItem(__index, 'price', product.price);
       // Cost breakdown will be recalculated by updateItem
+      return;
     }
+
+    // Fallback: fetch product details to get price if not in local list
+    try {
+      const res = await fetch(`/api/products/${productId}`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        const fetched = data.product;
+        if (fetched && typeof fetched.price === 'number') {
+          updateItem(__index, 'price', fetched.price);
+          // Cache fetched product
+          setProducts(prev => (prev.find(p => p.id === fetched.id) ? prev : [...prev, fetched]));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch product for price', e);
+    }
+    // Cost breakdown will be recalculated by updateItem
   };
 
   const addCostItem = () => {

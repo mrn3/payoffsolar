@@ -51,7 +51,7 @@ export default function NewOrderPage() {
     try {
       const [contactsRes, productsRes] = await Promise.all([
         fetch('/api/contacts'),
-        fetch('/api/products')
+        fetch('/api/products?limit=1000')
       ]);
 
       if (contactsRes.ok) {
@@ -125,11 +125,31 @@ export default function NewOrderPage() {
     }));
   };
 
-  const handleProductChange = (__index: number, productId: string) => {
+  const handleProductChange = async (__index: number, productId: string) => {
+    // Always set the selected product ID
+    updateItem(__index, 'product_id', productId);
+
+    // Try local cache first
     const product = products.find(p => p.id === productId);
     if (product) {
-      updateItem(__index, 'product_id', productId);
       updateItem(__index, 'price', product.price);
+      return;
+    }
+
+    // Fallback: fetch product details if not in local list (e.g., beyond pagination)
+    try {
+      const res = await fetch(`/api/products/${productId}`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        const fetched = data.product;
+        if (fetched && typeof fetched.price === 'number') {
+          updateItem(__index, 'price', fetched.price);
+          // Cache it for future selections
+          setProducts(prev => (prev.find(p => p.id === fetched.id) ? prev : [...prev, fetched]));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch product by id for price', e);
     }
   };
 
