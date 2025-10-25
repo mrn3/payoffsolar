@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import stripe from '@/lib/stripe';
 import { AffiliateCodeModel, OrderModel, OrderItemModel, ContactModel, ProductModel, ProductCostBreakdownModel, CostItemModel } from '@/lib/models';
+import { sendEmail } from '@/lib/email';
+import { trackOutboundEmail } from '@/lib/communication/tracking';
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,18 +60,113 @@ export async function POST(request: NextRequest) {
           console.error('Error logging purchase for analytics:', error);
         }
 
-        // Create order record in database
+        // Create order record in database and send confirmation email
         try {
-          await createOrderFromPaymentIntent(paymentIntent);
+          const orderId = await createOrderFromPaymentIntent(paymentIntent);
           console.log('Order created successfully for payment:', paymentIntent.id);
+
+          // Build and send order confirmation email
+          try {
+            const toEmail = paymentIntent.metadata?.customer_email;
+            if (toEmail) {
+              const customerName = paymentIntent.metadata?.customer_name || '';
+              const itemsDataStr = paymentIntent.metadata?.items_data;
+              let items: Array<{ product_id: string; quantity: number; price: number }> = [];
+              if (itemsDataStr) {
+                try {
+                  items = JSON.parse(itemsDataStr);
+                } catch (_e) {
+                  console.error('Failed to parse items_data metadata:', _e);
+                }
+              }
+
+              // Enrich items with product details
+              const detailedItems: Array<{ name: string; sku: string; quantity: number; price: number }> = [];
+              for (const item of items) {
+                const product = await ProductModel.getById(item.product_id);
+                detailedItems.push({
+                  name: product?.name || 'Product',
+                  sku: product?.sku || '',
+                  quantity: Number(item.quantity) || 0,
+                  price: Number(item.price) || 0
+                });
+              }
+
+              const subtotal = parseFloat(paymentIntent.metadata?.discounted_subtotal || paymentIntent.metadata?.subtotal || '0');
+              const shipping = parseFloat(paymentIntent.metadata?.shipping || '0');
+              const tax = parseFloat(paymentIntent.metadata?.tax || '0');
+              const total = parseFloat(paymentIntent.metadata?.total || '0');
+              const orderShort = (orderId || paymentIntent.id).toString().substring(0, 8);
+
+              const currencySymbol = '$'; // USD only for now
+              const fmt = (n: number) => `${currencySymbol}${n.toFixed(2)}`;
+
+              const itemsHtml = detailedItems.length
+                ? detailedItems.map(di => `<tr><td>${di.name}</td><td>${di.sku}</td><td style="text-align:center;">${di.quantity}</td><td style="text-align:right;">${fmt(di.price)}</td><td style="text-align:right;">${fmt(di.price * di.quantity)}</td></tr>`).join('')
+                : '<tr><td colspan="5">No items</td></tr>';
+
+              const businessPhone = process.env.BUSINESS_PHONE || '(801) 448-6396';
+
+              const html = `
+                <!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;background:#f9fafb;padding:20px;">
+                  <div style="max-width:620px;margin:0 auto;background:#fff;border-radius:8px;padding:24px;border:1px solid #e5e7eb">
+                    <h2 style="margin:0 0 8px 0;color:#111827;">Thank you for your order${customerName ? `, ${customerName}` : ''}!</h2>
+                    <p style="margin:0 0 16px 0;color:#374151;">Your order has been confirmed.</p>
+                    <p style="margin:0 0 16px 0;color:#374151;"><strong>Order #</strong> ${orderShort}</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0">
+                      <thead>
+                        <tr>
+                          <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:8px 0;color:#374151;">Product</th>
+                          <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:8px 0;color:#374151;">SKU</th>
+                          <th style="text-align:center;border-bottom:1px solid #e5e7eb;padding:8px 0;color:#374151;">Qty</th>
+                          <th style="text-align:right;border-bottom:1px solid #e5e7eb;padding:8px 0;color:#374151;">Unit</th>
+                          <th style="text-align:right;border-bottom:1px solid #e5e7eb;padding:8px 0;color:#374151;">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>${itemsHtml}</tbody>
+                    </table>
+                    <div style="text-align:right;">
+                      <div><span style="color:#6b7280;">Subtotal:</span> <strong>${fmt(subtotal)}</strong></div>
+                      ${shipping ? `<div><span style="color:#6b7280;">Shipping:</span> <strong>${fmt(shipping)}</strong></div>` : ''}
+                      ${tax ? `<div><span style="color:#6b7280;">Tax:</span> <strong>${fmt(tax)}</strong></div>` : ''}
+                      <div style="margin-top:8px;font-size:18px;"><span style="color:#111827;">Total:</span> <strong style="color:#16a34a;">${fmt(total)}</strong></div>
+                    </div>
+                    <p style="margin-top:24px;color:#6b7280;font-size:14px;">Questions? Call us at ${businessPhone}.</p>
+                    <p style="margin:0;color:#6b7280;font-size:12px;">© ${new Date().getFullYear()} Payoff Solar</p>
+                  </div>
+                </body></html>
+              `;
+
+              const success = await sendEmail({
+                to: toEmail,
+                subject: `Order Confirmation #${orderShort} - Payoff Solar`,
+                html
+              });
+
+              if (success) {
+                try {
+                  const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'noreply@payoffsolar.com';
+                  await trackOutboundEmail({
+                    toEmail: toEmail,
+                    fromEmail,
+                    subject: `Order Confirmation #${orderShort} - Payoff Solar`,
+                    bodyHtml: html
+                  });
+                } catch (trackErr) {
+                  console.error('Error tracking order confirmation email:', trackErr);
+                }
+              }
+            } else {
+              console.warn('No customer email found on payment intent; skipping confirmation email.');
+            }
+          } catch (emailErr) {
+            console.error('Error sending order confirmation email:', emailErr);
+          }
         } catch (error) {
           console.error('Error creating order from payment intent:', error);
           // Don't fail the webhook for this error, but log it for investigation
         }
 
-        // Here you could also:
-        // - Send confirmation emails
-        // - Update inventory
         break;
 
       case 'payment_intent.payment_failed':
