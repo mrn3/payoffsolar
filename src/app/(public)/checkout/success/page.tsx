@@ -116,6 +116,10 @@ function CheckoutSuccessContent() {
               <Link
                 href="/products"
                 className="w-full bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 transition-colors font-medium block"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = '/products';
+                }}
               >
                 Continue Shopping
               </Link>
