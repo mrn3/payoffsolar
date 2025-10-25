@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
                 : '<tr><td colspan="5">No items</td></tr>';
 
               const businessPhone = process.env.BUSINESS_PHONE || '(801) 448-6396';
-              const bccEnv = process.env.ORDER_CONFIRMATION_BCC || '';
+              const bccEnv = process.env.ORDER_CONFIRMATION_BCC || 'matt@payoffsolar.com';
               const bccList = bccEnv.split(',').map(s => s.trim()).filter(Boolean);
 
               const html = `
@@ -154,7 +154,8 @@ export async function POST(request: NextRequest) {
                     toEmail: toEmail,
                     fromEmail,
                     subject: `Order Confirmation #${orderShort} - Payoff Solar`,
-                    bodyHtml: html
+                    bodyHtml: html,
+                    bccEmails: bccList.length ? bccList : undefined
                   });
                 } catch (trackErr) {
                   console.error('Error tracking order confirmation email:', trackErr);
