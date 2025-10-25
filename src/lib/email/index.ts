@@ -16,6 +16,8 @@ export interface EmailOptions {
   subject: string;
   html: string;
   text?: string;
+  cc?: string[];
+  bcc?: string[];
 }
 
 /**
@@ -30,7 +32,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   }
 
   try {
-    const msg = {
+    const msg: any = {
       to: options.to,
       from: {
         email: FROM_EMAIL,
@@ -40,6 +42,9 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       html: options.html,
       text: options.text || stripHtml(options.html),
     };
+
+    if (options.cc && options.cc.length) msg.cc = options.cc;
+    if (options.bcc && options.bcc.length) msg.bcc = options.bcc;
 
     await sgMail.send(msg);
     console.log('✅ Email sent successfully to:', options.to);

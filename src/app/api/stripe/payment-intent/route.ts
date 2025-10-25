@@ -82,6 +82,8 @@ export async function POST(request: NextRequest) {
         discount: totalDiscount.toString(),
         discounted_subtotal: discountedSubtotal.toString(),
         shipping: shippingCost.toString(),
+        shipping_method: shipping?.method || '',
+        shipping_method_label: shipping?.methodLabel || shipping?.method || '',
         tax: totalTax.toString(),
         total: total.toString(),
         customer_email: customerInfo.email,

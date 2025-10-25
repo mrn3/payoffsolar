@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
               const shipping = parseFloat(paymentIntent.metadata?.shipping || '0');
               const tax = parseFloat(paymentIntent.metadata?.tax || '0');
               const total = parseFloat(paymentIntent.metadata?.total || '0');
+              const shippingMethodLabel = paymentIntent.metadata?.shipping_method_label || paymentIntent.metadata?.shipping_method || '';
               const orderShort = (orderId || paymentIntent.id).toString().substring(0, 8);
 
               const currencySymbol = '$'; // USD only for now
@@ -106,6 +107,8 @@ export async function POST(request: NextRequest) {
                 : '<tr><td colspan="5">No items</td></tr>';
 
               const businessPhone = process.env.BUSINESS_PHONE || '(801) 448-6396';
+              const bccEnv = process.env.ORDER_CONFIRMATION_BCC || '';
+              const bccList = bccEnv.split(',').map(s => s.trim()).filter(Boolean);
 
               const html = `
                 <!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;background:#f9fafb;padding:20px;">
@@ -127,7 +130,7 @@ export async function POST(request: NextRequest) {
                     </table>
                     <div style="text-align:right;">
                       <div><span style="color:#6b7280;">Subtotal:</span> <strong>${fmt(subtotal)}</strong></div>
-                      ${shipping ? `<div><span style="color:#6b7280;">Shipping:</span> <strong>${fmt(shipping)}</strong></div>` : ''}
+                      ${shipping ? `<div><span style="color:#6b7280;">Shipping${shippingMethodLabel ? ` (${shippingMethodLabel})` : ''}:</span> <strong>${fmt(shipping)}</strong></div>` : ''}
                       ${tax ? `<div><span style="color:#6b7280;">Tax:</span> <strong>${fmt(tax)}</strong></div>` : ''}
                       <div style="margin-top:8px;font-size:18px;"><span style="color:#111827;">Total:</span> <strong style="color:#16a34a;">${fmt(total)}</strong></div>
                     </div>
@@ -140,7 +143,8 @@ export async function POST(request: NextRequest) {
               const success = await sendEmail({
                 to: toEmail,
                 subject: `Order Confirmation #${orderShort} - Payoff Solar`,
-                html
+                html,
+                bcc: bccList.length ? bccList : undefined
               });
 
               if (success) {

@@ -110,6 +110,7 @@ export default function PaymentForm({ customerInfo, shippingMethod, shippingCost
           items: state.items,
           shipping: {
             method: shippingMethod,
+            methodLabel: selectedMethod?.name || shippingMethod,
             cost: calculateShipping(),
           },
           customerInfo,
@@ -179,6 +180,7 @@ export default function PaymentForm({ customerInfo, shippingMethod, shippingCost
               items: state.items,
               shipping: {
                 method: shippingMethod,
+                methodLabel: selectedMethod?.name || shippingMethod,
                 cost: calculateShipping(),
               },
             }),
