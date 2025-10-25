@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
 
               if (success) {
                 try {
-                  const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'noreply@payoffsolar.com';
+                  const fromEmail = process.env.SES_FROM_EMAIL || 'noreply@payoffsolar.com';
                   await trackOutboundEmail({
                     toEmail: toEmail,
                     fromEmail,

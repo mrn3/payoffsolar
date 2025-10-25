@@ -20,9 +20,11 @@ if [ ! -f ".env" ]; then
     echo "📝 Please edit .env file with your production settings:"
     echo "   - MYSQL_PASSWORD"
     echo "   - NEXT_PUBLIC_SITE_URL"
-    echo "   - SENDGRID_API_KEY"
-    echo "   - SENDGRID_FROM_EMAIL"
+    echo "   - AWS_REGION"
+    echo "   - SES_FROM_EMAIL"
+    echo "   - SES_FROM_NAME"
     echo "   - JWT_SECRET"
+    echo "   - (Optional) AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY"
     echo ""
     echo "Press Enter when you've updated the .env file..."
     read

@@ -1,14 +1,15 @@
-import sgMail from '@sendgrid/mail';
+import { SESClient, SendEmailCommand, SendEmailCommandInput } from '@aws-sdk/client-ses';
 
-// Initialize SendGrid
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'noreply@payoffsolar.com';
-const FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Payoff Solar';
+// Initialize AWS SES
+const AWS_REGION = process.env.AWS_REGION;
+const FROM_EMAIL = process.env.SES_FROM_EMAIL || 'noreply@payoffsolar.com';
+const FROM_NAME = process.env.SES_FROM_NAME || 'Payoff Solar';
 
-if (!SENDGRID_API_KEY) {
-  console.warn('⚠️  SENDGRID_API_KEY not found in environment variables. Email functionality will be disabled.');
+let sesClient: SESClient | null = null;
+if (!AWS_REGION) {
+  console.warn('⚠️  AWS_REGION not found in environment variables. Email functionality will be disabled.');
 } else {
-  sgMail.setApiKey(SENDGRID_API_KEY);
+  sesClient = new SESClient({ region: AWS_REGION });
 }
 
 export interface EmailOptions {
@@ -21,10 +22,10 @@ export interface EmailOptions {
 }
 
 /**
- * Send an email using SendGrid
+ * Send an email using AWS SES
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  if (!SENDGRID_API_KEY) {
+  if (!sesClient) {
     console.log('📧 Email would be sent to:', options.to);
     console.log('📧 Subject:', options.subject);
     console.log('📧 Content:', options.text || 'HTML content provided');
@@ -32,28 +33,27 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   }
 
   try {
-    const msg: any = {
-      to: options.to,
-      from: {
-        email: FROM_EMAIL,
-        name: FROM_NAME,
+    const params: SendEmailCommandInput = {
+      Destination: {
+        ToAddresses: [options.to],
+        CcAddresses: options.cc && options.cc.length ? options.cc : undefined,
+        BccAddresses: options.bcc && options.bcc.length ? options.bcc : undefined,
       },
-      subject: options.subject,
-      html: options.html,
-      text: options.text || stripHtml(options.html),
+      Message: {
+        Subject: { Data: options.subject, Charset: 'UTF-8' },
+        Body: {
+          Html: { Data: options.html, Charset: 'UTF-8' },
+          Text: { Data: options.text || stripHtml(options.html), Charset: 'UTF-8' },
+        },
+      },
+      Source: `${FROM_NAME} <${FROM_EMAIL}>`,
     };
 
-    if (options.cc && options.cc.length) msg.cc = options.cc;
-    if (options.bcc && options.bcc.length) msg.bcc = options.bcc;
-
-    await sgMail.send(msg);
+    await sesClient.send(new SendEmailCommand(params));
     console.log('✅ Email sent successfully to:', options.to);
     return true;
   } catch (_error: unknown) {
-    console.error('❌ Failed to send email:', _error);
-    if (_error.response) {
-      console.error('SendGrid error response:', _error.response.body);
-    }
+    console.error('❌ Failed to send email via SES:', _error);
     return false;
   }
 }

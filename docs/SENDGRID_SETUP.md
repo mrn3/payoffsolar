@@ -1,5 +1,7 @@
 # SendGrid Email Setup
 
+> Deprecated: This project now uses AWS SES for email. See docs/AWS_SES_SETUP.md for current setup instructions.
+
 This guide will help you configure SendGrid for email functionality in your Payoff Solar application.
 
 ## Prerequisites

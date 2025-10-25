@@ -25,9 +25,11 @@ vi /opt/bitnami/projects/payoffsolar/.env
 Update these critical values:
 - `MYSQL_PASSWORD`: Your actual MySQL/MariaDB password
 - `NEXT_PUBLIC_SITE_URL`: Your production domain (e.g., https://payoffsolar.com)
-- `SENDGRID_API_KEY`: Your production SendGrid API key
-- `SENDGRID_FROM_EMAIL`: Your verified sender email
+- `AWS_REGION`: Your AWS region for SES (e.g., us-west-2)
+- `SES_FROM_EMAIL`: Your verified SES sender email (must be verified in SES)
+- `SES_FROM_NAME`: Sender display name (e.g., Payoff Solar)
 - `JWT_SECRET`: Change to a secure random string
+- Optional (if not using an instance role or other AWS auth): `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
 
 ### 2. Database Setup on Server
 
@@ -143,10 +145,13 @@ NEXT_PUBLIC_SITE_URL=https://yourdomain.com
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 STRIPE_SECRET_KEY=sk_live_...
 
-# SendGrid (update with production settings)
-SENDGRID_API_KEY=SG.your-production-key
-SENDGRID_FROM_EMAIL=noreply@yourdomain.com
-SENDGRID_FROM_NAME=Payoff Solar
+# AWS SES (update with production settings)
+AWS_REGION=us-west-2
+# If not using an instance role or other AWS auth, set the following:
+# AWS_ACCESS_KEY_ID=your-aws-access-key-id
+# AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
+SES_FROM_EMAIL=noreply@yourdomain.com
+SES_FROM_NAME=Payoff Solar
 ```
 
 ## Next Steps
