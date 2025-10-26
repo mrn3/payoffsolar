@@ -180,7 +180,7 @@ Please provide me with a detailed quote and next steps for installation.`;
               </div>
               <h3 className="text-xl font-bold mb-2">Email</h3>
               <p className="text-gray-600">
-                matt@payoffsolar.com
+                <a href="mailto:matt@payoffsolar.com">matt@payoffsolar.com</a>
               </p>
               <p className="text-gray-600 mt-1">
                 We&apos;ll respond within 24 hours

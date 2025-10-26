@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {FaEdit, FaMapMarkerAlt, FaTrash} from 'react-icons/fa';
+import {FaEdit, FaBuilding, FaTrash} from 'react-icons/fa';
 
 interface Warehouse {
   id: string;
@@ -80,7 +80,7 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
                     <tr key={warehouse.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         <div className="flex items-center">
-                          <FaMapMarkerAlt className="mr-2 h-4 w-4 text-gray-400" />
+                          <FaBuilding className="mr-2 h-4 w-4 text-gray-400" />
                           {warehouse.name}
                         </div>
                       </td>
