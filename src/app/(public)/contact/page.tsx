@@ -169,6 +169,9 @@ Please provide me with a detailed quote and next steps for installation.`;
               <h3 className="text-xl font-bold mb-2">Phone</h3>
               <div className="text-gray-600">
                 <p className="mb-2">(801) 448-6396</p>
+                <p className="text-gray-600 mt-1">
+                  Monday - Saturday: 9am - 7pm
+                </p>
                 <div className="mt-2 flex items-center justify-center gap-3">
                   <a
                     href="tel:+18014486396"
@@ -188,9 +191,7 @@ Please provide me with a detailed quote and next steps for installation.`;
                   </a>
                 </div>
               </div>
-              <p className="text-gray-600 mt-1">
-                Monday - Saturday: 9am - 7pm
-              </p>
+              
             </div>
             <div className="bg-gray-50 p-8 rounded-lg text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -203,6 +204,16 @@ Please provide me with a detailed quote and next steps for installation.`;
               <p className="text-gray-600 mt-1">
                 We&apos;ll respond within 24 hours
               </p>
+              <div className="mt-2 flex items-center justify-center gap-3">
+                <a
+                  href="mailto:matt@payoffsolar.com"
+                  className="inline-flex items-center gap-1 rounded-full border border-purple-600 px-3 py-1 text-purple-600 hover:bg-purple-50 text-sm"
+                  title="Email"
+                >
+                  <FaEnvelope className="h-3 w-3" />
+                  Email
+                </a>
+              </div>
             </div>
             <div className="bg-gray-50 p-8 rounded-lg text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -215,6 +226,9 @@ Please provide me with a detailed quote and next steps for installation.`;
               <p className="text-gray-600 mt-1">
                 South Jordan, UT 84009
               </p>
+              <p className="text-gray-600 mt-1">
+                Monday - Saturday: 8am - 9pm
+              </p>
             </div>
             <div className="bg-gray-50 p-8 rounded-lg text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -226,6 +240,9 @@ Please provide me with a detailed quote and next steps for installation.`;
               </p>
               <p className="text-gray-600 mt-1">
                 Salt Lake City, UT 84104
+              </p>
+              <p className="text-gray-600 mt-1">
+                Monday - Friday: 8am - 4pm
               </p>
             </div>
           </div>
