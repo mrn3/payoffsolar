@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { FaEnvelope, FaMapMarkerAlt, FaPhone } from 'react-icons/fa';
+import { FaEnvelope, FaMapMarkerAlt, FaPhone, FaBuilding } from 'react-icons/fa';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -161,17 +161,17 @@ Please provide me with a detailed quote and next steps for installation.`;
       {/* Contact Information */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
             <div className="bg-gray-50 p-8 rounded-lg text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaPhone className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Phone</h3>
+              <h3 className="text-xl font-bold mb-2">Phone/Text</h3>
               <p className="text-gray-600">
                 (801) 448-6396
               </p>
               <p className="text-gray-600 mt-1">
-                Monday - Friday: 9am - 5pm
+                Monday - Saturday: 9am - 7pm
               </p>
             </div>
             <div className="bg-gray-50 p-8 rounded-lg text-center">
@@ -196,6 +196,18 @@ Please provide me with a detailed quote and next steps for installation.`;
               </p>
               <p className="text-gray-600 mt-1">
                 South Jordan, UT 84009
+              </p>
+            </div>
+            <div className="bg-gray-50 p-8 rounded-lg text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaBuilding className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Warehouse</h3>
+              <p className="text-gray-600">
+                906 S 4400 W, Suite 290
+              </p>
+              <p className="text-gray-600 mt-1">
+                Salt Lake City, UT 84104
               </p>
             </div>
           </div>
