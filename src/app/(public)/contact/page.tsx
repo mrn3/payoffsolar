@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { FaEnvelope, FaMapMarkerAlt, FaPhone, FaBuilding } from 'react-icons/fa';
+import { FaEnvelope, FaMapMarkerAlt, FaPhone, FaSms, FaBuilding } from 'react-icons/fa';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -166,10 +166,28 @@ Please provide me with a detailed quote and next steps for installation.`;
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaPhone className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Phone/Text</h3>
-              <p className="text-gray-600">
-                (801) 448-6396
-              </p>
+              <h3 className="text-xl font-bold mb-2">Phone</h3>
+              <div className="text-gray-600">
+                <p className="mb-2">(801) 448-6396</p>
+                <div className="mt-2 flex items-center justify-center gap-3">
+                  <a
+                    href="tel:+18014486396"
+                    className="inline-flex items-center gap-1 rounded-full border border-green-600 px-3 py-1 text-green-600 hover:bg-green-50 text-sm"
+                    title="Call"
+                  >
+                    <FaPhone className="h-3 w-3" />
+                    Call
+                  </a>
+                  <a
+                    href="sms:+18014486396"
+                    className="inline-flex items-center gap-1 rounded-full border border-blue-600 px-3 py-1 text-blue-600 hover:bg-blue-50 text-sm"
+                    title="Text"
+                  >
+                    <FaSms className="h-3 w-3" />
+                    Text
+                  </a>
+                </div>
+              </div>
               <p className="text-gray-600 mt-1">
                 Monday - Saturday: 9am - 7pm
               </p>
