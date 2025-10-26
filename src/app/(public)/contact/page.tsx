@@ -191,7 +191,7 @@ Please provide me with a detailed quote and next steps for installation.`;
                   </a>
                 </div>
               </div>
-              
+
             </div>
             <div className="bg-gray-50 p-8 rounded-lg text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -229,6 +229,19 @@ Please provide me with a detailed quote and next steps for installation.`;
               <p className="text-gray-600 mt-1">
                 Monday - Saturday: 8am - 9pm
               </p>
+              <div className="mt-2 flex items-center justify-center gap-3">
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=11483%20S%20Wexford%20Way%2C%20South%20Jordan%2C%20UT%2084009"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full border border-green-600 px-3 py-1 text-green-600 hover:bg-green-50 text-sm"
+                  title="Open in Google Maps"
+                >
+                  <FaMapMarkerAlt className="h-3 w-3" />
+                  Directions
+                </a>
+              </div>
+
             </div>
             <div className="bg-gray-50 p-8 rounded-lg text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -244,6 +257,19 @@ Please provide me with a detailed quote and next steps for installation.`;
               <p className="text-gray-600 mt-1">
                 Monday - Friday: 8am - 4pm
               </p>
+              <div className="mt-2 flex items-center justify-center gap-3">
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=906%20S%204400%20W%2C%20Suite%20290%2C%20Salt%20Lake%20City%2C%20UT%2084104"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full border border-green-600 px-3 py-1 text-green-600 hover:bg-green-50 text-sm"
+                  title="Open in Google Maps"
+                >
+                  <FaMapMarkerAlt className="h-3 w-3" />
+                  Directions
+                </a>
+              </div>
+
             </div>
           </div>
 
