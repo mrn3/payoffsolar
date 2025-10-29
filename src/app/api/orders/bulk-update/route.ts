@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth , isAdmin} from '@/lib/auth';
 import { OrderModel } from '@/lib/models';
+import { updateInventoryForOrder } from '@/lib/utils/orderProcessing';
+
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -31,8 +33,44 @@ export async function PATCH(request: NextRequest) {
       }, { status: 400 });
     }
 
+
+	    // Determine which orders need inventory adjustment (transition to Complete)
+	    const targetStatusLower = String(status).toLowerCase();
+	    let ordersNeedingAdjustment: string[] = [];
+	    if (targetStatusLower === 'complete') {
+	      const priorStatuses = await Promise.all(
+	        orderIds.map(async (id: string) => {
+	          const o = await OrderModel.getById(id);
+	          return { id, status: (o?.status || '').toLowerCase() };
+	        })
+	      );
+	      ordersNeedingAdjustment = priorStatuses
+	        .filter(o => o.status !== 'complete')
+	        .map(o => o.id);
+	    }
+
     // Perform bulk update
     await OrderModel.bulkUpdateStatus(orderIds, status);
+
+	    // If status set to Complete, decrement inventory for affected orders
+	    if (targetStatusLower === 'complete' && ordersNeedingAdjustment.length > 0) {
+	      for (const id of ordersNeedingAdjustment) {
+	        try {
+	          const order = await OrderModel.getWithItems(id);
+	          const items = (order?.items || []).map((i) => ({
+	            product_id: i.product_id,
+	            quantity: Number(i.quantity),
+	            price: Number(i.price || 0)
+	          }));
+	          if (items.length > 0) {
+	            await updateInventoryForOrder(items);
+	          }
+	        } catch (e) {
+	          console.error('Inventory adjustment failed for order', id, e);
+	        }
+	      }
+	    }
+
 
     return NextResponse.json({
       message: `Successfully updated ${orderIds.length} orders to ${status}`,

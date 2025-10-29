@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {OrderModel, OrderItemModel, ContactModel, ProductModel, CostItemModel, CostCategoryModel, ProductCostBreakdownModel} from '@/lib/models';
 import {requireAuth, isAdmin} from '@/lib/auth';
+import { updateInventoryForOrder } from '@/lib/utils/orderProcessing';
+
 
 export async function GET(
   request: NextRequest,
@@ -188,6 +190,26 @@ export async function PUT(
       order_date: data.order_date,
       notes: data.notes
     });
+    // If transitioning to Complete, decrement inventory for order items
+    try {
+      const isNowComplete = typeof data.status === 'string' && data.status.toLowerCase() === 'complete';
+      const wasComplete = typeof existingOrder.status === 'string' && existingOrder.status.toLowerCase() === 'complete';
+      if (isNowComplete && !wasComplete) {
+        const orderForInventory = await OrderModel.getWithItems(id);
+        const processedItems = (orderForInventory?.items || []).map((item) => ({
+          product_id: item.product_id,
+          quantity: Number(item.quantity),
+          price: Number(item.price || 0)
+        }));
+        if (processedItems.length > 0) {
+          await updateInventoryForOrder(processedItems);
+        }
+      }
+    } catch (invErr) {
+      console.error('Inventory adjustment on completion failed:', invErr);
+      // Continue without failing the whole request
+    }
+
 
     const updatedOrder = await OrderModel.getWithItems(id);
     return NextResponse.json({ order: updatedOrder });

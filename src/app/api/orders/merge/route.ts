@@ -3,6 +3,8 @@ import { OrderModel, OrderItemModel } from '@/lib/models';
 import { requireAuth, isAdmin } from '@/lib/auth';
 import { executeSingle } from '@/lib/mysql/connection';
 import { smartMergeOrders } from '@/lib/utils/duplicates';
+import { updateInventoryForOrder } from '@/lib/utils/orderProcessing';
+
 
 interface MergeRequest {
   primaryOrderId: string;
@@ -43,6 +45,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'One or both orders not found' }, { status: 404 });
     }
 
+
+	    // Track if the primary order was already complete before merge
+	    const wasComplete = (primaryOrder.status || '').toLowerCase() === 'complete';
+
     // Start transaction-like operations
     try {
       // 1. Get all order items from the duplicate order
@@ -58,7 +64,7 @@ export async function POST(request: NextRequest) {
           // If product already exists, combine quantities and use the higher price
           const newQuantity = existingItem.quantity + item.quantity;
           const newPrice = Math.max(Number(existingItem.price), Number(item.price));
-          
+
           await OrderItemModel.update(existingItem.id, {
             quantity: newQuantity,
             price: newPrice
@@ -86,13 +92,32 @@ export async function POST(request: NextRequest) {
         notes: finalMergedData.notes
       });
 
+	      // If transitioned to Complete during merge, decrement inventory for primary order
+	      try {
+	        const isNowComplete = (finalMergedData.status || '').toLowerCase() === 'complete';
+	        if (isNowComplete && !wasComplete) {
+	          const orderForInventory = await OrderModel.getWithItems(primaryOrderId);
+	          const items = (orderForInventory?.items || []).map((i) => ({
+	            product_id: i.product_id,
+	            quantity: Number(i.quantity),
+	            price: Number(i.price || 0)
+	          }));
+	          if (items.length > 0) {
+	            await updateInventoryForOrder(items);
+	          }
+	        }
+	      } catch (e) {
+	        console.error('Inventory adjustment on merge completion failed:', e);
+	      }
+
+
       // 5. Delete the duplicate order (this will cascade delete its items)
       await OrderModel.delete(duplicateOrderId);
 
       // 6. Get the updated primary order with items
       const updatedOrder = await OrderModel.getWithItems(primaryOrderId);
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         success: true,
         mergedOrder: updatedOrder,
         message: 'Orders merged successfully'
