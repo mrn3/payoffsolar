@@ -59,7 +59,7 @@ export async function POST(_request: NextRequest) {
 
     if (!sent) {
       return NextResponse.json(
-        { _error: 'Failed to send notification email' },
+        { error: 'Failed to send notification email' },
         { status: 500 }
       );
     }
@@ -73,13 +73,13 @@ export async function POST(_request: NextRequest) {
 
     if (_error instanceof z.ZodError) {
       return NextResponse.json(
-        { _error: 'Validation error', details: _error.errors },
+        { error: 'Validation error', details: _error.errors },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { _error: 'Failed to submit contact form' },
+      { error: 'Failed to submit contact form' },
       { status: 500 }
     );
   }
