@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth , isAdmin} from '@/lib/auth';
 import { OrderModel } from '@/lib/models';
-import { updateInventoryForOrder } from '@/lib/utils/orderProcessing';
+import { updateInventoryForOrder, validateInventoryForOrder, restoreInventoryForOrder } from '@/lib/utils/orderProcessing';
 
 
 export async function PATCH(request: NextRequest) {
@@ -34,43 +34,89 @@ export async function PATCH(request: NextRequest) {
     }
 
 
-	    // Determine which orders need inventory adjustment (transition to Complete)
-	    const targetStatusLower = String(status).toLowerCase();
-	    let ordersNeedingAdjustment: string[] = [];
-	    if (targetStatusLower === 'complete') {
-	      const priorStatuses = await Promise.all(
-	        orderIds.map(async (id: string) => {
-	          const o = await OrderModel.getById(id);
-	          return { id, status: (o?.status || '').toLowerCase() };
-	        })
-	      );
-	      ordersNeedingAdjustment = priorStatuses
-	        .filter(o => o.status !== 'complete')
-	        .map(o => o.id);
-	    }
+    const targetStatusLower = String(status).toLowerCase();
 
-    // Perform bulk update
-    await OrderModel.bulkUpdateStatus(orderIds, status);
+    // Load all target orders with items
+    const ordersWithItems = await Promise.all(
+      orderIds.map(async (id: string) => await OrderModel.getWithItems(id))
+    );
 
-	    // If status set to Complete, decrement inventory for affected orders
-	    if (targetStatusLower === 'complete' && ordersNeedingAdjustment.length > 0) {
-	      for (const id of ordersNeedingAdjustment) {
-	        try {
-	          const order = await OrderModel.getWithItems(id);
-	          const items = (order?.items || []).map((i) => ({
-	            product_id: i.product_id,
-	            quantity: Number(i.quantity),
-	            price: Number(i.price || 0)
-	          }));
-	          if (items.length > 0) {
-	            await updateInventoryForOrder(items);
-	          }
-	        } catch (e) {
-	          console.error('Inventory adjustment failed for order', id, e);
-	        }
-	      }
-	    }
+    if (targetStatusLower === 'complete') {
+      // Orders transitioning to Complete (were not complete before)
+      const candidates = ordersWithItems.filter(o => o && String(o.status).toLowerCase() !== 'complete');
 
+      // Require per-item warehouse selection for each candidate order
+      const ordersMissingWarehouses: string[] = [];
+      for (const o of candidates) {
+        const missing = (o?.items || []).some(i => !(i as any).warehouse_id);
+        if (missing) ordersMissingWarehouses.push(o!.id);
+      }
+      if (ordersMissingWarehouses.length > 0) {
+        return NextResponse.json({
+          error: 'Each line item must have a warehouse_id to mark orders Complete',
+          orderIds: ordersMissingWarehouses
+        }, { status: 400 });
+      }
+
+      // Validate inventory per order using per-item warehouses
+      const validationErrors: Record<string, string[]> = {};
+      for (const o of candidates) {
+        const items = (o?.items || []).map(i => ({
+          product_id: i.product_id,
+          quantity: Number(i.quantity),
+          price: Number(i.price || 0),
+          warehouse_id: (i as any).warehouse_id || null
+        }));
+        const res = await validateInventoryForOrder(items);
+        if (!res.valid) {
+          validationErrors[o!.id] = res.errors;
+        }
+      }
+
+      if (Object.keys(validationErrors).length > 0) {
+        return NextResponse.json({
+          error: 'Insufficient inventory for one or more orders',
+          details: validationErrors
+        }, { status: 400 });
+      }
+
+      // Update statuses
+      await OrderModel.bulkUpdateStatus(orderIds, status);
+
+      // Decrement inventory
+      for (const o of candidates) {
+        const items = (o!.items || []).map(i => ({
+          product_id: i.product_id,
+          quantity: Number(i.quantity),
+          price: Number(i.price || 0),
+          warehouse_id: (i as any).warehouse_id || null
+        }));
+        try {
+          await updateInventoryForOrder(items);
+        } catch (e) {
+          console.error('Inventory decrement failed for order', o!.id, e);
+        }
+      }
+    } else {
+      // For other statuses: restore inventory for orders that were previously Complete
+      const previouslyComplete = ordersWithItems.filter(o => o && String(o.status).toLowerCase() === 'complete');
+
+      await OrderModel.bulkUpdateStatus(orderIds, status);
+
+      for (const o of previouslyComplete) {
+        const items = (o!.items || []).map(i => ({
+          product_id: i.product_id,
+          quantity: Number(i.quantity),
+          price: Number(i.price || 0),
+          warehouse_id: (i as any).warehouse_id || null
+        }));
+        try {
+          await restoreInventoryForOrder(items);
+        } catch (e) {
+          console.error('Inventory restore failed for order', o!.id, e);
+        }
+      }
+    }
 
     return NextResponse.json({
       message: `Successfully updated ${orderIds.length} orders to ${status}`,

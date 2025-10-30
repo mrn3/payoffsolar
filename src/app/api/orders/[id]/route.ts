@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {OrderModel, OrderItemModel, ContactModel, ProductModel, CostItemModel, CostCategoryModel, ProductCostBreakdownModel} from '@/lib/models';
 import {requireAuth, isAdmin} from '@/lib/auth';
-import { updateInventoryForOrder } from '@/lib/utils/orderProcessing';
+import { updateInventoryForOrder, validateInventoryForOrder, restoreInventoryForOrder } from '@/lib/utils/orderProcessing';
 
 
 export async function GET(
@@ -101,7 +101,8 @@ export async function PUT(
           order_id: id,
           product_id: item.product_id,
           quantity: parseInt(item.quantity),
-          price: parseFloat(item.price)
+          price: parseFloat(item.price),
+          warehouse_id: (item as any).warehouse_id || null
         });
       }
 
@@ -182,6 +183,33 @@ export async function PUT(
       }
     }
 
+    // Determine status transition and prepare inventory operations
+    const targetStatus = typeof data.status === 'string' ? data.status : existingOrder.status;
+    const isNowComplete = (targetStatus || '').toLowerCase() === 'complete';
+    const wasComplete = (existingOrder.status || '').toLowerCase() === 'complete';
+
+    // Load items (after any item updates above) for validation/adjustments
+    const orderForInventory = await OrderModel.getWithItems(id);
+    const processedItems = (orderForInventory?.items || []).map((item) => ({
+      product_id: item.product_id,
+      quantity: Number(item.quantity),
+      price: Number(item.price || 0),
+      warehouse_id: (item as any).warehouse_id || null
+    }));
+
+    // If transitioning to Complete, require per-item warehouse and validate inventory
+    if (isNowComplete && !wasComplete) {
+      const missingWarehouse = processedItems.find((it: any) => !it.warehouse_id);
+      if (missingWarehouse) {
+        return NextResponse.json({ error: 'Each line item must have a warehouse_id to mark an order Complete' }, { status: 400 });
+      }
+      const validation = await validateInventoryForOrder(processedItems);
+      if (!validation.valid) {
+        return NextResponse.json({ error: 'Insufficient inventory', details: validation.errors }, { status: 400 });
+      }
+    }
+
+
     // Update order
     await OrderModel.update(id, {
       contact_id: data.contact_id,
@@ -190,23 +218,19 @@ export async function PUT(
       order_date: data.order_date,
       notes: data.notes
     });
-    // If transitioning to Complete, decrement inventory for order items
+    // Post-update inventory adjustments
     try {
-      const isNowComplete = typeof data.status === 'string' && data.status.toLowerCase() === 'complete';
-      const wasComplete = typeof existingOrder.status === 'string' && existingOrder.status.toLowerCase() === 'complete';
       if (isNowComplete && !wasComplete) {
-        const orderForInventory = await OrderModel.getWithItems(id);
-        const processedItems = (orderForInventory?.items || []).map((item) => ({
-          product_id: item.product_id,
-          quantity: Number(item.quantity),
-          price: Number(item.price || 0)
-        }));
         if (processedItems.length > 0) {
           await updateInventoryForOrder(processedItems);
         }
+      } else if (!isNowComplete && wasComplete) {
+        if (processedItems.length > 0) {
+          await restoreInventoryForOrder(processedItems);
+        }
       }
     } catch (invErr) {
-      console.error('Inventory adjustment on completion failed:', invErr);
+      console.error('Inventory adjustment failed:', invErr);
       // Continue without failing the whole request
     }
 

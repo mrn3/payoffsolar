@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {useParams, useRouter} from 'next/navigation';
-import { Order, OrderItem, Contact, Product, CostCategory, CostItem } from '@/lib/types';
+import { Order, OrderItem, Contact, Product, CostCategory, CostItem, Warehouse } from '@/lib/types';
 import ContactAutocomplete from '@/components/ui/ContactAutocomplete';
 import ProductAutocomplete from '@/components/ui/ProductAutocomplete';
 import {FaArrowLeft, FaPlus, FaTrash} from 'react-icons/fa';
@@ -14,6 +14,7 @@ interface FormOrderItem {
   product_id: string;
   quantity: number | string;
   price: number | string;
+  warehouse_id?: string;
 }
 
 // Local interface for cost items in form state
@@ -27,20 +28,21 @@ export default function EditOrderPage() {
   const router = useRouter();
   const params = useParams();
   const orderId = params.id as string;
-  
+
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [costCategories, setCostCategories] = useState<CostCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [itemWarehouseOptions, setItemWarehouseOptions] = useState<Record<number, (Warehouse & { available_quantity?: number })[]>>({});
 
   const [formData, setFormData] = useState({
     contact_id: '',
     status: 'Proposed',
     order_date: '',
     notes: '',
-    items: [{ product_id: '', quantity: 1, price: 0 }] as FormOrderItem[],
+    items: [{ product_id: '', quantity: 1, price: 0, warehouse_id: '' }] as FormOrderItem[],
     costItems: [] as FormCostItem[]
   });
 
@@ -90,22 +92,48 @@ export default function EditOrderPage() {
           status: _order.status || 'Proposed',
           order_date: formattedOrderDate,
           notes: _order.notes || '',
-          items: _order.items && _order.items.length > 0
-            ? _order.items.map(item => ({
+          items: Array.isArray(((_order as any).items)) && ((_order as any).items.length > 0)
+            ? ((_order as any).items).map((item: any) => ({
                 id: item.id,
                 product_id: item.product_id,
                 quantity: item.quantity,
-                price: Number(item.price)
+                price: Number(item.price),
+                warehouse_id: item.warehouse_id || ''
               }))
-            : [{ product_id: '', quantity: 1, price: 0 }],
-          costItems: _order.costItems && _order.costItems.length > 0
-            ? _order.costItems.map(costItem => ({
+            : [{ product_id: '', quantity: 1, price: 0, warehouse_id: '' }],
+          costItems: Array.isArray(((_order as any).costItems)) && ((_order as any).costItems.length > 0)
+            ? ((_order as any).costItems).map((costItem: any) => ({
                 id: costItem.id,
                 category_id: costItem.category_id,
                 amount: Number(costItem.amount)
               }))
             : []
         });
+
+        // Preload warehouse options for each existing item based on its product
+        try {
+          const items: any[] = Array.isArray(((_order as any).items)) ? ((_order as any).items) : [];
+          const optionsByIndex: Record<number, (Warehouse & { available_quantity?: number })[]> = {};
+          await Promise.all(items.map(async (it: any, idx: number) => {
+            if (it && it.product_id) {
+              try {
+                const wres = await fetch(`/api/products/${it.product_id}/warehouses`, { credentials: 'include' });
+                if (wres.ok) {
+                  const wdata = await wres.json();
+                  optionsByIndex[idx] = (wdata.warehouses || []) as (Warehouse & { available_quantity?: number })[];
+                } else {
+                  optionsByIndex[idx] = [];
+                }
+              } catch {
+                optionsByIndex[idx] = [];
+              }
+            }
+          }));
+          setItemWarehouseOptions(optionsByIndex);
+        } catch (e) {
+          console.warn('Failed to preload warehouse options', e);
+        }
+
       } else {
         setError('Failed to load order');
       }
@@ -121,6 +149,17 @@ export default function EditOrderPage() {
     _e.preventDefault();
     setSubmitting(true);
     setError('');
+
+
+    // Enforce per-item warehouse selection when updating to Complete
+    if (formData.status === 'Complete') {
+      const missing = formData.items.find(it => !it.product_id || !it.warehouse_id);
+      if (missing) {
+        setError('Each line item must have a warehouse selected to mark this order Complete');
+        setSubmitting(false);
+        return;
+      }
+    }
 
     try {
       const _response = await fetch(`/api/orders/${orderId}`, {
@@ -185,28 +224,45 @@ export default function EditOrderPage() {
     // Always set selected product id first
     updateItem(__index, 'product_id', productId);
 
-    // Try to find product locally
+    // Try to find product locally for price
     const product = products.find(p => p.id === productId);
     if (product) {
       updateItem(__index, 'price', product.price);
-      // Cost breakdown will be recalculated by updateItem
-      return;
+    } else {
+      // Fallback: fetch product details to get price if not in local list
+      try {
+        const res = await fetch(`/api/products/${productId}`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          const fetched = data.product;
+          if (fetched && typeof fetched.price === 'number') {
+            updateItem(__index, 'price', fetched.price);
+            // Cache fetched product
+            setProducts(prev => (prev.find(p => p.id === fetched.id) ? prev : [...prev, fetched]));
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch product for price', e);
+      }
     }
 
-    // Fallback: fetch product details to get price if not in local list
+    // Fetch warehouses with available stock for this product
     try {
-      const res = await fetch(`/api/products/${productId}`, { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        const fetched = data.product;
-        if (fetched && typeof fetched.price === 'number') {
-          updateItem(__index, 'price', fetched.price);
-          // Cache fetched product
-          setProducts(prev => (prev.find(p => p.id === fetched.id) ? prev : [...prev, fetched]));
+      const wres = await fetch(`/api/products/${productId}/warehouses`, { credentials: 'include' });
+      if (wres.ok) {
+        const wdata = await wres.json();
+        const options = (wdata.warehouses || []) as (Warehouse & { available_quantity?: number })[];
+        setItemWarehouseOptions(prev => ({ ...prev, [__index]: options }));
+        // If current selected warehouse for this item is not in options, clear it
+        const current = formData.items[__index]?.warehouse_id;
+        if (!options.find(w => w.id === current)) {
+          updateItem(__index, 'warehouse_id', '');
         }
       }
     } catch (e) {
-      console.error('Failed to fetch product for price', e);
+      console.error('Failed to fetch warehouses for product', e);
+      setItemWarehouseOptions(prev => ({ ...prev, [__index]: [] }));
+      updateItem(__index, 'warehouse_id', '');
     }
     // Cost breakdown will be recalculated by updateItem
   };
@@ -408,7 +464,7 @@ export default function EditOrderPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Order Details</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label htmlFor="contact_id" className="block text-sm font-medium text-gray-700">
@@ -432,6 +488,8 @@ export default function EditOrderPage() {
                 required
                 value={formData.status}
                 onChange={(_e) => setFormData(prev => ({ ...prev, status: _e.target.value }))}
+
+
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
               >
                 <option value="Cancelled">Cancelled</option>
@@ -487,7 +545,7 @@ export default function EditOrderPage() {
 
           <div className="space-y-4">
             {formData.items.map((item, _index) => (
-              <div key={_index} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border border-gray-200 rounded-md">
+              <div key={_index} className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 border border-gray-200 rounded-md">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Product *
@@ -547,6 +605,25 @@ export default function EditOrderPage() {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Warehouse {formData.status === 'Complete' ? '*' : ''}
+                  </label>
+                  <select
+                    value={item.warehouse_id || ''}
+                    onChange={(_e) => updateItem(_index, 'warehouse_id', _e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
+                    disabled={!item.product_id}
+                    required={formData.status === 'Complete'}
+                  >
+                    <option value="">Select a warehouse...</option>
+                    {(itemWarehouseOptions[_index] || []).map((w) => (
+                      <option key={w.id} value={w.id}>{w.name}</option>
+                    ))}
+                  </select>
+                </div>
+
 
                 <div className="flex items-end">
                   {formData.items.length > 1 && (

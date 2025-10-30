@@ -3,7 +3,7 @@ import { OrderModel, OrderItemModel } from '@/lib/models';
 import { requireAuth, isAdmin } from '@/lib/auth';
 import { executeSingle } from '@/lib/mysql/connection';
 import { smartMergeOrders } from '@/lib/utils/duplicates';
-import { updateInventoryForOrder } from '@/lib/utils/orderProcessing';
+import { updateInventoryForOrder, validateInventoryForOrder, restoreInventoryForOrder } from '@/lib/utils/orderProcessing';
 
 
 interface MergeRequest {
@@ -15,7 +15,9 @@ interface MergeRequest {
     total: number;
     order_date: string;
     notes?: string;
+    warehouse_id?: string;
   };
+
 }
 
 export async function POST(request: NextRequest) {
@@ -58,10 +60,11 @@ export async function POST(request: NextRequest) {
       for (const item of duplicateOrderItems) {
         // Check if the primary order already has an item with the same product
         const existingItems = await OrderItemModel.getByOrderId(primaryOrderId);
-        const existingItem = existingItems.find(existing => existing.product_id === item.product_id);
+        // Only merge if both product_id AND warehouse_id match; otherwise create a separate line
+        const existingItem = existingItems.find(existing => existing.product_id === item.product_id && (existing as any).warehouse_id === (item as any).warehouse_id);
 
         if (existingItem) {
-          // If product already exists, combine quantities and use the higher price
+          // If same product and warehouse, combine quantities and use the higher price
           const newQuantity = existingItem.quantity + item.quantity;
           const newPrice = Math.max(Number(existingItem.price), Number(item.price));
 
@@ -70,20 +73,44 @@ export async function POST(request: NextRequest) {
             price: newPrice
           });
         } else {
-          // If product doesn't exist, create new order item for primary order
+          // Otherwise, create a separate line item and preserve the item's warehouse
           await OrderItemModel.create({
             order_id: primaryOrderId,
             product_id: item.product_id,
             quantity: item.quantity,
-            price: item.price
+            price: item.price,
+            warehouse_id: (item as any).warehouse_id || null
           });
         }
       }
 
       // 3. Generate smart merged data if not provided
-      const finalMergedData = mergedData || smartMergeOrders(primaryOrder, duplicateOrder);
+      const mergedCandidate = mergedData || smartMergeOrders(primaryOrder, duplicateOrder);
 
-      // 4. Update the primary order with merged data
+      // Determine merge status transition and validate if moving to Complete
+      const targetIsComplete = (mergedCandidate.status || '').toLowerCase() === 'complete';
+
+      if (targetIsComplete && !wasComplete) {
+        const orderForInventory = await OrderModel.getWithItems(primaryOrderId);
+        const itemsForValidation = (orderForInventory?.items || []).map(i => ({
+          product_id: i.product_id,
+          quantity: Number(i.quantity),
+          price: Number(i.price || 0),
+          warehouse_id: (i as any).warehouse_id || null
+        }));
+        const missingWarehouse = itemsForValidation.find((it: any) => !it.warehouse_id);
+        if (missingWarehouse) {
+          return NextResponse.json({ error: 'Each line item must have a warehouse_id to mark merged order Complete' }, { status: 400 });
+        }
+        const validation = await validateInventoryForOrder(itemsForValidation);
+        if (!validation.valid) {
+          return NextResponse.json({ error: 'Insufficient inventory', details: validation.errors }, { status: 400 });
+        }
+      }
+
+      const finalMergedData = mergedCandidate;
+
+      // 4. Update the primary order with merged data (no order-level warehouse)
       await OrderModel.update(primaryOrderId, {
         contact_id: finalMergedData.contact_id,
         status: finalMergedData.status,
@@ -92,23 +119,35 @@ export async function POST(request: NextRequest) {
         notes: finalMergedData.notes
       });
 
-	      // If transitioned to Complete during merge, decrement inventory for primary order
-	      try {
-	        const isNowComplete = (finalMergedData.status || '').toLowerCase() === 'complete';
-	        if (isNowComplete && !wasComplete) {
-	          const orderForInventory = await OrderModel.getWithItems(primaryOrderId);
-	          const items = (orderForInventory?.items || []).map((i) => ({
-	            product_id: i.product_id,
-	            quantity: Number(i.quantity),
-	            price: Number(i.price || 0)
-	          }));
-	          if (items.length > 0) {
-	            await updateInventoryForOrder(items);
-	          }
-	        }
-	      } catch (e) {
-	        console.error('Inventory adjustment on merge completion failed:', e);
-	      }
+      // Post-update inventory adjustments for merge
+      try {
+        const isNowComplete = (finalMergedData.status || '').toLowerCase() === 'complete';
+        if (isNowComplete && !wasComplete) {
+          const orderForInventory = await OrderModel.getWithItems(primaryOrderId);
+          const items = (orderForInventory?.items || []).map((i) => ({
+            product_id: i.product_id,
+            quantity: Number(i.quantity),
+            price: Number(i.price || 0),
+            warehouse_id: (i as any).warehouse_id || null
+          }));
+          if (items.length > 0) {
+            await updateInventoryForOrder(items);
+          }
+        } else if (!isNowComplete && wasComplete) {
+          const orderForInventory = await OrderModel.getWithItems(primaryOrderId);
+          const items = (orderForInventory?.items || []).map((i) => ({
+            product_id: i.product_id,
+            quantity: Number(i.quantity),
+            price: Number(i.price || 0),
+            warehouse_id: (i as any).warehouse_id || null
+          }));
+          if (items.length > 0) {
+            await restoreInventoryForOrder(items);
+          }
+        }
+      } catch (e) {
+        console.error('Inventory adjustment on merge failed:', e);
+      }
 
 
       // 5. Delete the duplicate order (this will cascade delete its items)

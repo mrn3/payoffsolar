@@ -126,6 +126,7 @@ export interface OrderItem {
   product_id: string;
   quantity: number;
   price: number | string;
+  warehouse_id?: string;
   created_at: string;
 }
 
@@ -285,7 +286,7 @@ export interface SiteSetting {
 export interface AffiliateCode {
   id: string;
   code: string;
-  discount_type: 'percentage' | 'fixed';
+  discount_type: 'percentage' | 'fixed_amount';
   discount_value: number;
   is_active: boolean;
   created_at: string;

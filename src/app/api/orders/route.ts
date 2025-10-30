@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {OrderModel, OrderItemModel, ContactModel, ProductModel, ProductCostBreakdownModel, CostItemModel} from '@/lib/models';
 import { requireAuth , isAdmin, isContact} from '@/lib/auth';
-import { processOrderItems, validateInventoryForOrder } from '@/lib/utils/orderProcessing';
+import { processOrderItems, validateInventoryForOrder, updateInventoryForOrder } from '@/lib/utils/orderProcessing';
 
 export async function GET(request: NextRequest) {
   try {
@@ -140,13 +140,21 @@ export async function POST(request: NextRequest) {
       preserveBundleStructure: false
     });
 
-    // Validate inventory for processed items
-    const inventoryValidation = await validateInventoryForOrder(processedItems);
-    if (!inventoryValidation.valid) {
-      return NextResponse.json({
-        error: 'Insufficient inventory',
-        details: inventoryValidation.errors
-      }, { status: 400 });
+    // Only validate inventory when creating with Complete status
+    const creatingComplete = typeof data.status === 'string' && data.status.toLowerCase() === 'complete';
+    if (creatingComplete) {
+      // Require warehouse selection per line item
+      const missingWarehouse = processedItems.find((it: any) => !it.warehouse_id);
+      if (missingWarehouse) {
+        return NextResponse.json({ error: 'Each line item must have a warehouse_id when creating an order with status Complete' }, { status: 400 });
+      }
+      const inventoryValidation = await validateInventoryForOrder(processedItems);
+      if (!inventoryValidation.valid) {
+        return NextResponse.json({
+          error: 'Insufficient inventory',
+          details: inventoryValidation.errors
+        }, { status: 400 });
+      }
     }
 
     // Calculate total from processed items
@@ -170,7 +178,8 @@ export async function POST(request: NextRequest) {
         order_id: orderId,
         product_id: item.product_id,
         quantity: parseInt(item.quantity.toString()),
-        price: parseFloat(item.price.toString())
+        price: parseFloat(item.price.toString()),
+        warehouse_id: (item as any).warehouse_id || null
       });
     }
 
@@ -205,6 +214,17 @@ export async function POST(request: NextRequest) {
         amount: costItem.amount
       });
     }
+
+    // If created as Complete, decrement inventory now (warehouse-specific)
+    if (creatingComplete) {
+      try {
+        await updateInventoryForOrder(processedItems);
+      } catch (invErr) {
+        console.error('Inventory decrement on order creation failed:', invErr);
+        return NextResponse.json({ error: 'Failed to decrement inventory for Complete order' }, { status: 500 });
+      }
+    }
+
 
     // Get the complete order with items
     const newOrder = await OrderModel.getWithItems(orderId);

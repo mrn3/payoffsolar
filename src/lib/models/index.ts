@@ -1350,6 +1350,7 @@ export const ProductImageModel = {
 export interface Order {
   id: string;
   contact_id: string;
+  warehouse_id?: string;
   status: string;
   total: number | string;
   order_date: string;
@@ -1375,6 +1376,7 @@ export interface OrderItem {
   product_id: string;
   quantity: number;
   price: number | string;
+  warehouse_id?: string;
   created_at: string;
 }
 
@@ -3196,8 +3198,8 @@ export const OrderItemModel = {
 
   async create(data: Omit<OrderItem, 'id' | 'created_at'>): Promise<string> {
     await executeSingle(
-      'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
-      [data.order_id, data.product_id, data.quantity, data.price]
+      'INSERT INTO order_items (order_id, product_id, quantity, price, warehouse_id) VALUES (?, ?, ?, ?, ?)',
+      [data.order_id, data.product_id, data.quantity, data.price, (data as any).warehouse_id || null]
     );
 
     const item = await getOne<{ id: string }>(
@@ -3208,8 +3210,8 @@ export const OrderItemModel = {
   },
 
   async update(_id: string, _data: Partial<Omit<OrderItem, 'id' | 'order_id' | 'created_at'>>): Promise<void> {
-    const fields = [];
-    const values = [];
+    const fields = [] as string[];
+    const values = [] as any[];
 
     if (_data.product_id !== undefined) {
       fields.push('product_id = ? ');
@@ -3222,6 +3224,10 @@ export const OrderItemModel = {
     if (_data.price !== undefined) {
       fields.push('price = ? ');
       values.push(_data.price);
+    }
+    if (( _data as any ).warehouse_id !== undefined) {
+      fields.push('warehouse_id = ?');
+      values.push((( _data as any ).warehouse_id) || null);
     }
 
     if (fields.length === 0) return;

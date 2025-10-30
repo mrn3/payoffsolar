@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { OrderItem, Contact, Product } from '@/lib/types';
+import { OrderItem, Contact, Product, Warehouse } from '@/lib/types';
 import ContactAutocomplete from '@/components/ui/ContactAutocomplete';
 import ProductAutocomplete from '@/components/ui/ProductAutocomplete';
 import {FaArrowLeft, FaPlus, FaTrash} from 'react-icons/fa';
@@ -13,6 +13,7 @@ interface FormOrderItem {
   product_id: string;
   quantity: number | string;
   price: number | string;
+  warehouse_id?: string;
 }
 
 export default function NewOrderPage() {
@@ -23,13 +24,14 @@ export default function NewOrderPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [itemWarehouseOptions, setItemWarehouseOptions] = useState<Record<number, (Warehouse & { available_quantity?: number })[]>>({});
 
   const [formData, setFormData] = useState({
     contact_id: '',
     status: 'Proposed',
     order_date: new Date().toISOString().split('T')[0], // Default to today
     notes: '',
-    items: [{ product_id: '', quantity: 1, price: 0 }] as FormOrderItem[]
+    items: [{ product_id: '', quantity: 1, price: 0, warehouse_id: '' }] as FormOrderItem[]
   });
 
   useEffect(() => {
@@ -65,16 +67,19 @@ export default function NewOrderPage() {
       }
     } catch (err) {
       console.error('Error fetching _data:', err);
-      setError('Failed to load contacts and products');
+      setError('Failed to load contacts, products, and warehouses');
     } finally {
+
       setLoading(false);
     }
   };
+
 
   const handleSubmit = async (_e: React.FormEvent) => {
     _e.preventDefault();
     setSubmitting(true);
     setError('');
+
 
     try {
       const _response = await fetch('/api/orders', {
@@ -83,6 +88,7 @@ export default function NewOrderPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
+
       });
 
       if (_response.ok) {
@@ -129,27 +135,45 @@ export default function NewOrderPage() {
     // Always set the selected product ID
     updateItem(__index, 'product_id', productId);
 
-    // Try local cache first
+    // Set default price from local cache if available
     const product = products.find(p => p.id === productId);
     if (product) {
       updateItem(__index, 'price', product.price);
-      return;
+    } else {
+      // Fallback: fetch product details if not in local list (e.g., beyond pagination)
+      try {
+        const res = await fetch(`/api/products/${productId}`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          const fetched = data.product;
+          if (fetched && typeof fetched.price === 'number') {
+            updateItem(__index, 'price', fetched.price);
+            // Cache it for future selections
+            setProducts(prev => (prev.find(p => p.id === fetched.id) ? prev : [...prev, fetched]));
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch product by id for price', e);
+      }
     }
 
-    // Fallback: fetch product details if not in local list (e.g., beyond pagination)
+    // Fetch warehouses with available stock for this product
     try {
-      const res = await fetch(`/api/products/${productId}`, { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        const fetched = data.product;
-        if (fetched && typeof fetched.price === 'number') {
-          updateItem(__index, 'price', fetched.price);
-          // Cache it for future selections
-          setProducts(prev => (prev.find(p => p.id === fetched.id) ? prev : [...prev, fetched]));
+      const wres = await fetch(`/api/products/${productId}/warehouses`, { credentials: 'include' });
+      if (wres.ok) {
+        const wdata = await wres.json();
+        const options = (wdata.warehouses || []) as (Warehouse & { available_quantity?: number })[];
+        setItemWarehouseOptions(prev => ({ ...prev, [__index]: options }));
+        // If current selected warehouse for this item is not in options, clear it
+        const current = formData.items[__index]?.warehouse_id;
+        if (!options.find(w => w.id === current)) {
+          updateItem(__index, 'warehouse_id', '');
         }
       }
     } catch (e) {
-      console.error('Failed to fetch product by id for price', e);
+      console.error('Failed to fetch warehouses for product', e);
+      setItemWarehouseOptions(prev => ({ ...prev, [__index]: [] }));
+      updateItem(__index, 'warehouse_id', '');
     }
   };
 
@@ -199,7 +223,7 @@ export default function NewOrderPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Order Details</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label htmlFor="contact_id" className="block text-sm font-medium text-gray-700">
@@ -222,6 +246,8 @@ export default function NewOrderPage() {
                 id="status"
                 required
                 value={formData.status}
+
+
                 onChange={(_e) => setFormData(prev => ({ ...prev, status: _e.target.value }))}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
               >
@@ -249,6 +275,8 @@ export default function NewOrderPage() {
           </div>
 
           <div className="mt-6">
+
+
             <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
               Notes
             </label>
@@ -278,7 +306,7 @@ export default function NewOrderPage() {
 
           <div className="space-y-4">
             {formData.items.map((item, _index) => (
-              <div key={_index} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border border-gray-200 rounded-md">
+              <div key={_index} className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 border border-gray-200 rounded-md">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Product *
@@ -338,6 +366,25 @@ export default function NewOrderPage() {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Warehouse {formData.status === 'Complete' ? '*' : ''}
+                  </label>
+                  <select
+                    value={item.warehouse_id || ''}
+                    onChange={(_e) => updateItem(_index, 'warehouse_id', _e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
+                    disabled={!item.product_id}
+                    required={formData.status === 'Complete'}
+                  >
+                    <option value="">Select a warehouse...</option>
+                    {(itemWarehouseOptions[_index] || []).map((w) => (
+                      <option key={w.id} value={w.id}>{w.name}</option>
+                    ))}
+                  </select>
+                </div>
+
 
                 <div className="flex items-end">
                   {formData.items.length > 1 && (
