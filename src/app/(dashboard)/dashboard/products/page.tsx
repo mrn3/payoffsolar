@@ -14,6 +14,8 @@ import DuplicateProductsModal from '@/components/products/DuplicateProductsModal
 import BulkListingModal from '@/components/listings/BulkListingModal';
 import {FaEdit, FaEye, FaImage, FaPlus, FaSearch, FaTrash, FaTrashAlt, FaUpload, FaCopy, FaTimes, FaGlobe, FaBox} from 'react-icons/fa';
 import { createTextPreview } from '@/lib/utils/text';
+import toast from 'react-hot-toast';
+
 
 interface ProductsResponse {
   products: ProductWithFirstImage[];
@@ -44,6 +46,8 @@ export default function ProductsPage() {
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [isSelectAllChecked, setIsSelectAllChecked] = useState(false);
   const [showBulkMergeModal, setShowBulkMergeModal] = useState(false);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+
   const [showDuplicatesModal, setShowDuplicatesModal] = useState(false);
   const [showBulkListingModal, setShowBulkListingModal] = useState(false);
 
@@ -220,6 +224,24 @@ export default function ProductsPage() {
   const openDeleteModal = (product: ProductWithFirstImage) => {
     setSelectedProduct(product);
     setIsDeleteModalOpen(true);
+  };
+
+  const duplicateProduct = async (product: ProductWithFirstImage) => {
+    try {
+      setDuplicatingId(product.id);
+      const res = await fetch(`/api/products/${product.id}/duplicate`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to duplicate product');
+      }
+      toast.success('Product duplicated');
+      router.push(`/dashboard/products/${data.product.id}/edit`);
+    } catch (err: any) {
+      console.error('Duplicate product failed:', err);
+      toast.error(err?.message || 'Failed to duplicate product');
+    } finally {
+      setDuplicatingId(null);
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -493,6 +515,15 @@ export default function ProductsPage() {
                       title="Edit product"
                     >
                       <FaEdit className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => duplicateProduct(product)}
+                      className="text-gray-600 hover:text-gray-900 disabled:opacity-50"
+                      title="Duplicate product"
+                      disabled={duplicatingId === product.id}
+                    >
+                      <FaCopy className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
