@@ -69,7 +69,7 @@ function generateInvoiceHTML(order: any, invoice: any, businessAddress: string, 
   const calculatedTotal = order.items?.reduce((total: number, item: any) => {
     return total + (Number(item.price) * item.quantity);
   }, 0) || 0;
-    
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -284,6 +284,16 @@ function generateInvoiceHTML(order: any, invoice: any, businessAddress: string, 
             <div class="total-amount">$${calculatedTotal.toFixed(2)}</div>
         </div>
     </div>
+
+    <div class="info-section" style="background-color: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; color: #92400e;">Wiring Instructions</h3>
+        <p style="margin: 5px 0; color: #7c2d12;"><strong>Bank:</strong> Wells Fargo</p>
+        <p style="margin: 5px 0; color: #7c2d12;"><strong>Account Name:</strong> Payoff Solar</p>
+        <p style="margin: 5px 0; color: #7c2d12;"><strong>Routing Number:</strong> 121000248</p>
+        <p style="margin: 5px 0; color: #7c2d12;"><strong>Account Number:</strong> 8904437012</p>
+        <p style="margin: 5px 0; color: #7c2d12;"><strong>Address:</strong> 11483 S Wexford Way, South Jordan, UT 84009</p>
+    </div>
+
 
     <div class="footer">
         <p>Thank you for your business!</p>
