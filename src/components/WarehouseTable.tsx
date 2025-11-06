@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {FaEdit, FaBuilding, FaTrash} from 'react-icons/fa';
 
+import Pagination from '@/components/ui/Pagination';
+
 interface Warehouse {
   id: string;
   name: string;
@@ -18,6 +20,7 @@ interface Warehouse {
 
 interface WarehouseTableProps {
   warehouses: Warehouse[];
+
 }
 
 export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
@@ -46,8 +49,16 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
     return parts.length > 0 ? parts.join(', ') : 'No address provided';
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  const totalPages = Math.max(1, Math.ceil(warehouses.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedWarehouses = warehouses.slice(startIndex, startIndex + pageSize);
+
   return (
     <div className="flex flex-col">
+
       <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
           <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
@@ -76,7 +87,7 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
                     </td>
                   </tr>
                 ) : (
-                  warehouses.map((warehouse) => (
+                  pagedWarehouses.map((warehouse) => (
                     <tr key={warehouse.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         <div className="flex items-center">
@@ -121,6 +132,7 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
                               className="text-red-600 hover:text-red-900"
                             >
                               <FaTrash className="h-4 w-4" />
+
                             </button>
                           )}
                         </div>
@@ -133,6 +145,19 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
           </div>
         </div>
       </div>
+
+      {warehouses.length > 0 && totalPages > 1 && (
+        <div className="mt-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            total={warehouses.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
+
     </div>
   );
 }

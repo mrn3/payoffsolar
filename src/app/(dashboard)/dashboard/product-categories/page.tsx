@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ProductCategory } from '@/lib/types';
 import { FaPlus, FaEdit, FaTrash, FaTags } from 'react-icons/fa';
 
+import Pagination from '@/components/ui/Pagination';
+
 interface ProductCategoryWithUsage extends ProductCategory {
   product_count?: number;
 }
@@ -13,6 +15,19 @@ export default function ProductCategoriesPage() {
   const [categories, setCategories] = useState<ProductCategoryWithUsage[]>([]);
   const [usageStats, setUsageStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  // Clamp currentPage when categories change
+  useEffect(() => {
+    const tp = Math.max(1, Math.ceil(categories.length / pageSize));
+    if (currentPage > tp) setCurrentPage(tp);
+  }, [categories, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(categories.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedCategories = categories.slice(startIndex, startIndex + pageSize);
+
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -163,7 +178,7 @@ export default function ProductCategoriesPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {categories.map((category) => (
+                    {pagedCategories.map((category) => (
                       <tr key={category.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{category.name}</div>
@@ -207,7 +222,7 @@ export default function ProductCategoriesPage() {
 
               {/* Mobile cards */}
               <div className="sm:hidden">
-                {categories.map((category) => (
+                {pagedCategories.map((category) => (
                   <div key={category.id} className="border-b border-gray-200 p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
@@ -230,6 +245,7 @@ export default function ProductCategoriesPage() {
                         >
                           <FaEdit className="h-4 w-4" />
                         </Link>
+
                         <button
                           onClick={() => handleDelete(category.id)}
                           disabled={deletingId === category.id}
@@ -246,6 +262,19 @@ export default function ProductCategoriesPage() {
           )}
         </div>
       </div>
+
+      {categories.length > 0 && totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            total={categories.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
+
     </div>
   );
 }

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { ProductListingWithDetails } from '@/lib/models';
 import { FaSync, FaExternalLinkAlt, FaCheck, FaTimes, FaSpinner, FaExclamationTriangle, FaEye, FaEdit } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
+import Pagination from '@/components/ui/Pagination';
+
 
 interface ListingStats {
   total: number;
@@ -37,9 +39,9 @@ export default function ListingStatusDashboard() {
       const response = await fetch('/api/listing/all');
       const data = await response.json();
       const allListings = data.listings || [];
-      
+
       setListings(allListings);
-      
+
       // Calculate stats
       const newStats = allListings.reduce((acc: ListingStats, listing: ProductListingWithDetails) => {
         acc.total++;
@@ -59,7 +61,7 @@ export default function ListingStatusDashboard() {
         }
         return acc;
       }, { total: 0, active: 0, pending: 0, error: 0, ended: 0 });
-      
+
       setStats(newStats);
     } catch (error) {
       console.error('Error fetching listings:', error);
@@ -74,11 +76,11 @@ export default function ListingStatusDashboard() {
       const response = await fetch('/api/listing/sync-all', {
         method: 'POST'
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to sync listings');
       }
-      
+
       await fetchListings();
     } catch (error) {
       console.error('Error syncing listings:', error);
@@ -117,9 +119,24 @@ export default function ListingStatusDashboard() {
     }
   };
 
-  const filteredListings = filter === 'all' 
-    ? listings 
-    : listings.filter(listing => listing.status === filter);
+  const filteredListings = filter === 'all' ? listings : listings.filter(listing => listing.status === filter);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  const totalPages = Math.max(1, Math.ceil(filteredListings.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedListings = filteredListings.slice(startIndex, startIndex + pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
+
+  useEffect(() => {
+    const tp = Math.max(1, Math.ceil(filteredListings.length / pageSize));
+    if (currentPage > tp) setCurrentPage(tp);
+  }, [filteredListings.length, currentPage]);
+
 
   if (loading) {
     return (
@@ -263,7 +280,7 @@ export default function ListingStatusDashboard() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredListings.map((listing) => (
+              {pagedListings.map((listing) => (
                 <tr key={listing.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -289,7 +306,7 @@ export default function ListingStatusDashboard() {
                     </div>
                     {listing.error_message && (
                       <div className="text-xs text-red-600 mt-1" title={listing.error_message}>
-                        {listing.error_message.length > 50 
+                        {listing.error_message.length > 50
                           ? `${listing.error_message.substring(0, 50)}...`
                           : listing.error_message
                         }
@@ -297,7 +314,7 @@ export default function ListingStatusDashboard() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {listing.last_sync_at 
+                    {listing.last_sync_at
                       ? new Date(listing.last_sync_at).toLocaleDateString()
                       : 'Never'
                     }
@@ -326,6 +343,7 @@ export default function ListingStatusDashboard() {
                         onClick={() => router.push(`/dashboard/products/${listing.product_id}/edit`)}
                         className="text-blue-600 hover:text-blue-800"
                         title="Edit product"
+
                       >
                         <FaEdit className="h-4 w-4" />
                       </button>
@@ -343,6 +361,19 @@ export default function ListingStatusDashboard() {
           </div>
         )}
       </div>
+
+      {filteredListings.length > 0 && totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            total={filteredListings.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
+
     </div>
   );
 }

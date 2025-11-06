@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CostCategory } from '@/lib/models';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaTags } from 'react-icons/fa';
+import Pagination from '@/components/ui/Pagination';
+
 
 export default function CostCategoriesPage() {
   const [categories, setCategories] = useState<CostCategory[]>([]);
@@ -11,6 +13,19 @@ export default function CostCategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showInactive, setShowInactive] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  // Clamp current page when categories change
+  useEffect(() => {
+    const tp = Math.max(1, Math.ceil(categories.length / pageSize));
+    if (currentPage > tp) setCurrentPage(tp);
+  }, [categories, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(categories.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedCategories = categories.slice(startIndex, startIndex + pageSize);
+
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -207,7 +222,7 @@ export default function CostCategoriesPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {categories.map((category) => (
+                    {pagedCategories.map((category) => (
                       <tr key={category.id} className={!category.is_active ? 'bg-gray-50' : ''}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
@@ -283,7 +298,7 @@ export default function CostCategoriesPage() {
 
               {/* Mobile cards */}
               <div className="sm:hidden space-y-4">
-                {categories.map((category) => (
+                {pagedCategories.map((category) => (
                   <div key={category.id} className={`bg-white border border-gray-200 rounded-lg p-4 ${!category.is_active ? 'bg-gray-50' : ''}`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
@@ -339,6 +354,7 @@ export default function CostCategoriesPage() {
                         <Link
                           href={`/dashboard/cost-categories/${category.id}/edit`}
                           className="text-green-600 hover:text-green-900 p-1"
+
                         >
                           <FaEdit className="h-4 w-4" />
                         </Link>
@@ -358,6 +374,19 @@ export default function CostCategoriesPage() {
           )}
         </div>
       </div>
+
+      {categories.length > 0 && totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            total={categories.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
+
     </div>
   );
 }

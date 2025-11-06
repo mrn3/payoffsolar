@@ -6,6 +6,8 @@ import { FaPlus, FaEye, FaEdit, FaTrash, FaSearch, FaFilter } from 'react-icons/
 import { format } from 'date-fns';
 import { ProjectWithDetails } from '@/lib/types';
 import toast from 'react-hot-toast';
+import Pagination from '@/components/ui/Pagination';
+
 
 interface User {
   id: string;
@@ -24,6 +26,9 @@ export default function ProjectsPage() {
   const [priorityFilter, setPriorityFilter] = useState('');
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
   const [selectedProject, setSelectedProject] = useState<ProjectWithDetails | null>(null);
 
   const statusOptions = [
@@ -52,7 +57,7 @@ export default function ProjectsPage() {
     try {
       const params = new URLSearchParams();
       if (statusFilter) params.append('status', statusFilter);
-      
+
       const response = await fetch(`/api/projects?${params}`);
       if (response.ok) {
         const data = await response.json();
@@ -129,6 +134,20 @@ export default function ProjectsPage() {
     (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedProjects = filteredProjects.slice(startIndex, startIndex + pageSize);
+
+  // Reset or clamp page when filters/search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, priorityFilter]);
+
+  useEffect(() => {
+    const tp = Math.max(1, Math.ceil(filteredProjects.length / pageSize));
+    if (currentPage > tp) setCurrentPage(tp);
+  }, [filteredProjects.length, currentPage]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -179,7 +198,7 @@ export default function ProjectsPage() {
               </div>
             </div>
           </div>
-          
+
           <div>
             <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700">
               Status
@@ -226,7 +245,7 @@ export default function ProjectsPage() {
           </div>
         ) : (
           <ul className="divide-y divide-gray-200">
-            {filteredProjects.map((project) => (
+            {pagedProjects.map((project) => (
               <li key={project.id}>
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
@@ -290,6 +309,19 @@ export default function ProjectsPage() {
           </ul>
         )}
       </div>
+
+      {filteredProjects.length > 0 && totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            total={filteredProjects.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
+
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedProject && (

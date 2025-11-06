@@ -6,14 +6,29 @@ import { AffiliateCode } from '@/lib/models';
 import { FaPlus, FaEdit, FaTrash, FaTag, FaEye, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
+import Pagination from '@/components/ui/Pagination';
+
 export default function AffiliateCodesPage() {
   const [affiliateCodes, setAffiliateCodes] = useState<AffiliateCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
 
   useEffect(() => {
     fetchAffiliateCodes();
   }, []);
+
+  // Clamp currentPage when data changes
+  useEffect(() => {
+    const tp = Math.max(1, Math.ceil(affiliateCodes.length / pageSize));
+    if (currentPage > tp) setCurrentPage(tp);
+  }, [affiliateCodes, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(affiliateCodes.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedAffiliateCodes = affiliateCodes.slice(startIndex, startIndex + pageSize);
 
   const fetchAffiliateCodes = async () => {
     try {
@@ -26,6 +41,7 @@ export default function AffiliateCodesPage() {
         toast.error('Failed to load affiliate codes');
       }
     } catch (error) {
+
       console.error('Error fetching affiliate codes:', error);
       toast.error('Failed to load affiliate codes');
     } finally {
@@ -164,7 +180,7 @@ export default function AffiliateCodesPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {affiliateCodes.map((code) => (
+                {pagedAffiliateCodes.map((code) => (
                   <tr key={code.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -234,6 +250,7 @@ export default function AffiliateCodesPage() {
                         </button>
                       </div>
                     </td>
+
                   </tr>
                 ))}
               </tbody>
@@ -241,6 +258,19 @@ export default function AffiliateCodesPage() {
           </div>
         )}
       </div>
+
+      {affiliateCodes.length > 0 && totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            total={affiliateCodes.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
+
     </div>
   );
 }
