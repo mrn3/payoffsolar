@@ -11,6 +11,7 @@ interface InventoryPageProps {
     page?: string;
     search?: string;
     warehouseId?: string;
+    pageSize?: string;
   }>;
 }
 
@@ -25,7 +26,8 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
   const page = parseInt(params.page || '1');
   const search = params.search || '';
   const warehouseId = params.warehouseId || '';
-  const limit = 50;
+  const pageSize = parseInt(params.pageSize || '25');
+  const limit = pageSize;
   const offset = (page - 1) * limit;
 
   let inventory = [];
@@ -124,6 +126,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
           currentSearch={search}
           currentWarehouseId={warehouseId}
           total={total}
+          pageSize={pageSize}
         />
       </div>
     </div>

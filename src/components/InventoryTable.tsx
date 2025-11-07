@@ -33,6 +33,7 @@ interface InventoryTableProps {
   currentSearch: string;
   currentWarehouseId: string;
   total: number;
+  pageSize: number;
 }
 
 export default function InventoryTable({
@@ -42,7 +43,8 @@ export default function InventoryTable({
   totalPages,
   currentSearch,
   currentWarehouseId,
-  total
+  total,
+  pageSize
 }: InventoryTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -50,7 +52,7 @@ export default function InventoryTable({
   const [selectedWarehouse, setSelectedWarehouse] = useState(currentWarehouseId);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const updateURL = (newSearch?: string, newWarehouse?: string, newPage?: number) => {
+  const updateURL = (newSearch?: string, newWarehouse?: string, newPage?: number, newPageSize?: number) => {
     const params = new URLSearchParams(searchParams);
 
     if (newSearch !== undefined) {
@@ -75,6 +77,10 @@ export default function InventoryTable({
       } else {
         params.delete('page');
       }
+    }
+
+    if (newPageSize !== undefined) {
+      params.set('pageSize', newPageSize.toString());
     }
 
     router.push(`/dashboard/inventory?${params.toString()}`);
@@ -295,8 +301,9 @@ export default function InventoryTable({
           currentPage={currentPage}
           totalPages={totalPages}
           total={total}
-          pageSize={50}
+          pageSize={pageSize}
           onPageChange={(p) => updateURL(undefined, undefined, p)}
+          onPageSizeChange={(size) => updateURL(undefined, undefined, 1, size)}
         />
       )}
     </div>

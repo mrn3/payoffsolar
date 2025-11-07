@@ -13,6 +13,8 @@ export interface PaginationProps {
   className?: string;
   showFirstLast?: boolean;
   showJumpInput?: boolean;
+  pageSizeOptions?: number[]; // options for page size selector
+  onPageSizeChange?: (pageSize: number) => void; // handler for page size changes
 }
 
 export default function Pagination({
@@ -25,6 +27,8 @@ export default function Pagination({
   className,
   showFirstLast = true,
   showJumpInput = true,
+  pageSizeOptions,
+  onPageSizeChange,
 }: PaginationProps) {
   const [jumpValue, setJumpValue] = useState<string>(String(currentPage));
 
@@ -55,6 +59,10 @@ export default function Pagination({
     const end = Math.min(currentPage * pageSize, total);
     return `Showing ${start} to ${end} of ${total} results`;
   }, [currentPage, pageSize, total, totalPages]);
+
+  const effectivePageSize = useMemo(() => {
+    return pageSize ?? ((Array.isArray(pageSizeOptions) && pageSizeOptions.length > 0 ? pageSizeOptions[0] : 25));
+  }, [pageSize, pageSizeOptions]);
 
   const renderButton = (
     label: React.ReactNode,
@@ -108,6 +116,21 @@ export default function Pagination({
               className="w-20 px-2 py-1 border border-gray-300 rounded-md text-sm"
               aria-label="Jump to page"
             />
+          )}
+          {onPageSizeChange && (
+            <div className="flex items-center space-x-1">
+              <span className="text-sm text-gray-600">Per:</span>
+              <select
+                value={effectivePageSize}
+                onChange={(e) => onPageSizeChange(parseInt(e.target.value))}
+                className="rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm text-gray-900"
+                aria-label="Items per page"
+              >
+                {(pageSizeOptions ?? [10, 25, 50, 100]).map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
           )}
         </div>
         <div className="flex items-center">
@@ -164,6 +187,21 @@ export default function Pagination({
                 className="w-20 px-2 py-1 border border-gray-300 rounded-md text-sm"
                 aria-label="Jump to page"
               />
+            </div>
+          )}
+          {onPageSizeChange && (
+            <div className="flex items-center space-x-2">
+              <label className="text-sm text-gray-600">Per page:</label>
+              <select
+                value={effectivePageSize}
+                onChange={(e) => onPageSizeChange(parseInt(e.target.value))}
+                className="rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm text-gray-900"
+                aria-label="Items per page"
+              >
+                {(pageSizeOptions ?? [10, 25, 50, 100]).map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
             </div>
           )}
         </div>

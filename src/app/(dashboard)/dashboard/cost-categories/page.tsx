@@ -14,7 +14,7 @@ export default function CostCategoriesPage() {
   const [error, setError] = useState('');
   const [showInactive, setShowInactive] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(25);
 
   // Clamp current page when categories change
   useEffect(() => {
@@ -383,6 +383,7 @@ export default function CostCategoriesPage() {
             total={categories.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
           />
         </div>
       )}

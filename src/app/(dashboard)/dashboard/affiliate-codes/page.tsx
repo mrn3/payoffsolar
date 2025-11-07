@@ -13,7 +13,7 @@ export default function AffiliateCodesPage() {
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(25);
 
 
   useEffect(() => {
@@ -267,6 +267,7 @@ export default function AffiliateCodesPage() {
             total={affiliateCodes.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
           />
         </div>
       )}

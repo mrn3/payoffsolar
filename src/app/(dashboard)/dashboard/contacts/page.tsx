@@ -37,9 +37,10 @@ export default function ContactsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 25,
     total: 0,
     totalPages: 0
   });
@@ -55,12 +56,12 @@ export default function ContactsPage() {
   const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
   const [isSelectAllChecked, setIsSelectAllChecked] = useState(false);
 
-  const fetchContacts = async (page = 1, search = '', city = '', state = '', zip = '') => {
+  const fetchContacts = async (page = 1, search = '', city = '', state = '', zip = '', limitNum: number = pageSize) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '10',
+        limit: limitNum.toString(),
         ...(search && { search }),
         ...(city && { city }),
         ...(state && { state }),
@@ -684,8 +685,9 @@ export default function ContactsPage() {
           currentPage={currentPage}
           totalPages={totalPages}
           total={total}
-          pageSize={10}
-          onPageChange={(p) => fetchContacts(p, searchQuery, cityFilter, stateFilter, zipFilter)}
+          pageSize={pageSize}
+          onPageChange={(p) => fetchContacts(p, searchQuery, cityFilter, stateFilter, zipFilter, pageSize)}
+          onPageSizeChange={(size) => { setPageSize(size); fetchContacts(1, searchQuery, cityFilter, stateFilter, zipFilter, size); }}
         />
       )}
 

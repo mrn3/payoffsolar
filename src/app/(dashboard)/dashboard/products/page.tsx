@@ -38,6 +38,7 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductWithFirstImage | null>(null);
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
@@ -53,12 +54,12 @@ export default function ProductsPage() {
   const [showDuplicatesModal, setShowDuplicatesModal] = useState(false);
   const [showBulkListingModal, setShowBulkListingModal] = useState(false);
 
-  const fetchProducts = async (page: number, search: string = '', includeInactiveProducts: boolean = false, categoryId: string = '') => {
+  const fetchProducts = async (page: number, search: string = '', includeInactiveProducts: boolean = false, categoryId: string = '', limitNum: number = pageSize) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '12'
+        limit: limitNum.toString()
       });
 
       if (search) {
@@ -550,8 +551,9 @@ export default function ProductsPage() {
           currentPage={currentPage}
           totalPages={totalPages}
           total={total}
-          pageSize={12}
-          onPageChange={(p) => fetchProducts(p, searchQuery, includeInactive, selectedCategory)}
+          pageSize={pageSize}
+          onPageChange={(p) => fetchProducts(p, searchQuery, includeInactive, selectedCategory, pageSize)}
+          onPageSizeChange={(size) => { setPageSize(size); fetchProducts(1, searchQuery, includeInactive, selectedCategory, size); }}
         />
       )}
 

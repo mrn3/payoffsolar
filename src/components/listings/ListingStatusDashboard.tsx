@@ -122,7 +122,7 @@ export default function ListingStatusDashboard() {
   const filteredListings = filter === 'all' ? listings : listings.filter(listing => listing.status === filter);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(25);
 
   const totalPages = Math.max(1, Math.ceil(filteredListings.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
@@ -135,7 +135,7 @@ export default function ListingStatusDashboard() {
   useEffect(() => {
     const tp = Math.max(1, Math.ceil(filteredListings.length / pageSize));
     if (currentPage > tp) setCurrentPage(tp);
-  }, [filteredListings.length, currentPage]);
+  }, [filteredListings.length, currentPage, pageSize]);
 
 
   if (loading) {
@@ -370,6 +370,7 @@ export default function ListingStatusDashboard() {
             total={filteredListings.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
           />
         </div>
       )}

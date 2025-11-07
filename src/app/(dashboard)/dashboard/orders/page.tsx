@@ -61,6 +61,7 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState('');
@@ -105,7 +106,7 @@ export default function OrdersPage() {
     return () => clearTimeout(timer);
   }, [searchQuery, filters, sortConfig]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
-  const fetchOrders = async (page: number) => {
+  const fetchOrders = async (page: number, limitNum: number = pageSize) => {
     try {
       setLoading(true);
 
@@ -122,7 +123,7 @@ export default function OrdersPage() {
       // Then get orders with pagination and filter parameters
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '10'
+        limit: limitNum.toString()
       });
 
       // Add legacy search parameter
@@ -738,8 +739,9 @@ export default function OrdersPage() {
           currentPage={currentPage}
           totalPages={totalPages}
           total={total}
-          pageSize={10}
+          pageSize={pageSize}
           onPageChange={(p) => fetchOrders(p)}
+          onPageSizeChange={(size) => { setPageSize(size); fetchOrders(1, size); }}
         />
       )}
 

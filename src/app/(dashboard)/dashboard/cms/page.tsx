@@ -17,6 +17,7 @@ export default function CMSPage() {
   const [selectedType, setSelectedType] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   // Debounce search input
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function CMSPage() {
       setLoading(true);
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: '10'
+        limit: pageSize.toString()
       });
 
       if (searchTerm) {
@@ -53,7 +54,7 @@ export default function CMSPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, selectedType, searchTerm]);
+  }, [currentPage, selectedType, searchTerm, pageSize]);
 
   useEffect(() => {
     fetchContentTypes();
@@ -267,7 +268,9 @@ export default function CMSPage() {
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
+          pageSize={pageSize}
           onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
         />
       )}
     </div>

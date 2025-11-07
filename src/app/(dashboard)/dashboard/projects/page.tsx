@@ -27,7 +27,7 @@ export default function ProjectsPage() {
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(25);
 
   const [selectedProject, setSelectedProject] = useState<ProjectWithDetails | null>(null);
 
@@ -146,7 +146,7 @@ export default function ProjectsPage() {
   useEffect(() => {
     const tp = Math.max(1, Math.ceil(filteredProjects.length / pageSize));
     if (currentPage > tp) setCurrentPage(tp);
-  }, [filteredProjects.length, currentPage]);
+  }, [filteredProjects.length, currentPage, pageSize]);
 
   if (loading) {
     return (
@@ -318,6 +318,7 @@ export default function ProjectsPage() {
             total={filteredProjects.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
           />
         </div>
       )}

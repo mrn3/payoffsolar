@@ -16,7 +16,7 @@ export default function ProductCategoriesPage() {
   const [usageStats, setUsageStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(25);
 
   // Clamp currentPage when categories change
   useEffect(() => {
@@ -271,6 +271,7 @@ export default function ProductCategoriesPage() {
             total={categories.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
           />
         </div>
       )}
