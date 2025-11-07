@@ -5,6 +5,8 @@ import { ProductListingWithDetails } from '@/lib/models';
 import { FaSync, FaExternalLinkAlt, FaCheck, FaTimes, FaSpinner, FaExclamationTriangle, FaEye, FaEdit } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import Pagination from '@/components/ui/Pagination';
+import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
+
 
 
 interface ListingStats {
@@ -122,7 +124,7 @@ export default function ListingStatusDashboard() {
   const filteredListings = filter === 'all' ? listings : listings.filter(listing => listing.status === filter);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState<number>(() => getGlobalPageSize(10));
 
   const totalPages = Math.max(1, Math.ceil(filteredListings.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
@@ -370,7 +372,7 @@ export default function ListingStatusDashboard() {
             total={filteredListings.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
+            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); setGlobalPageSize(size); }}
           />
         </div>
       )}

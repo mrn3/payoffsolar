@@ -7,13 +7,15 @@ import { FaPlus, FaEdit, FaTrash, FaTag, FaEye, FaToggleOn, FaToggleOff } from '
 import toast from 'react-hot-toast';
 
 import Pagination from '@/components/ui/Pagination';
+import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
+
 
 export default function AffiliateCodesPage() {
   const [affiliateCodes, setAffiliateCodes] = useState<AffiliateCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState<number>(() => getGlobalPageSize(10));
 
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export default function AffiliateCodesPage() {
   useEffect(() => {
     const tp = Math.max(1, Math.ceil(affiliateCodes.length / pageSize));
     if (currentPage > tp) setCurrentPage(tp);
-  }, [affiliateCodes, currentPage]);
+  }, [affiliateCodes, currentPage, pageSize]);
 
   const totalPages = Math.max(1, Math.ceil(affiliateCodes.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
@@ -267,7 +269,7 @@ export default function AffiliateCodesPage() {
             total={affiliateCodes.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
+            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); setGlobalPageSize(size); }}
           />
         </div>
       )}

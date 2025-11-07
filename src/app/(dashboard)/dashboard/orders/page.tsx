@@ -13,6 +13,8 @@ import {FaDownload, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaUpload, FaCopy, 
 
 import Pagination from '@/components/ui/Pagination';
 
+import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
+
 interface Order {
   id: string;
   contact_id: string;
@@ -61,7 +63,7 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState<number>(() => getGlobalPageSize(10));
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState('');
@@ -741,7 +743,7 @@ export default function OrdersPage() {
           total={total}
           pageSize={pageSize}
           onPageChange={(p) => fetchOrders(p)}
-          onPageSizeChange={(size) => { setPageSize(size); fetchOrders(1, size); }}
+          onPageSizeChange={(size) => { setPageSize(size); setGlobalPageSize(size); fetchOrders(1, size); }}
         />
       )}
 

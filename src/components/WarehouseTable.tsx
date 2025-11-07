@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import {FaEdit, FaBuilding, FaTrash} from 'react-icons/fa';
 
 import Pagination from '@/components/ui/Pagination';
+import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
+
 
 interface Warehouse {
   id: string;
@@ -50,7 +52,7 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState<number>(() => getGlobalPageSize(10));
 
   const totalPages = Math.max(1, Math.ceil(warehouses.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
@@ -154,7 +156,7 @@ export default function WarehouseTable({ warehouses }: WarehouseTableProps) {
             total={warehouses.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
+            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); setGlobalPageSize(size); }}
           />
         </div>
       )}

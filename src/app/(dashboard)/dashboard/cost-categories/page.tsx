@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { CostCategory } from '@/lib/models';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaTags } from 'react-icons/fa';
 import Pagination from '@/components/ui/Pagination';
+import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
+
 
 
 export default function CostCategoriesPage() {
@@ -14,13 +16,13 @@ export default function CostCategoriesPage() {
   const [error, setError] = useState('');
   const [showInactive, setShowInactive] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState<number>(() => getGlobalPageSize(10));
 
   // Clamp current page when categories change
   useEffect(() => {
     const tp = Math.max(1, Math.ceil(categories.length / pageSize));
     if (currentPage > tp) setCurrentPage(tp);
-  }, [categories, currentPage]);
+  }, [categories, currentPage, pageSize]);
 
   const totalPages = Math.max(1, Math.ceil(categories.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
@@ -383,7 +385,7 @@ export default function CostCategoriesPage() {
             total={categories.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
+            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); setGlobalPageSize(size); }}
           />
         </div>
       )}

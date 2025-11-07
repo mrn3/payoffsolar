@@ -18,6 +18,8 @@ import toast from 'react-hot-toast';
 
 import Pagination from '@/components/ui/Pagination';
 
+import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
+
 
 interface ProductsResponse {
   products: ProductWithFirstImage[];
@@ -38,7 +40,7 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState<number>(() => getGlobalPageSize(10));
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductWithFirstImage | null>(null);
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
@@ -553,7 +555,7 @@ export default function ProductsPage() {
           total={total}
           pageSize={pageSize}
           onPageChange={(p) => fetchProducts(p, searchQuery, includeInactive, selectedCategory, pageSize)}
-          onPageSizeChange={(size) => { setPageSize(size); fetchProducts(1, searchQuery, includeInactive, selectedCategory, size); }}
+          onPageSizeChange={(size) => { setPageSize(size); setGlobalPageSize(size); fetchProducts(1, searchQuery, includeInactive, selectedCategory, size); }}
         />
       )}
 

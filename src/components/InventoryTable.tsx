@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaEdit, FaExchangeAlt, FaSearch, FaTrash } from 'react-icons/fa';
 
 import Pagination from '@/components/ui/Pagination';
+
+import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
 
 interface InventoryItem {
   id: string;
@@ -85,6 +87,15 @@ export default function InventoryTable({
 
     router.push(`/dashboard/inventory?${params.toString()}`);
   };
+
+  // On mount, if a global page size preference exists and differs from current pageSize, sync URL
+  useEffect(() => {
+    const global = getGlobalPageSize(10);
+    if (global && global !== pageSize) {
+      updateURL(undefined, undefined, 1, global);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -303,7 +314,7 @@ export default function InventoryTable({
           total={total}
           pageSize={pageSize}
           onPageChange={(p) => updateURL(undefined, undefined, p)}
-          onPageSizeChange={(size) => updateURL(undefined, undefined, 1, size)}
+          onPageSizeChange={(size) => { setGlobalPageSize(size); updateURL(undefined, undefined, 1, size); }}
         />
       )}
     </div>

@@ -7,6 +7,8 @@ import { format } from 'date-fns';
 import { ProjectWithDetails } from '@/lib/types';
 import toast from 'react-hot-toast';
 import Pagination from '@/components/ui/Pagination';
+import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
+
 
 
 interface User {
@@ -27,7 +29,7 @@ export default function ProjectsPage() {
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState<number>(() => getGlobalPageSize(10));
 
   const [selectedProject, setSelectedProject] = useState<ProjectWithDetails | null>(null);
 
@@ -318,7 +320,7 @@ export default function ProjectsPage() {
             total={filteredProjects.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
+            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); setGlobalPageSize(size); }}
           />
         </div>
       )}

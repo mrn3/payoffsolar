@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import {FaEdit, FaEye, FaGlobe, FaPlus, FaSearch, FaTrash} from 'react-icons/fa';
 
 import Pagination from '@/components/ui/Pagination';
+import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
+
 
 export default function CMSPage() {
   const [content, setContent] = useState<ContentWithDetails[]>([]);
@@ -17,7 +19,7 @@ export default function CMSPage() {
   const [selectedType, setSelectedType] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState<number>(() => getGlobalPageSize(10));
 
   // Debounce search input
   useEffect(() => {
@@ -270,7 +272,7 @@ export default function CMSPage() {
           totalPages={totalPages}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
-          onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
+          onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); setGlobalPageSize(size); }}
         />
       )}
     </div>

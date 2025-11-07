@@ -26,7 +26,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
   const page = parseInt(params.page || '1');
   const search = params.search || '';
   const warehouseId = params.warehouseId || '';
-  const pageSize = parseInt(params.pageSize || '25');
+  const pageSize = parseInt(params.pageSize || '10');
   const limit = pageSize;
   const offset = (page - 1) * limit;
 

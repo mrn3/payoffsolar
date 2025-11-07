@@ -13,6 +13,8 @@ import BulkActionsToolbar from '@/components/contacts/BulkActionsToolbar';
 
 import Pagination from '@/components/ui/Pagination';
 
+import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
+
 interface ContactsResponse {
   contacts: Contact[];
   pagination: {
@@ -37,10 +39,10 @@ export default function ContactsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState<number>(() => getGlobalPageSize(10));
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 25,
+    limit: 10,
     total: 0,
     totalPages: 0
   });
@@ -687,7 +689,7 @@ export default function ContactsPage() {
           total={total}
           pageSize={pageSize}
           onPageChange={(p) => fetchContacts(p, searchQuery, cityFilter, stateFilter, zipFilter, pageSize)}
-          onPageSizeChange={(size) => { setPageSize(size); fetchContacts(1, searchQuery, cityFilter, stateFilter, zipFilter, size); }}
+          onPageSizeChange={(size) => { setPageSize(size); setGlobalPageSize(size); fetchContacts(1, searchQuery, cityFilter, stateFilter, zipFilter, size); }}
         />
       )}
 

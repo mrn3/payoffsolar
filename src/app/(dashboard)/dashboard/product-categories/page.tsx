@@ -6,6 +6,8 @@ import { ProductCategory } from '@/lib/types';
 import { FaPlus, FaEdit, FaTrash, FaTags } from 'react-icons/fa';
 
 import Pagination from '@/components/ui/Pagination';
+import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
+
 
 interface ProductCategoryWithUsage extends ProductCategory {
   product_count?: number;
@@ -16,13 +18,13 @@ export default function ProductCategoriesPage() {
   const [usageStats, setUsageStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState<number>(() => getGlobalPageSize(10));
 
   // Clamp currentPage when categories change
   useEffect(() => {
     const tp = Math.max(1, Math.ceil(categories.length / pageSize));
     if (currentPage > tp) setCurrentPage(tp);
-  }, [categories, currentPage]);
+  }, [categories, currentPage, pageSize]);
 
   const totalPages = Math.max(1, Math.ceil(categories.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
@@ -271,7 +273,7 @@ export default function ProductCategoriesPage() {
             total={categories.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); }}
+            onPageSizeChange={(size) => { setCurrentPage(1); setPageSize(size); setGlobalPageSize(size); }}
           />
         </div>
       )}
