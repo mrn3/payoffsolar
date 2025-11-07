@@ -285,6 +285,24 @@ function generateInvoiceHTML(order: any, invoice: any, businessAddress: string, 
         </div>
     </div>
 
+    <div class="info-section" style="background-color: #ecfeff; border: 1px solid #a5f3fc; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; color: #0f766e;">Payment Options (Preferred - no fees)</h3>
+        <ul style="margin: 0; padding-left: 20px; color: #334155;">
+            <li><strong>Venmo:</strong> <a href="https://venmo.com/u/mattrnewman" target="_blank" rel="noopener noreferrer">venmo.com/u/mattrnewman</a></li>
+            <li><strong>Cash App:</strong> <a href="https://cash.app/$mattrnewman" target="_blank" rel="noopener noreferrer">cash.app/$mattrnewman</a></li>
+            <li><strong>Apple Pay:</strong> <a href="tel:+18014486396">(801) 448-6396</a></li>
+            <li><strong>Zelle:</strong> <a href="mailto:mattrobertnewman@gmail.com">mattrobertnewman@gmail.com</a></li>
+            <li><strong>PayPal:</strong> <a href="mailto:lisafunknewman@gmail.com">lisafunknewman@gmail.com</a></li>
+        </ul>
+    </div>
+
+    <div class="info-section" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; color: #166534;">Direct Bank Transfer (ACH)</h3>
+        <p style="margin: 5px 0; color: #14532d;"><strong>Wells Fargo checking account:</strong> 8904437012</p>
+        <p style="margin: 5px 0; color: #14532d;"><strong>America First checking account:</strong> 6782882</p>
+        <p style="margin: 5px 0; color: #475569; font-size: 0.9em;">Please include the invoice number ${invoice.invoice_number} in the memo.</p>
+    </div>
+
     <div class="info-section" style="background-color: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
         <h3 style="margin-top: 0; color: #92400e;">Wiring Instructions</h3>
         <p style="margin: 5px 0; color: #7c2d12;"><strong>Bank:</strong> Wells Fargo</p>
@@ -292,6 +310,17 @@ function generateInvoiceHTML(order: any, invoice: any, businessAddress: string, 
         <p style="margin: 5px 0; color: #7c2d12;"><strong>Routing Number:</strong> 121000248</p>
         <p style="margin: 5px 0; color: #7c2d12;"><strong>Account Number:</strong> 8904437012</p>
         <p style="margin: 5px 0; color: #7c2d12;"><strong>Address:</strong> 11483 S Wexford Way, South Jordan, UT 84009</p>
+    </div>
+
+    <div class="info-section" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; color: #334155;">In-person Options</h3>
+        <p style="margin: 5px 0; color: #475569;"><strong>Cash:</strong> requires in-person</p>
+        <p style="margin: 5px 0; color: #475569;"><strong>Check or Cashier's check:</strong> requires in-person and delay</p>
+    </div>
+
+    <div class="info-section" style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; color: #9f1239;">Credit Card (less preferred)</h3>
+        <p style="margin: 5px 0; color: #be123c;">Credit card payments incur a 3% processing fee which will be added to your total.</p>
     </div>
 
 
