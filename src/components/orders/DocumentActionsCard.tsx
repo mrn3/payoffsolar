@@ -157,7 +157,7 @@ export default function DocumentActionsCard({ kind, orderId, contactId, contactE
               </div>
             </div>
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setShowEmail(false)} className="px-3 py-2 text-sm rounded-md border">Cancel</button>
+              <button onClick={() => setShowEmail(false)} className="px-3 py-2 text-sm rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">Cancel</button>
               <button onClick={sendEmail} disabled={sending} className="px-3 py-2 text-sm rounded-md bg-green-600 text-white disabled:opacity-50">Send Email</button>
             </div>
           </div>
