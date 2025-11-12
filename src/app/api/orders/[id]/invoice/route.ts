@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, isContact } from '@/lib/auth';
 import { OrderModel, InvoiceModel, SiteSettingsModel } from '@/lib/models';
 import { format } from 'date-fns';
 
@@ -8,20 +7,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Require authentication
-    const session = await requireAuth();
-    const profile = session.profile;
-
+    // Public invoice endpoint (no authentication required)
     const { id } = await params;
 
-    let order;
-    if (isContact(profile.role)) {
-      // Contact users can only view their own order invoices
-      order = await OrderModel.getByIdForUser(id, profile.id);
-    } else {
-      // Admin and other roles can view all order invoices
-      order = await OrderModel.getWithItems(id);
-    }
+    const order = await OrderModel.getWithItems(id);
 
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });

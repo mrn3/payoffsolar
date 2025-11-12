@@ -1,4 +1,4 @@
-import { SESClient, SendEmailCommand, SendEmailCommandInput } from '@aws-sdk/client-ses';
+import { SESClient, SendEmailCommand, SendEmailCommandInput, SendRawEmailCommand } from '@aws-sdk/client-ses';
 
 // Initialize AWS SES
 const AWS_REGION = process.env.AWS_REGION;
@@ -194,20 +194,20 @@ function generatePasswordResetEmailHtml(resetUrl: string): string {
           <h1>Reset Your Password</h1>
           <p class="subtitle">We received a request to reset your password for your Payoff Solar account.</p>
         </div>
-        
+
         <p>Click the button below to reset your password:</p>
-        
+
         <div style="text-align: center;">
           <a href="${resetUrl}" class="button">Reset Password</a>
         </div>
-        
+
         <p>If the button doesn&apos;t work, you can copy and paste this link into your browser:</p>
         <p style="word-break: break-all; color: #6b7280; font-size: 14px;">${resetUrl}</p>
-        
+
         <div class="warning">
           <strong>Security Notice:</strong> This link will expire in 1 hour for your security. If you didn&apos;t request this password reset, you can safely ignore this email.
         </div>
-        
+
         <div class="footer">
           <p>If you have any questions, please contact our support team.</p>
           <p>© ${new Date().getFullYear()} Payoff Solar. All rights reserved.</p>
@@ -384,4 +384,109 @@ function stripHtml(html: string): string {
     .replace(/<[^>]*>/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+
+export interface EmailAttachment {
+  filename: string;
+  contentType: string;
+  content: Buffer | Uint8Array | string;
+}
+
+export interface EmailWithAttachmentOptions extends EmailOptions {
+  attachments: EmailAttachment[];
+}
+
+/**
+ * Send an email with attachments using AWS SES RawEmail
+ */
+export async function sendEmailWithAttachment(options: EmailWithAttachmentOptions): Promise<boolean> {
+  if (!sesClient) {
+    console.log('📧 (Simulated) Email with attachment would be sent to:', options.to);
+    console.log('📧 Subject:', options.subject);
+    console.log('📎 Attachments:', options.attachments.map(a => a.filename).join(', '));
+    return true;
+  }
+
+  try {
+    const boundaryMixed = `Mixed_${Date.now()}`;
+    const boundaryAlt = `Alt_${Date.now()}`;
+    const from = `${FROM_NAME} <${FROM_EMAIL}>`;
+
+    let raw = '';
+    raw += `From: ${from}\r\n`;
+    raw += `To: ${options.to}\r\n`;
+    if (options.cc?.length) raw += `Cc: ${options.cc.join(', ')}\r\n`;
+    if (options.bcc?.length) raw += `Bcc: ${options.bcc.join(', ')}\r\n`;
+    raw += `Subject: ${options.subject}\r\n`;
+    raw += `MIME-Version: 1.0\r\n`;
+    raw += `Content-Type: multipart/mixed; boundary=${boundaryMixed}
+
+`;
+
+    // Alternative part (text and HTML)
+    raw += `--${boundaryMixed}
+`;
+    raw += `Content-Type: multipart/alternative; boundary=${boundaryAlt}
+
+`;
+
+    // Text
+    raw += `--${boundaryAlt}
+`;
+    raw += `Content-Type: text/plain; charset=UTF-8
+
+`;
+    raw += `${options.text || stripHtml(options.html)}
+
+`;
+
+    // HTML
+    raw += `--${boundaryAlt}
+`;
+    raw += `Content-Type: text/html; charset=UTF-8
+
+`;
+    raw += `${options.html}
+
+`;
+
+    // End alt
+    raw += `--${boundaryAlt}--
+`;
+
+    // Attachments
+    for (const att of options.attachments) {
+      const base64 =
+        att instanceof Buffer
+          ? att.toString('base64')
+          : (att as any).byteLength !== undefined && typeof att !== 'string'
+            ? Buffer.from(att as Uint8Array).toString('base64')
+            : Buffer.from(att as string).toString('base64');
+
+      raw += `--${boundaryMixed}
+`;
+      raw += `Content-Type: ${att.contentType}; name='${att.filename}'
+`;
+      raw += `Content-Transfer-Encoding: base64
+`;
+      raw += `Content-Disposition: attachment; filename='${att.filename}'
+
+`;
+      raw += `${base64}
+
+`;
+    }
+
+    // End mixed
+    raw += `--${boundaryMixed}--`;
+
+    const params = { RawMessage: { Data: Buffer.from(raw) } };
+    await sesClient.send(new SendRawEmailCommand(params));
+    console.log('✅ Email with attachment sent successfully to:', options.to);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to send email with attachment via SES:', error);
+    return false;
+  }
 }
