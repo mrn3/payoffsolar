@@ -71,8 +71,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const baseUrl = getBaseUrl(request);
     const invoiceUrl = `${baseUrl}/api/orders/${id}/invoice`;
 
-    const subject = `Invoice ${invoice.invoice_number} from Payoff Solar`;
-    const emailHtml = `<p>Hi ${order.contact_name || ''},</p><p>Your invoice is available here: <a href="${invoiceUrl}">${invoiceUrl}</a></p><p>Thank you!<br/>Payoff Solar</p>`;
+    const subject = `Invoice From Payoff Solar — Order #${order.id.substring(0, 8)}`;
+    const emailHtml = `<p>Hi ${order.contact_name || ''},</p><p>Your invoice is available here: <a href="${invoiceUrl}">${invoiceUrl}</a></p><p>A PDF copy is attached.</p><p>Thank you!<br/>Payoff Solar</p>`;
 
     let sendOk = false;
     if (mode === 'pdf' || mode === 'both') {

@@ -4,8 +4,8 @@ import { requireAuth, isContact } from '@/lib/auth';
 import { OrderModel } from '@/lib/models';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
-import {FaArrowLeft, FaDownload, FaEdit, FaUser, FaCalendarAlt, FaPhone, FaSms, FaEnvelope, FaFileInvoice, FaFilePdf} from 'react-icons/fa';
-import SendInvoiceButtons from '@/components/orders/SendInvoiceButtons';
+import { FaArrowLeft, FaEdit, FaUser, FaCalendarAlt, FaPhone, FaSms, FaEnvelope } from 'react-icons/fa';
+import DocumentActionsCard from '@/components/orders/DocumentActionsCard';
 
 interface OrderPageProps {
   params: Promise<{ id: string }>;
@@ -88,60 +88,27 @@ export default async function OrderPage({ params }: OrderPageProps) {
             View order details and line items.
           </p>
         </div>
-        <div className="flex space-x-3">
-          <Link
-            href={`/api/orders/${order.id}/receipt`}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-          >
-            <FaDownload className="mr-2 h-4 w-4" />
-            Download Receipt
-          </Link>
-          <Link
-            href={`/api/orders/${order.id}/invoice`}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-          >
-            <FaFileInvoice className="mr-2 h-4 w-4" />
-            View Invoice
-          </Link>
-          {!isContact(profile.role) && (
-            <>
-              <Link
-                href={`/api/orders/${order.id}/invoice/pdf`}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                <FaFilePdf className="mr-2 h-4 w-4" />
-                Download Invoice PDF
-              </Link>
-              <Link
-                href={`/dashboard/orders/${order.id}/edit`}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                <FaEdit className="mr-2 h-4 w-4" />
-                Edit Order
-              </Link>
-            </>
-          )}
-        </div>
+        {!isContact(profile.role) && (
+          <div className="flex space-x-3">
+            <Link
+              href={`/dashboard/orders/${order.id}/edit`}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              <FaEdit className="mr-2 h-4 w-4" />
+              Edit Order
+            </Link>
+          </div>
+        )}
       </div>
 
-      {/* Send Invoice Actions */}
-      {!isContact(profile.role) && (
-        <div className="mb-6">
-          <SendInvoiceButtons
-            orderId={order.id}
-            contactId={order.contact_id || undefined}
-            contactEmail={order.contact_email}
-            contactPhone={order.contact_phone}
-          />
-        </div>
-      )}
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Order Details */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Order Information</h2>
-            
+
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <dt className="text-sm font-medium text-gray-500">Order ID</dt>
@@ -377,6 +344,23 @@ export default async function OrderPage({ params }: OrderPageProps) {
               )}
             </dl>
           </div>
+          {/* Invoice/Receipt actions */}
+          <DocumentActionsCard
+            kind="invoice"
+            orderId={order.id}
+            contactId={order.contact_id || undefined}
+            contactEmail={!isContact(profile.role) ? order.contact_email : null}
+            contactPhone={!isContact(profile.role) ? order.contact_phone : null}
+          />
+
+          <DocumentActionsCard
+            kind="receipt"
+            orderId={order.id}
+            contactId={order.contact_id || undefined}
+            contactEmail={!isContact(profile.role) ? order.contact_email : null}
+            contactPhone={!isContact(profile.role) ? order.contact_phone : null}
+          />
+
 
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
