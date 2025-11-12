@@ -16,6 +16,10 @@ interface Props {
 export default function DocumentActionsCard({ kind, orderId, contactId, contactEmail, contactPhone }: Props) {
   const [sending, setSending] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
+  // Editable email fields for the compose dialog
+  const [toEmail, setToEmail] = useState(contactEmail || '');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
 
   const title = kind === 'invoice' ? 'Invoice' : 'Receipt';
   const viewHref = kind === 'invoice' ? `/api/orders/${orderId}/invoice` : `/api/orders/${orderId}/receipt`;
@@ -32,13 +36,14 @@ export default function DocumentActionsCard({ kind, orderId, contactId, contactE
   }, [title]);
 
   const sendEmail = async () => {
-    if (!contactEmail) return;
+    const to = (toEmail || contactEmail || '').trim();
+    if (!to) return;
     setSending(true);
     try {
       const res = await fetch(emailApi, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: contactEmail, contactId, mode: 'pdf' })
+        body: JSON.stringify({ to, contactId, mode: 'pdf', subject: emailSubject, body: emailBody })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send email');
@@ -91,7 +96,7 @@ export default function DocumentActionsCard({ kind, orderId, contactId, contactE
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-700">Email</span>
             <button
-              onClick={() => setShowEmail(true)}
+              onClick={() => { setToEmail(contactEmail || ''); setEmailSubject(subject); setEmailBody(`${bodyPreview}\n\n${viewHref}`); setShowEmail(true); }}
               className="inline-flex items-center text-purple-600 hover:text-purple-800 text-sm"
             >
               <FaEnvelope className="mr-2 h-4 w-4" /> Compose
@@ -121,20 +126,34 @@ export default function DocumentActionsCard({ kind, orderId, contactId, contactE
                 <div className="text-gray-500">From</div>
                 <div className="text-gray-900">Payoff Solar &lt;matt@payoffsolar.com&gt;</div>
               </div>
-              <div className="hidden">
+              <div>
                 <div className="text-gray-500">To</div>
-                <div className="text-gray-900">{contactEmail}</div>
+                <input
+                  type="email"
+                  value={toEmail}
+                  onChange={(e) => setToEmail(e.target.value)}
+                  className="mt-1 w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
               </div>
               <div>
                 <div className="text-gray-500">Subject</div>
-                <div className="text-gray-900">{subject}</div>
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  className="mt-1 w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
               </div>
               <div>
                 <div className="text-gray-500">Body</div>
-                <div className="text-gray-900">
-                  <p>{bodyPreview}</p>
-                  <p className="break-all text-green-700 mt-2">{viewHref}</p>
-                </div>
+                <textarea
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  rows={6}
+                  className="mt-1 w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <div className="text-xs text-gray-500 mt-1">Tip: include the link below if you want it in the message.</div>
+                <p className="break-all text-green-700 mt-2">{viewHref}</p>
               </div>
             </div>
             <div className="mt-4 flex justify-end gap-2">

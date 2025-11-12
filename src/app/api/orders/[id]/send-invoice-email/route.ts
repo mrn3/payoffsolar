@@ -11,7 +11,9 @@ export const runtime = 'nodejs';
 const BodySchema = z.object({
   to: z.string().email('Invalid email address'),
   contactId: z.string().optional(),
-  mode: z.enum(['link', 'pdf', 'both']).default('both')
+  mode: z.enum(['link', 'pdf', 'both']).default('both'),
+  subject: z.string().optional(),
+  body: z.string().optional()
 });
 
 function getBaseUrl(req: NextRequest) {
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { id } = await params;
     const body = await request.json();
-    const { to, contactId, mode } = BodySchema.parse(body);
+    const { to, contactId, mode, subject: subjectOverride, body: bodyOverride } = BodySchema.parse(body);
 
     const order = await OrderModel.getWithItems(id);
     if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
@@ -71,8 +73,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const baseUrl = getBaseUrl(request);
     const invoiceUrl = `${baseUrl}/api/orders/${id}/invoice`;
 
-    const subject = `Invoice From Payoff Solar — Order #${order.id.substring(0, 8)}`;
-    const emailHtml = `<p>Hi ${order.contact_name || ''},</p><p>Your invoice is available here: <a href="${invoiceUrl}">${invoiceUrl}</a></p><p>A PDF copy is attached.</p><p>Thank you!<br/>Payoff Solar</p>`;
+    const defaultSubject = `Invoice From Payoff Solar — Order #${order.id.substring(0, 8)}`;
+    const subject = (subjectOverride && subjectOverride.trim()) ? subjectOverride.trim() : defaultSubject;
+    let text = `View your invoice: ${invoiceUrl}`;
+    let emailHtml = `<p>Hi ${order.contact_name || ''},</p><p>Your invoice is available here: <a href="${invoiceUrl}">${invoiceUrl}</a></p><p>A PDF copy is attached.</p><p>Thank you!<br/>Payoff Solar</p>`;
+    if (bodyOverride && bodyOverride.trim()) {
+      text = bodyOverride;
+      const safeHtml = bodyOverride
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br/>');
+      emailHtml = `<div>${safeHtml}</div>`;
+    }
 
     let sendOk = false;
     if (mode === 'pdf' || mode === 'both') {
@@ -108,7 +121,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         fromEmail: process.env.SES_FROM_EMAIL || 'noreply@payoffsolar.com',
         toEmail: to,
         subject,
-        bodyText: `View your invoice: ${invoiceUrl}`,
+        bodyText: text,
         bodyHtml: emailHtml
       });
       return NextResponse.json({ success: true, emailId });

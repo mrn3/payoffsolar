@@ -413,6 +413,13 @@ export async function sendEmailWithAttachment(options: EmailWithAttachmentOption
     const boundaryAlt = `Alt_${Date.now()}`;
     const from = `${FROM_NAME} <${FROM_EMAIL}>`;
 
+    const toBase64 = (content: Buffer | Uint8Array | string): string => {
+      if (Buffer.isBuffer(content)) return content.toString('base64');
+      if (typeof content === 'string') return Buffer.from(content).toString('base64');
+      return Buffer.from(content as Uint8Array).toString('base64');
+    };
+    const wrap76 = (b64: string): string => (b64.match(/.{1,76}/g)?.join('\r\n') || b64);
+
     let raw = '';
     raw += `From: ${from}\r\n`;
     raw += `To: ${options.to}\r\n`;
@@ -420,66 +427,37 @@ export async function sendEmailWithAttachment(options: EmailWithAttachmentOption
     if (options.bcc?.length) raw += `Bcc: ${options.bcc.join(', ')}\r\n`;
     raw += `Subject: ${options.subject}\r\n`;
     raw += `MIME-Version: 1.0\r\n`;
-    raw += `Content-Type: multipart/mixed; boundary=${boundaryMixed}
-
-`;
+    raw += `Content-Type: multipart/mixed; boundary="${boundaryMixed}"\r\n\r\n`;
 
     // Alternative part (text and HTML)
-    raw += `--${boundaryMixed}
-`;
-    raw += `Content-Type: multipart/alternative; boundary=${boundaryAlt}
-
-`;
+    raw += `--${boundaryMixed}\r\n`;
+    raw += `Content-Type: multipart/alternative; boundary="${boundaryAlt}"\r\n\r\n`;
 
     // Text
-    raw += `--${boundaryAlt}
-`;
-    raw += `Content-Type: text/plain; charset=UTF-8
-
-`;
-    raw += `${options.text || stripHtml(options.html)}
-
-`;
+    raw += `--${boundaryAlt}\r\n`;
+    raw += `Content-Type: text/plain; charset=UTF-8\r\n\r\n`;
+    raw += `${options.text || stripHtml(options.html)}\r\n\r\n`;
 
     // HTML
-    raw += `--${boundaryAlt}
-`;
-    raw += `Content-Type: text/html; charset=UTF-8
-
-`;
-    raw += `${options.html}
-
-`;
+    raw += `--${boundaryAlt}\r\n`;
+    raw += `Content-Type: text/html; charset=UTF-8\r\n\r\n`;
+    raw += `${options.html}\r\n\r\n`;
 
     // End alt
-    raw += `--${boundaryAlt}--
-`;
+    raw += `--${boundaryAlt}--\r\n`;
 
     // Attachments
     for (const att of options.attachments) {
-      const base64 =
-        att instanceof Buffer
-          ? att.toString('base64')
-          : (att as any).byteLength !== undefined && typeof att !== 'string'
-            ? Buffer.from(att as Uint8Array).toString('base64')
-            : Buffer.from(att as string).toString('base64');
-
-      raw += `--${boundaryMixed}
-`;
-      raw += `Content-Type: ${att.contentType}; name='${att.filename}'
-`;
-      raw += `Content-Transfer-Encoding: base64
-`;
-      raw += `Content-Disposition: attachment; filename='${att.filename}'
-
-`;
-      raw += `${base64}
-
-`;
+      const base64 = wrap76(toBase64(att.content));
+      raw += `--${boundaryMixed}\r\n`;
+      raw += `Content-Type: ${att.contentType}; name="${att.filename}"\r\n`;
+      raw += `Content-Transfer-Encoding: base64\r\n`;
+      raw += `Content-Disposition: attachment; filename="${att.filename}"\r\n\r\n`;
+      raw += `${base64}\r\n\r\n`;
     }
 
     // End mixed
-    raw += `--${boundaryMixed}--`;
+    raw += `--${boundaryMixed}--\r\n`;
 
     // Normalize line endings to CRLF for SMTP compliance
     raw = raw.replace(/\r?\n/g, '\r\n');
