@@ -6,6 +6,8 @@ import { OrderModel, InvoiceModel, SiteSettingsModel } from '@/lib/models';
 import { sendEmail, sendEmailWithAttachment } from '@/lib/email';
 import { trackOutboundEmail } from '@/lib/communication/tracking';
 
+export const runtime = 'nodejs';
+
 const BodySchema = z.object({
   to: z.string().email('Invalid email address'),
   contactId: z.string().optional(),
@@ -85,8 +87,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             { filename: `invoice-${invoice.invoice_number}.pdf`, contentType: 'application/pdf', content: pdf }
           ]
         });
+        if (!sendOk) {
+          console.warn('sendEmailWithAttachment returned false; falling back to link-only email');
+          sendOk = await sendEmail({ to, subject, html: emailHtml, text: `View your invoice: ${invoiceUrl}` });
+        }
       } catch (e) {
-        console.error('Invoice PDF generation failed, falling back to link-only email:', e);
+        console.error('Invoice PDF generation or email with attachment failed, falling back to link-only email:', e);
         // Fallback to link-only
         sendOk = await sendEmail({ to, subject, html: emailHtml, text: `View your invoice: ${invoiceUrl}` });
       }

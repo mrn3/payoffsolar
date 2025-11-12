@@ -481,6 +481,9 @@ export async function sendEmailWithAttachment(options: EmailWithAttachmentOption
     // End mixed
     raw += `--${boundaryMixed}--`;
 
+    // Normalize line endings to CRLF for SMTP compliance
+    raw = raw.replace(/\r?\n/g, '\r\n');
+
     const params = { RawMessage: { Data: Buffer.from(raw) } };
     await sesClient.send(new SendRawEmailCommand(params));
     console.log('✅ Email with attachment sent successfully to:', options.to);
