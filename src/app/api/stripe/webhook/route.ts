@@ -243,6 +243,17 @@ async function createOrderFromPaymentIntent(paymentIntent: any) {
     notes: `Online order - Payment ID: ${paymentIntent.id}`,
   });
 
+  // Attach affiliate code to order if present
+  const affiliateCodeId = paymentIntent.metadata?.affiliate_code_id;
+  if (affiliateCodeId) {
+    try {
+      await OrderModel.update(orderId, { affiliate_code_id: affiliateCodeId });
+    } catch (err) {
+      console.error('Error updating order with affiliate_code_id:', err);
+      // Don't fail webhook if this fails
+    }
+  }
+
   // Create order items from metadata
   const itemsData = paymentIntent.metadata.items_data;
   let items = [];

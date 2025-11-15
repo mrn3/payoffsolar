@@ -202,10 +202,13 @@ export default function AffiliateCodesPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">
+                      <Link
+                        href={`/dashboard/orders/by-affiliate-code?affiliateCodeId=${code.id}`}
+                        className="text-sm text-green-600 hover:text-green-900 hover:underline"
+                      >
                         {code.usage_count}
                         {code.usage_limit && ` / ${code.usage_limit}`}
-                      </span>
+                      </Link>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button

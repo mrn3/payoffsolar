@@ -1351,6 +1351,7 @@ export interface Order {
   id: string;
   contact_id: string;
   warehouse_id?: string;
+  affiliate_code_id?: string;
   status: string;
   total: number | string;
   order_date: string;
@@ -1367,6 +1368,7 @@ export interface OrderWithContact extends Order {
   contact_state?: string;
   contact_address?: string;
   total_internal_cost?: number;
+  matt_profit_amount?: number;
 }
 
 // Order Item model
@@ -2681,6 +2683,42 @@ export const OrderModel = {
     return result?.count || 0;
   },
 
+  async getOrdersByAffiliateCode(
+    affiliateCodeId: string,
+    limit = 50,
+    offset = 0,
+    sortField = 'order_date',
+    sortDirection = 'desc'
+  ): Promise<OrderWithContact[]> {
+    const orderByClause = buildOrderByClause(sortField, sortDirection);
+    return executeQuery<OrderWithContact>(
+      `SELECT o.*,
+              c.name as contact_name,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.address as contact_address,
+              COALESCE(MAX(CASE WHEN cc.name = 'Matt Profit' THEN ci.amount END), 0) as matt_profit_amount
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       LEFT JOIN cost_items ci ON o.id = ci.order_id
+       LEFT JOIN cost_categories cc ON ci.category_id = cc.id
+       WHERE o.affiliate_code_id = ?
+       GROUP BY o.id, c.name, c.city, c.state, c.address
+       ${orderByClause} LIMIT ? OFFSET ?`,
+      [affiliateCodeId, limit, offset]
+    );
+  },
+
+  async getOrdersByAffiliateCodeCount(affiliateCodeId: string): Promise<number> {
+    const result = await getOne<{ count: number }>(
+      `SELECT COUNT(DISTINCT o.id) as count
+       FROM orders o
+       WHERE o.affiliate_code_id = ?`,
+      [affiliateCodeId]
+    );
+    return result?.count || 0;
+  },
+
   async getWithItems(_id: string): Promise<OrderWithItems | null> {
     const order = await getOne<OrderWithContact>(
       `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone
@@ -2727,12 +2765,20 @@ export const OrderModel = {
   },
 
   async update(_id: string, _data: Partial<Omit<Order, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
-    const fields = [];
-    const values = [];
+    const fields: string[] = [];
+    const values: any[] = [];
 
     if (_data.contact_id !== undefined) {
       fields.push('contact_id = ? ');
       values.push(_data.contact_id);
+    }
+    if (_data.warehouse_id !== undefined) {
+      fields.push('warehouse_id = ? ');
+      values.push(_data.warehouse_id);
+    }
+    if (_data.affiliate_code_id !== undefined) {
+      fields.push('affiliate_code_id = ? ');
+      values.push(_data.affiliate_code_id);
     }
     if (_data.status !== undefined) {
       fields.push('status = ?');
