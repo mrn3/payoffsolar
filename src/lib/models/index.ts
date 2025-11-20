@@ -2052,6 +2052,7 @@ export const OrderModel = {
     contactName?: string;
     city?: string;
     state?: string;
+    productId?: string;
     status?: string | string[];
     minTotal?: number | null;
     maxTotal?: number | null;
@@ -2083,6 +2084,12 @@ export const OrderModel = {
     if (filters.state) {
       conditions.push('c.state = ?');
       params.push(filters.state);
+    }
+
+    // Product filter - orders that include this product in any line item
+    if (filters.productId) {
+      conditions.push('EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id = o.id AND oi.product_id = ?)');
+      params.push(filters.productId);
     }
 
     // Status filter
@@ -2145,6 +2152,7 @@ export const OrderModel = {
     contactName?: string;
     city?: string;
     state?: string;
+    productId?: string;
     status?: string | string[];
     minTotal?: number | null;
     maxTotal?: number | null;
@@ -2176,6 +2184,12 @@ export const OrderModel = {
     if (filters.state) {
       conditions.push('c.state = ?');
       params.push(filters.state);
+    }
+
+    // Product filter - orders that include this product in any line item
+    if (filters.productId) {
+      conditions.push('EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id = o.id AND oi.product_id = ?)');
+      params.push(filters.productId);
     }
 
     // Status filter

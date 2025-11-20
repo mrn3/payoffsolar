@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { FaFilter, FaTimes, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import StateSelect from '@/components/ui/StateSelect';
+import ProductAutocomplete from '@/components/ui/ProductAutocomplete';
 
 export interface OrderFilters {
   contactName: string;
+  productId: string;
   city: string;
   state: string;
   status: string[];
@@ -110,8 +112,8 @@ export default function OrderFiltersComponent({
       {/* Filter Content */}
       {isExpanded && (
         <div className="p-4 space-y-4">
-          {/* Row 1: Contact Name and Location */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Row 1: Contact, Product, and Location */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label htmlFor="contactName" className="block text-sm font-medium text-gray-700 mb-1">
                 Contact Name
@@ -123,6 +125,17 @@ export default function OrderFiltersComponent({
                 onChange={(e) => handleFilterChange('contactName', e.target.value)}
                 placeholder="Search by contact name..."
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="productId" className="block text-sm font-medium text-gray-700 mb-1">
+                Product
+              </label>
+              <ProductAutocomplete
+                value={filters.productId}
+                onChange={(productId) => handleFilterChange('productId', productId)}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm"
+                placeholder="Filter by product..."
               />
             </div>
             <div>

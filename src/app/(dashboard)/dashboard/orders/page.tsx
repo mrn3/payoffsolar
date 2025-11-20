@@ -75,6 +75,7 @@ export default function OrdersPage() {
   // Filter state
   const [filters, setFilters] = useState<OrderFilters>({
     contactName: '',
+    productId: '',
     city: '',
     state: '',
     status: [],
@@ -137,6 +138,9 @@ export default function OrdersPage() {
       if (filters.contactName) {
         params.append('contactName', filters.contactName);
       }
+      if (filters.productId) {
+        params.append('productId', filters.productId);
+      }
       if (filters.city) {
         params.append('city', filters.city);
       }
@@ -194,6 +198,7 @@ export default function OrdersPage() {
   const handleClearFilters = () => {
     setFilters({
       contactName: '',
+      productId: '',
       city: '',
       state: '',
       status: [],

@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const search = searchParams.get('search') || '';
     const contactName = searchParams.get('contactName') || '';
+    const productId = searchParams.get('productId') || '';
     const city = searchParams.get('city') || '';
     const state = searchParams.get('state') || '';
     const statusParam = searchParams.get('status') || '';
@@ -30,6 +31,7 @@ export async function GET(request: NextRequest) {
     const filters = {
       search,
       contactName,
+      productId,
       city,
       state,
       status,
