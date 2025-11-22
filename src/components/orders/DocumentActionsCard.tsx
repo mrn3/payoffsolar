@@ -27,6 +27,18 @@ export default function DocumentActionsCard({ kind, orderId, contactId, contactE
   const emailApi = kind === 'invoice' ? `/api/orders/${orderId}/send-invoice-email` : `/api/orders/${orderId}/send-receipt-email`;
   const smsApi = kind === 'invoice' ? `/api/orders/${orderId}/send-invoice-sms` : `/api/orders/${orderId}/send-receipt-sms`;
 
+  const baseUrl = useMemo(() => {
+    const envBase = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL;
+    if (envBase) return envBase.replace(/\/$/, '');
+    if (typeof window !== 'undefined') return window.location.origin;
+    return '';
+  }, []);
+
+  const viewUrl = useMemo(() => {
+    if (!baseUrl) return viewHref;
+    return `${baseUrl}${viewHref}`;
+  }, [baseUrl, viewHref]);
+
   const subject = useMemo(() => {
     return `${title} From Payoff Solar — Order #${orderId.substring(0, 8)}`;
   }, [title, orderId]);
@@ -96,7 +108,7 @@ export default function DocumentActionsCard({ kind, orderId, contactId, contactE
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-700">Email</span>
             <button
-              onClick={() => { setToEmail(contactEmail || ''); setEmailSubject(subject); setEmailBody(`${bodyPreview}\n\n${viewHref}`); setShowEmail(true); }}
+              onClick={() => { setToEmail(contactEmail || ''); setEmailSubject(subject); setEmailBody(`${bodyPreview}\n\n${viewUrl}`); setShowEmail(true); }}
               className="inline-flex items-center text-purple-600 hover:text-purple-800 text-sm"
             >
               <FaEnvelope className="mr-2 h-4 w-4" /> Compose
@@ -153,7 +165,7 @@ export default function DocumentActionsCard({ kind, orderId, contactId, contactE
                   className="mt-1 w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <div className="text-xs text-gray-500 mt-1">Tip: include the link below if you want it in the message.</div>
-                <p className="break-all text-green-700 mt-2">{viewHref}</p>
+                <p className="break-all text-green-700 mt-2">{viewUrl}</p>
               </div>
             </div>
             <div className="mt-4 flex justify-end gap-2">
