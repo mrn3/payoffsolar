@@ -1,4 +1,5 @@
 import { EmailCommunicationModel, SMSCommunicationModel, ContactModel } from '@/lib/models';
+import { format } from 'date-fns';
 
 export interface EmailTrackingData {
   contactId?: string;
@@ -71,7 +72,7 @@ export async function trackOutboundEmail(data: EmailTrackingData): Promise<strin
     message_id: data.messageId,
     thread_id: data.threadId,
     status: 'sent',
-    sent_at: new Date().toISOString()
+    sent_at: format(new Date(), 'yyyy-MM-dd HH:mm:ss')
   });
 }
 
@@ -122,7 +123,7 @@ export async function trackInboundEmail(data: EmailTrackingData): Promise<string
     message_id: data.messageId,
     thread_id: data.threadId,
     status: 'delivered',
-    sent_at: new Date().toISOString()
+    sent_at: format(new Date(), 'yyyy-MM-dd HH:mm:ss')
   });
 }
 
@@ -166,7 +167,7 @@ export async function trackOutboundSMS(data: SMSTrackingData): Promise<string> {
     status: 'sent',
     provider: data.provider,
     provider_message_id: data.providerMessageId,
-    sent_at: new Date().toISOString()
+    sent_at: format(new Date(), 'yyyy-MM-dd HH:mm:ss')
   });
 }
 
@@ -210,7 +211,7 @@ export async function trackInboundSMS(data: SMSTrackingData): Promise<string> {
     status: 'delivered',
     provider: data.provider,
     provider_message_id: data.providerMessageId,
-    sent_at: new Date().toISOString()
+    sent_at: format(new Date(), 'yyyy-MM-dd HH:mm:ss')
   });
 }
 
