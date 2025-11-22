@@ -19,7 +19,7 @@ async function generatePdfFromHtml(html: string): Promise<Buffer> {
   }
 }
 
-import { generateOrderReceiptHTML } from '../receipt/route';
+import { generateOrderReceiptHTML } from '../route';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
