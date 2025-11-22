@@ -44,7 +44,7 @@ export default function DocumentActionsCard({ kind, orderId, contactId, contactE
   }, [title, orderId]);
 
   const bodyPreview = useMemo(() => {
-    return `A link to your ${title.toLowerCase()} is included below. A PDF copy is also be attached.`;
+    return `A link to your ${title.toLowerCase()} is included below. A PDF copy is attached.`;
   }, [title]);
 
   const sendEmail = async () => {
