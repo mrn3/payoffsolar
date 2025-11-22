@@ -23,14 +23,7 @@ function getBaseUrl(req: NextRequest) {
   return `${url.protocol}//${url.host}`;
 }
 
-async function generateInvoiceHTML(order: any, invoice: any, businessAddress: string, businessPhone: string) {
-  const { format } = await import('date-fns');
-  const orderDate = format(new Date(order.order_date), 'MMMM d, yyyy');
-  const invoiceDate = format(new Date(invoice.created_at), 'MMMM d, yyyy');
-  const dueDate = format(new Date(invoice.due_date), 'MMMM d, yyyy');
-  const calculatedTotal = order.items?.reduce((t: number, it: any) => t + Number(it.price) * it.quantity, 0) || 0;
-  return `<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Invoice ${invoice.invoice_number}</title></head><body><h1>Invoice ${invoice.invoice_number}</h1><p>Date: ${invoiceDate} | Due: ${dueDate}</p><p>Bill To: ${order.contact_name || ''}</p><p>Business: ${businessAddress} • ${businessPhone}</p><hr/><table width='100%' style='border-collapse:collapse'><thead><tr><th align='left'>Product</th><th align='right'>Qty</th><th align='right'>Unit</th><th align='right'>Total</th></tr></thead><tbody>${(order.items||[]).map((it:any)=>`<tr><td>${it.product_name||'Item'}</td><td align='right'>${it.quantity}</td><td align='right'>$${Number(it.price).toFixed(2)}</td><td align='right'>$${(Number(it.price)*it.quantity).toFixed(2)}</td></tr>`).join('')}</tbody></table><h3 style='text-align:right'>Amount Due: $${calculatedTotal.toFixed(2)}</h3><p>Payment Options: Venmo https://venmo.com/u/mattrnewman, Cash App https://cash.app/$mattrnewman, Apple Pay (801) 448-6396, Zelle mattrobertnewman@gmail.com, PayPal lisafunknewman@gmail.com, bank transfer Wells Fargo 8904437012 and America First 6782882. Wire/ACH routing — Direct deposits &amp; electronic payments: 124002971; Domestic wire transfers: 121000248; International wire transfers (SWIFT): WFBIUS6S. Cash/check in-person (credit cards +3%).</p></body></html>`;
-}
+import { generateInvoiceHTML } from '../invoice/route';
 
 async function generateInvoicePDF(html: string): Promise<Buffer> {
   const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });

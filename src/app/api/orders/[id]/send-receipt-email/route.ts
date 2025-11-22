@@ -36,10 +36,7 @@ async function generatePdfFromHtml(html: string): Promise<Buffer> {
   }
 }
 
-function generateOrderReceiptHTML(order: any, businessAddress: string, businessPhone: string): string {
-  const orderDate = format(new Date(order.order_date), 'MMMM d, yyyy');
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Order Receipt #${order.id.substring(0,8)}</title></head><body><h2>Payoff Solar Receipt</h2><p>Order #${order.id.substring(0,8)} on ${orderDate}</p><p>Total: $${Number(order.total).toFixed(2)}</p></body></html>`;
-}
+import { generateOrderReceiptHTML } from '../receipt/route';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

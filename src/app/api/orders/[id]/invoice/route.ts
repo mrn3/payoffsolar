@@ -48,7 +48,7 @@ export async function GET(
   }
 }
 
-function generateInvoiceHTML(order: any, invoice: any, businessAddress: string, businessPhone: string): string {
+export function generateInvoiceHTML(order: any, invoice: any, businessAddress: string, businessPhone: string): string {
   const orderDate = format(new Date(order.order_date), 'MMMM d, yyyy');
   const invoiceDate = format(new Date(invoice.created_at), 'MMMM d, yyyy');
   const dueDate = format(new Date(invoice.due_date), 'MMMM d, yyyy');
