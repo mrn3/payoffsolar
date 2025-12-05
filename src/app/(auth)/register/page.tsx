@@ -119,8 +119,31 @@ export default function RegisterPage() {
               <div className="flex">
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">Error</h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    <p>{error}</p>
+                  <div className="mt-2 text-sm text-red-700 space-y-2">
+                    {error === 'User with this email already exists' ? (
+                      <>
+                        <p>An account with this email already exists.</p>
+                        <p>
+                          Try{' '}
+                          <Link
+                            href="/login"
+                            className="font-medium text-green-600 hover:text-green-500"
+                          >
+                            signing in
+                          </Link>{' '}
+                          or{' '}
+                          <Link
+                            href="/forgot-password"
+                            className="font-medium text-green-600 hover:text-green-500"
+                          >
+                            resetting your password
+                          </Link>
+                          .
+                        </p>
+                      </>
+                    ) : (
+                      <p>{error}</p>
+                    )}
                   </div>
                 </div>
               </div>

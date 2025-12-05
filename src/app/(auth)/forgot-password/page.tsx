@@ -30,33 +30,34 @@ export default function ForgotPasswordPage() {
     },
   });
 
-  const onSubmit = async (_data: ForgotPasswordFormValues) => {
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const _response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: data.email }),
-      });
-
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to send reset instructions');
-      }
-
-      setSuccess('Password reset instructions have been sent to your email.');
-    } catch (_error: unknown) {
-      console.error('Password reset _error:', _error);
-      setError(_error instanceof Error ? _error.message : 'Failed to send reset instructions. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+	  const onSubmit = async (data: ForgotPasswordFormValues) => {
+	    setIsLoading(true);
+	    setError(null);
+	    setSuccess(null);
+	
+	    try {
+	      const response = await fetch('/api/auth/forgot-password', {
+	        method: 'POST',
+	        headers: {
+	          'Content-Type': 'application/json',
+	        },
+	        body: JSON.stringify({ email: data.email }),
+	      });
+	
+	      const result = await response.json();
+	
+	      if (!response.ok) {
+	        throw new Error(result.error || 'Failed to send reset instructions');
+	      }
+	
+	      setSuccess('Password reset instructions have been sent to your email.');
+	    } catch (error: unknown) {
+	      console.error('Password reset error:', error);
+	      setError(error instanceof Error ? error.message : 'Failed to send reset instructions. Please try again.');
+	    } finally {
+	      setIsLoading(false);
+	    }
+	  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
