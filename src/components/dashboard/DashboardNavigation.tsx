@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { UserRole } from '@/lib/auth';
 import {FaTachometerAlt, FaShoppingCart, FaUsers, FaBoxes, FaWarehouse, FaBuilding, FaSun, FaUser, FaSignOutAlt, FaBars, FaTimes, FaEdit, FaTags, FaLayerGroup, FaTasks, FaGlobe, FaCog, FaTag, FaFacebookMessenger} from 'react-icons/fa';
@@ -126,9 +127,11 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
             <div className="flex items-center">
               <div className="flex-shrink-0">
 	                {userProfile?.avatar_url ? (
-	                  <img
+	                  <Image
 	                    src={userProfile.avatar_url}
 	                    alt={getUserDisplayName() || 'User avatar'}
+	                    width={32}
+	                    height={32}
 	                    className="h-8 w-8 rounded-full object-cover"
 	                  />
 	                ) : (
@@ -214,9 +217,11 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
 	              <div className="flex items-center">
 	                <div className="flex-shrink-0">
 	                  {userProfile?.avatar_url ? (
-	                    <img
+	                    <Image
 	                      src={userProfile.avatar_url}
 	                      alt={getUserDisplayName() || 'User avatar'}
+	                      width={32}
+	                      height={32}
 	                      className="h-8 w-8 rounded-full object-cover"
 	                    />
 	                  ) : (

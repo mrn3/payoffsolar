@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {usePathname, useRouter} from 'next/navigation';
 import { FaBars, FaChevronDown, FaSignOutAlt, FaSun, FaTimes, FaUser } from 'react-icons/fa';
 import { UserProfile } from '@/lib/auth';
@@ -56,9 +57,11 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
 	  const renderAvatar = () => {
 	    if (userProfile?.avatar_url) {
 	      return (
-	        <img
+	        <Image
 	          src={userProfile.avatar_url}
 	          alt={getUserDisplayName() || 'User avatar'}
+	          width={24}
+	          height={24}
 	          className="h-6 w-6 rounded-full object-cover"
 	        />
 	      );
@@ -196,9 +199,11 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
               <div className="px-3 py-2">
                 <div className="flex items-center">
 	                  {userProfile.avatar_url ? (
-	                    <img
+	                    <Image
 	                      src={userProfile.avatar_url}
 	                      alt={getUserDisplayName() || 'User avatar'}
+	                      width={32}
+	                      height={32}
 	                      className="h-8 w-8 rounded-full object-cover"
 	                    />
 	                  ) : (
