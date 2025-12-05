@@ -1,5 +1,6 @@
 import {getOne, executeSingle, executeQuery} from '../mysql/connection';
 import { generateProductSlug } from '@/lib/utils/slug';
+import { cleanPhoneNumber, isValidPhoneNumber } from '@/lib/utils/phone';
 
 // Contact model
 export interface Contact {
@@ -7,6 +8,7 @@ export interface Contact {
   name: string;
   email: string;
   phone: string;
+  phone_digits?: string | null;
   address: string;
   city: string;
   state: string;
@@ -116,17 +118,44 @@ export const ContactModel = {
   async create(data: Omit<Contact, 'id' | 'updated_at'> & { created_at?: string }): Promise<string> {
     const { created_at, ...contactData } = data;
 
+    const phoneDigits = contactData.phone
+      ? cleanPhoneNumber(contactData.phone)
+      : null;
+
     if (created_at) {
       // Insert with custom created_at
       await executeSingle(
-        'INSERT INTO contacts (name, email, phone, address, city, state, zip, notes, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [contactData.name, contactData.email || '', contactData.phone || '', contactData.address || '', contactData.city || '', contactData.state || '', contactData.zip || '', contactData.notes || null, contactData.user_id || null, created_at]
+        'INSERT INTO contacts (name, email, phone, phone_digits, address, city, state, zip, notes, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          contactData.name,
+          contactData.email || '',
+          contactData.phone || '',
+          phoneDigits,
+          contactData.address || '',
+          contactData.city || '',
+          contactData.state || '',
+          contactData.zip || '',
+          contactData.notes || null,
+          contactData.user_id || null,
+          created_at,
+        ]
       );
     } else {
       // Insert with default created_at (current timestamp)
       await executeSingle(
-        'INSERT INTO contacts (name, email, phone, address, city, state, zip, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [contactData.name, contactData.email || '', contactData.phone || '', contactData.address || '', contactData.city || '', contactData.state || '', contactData.zip || '', contactData.notes || null, contactData.user_id || null]
+        'INSERT INTO contacts (name, email, phone, phone_digits, address, city, state, zip, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          contactData.name,
+          contactData.email || '',
+          contactData.phone || '',
+          phoneDigits,
+          contactData.address || '',
+          contactData.city || '',
+          contactData.state || '',
+          contactData.zip || '',
+          contactData.notes || null,
+          contactData.user_id || null,
+        ]
       );
     }
 
@@ -141,9 +170,14 @@ export const ContactModel = {
     const fields = [];
     const values = [];
 
+    const phoneDigits = _data.phone !== undefined
+      ? (_data.phone ? cleanPhoneNumber(_data.phone) : null)
+      : undefined;
+
     if (_data.name !== undefined) { fields.push('name = ? '); values.push(_data.name); }
     if (_data.email !== undefined) { fields.push('email = ? '); values.push(_data.email); }
     if (_data.phone !== undefined) { fields.push('phone = ? '); values.push(_data.phone); }
+    if (phoneDigits !== undefined) { fields.push('phone_digits = ? '); values.push(phoneDigits); }
     if (_data.address !== undefined) { fields.push('address = ? '); values.push(_data.address); }
     if (_data.city !== undefined) { fields.push('city = ? '); values.push(_data.city); }
     if (_data.state !== undefined) { fields.push('state = ?'); values.push(_data.state); }
@@ -166,9 +200,14 @@ export const ContactModel = {
     const fields = [];
     const values = [];
 
+    const phoneDigits = _data.phone !== undefined
+      ? (_data.phone ? cleanPhoneNumber(_data.phone) : null)
+      : undefined;
+
     if (_data.name !== undefined) { fields.push('name = ? '); values.push(_data.name); }
     if (_data.email !== undefined) { fields.push('email = ? '); values.push(_data.email); }
     if (_data.phone !== undefined) { fields.push('phone = ? '); values.push(_data.phone); }
+    if (phoneDigits !== undefined) { fields.push('phone_digits = ? '); values.push(phoneDigits); }
     if (_data.address !== undefined) { fields.push('address = ? '); values.push(_data.address); }
     if (_data.city !== undefined) { fields.push('city = ? '); values.push(_data.city); }
     if (_data.state !== undefined) { fields.push('state = ?'); values.push(_data.state); }
@@ -215,6 +254,52 @@ export const ContactModel = {
   async getCount(): Promise<number> {
     const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM contacts');
     return result?.count || 0;
+  },
+
+  async linkUserByEmailAndPhone(params: {
+    userId: string;
+    email?: string | null;
+    phone?: string | null;
+  }): Promise<void> {
+    const { userId, email, phone } = params;
+
+    if (!email && !phone) {
+      return;
+    }
+
+    let matchedContactId: string | null = null;
+
+    // Try to match by email first
+    if (email) {
+      const emailMatches = await executeQuery<{ id: string }>(
+        'SELECT id FROM contacts WHERE email = ? AND user_id IS NULL',
+        [email]
+      );
+
+      if (emailMatches.length === 1) {
+        matchedContactId = emailMatches[0].id;
+      }
+    }
+
+    // If no unique email match, try phone_digits
+    if (!matchedContactId && phone && isValidPhoneNumber(phone)) {
+      const phoneDigits = cleanPhoneNumber(phone);
+
+      if (phoneDigits) {
+        const phoneMatches = await executeQuery<{ id: string }>(
+          'SELECT id FROM contacts WHERE phone_digits = ? AND user_id IS NULL',
+          [phoneDigits]
+        );
+
+        if (phoneMatches.length === 1) {
+          matchedContactId = phoneMatches[0].id;
+        }
+      }
+    }
+
+    if (matchedContactId) {
+      await executeSingle('UPDATE contacts SET user_id = ? WHERE id = ?', [userId, matchedContactId]);
+    }
   },
 
   async getCountWithEmail(): Promise<number> {
@@ -340,8 +425,8 @@ export const ContactModel = {
     notes?: string;
   }): Promise<string> {
     await executeSingle(
-      'INSERT INTO contacts (name, email, phone, address, city, state, zip, notes, facebook_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [data.name, data.email || '', '', '', '', '', '', data.notes || null, data.facebook_user_id]
+      'INSERT INTO contacts (name, email, phone, phone_digits, address, city, state, zip, notes, facebook_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.name, data.email || '', '', null, '', '', '', '', data.notes || null, data.facebook_user_id]
     );
 
     const contact = await getOne<{ id: string }>(

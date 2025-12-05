@@ -19,6 +19,8 @@ export interface UserProfile {
   email: string;
   first_name: string | null;
   last_name: string | null;
+  phone: string | null;
+  avatar_url: string | null;
   role: UserRole | null;
 }
 
@@ -117,12 +119,12 @@ export async function getSession(): Promise<AuthSession | null> {
 
     // Get user profile
     const profile = await getOne<any>(
-      `SELECT p.id, p.first_name, p.last_name, p.email, r.name as role_name
-       FROM profiles p
-       LEFT JOIN roles r ON p.role_id = r.id
-       WHERE p.id = ?`,
-      [user.id]
-    );
+	      `SELECT p.id, p.first_name, p.last_name, p.email, p.phone, p.avatar_url, r.name as role_name
+	       FROM profiles p
+	       LEFT JOIN roles r ON p.role_id = r.id
+	       WHERE p.id = ?`,
+	      [user.id]
+	    );
 
     if (!profile) {
       return null;
@@ -135,6 +137,8 @@ export async function getSession(): Promise<AuthSession | null> {
         email: profile.email || user.email,
         first_name: profile.first_name,
         last_name: profile.last_name,
+	        phone: profile.phone || null,
+	        avatar_url: profile.avatar_url || null,
         role: profile.role_name as UserRole || null,
       },
     };
@@ -184,14 +188,14 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
   // const token = generateToken(user.id);
   // await setAuthCookie(token);
 
-  // Get profile
-  const profile = await getOne<any>(
-    `SELECT p.id, p.first_name, p.last_name, p.email, r.name as role_name
-     FROM profiles p
-     LEFT JOIN roles r ON p.role_id = r.id
-     WHERE p.id = ?`,
-    [user.id]
-  );
+	  // Get profile
+	  const profile = await getOne<any>(
+	    `SELECT p.id, p.first_name, p.last_name, p.email, p.phone, p.avatar_url, r.name as role_name
+	     FROM profiles p
+	     LEFT JOIN roles r ON p.role_id = r.id
+	     WHERE p.id = ?`,
+	    [user.id]
+	  );
 
   return {
     user: {
@@ -200,13 +204,15 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
       email_verified: user.email_verified,
       created_at: user.created_at,
     },
-    profile: {
-      id: profile?.id || user.id,
-      email: profile?.email || user.email,
-      first_name: profile?.first_name || null,
-      last_name: profile?.last_name || null,
-      role: profile?.role_name as UserRole || null,
-    },
+	    profile: {
+	      id: profile?.id || user.id,
+	      email: profile?.email || user.email,
+	      first_name: profile?.first_name || null,
+	      last_name: profile?.last_name || null,
+	      phone: profile?.phone || null,
+	      avatar_url: profile?.avatar_url || null,
+	      role: profile?.role_name as UserRole || null,
+	    },
   };
 }
 
@@ -215,7 +221,8 @@ export async function signUp(
   email: string,
   password: string,
   firstName: string,
-  lastName: string
+	  lastName: string,
+	  phone?: string | null
 ): Promise<AuthSession> {
   // Check if user already exists
   const existingUser = await getOne(
@@ -257,26 +264,28 @@ export async function signUp(
       throw new Error('Failed to create user');
     }
 
-    // Create profile
-    await executeSingle(
-      'INSERT INTO profiles (id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
-      [user.id, firstName, lastName, email, contactRole.id]
-    );
+	    // Create profile
+	    await executeSingle(
+	      'INSERT INTO profiles (id, first_name, last_name, email, phone, avatar_url, role_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+	      [user.id, firstName, lastName, email, phone || null, null, contactRole.id]
+	    );
 
     // Generate token and set cookie
     const token = generateToken(user.id);
     await setAuthCookie(token);
 
-    return {
-      user,
-      profile: {
-        id: user.id,
-        email: user.email,
-        first_name: firstName,
-        last_name: lastName,
-        role: 'contact',
-      },
-    };
+	    return {
+	      user,
+	      profile: {
+	        id: user.id,
+	        email: user.email,
+	        first_name: firstName,
+	        last_name: lastName,
+	        phone: phone || null,
+	        avatar_url: null,
+	        role: 'contact',
+	      },
+	    };
   } catch (error) {
     console.error('Error creating user:', error);
     throw new Error('Failed to create user account');
@@ -373,22 +382,24 @@ export async function createAdminUser(
       throw new Error('Failed to create user');
     }
 
-    // Create profile
-    await executeSingle(
-      'INSERT INTO profiles (id, first_name, last_name, email, role_id) VALUES (?, ?, ?, ?, ?)',
-      [user.id, firstName, lastName, email, adminRole.id]
-    );
+	    // Create profile
+	    await executeSingle(
+	      'INSERT INTO profiles (id, first_name, last_name, email, phone, avatar_url, role_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+	      [user.id, firstName, lastName, email, null, null, adminRole.id]
+	    );
 
-    return {
-      user,
-      profile: {
-        id: user.id,
-        email: user.email,
-        first_name: firstName,
-        last_name: lastName,
-        role: 'admin',
-      },
-    };
+	    return {
+	      user,
+	      profile: {
+	        id: user.id,
+	        email: user.email,
+	        first_name: firstName,
+	        last_name: lastName,
+	        phone: null,
+	        avatar_url: null,
+	        role: 'admin',
+	      },
+	    };
   } catch (error) {
     console.error('Error creating admin user:', error);
     throw new Error('Failed to create admin user account');

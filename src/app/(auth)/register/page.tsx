@@ -5,14 +5,23 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaSun } from 'react-icons/fa';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import PhoneInput from '@/components/ui/PhoneInput';
+import { isValidPhoneNumber } from '@/lib/utils/phone';
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().optional(),
   email: z.string().email('Please enter a valid email address'),
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (value) => !value || isValidPhoneNumber(value),
+      { message: 'Please enter a valid phone number' }
+    ),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
   terms: z.boolean().refine(val => val === true, {
@@ -34,6 +43,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+	    control,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -41,6 +51,7 @@ export default function RegisterPage() {
       firstName: '',
       lastName: '',
       email: '',
+	      phone: '',
       password: '',
       confirmPassword: '',
       terms: false,
@@ -52,19 +63,20 @@ export default function RegisterPage() {
     setError(null);
     setSuccess(null);
 
-    try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-          firstName: data.firstName,
-          lastName: data.lastName,
-        }),
-      });
+	    try {
+	      const response = await fetch('/api/auth/signup', {
+	        method: 'POST',
+	        headers: {
+	          'Content-Type': 'application/json',
+	        },
+	        body: JSON.stringify({
+	          email: data.email,
+	          password: data.password,
+	          firstName: data.firstName,
+	          lastName: data.lastName,
+	          phone: data.phone,
+	        }),
+	      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -190,6 +202,32 @@ export default function RegisterPage() {
                 )}
               </div>
             </div>
+
+	            <div>
+	              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+	                Phone number (optional)
+	              </label>
+	              <div className="mt-1">
+	                <Controller
+	                  name="phone"
+	                  control={control}
+	                  render={({ field }) => (
+	                    <PhoneInput
+	                      name={field.name}
+	                      value={field.value || ''}
+	                      onChange={field.onChange}
+	                      onBlur={field.onBlur}
+	                      className={`block w-full appearance-none rounded-md border ${
+	                        errors.phone ? 'border-red-300' : 'border-gray-300'
+	                      } px-3 py-2 placeholder-gray-400 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm`}
+	                    />
+	                  )}
+	                />
+	                {errors.phone && (
+	                  <p className="mt-2 text-sm text-red-600">{errors.phone.message}</p>
+	                )}
+	              </div>
+	            </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">

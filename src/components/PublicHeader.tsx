@@ -53,6 +53,24 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
     return `${firstName} ${lastName}`.trim() || userProfile.email;
   };
 
+	  const renderAvatar = () => {
+	    if (userProfile?.avatar_url) {
+	      return (
+	        <img
+	          src={userProfile.avatar_url}
+	          alt={getUserDisplayName() || 'User avatar'}
+	          className="h-6 w-6 rounded-full object-cover"
+	        />
+	      );
+	    }
+
+	    return (
+	      <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center">
+	        <FaUser className="h-3 w-3 text-white" />
+	      </div>
+	    );
+	  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -82,17 +100,15 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
           {/* Cart Icon */}
           <CartIcon />
 
-          {userProfile ? (
+	          {userProfile ? (
             // User is logged in - show user dropdown
             <div className="relative">
               <button
                 type="button"
-                className="flex items-center gap-2 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+	                className="flex items-center gap-2 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
               >
-                <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center">
-                  <FaUser className="h-3 w-3 text-white" />
-                </div>
+	                {renderAvatar()}
                 <span className="hidden sm:block">{getUserDisplayName()}</span>
                 <FaChevronDown className="h-3 w-3" />
               </button>
@@ -103,6 +119,13 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
                     <p className="text-sm font-medium text-gray-900">{getUserDisplayName()}</p>
                     <p className="text-xs text-gray-500 capitalize">{userProfile.role || 'User'}</p>
                   </div>
+	                  <Link
+	                    href="/dashboard/account"
+	                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+	                    onClick={() => setUserDropdownOpen(false)}
+	                  >
+	                    My Account
+	                  </Link>
                   <Link
                     href="/dashboard"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -168,19 +191,34 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
           ))}
           
           {/* Mobile user section */}
-          {userProfile && (
+	              {userProfile && (
             <div className="border-t pt-3 mt-3">
               <div className="px-3 py-2">
                 <div className="flex items-center">
-                  <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center">
-                    <FaUser className="h-4 w-4 text-white" />
-                  </div>
+	                  {userProfile.avatar_url ? (
+	                    <img
+	                      src={userProfile.avatar_url}
+	                      alt={getUserDisplayName() || 'User avatar'}
+	                      className="h-8 w-8 rounded-full object-cover"
+	                    />
+	                  ) : (
+	                    <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center">
+	                      <FaUser className="h-4 w-4 text-white" />
+	                    </div>
+	                  )}
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-900">{getUserDisplayName()}</p>
                     <p className="text-xs text-gray-500 capitalize">{userProfile.role || 'User'}</p>
                   </div>
                 </div>
               </div>
+	              <Link
+	                href="/dashboard/account"
+	                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-green-500"
+	                onClick={() => setMobileMenuOpen(false)}
+	              >
+	                My Account
+	              </Link>
               <Link
                 href="/dashboard"
                 className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-green-500"

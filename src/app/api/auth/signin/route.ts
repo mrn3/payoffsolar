@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { signIn, generateToken, generateCookieString } from '@/lib/auth';
+import { ContactModel } from '@/lib/models';
 import { z } from 'zod';
 
 const signInSchema = z.object({
@@ -22,8 +23,19 @@ export async function POST(request: NextRequest) {
 
     const validatedData = signInSchema.parse(body);
 
-    const session = await signIn(validatedData.email, validatedData.password);
-    console.log('✅ Session created successfully:', session.user.email);
+	    const session = await signIn(validatedData.email, validatedData.password);
+	    console.log('✅ Session created successfully:', session.user.email);
+
+	    // Attempt to link this user to an existing contact by email or phone
+	    try {
+	      await ContactModel.linkUserByEmailAndPhone({
+	        userId: session.user.id,
+	        email: session.user.email,
+	        phone: session.profile.phone || undefined,
+	      });
+	    } catch (linkError) {
+	      console.error('Contact linking during sign-in failed:', linkError);
+	    }
 
     // Generate a new token and set it manually in the response
     const token = generateToken(session.user.id);

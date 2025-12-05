@@ -42,33 +42,35 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 
 -- Create user profiles table
 CREATE TABLE IF NOT EXISTS profiles (
-  id VARCHAR(36) PRIMARY KEY,
-  first_name VARCHAR(100),
-  last_name VARCHAR(100),
-  email VARCHAR(255) UNIQUE,
-  phone VARCHAR(20),
-  role_id VARCHAR(36),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (role_id) REFERENCES roles(id)
+	id VARCHAR(36) PRIMARY KEY,
+	first_name VARCHAR(100),
+	last_name VARCHAR(100),
+	email VARCHAR(255) UNIQUE,
+	phone VARCHAR(20),
+	avatar_url VARCHAR(500),
+	role_id VARCHAR(36),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
 -- Create contacts table
 CREATE TABLE IF NOT EXISTS contacts (
-  id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-  name VARCHAR(200) NOT NULL,
-  email VARCHAR(255) NOT NULL,
-  phone VARCHAR(20) NOT NULL,
-  address VARCHAR(255) NOT NULL,
-  city VARCHAR(100) NOT NULL,
-  state VARCHAR(50) NOT NULL,
-  zip VARCHAR(10) NOT NULL,
-  notes TEXT,
-  user_id VARCHAR(36),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+	id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+	name VARCHAR(200) NOT NULL,
+	email VARCHAR(255) NOT NULL,
+	phone VARCHAR(20) NOT NULL,
+	phone_digits VARCHAR(20),
+	address VARCHAR(255) NOT NULL,
+	city VARCHAR(100) NOT NULL,
+	state VARCHAR(50) NOT NULL,
+	zip VARCHAR(10) NOT NULL,
+	notes TEXT,
+	user_id VARCHAR(36),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Create product categories table
@@ -432,6 +434,7 @@ CREATE TABLE IF NOT EXISTS task_comments (
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email);
+CREATE INDEX IF NOT EXISTS idx_contacts_phone_digits ON contacts(phone_digits);
 CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_product ON inventory(product_id);
