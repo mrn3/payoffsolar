@@ -62,8 +62,10 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
  * Send password reset email
  */
 export async function sendPasswordResetEmail(email: string, resetToken: string): Promise<boolean> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const resetUrl = `${siteUrl}/reset-password?token=${resetToken}`;
+	// Normalize site URL to avoid double slashes in paths (e.g. https://site.com//reset-password)
+	const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+	const siteUrl = rawSiteUrl.replace(/\/+$/, '');
+	const resetUrl = `${siteUrl}/reset-password?token=${resetToken}`;
 
   const html = generatePasswordResetEmailHtml(resetUrl);
   const text = generatePasswordResetEmailText(resetUrl);
@@ -80,8 +82,10 @@ export async function sendPasswordResetEmail(email: string, resetToken: string):
  * Send welcome email to new users
  */
 export async function sendWelcomeEmail(email: string, firstName: string): Promise<boolean> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const loginUrl = `${siteUrl}/login`;
+	// Normalize site URL to avoid double slashes in paths
+	const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+	const siteUrl = rawSiteUrl.replace(/\/+$/, '');
+	const loginUrl = `${siteUrl}/login`;
 
   const html = generateWelcomeEmailHtml(firstName, loginUrl);
   const text = generateWelcomeEmailText(firstName, loginUrl);
