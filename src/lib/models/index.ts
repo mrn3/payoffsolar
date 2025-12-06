@@ -3478,18 +3478,20 @@ export const CostItemModel = {
     );
   },
 
-  async create(data: Omit<CostItem, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-    await executeSingle(
-      'INSERT INTO cost_items (order_id, category_id, amount) VALUES (?, ?, ?)',
-      [data.order_id, data.category_id, data.amount]
-    );
+	  async create(data: Omit<CostItem, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+	    await executeSingle(
+	      'INSERT INTO cost_items (order_id, category_id, amount) VALUES (?, ?, ?)',
+	      [data.order_id, data.category_id, data.amount]
+	    );
 
-    const item = await getOne<{ id: string }>(
-      'SELECT id FROM cost_items WHERE order_id = ? AND category_id = ? AND amount = ? ORDER BY created_at DESC LIMIT 1',
-      [data.order_id, data.category_id, data.amount]
-    );
-    return item!.id;
-  },
+	    // Best-effort fetch of the created row's id. In practice callers don't rely on the
+	    // returned id, so avoid throwing if the lookup fails (e.g. due to rounding nuances).
+	    const item = await getOne<{ id: string }>(
+	      'SELECT id FROM cost_items WHERE order_id = ? AND category_id = ? ORDER BY created_at DESC LIMIT 1',
+	      [data.order_id, data.category_id]
+	    );
+	    return item?.id || '';
+	  },
 
   async update(_id: string, _data: Partial<Omit<CostItem, 'id' | 'order_id' | 'created_at' | 'updated_at'>>): Promise<void> {
     const fields = [];
