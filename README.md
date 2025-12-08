@@ -114,6 +114,10 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
     scp dump.sql payoffsolarnew:/opt/bitnami/projects/payoffsolar
     mysql -u root -p payoffsolar < dump.sql
     ```
+1. Copy all the files over from old server
+    ```
+    scp -r payoffsolarold:/opt/bitnami/projects/payoffsolar/public/uploads/ payoffsolar:/opt/bitnami/projects/payoffsolar/public/
+    ```
 1. Install depdencies for PDF generation
     ```
     
