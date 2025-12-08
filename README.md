@@ -32,6 +32,8 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 ## Server Setup
 
 1. Create Lighsail instance using Node.js template
+1. Go to Namecheap and point payoffsolar.com and www.payoffsolar.com to the instance
+1. Open port 80 and 443, but make port 22 only accessible from your IP
 1. SSH to instance
 1. Update packages
     ```
@@ -49,9 +51,13 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
     ```
 1. Clone the repo
     ```
-    git clone https://github.com/payoffsolar/payoffsolar.git
+    git clone https://github.com/mrn3/payoffsolar.git
     ```
-1. Configure environment variables using .env
+1. Change directory
+    ```
+    cd payoffsolar
+    ```
+1. Configure environment variables using .env - use .env.example as a template
     ```
     vi .env
     ```
@@ -65,7 +71,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
     ```
 1. Install pm2
     ```
-    npm install -g pm2
+    sudo npm install -g pm2
     ```
 1. Set up as daemon in pm2
     ```
@@ -75,8 +81,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
     ```
     pm2 startup
     ```
-1. Set up Apache - https://docs.bitnami.com/general/infrastructure/nodejs/get-started/get-started/
+1. Set up Apache - just the first half of Step 3 on https://docs.bitnami.com/general/infrastructure/nodejs/get-started/get-started/
 1. Set up SSL - https://docs.bitnami.com/general/faq/administration/generate-configure-certificate-letsencrypt/
+    1. Domain list []: payoffsolar.com,www.payoffsolar.com
+    1. Enable HTTP to HTTPS redirection [Y/n]: Y
+    1. Enable non-www to www redirection [Y/n]: n
+    1. Enable www to non-www redirection [y/N]: y
+    1. Do you agree to these changes? [Y/n]: Y
+    1. E-mail address []: mattrobertnewman@gmail.com
+    1. Do you agree to the Let's Encrypt Subscriber Agreement? [Y/n]: Y
 1. Install mariadb
     ```
     sudo apt-get install mariadb-server
@@ -86,9 +99,24 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
     ```
     sudo mysql_secure_installation
     ```
-1. Set up database
+    1. Switch to unix_socket authentication [Y/n] n
+    1. Change the root password? [Y/n] Y
+    1. New password: <your-password-from-MYSQL_PASSWORD-in-.env>
+    1. Re-enter new password: <your-password-from-MYSQL_PASSWORD-in-.env>
+    1. Remove anonymous users? [Y/n] Y
+    1. Disallow root login remotely? [Y/n] Y
+    1. Remove test database and access to it? [Y/n] Y
+    1. Reload privilege tables now? [Y/n] Y
+1. Set up fresh database or import production dump file
     ```
     node ./scripts/setup-db.js
+    OR
+    scp dump.sql payoffsolarnew:/opt/bitnami/projects/payoffsolar
+    mysql -u root -p payoffsolar < dump.sql
+    ```
+1. Install depdencies for PDF generation
+    ```
+    
     ```
 
 ## Deploy
