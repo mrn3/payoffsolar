@@ -122,6 +122,13 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
     ```
     
     ```
+1. Harden server with fail2ban and other stuff - have AI properly configure this on the new server
+    ```
+    sudo apt-get install fail2ban
+    sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+    sudo systemctl enable fail2ban
+    sudo systemctl start fail2ban
+    ```
 
 ## Deploy
 

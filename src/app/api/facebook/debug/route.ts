@@ -1,9 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/mysql/connection';
+import { requireAuth, isAdmin } from '@/lib/auth';
 
-// Debug endpoint to test Facebook database tables without authentication
+// Debug endpoint to test Facebook database tables
+// Restricted to admin users in non-production environments and disabled entirely in production
 export async function GET(request: NextRequest) {
   try {
+    // For security, do not expose this endpoint in production at all
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
+    // Require an authenticated admin session in non-production environments
+    const session = await requireAuth();
+    if (!isAdmin(session.profile.role)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
     console.log('🔍 Facebook debug endpoint called');
     
     const results = {
