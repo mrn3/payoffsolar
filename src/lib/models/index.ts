@@ -4,20 +4,25 @@ import { cleanPhoneNumber, isValidPhoneNumber } from '@/lib/utils/phone';
 
 // Contact model
 export interface Contact {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  phone_digits?: string | null;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  notes?: string;
-  user_id?: string;
-  facebook_user_id?: string;
-  created_at: string;
-  updated_at: string;
+	id: string;
+	name: string;
+	email: string;
+	phone: string;
+	phone_digits?: string | null;
+	address: string;
+	city: string;
+	state: string;
+	zip: string;
+	notes?: string;
+	user_id?: string;
+	/**
+	 * Optional role of the associated user account (from roles.name), if any.
+	 * This is populated for list views that join contacts with users/profiles/roles.
+	 */
+	user_role?: string | null;
+	facebook_user_id?: string;
+	created_at: string;
+	updated_at: string;
 }
 
 // Facebook Conversation model
@@ -101,10 +106,15 @@ export interface CommunicationHistoryItem {
 
 export const ContactModel = {
   async getAll(limit = 50, offset = 0): Promise<Contact[]> {
-    return executeQuery<Contact>(
-      'SELECT * FROM contacts ORDER BY created_at DESC LIMIT ? OFFSET ?',
-      [limit, offset]
-    );
+	    return executeQuery<Contact>(
+	      `SELECT c.*, r.name as user_role
+	       FROM contacts c
+	       LEFT JOIN users u ON c.user_id = u.id
+	       LEFT JOIN profiles p ON u.id = p.id
+	       LEFT JOIN roles r ON p.role_id = r.id
+	       ORDER BY c.created_at DESC LIMIT ? OFFSET ?`,
+	      [limit, offset]
+	    );
   },
 
   async getById(_id: string): Promise<Contact | null> {
@@ -332,40 +342,46 @@ export const ContactModel = {
 
     const conditions: string[] = [];
 
-    if (filters.search) {
-      const searchTerm = `%${filters.search}%`;
-      conditions.push('(name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ? OR city LIKE ? OR state LIKE ? OR zip LIKE ?)');
-      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
-    }
+	    if (filters.search) {
+	      const searchTerm = `%${filters.search}%`;
+	      conditions.push('(c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ? OR c.notes LIKE ? OR c.city LIKE ? OR c.state LIKE ? OR c.zip LIKE ?)');
+	      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+	    }
 
-    if (filters.city) {
-      const cityTerm = `%${filters.city}%`;
-      conditions.push('city LIKE ?');
-      params.push(cityTerm);
-    }
+	    if (filters.city) {
+	      const cityTerm = `%${filters.city}%`;
+	      conditions.push('c.city LIKE ?');
+	      params.push(cityTerm);
+	    }
 
-    if (filters.state) {
-      const stateTerm = `%${filters.state}%`;
-      conditions.push('state LIKE ?');
-      params.push(stateTerm);
-    }
+	    if (filters.state) {
+	      const stateTerm = `%${filters.state}%`;
+	      conditions.push('c.state LIKE ?');
+	      params.push(stateTerm);
+	    }
 
-    if (filters.zip) {
-      const zipTerm = `%${filters.zip}%`;
-      conditions.push('zip LIKE ?');
-      params.push(zipTerm);
-    }
+	    if (filters.zip) {
+	      const zipTerm = `%${filters.zip}%`;
+	      conditions.push('c.zip LIKE ?');
+	      params.push(zipTerm);
+	    }
 
-    if (conditions.length > 0) {
-      whereClause = 'WHERE ' + conditions.join(' AND ');
-    }
+	    if (conditions.length > 0) {
+	      whereClause = 'WHERE ' + conditions.join(' AND ');
+	    }
 
-    params.push(limit, offset);
+	    params.push(limit, offset);
 
-    return executeQuery<Contact>(
-      `SELECT * FROM contacts ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      params
-    );
+	    return executeQuery<Contact>(
+	      `SELECT c.*, r.name as user_role
+	       FROM contacts c
+	       LEFT JOIN users u ON c.user_id = u.id
+	       LEFT JOIN profiles p ON u.id = p.id
+	       LEFT JOIN roles r ON p.role_id = r.id
+	       ${whereClause}
+	       ORDER BY c.created_at DESC LIMIT ? OFFSET ?`,
+	      params
+	    );
   },
 
   async getFilteredCount(filters: {
@@ -379,38 +395,38 @@ export const ContactModel = {
 
     const conditions: string[] = [];
 
-    if (filters.search) {
-      const searchTerm = `%${filters.search}%`;
-      conditions.push('(name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ? OR city LIKE ? OR state LIKE ? OR zip LIKE ?)');
-      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
-    }
+	    if (filters.search) {
+	      const searchTerm = `%${filters.search}%`;
+	      conditions.push('(c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ? OR c.notes LIKE ? OR c.city LIKE ? OR c.state LIKE ? OR c.zip LIKE ?)');
+	      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+	    }
 
-    if (filters.city) {
-      const cityTerm = `%${filters.city}%`;
-      conditions.push('city LIKE ?');
-      params.push(cityTerm);
-    }
+	    if (filters.city) {
+	      const cityTerm = `%${filters.city}%`;
+	      conditions.push('c.city LIKE ?');
+	      params.push(cityTerm);
+	    }
 
-    if (filters.state) {
-      const stateTerm = `%${filters.state}%`;
-      conditions.push('state LIKE ?');
-      params.push(stateTerm);
-    }
+	    if (filters.state) {
+	      const stateTerm = `%${filters.state}%`;
+	      conditions.push('c.state LIKE ?');
+	      params.push(stateTerm);
+	    }
 
-    if (filters.zip) {
-      const zipTerm = `%${filters.zip}%`;
-      conditions.push('zip LIKE ?');
-      params.push(zipTerm);
-    }
+	    if (filters.zip) {
+	      const zipTerm = `%${filters.zip}%`;
+	      conditions.push('c.zip LIKE ?');
+	      params.push(zipTerm);
+	    }
 
-    if (conditions.length > 0) {
-      whereClause = 'WHERE ' + conditions.join(' AND ');
-    }
+	    if (conditions.length > 0) {
+	      whereClause = 'WHERE ' + conditions.join(' AND ');
+	    }
 
-    const result = await getOne<{ count: number }>(
-      `SELECT COUNT(*) as count FROM contacts ${whereClause}`,
-      params
-    );
+	    const result = await getOne<{ count: number }>(
+	      `SELECT COUNT(*) as count FROM contacts c ${whereClause}`,
+	      params
+	    );
     return result?.count || 0;
   },
 
@@ -2040,8 +2056,18 @@ export const UserModel = {
        WHERE u.id = ?`,
       [id]
     );
-    return user;
-  }
+	    return user;
+	  },
+
+	  async updateRole(id: string, role: string): Promise<void> {
+	    // Update the user's role by setting their profile.role_id based on roles.name
+	    await executeSingle(
+	      `UPDATE profiles
+	       SET role_id = (SELECT id FROM roles WHERE name = ?)
+	       WHERE id = ?`,
+	      [role, id]
+	    );
+	  }
 };
 
 // Product Cost Breakdown model

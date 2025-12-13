@@ -47,6 +47,9 @@ export default function ContactsPage() {
     totalPages: 0
   });
 
+	  // Track per-contact role update state (by contact id)
+	  const [roleUpdateStatus, setRoleUpdateStatus] = useState<Record<string, 'idle' | 'saving' | 'error'>>({});
+
   // Modal states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
@@ -173,6 +176,43 @@ export default function ContactsPage() {
   const handleDuplicatesComplete = () => {
     fetchContacts(currentPage, searchQuery, cityFilter, stateFilter, zipFilter);
   };
+
+	  const handleRoleChange = async (contact: Contact, newRole: 'admin' | 'contact') => {
+	    if (!contact.user_id) return;
+
+	    try {
+	      setRoleUpdateStatus((prev) => ({ ...prev, [contact.id]: 'saving' }));
+
+	      const response = await fetch(`/api/users/${contact.user_id}`, {
+	        method: 'PATCH',
+	        headers: {
+	          'Content-Type': 'application/json',
+	        },
+	        body: JSON.stringify({ role: newRole }),
+	      });
+
+	      if (!response.ok) {
+	        const errorData = await response.json().catch(() => ({}));
+	        console.error('Failed to update user role', errorData);
+	        setRoleUpdateStatus((prev) => ({ ...prev, [contact.id]: 'error' }));
+	        return;
+	      }
+
+	      // Update the role in local state so the UI reflects the change without a full refetch
+	      setContacts((prev) =>
+	        prev.map((c) =>
+	          c.id === contact.id
+	            ? { ...c, user_role: newRole }
+	            : c
+	        )
+	      );
+
+	      setRoleUpdateStatus((prev) => ({ ...prev, [contact.id]: 'idle' }));
+	    } catch (err) {
+	      console.error('Error updating user role:', err);
+	      setRoleUpdateStatus((prev) => ({ ...prev, [contact.id]: 'error' }));
+	    }
+	  };
 
   const handleExportCSV = async () => {
     try {
@@ -448,6 +488,9 @@ export default function ContactsPage() {
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Phone
                     </th>
+	                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+	                      Role
+	                    </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Location
                     </th>
@@ -510,9 +553,24 @@ export default function ContactsPage() {
                             '-'
                           )}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {[contact.city, contact.state].filter(Boolean).join(', ')}
-                        </td>
+	                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+	                          {contact.user_id ? (
+	                            <select
+	                              value={contact.user_role || 'contact'}
+	                              onChange={(e) => handleRoleChange(contact, e.target.value as 'admin' | 'contact')}
+	                              disabled={roleUpdateStatus[contact.id] === 'saving'}
+	                              className="block w-full rounded-md border border-gray-300 bg-white py-1 pl-2 pr-8 text-sm text-gray-900 shadow-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+	                            >
+	                              <option value="contact">Contact</option>
+	                              <option value="admin">Admin</option>
+	                            </select>
+	                          ) : (
+	                            <span className="text-gray-400 italic">No login</span>
+	                          )}
+	                        </td>
+	                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+	                          {[contact.city, contact.state].filter(Boolean).join(', ')}
+	                        </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {format(new Date(contact.created_at), 'MMM d, yyyy')}
                         </td>
@@ -605,7 +663,7 @@ export default function ContactsPage() {
                         {contact.name}
                       </button>
                     </h3>
-                    <div className="mt-2 space-y-1">
+	                    <div className="mt-2 space-y-1">
                       {contact.email && (
                         <p className="text-sm text-gray-600 truncate">
                           <span className="font-medium">Email:</span>{' '}
@@ -628,6 +686,22 @@ export default function ContactsPage() {
                           </a>
                         </p>
                       )}
+	                      <p className="text-sm text-gray-600">
+	                        <span className="font-medium">Role:</span>{' '}
+	                        {contact.user_id ? (
+	                          <select
+	                            value={contact.user_role || 'contact'}
+	                            onChange={(e) => handleRoleChange(contact, e.target.value as 'admin' | 'contact')}
+	                            disabled={roleUpdateStatus[contact.id] === 'saving'}
+	                            className="mt-1 block rounded-md border border-gray-300 bg-white py-1 pl-2 pr-8 text-sm text-gray-900 shadow-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+	                          >
+	                            <option value="contact">Contact</option>
+	                            <option value="admin">Admin</option>
+	                          </select>
+	                        ) : (
+	                          <span className="text-gray-400 italic">No login</span>
+	                        )}
+	                      </p>
                       {(contact.city || contact.state) && (
                         <p className="text-sm text-gray-600">
                           <span className="font-medium">Location:</span> {[contact.city, contact.state].filter(Boolean).join(', ')}

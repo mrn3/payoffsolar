@@ -23,6 +23,8 @@ export interface Contact {
   zip?: string;
   description?: string;
   user_id?: string;
+	// Optional role of the linked user account, if any
+	user_role?: 'admin' | 'manager' | 'sales' | 'inventory' | 'contact' | null;
   created_at: string;
   updated_at: string;
 }
