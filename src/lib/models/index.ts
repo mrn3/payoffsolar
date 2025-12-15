@@ -5361,13 +5361,13 @@ export const InvoiceModel = {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 1);
 
-    // Determine status based on order status
-    let status: Invoice['status'] = 'pending';
-    if (order.status.toLowerCase() === 'paid') {
-      status = 'paid';
-    } else if (order.status.toLowerCase() === 'completed') {
-      status = 'sent';
-    }
+	    // Determine invoice status based on order status
+	    // Treat both "Paid" and "Complete" orders as fully paid invoices
+	    const orderStatus = String(order.status || '').toLowerCase();
+	    let status: Invoice['status'] = 'pending';
+	    if (orderStatus === 'paid' || orderStatus === 'complete' || orderStatus === 'completed') {
+	      status = 'paid';
+	    }
 
     // Create invoice
     return await this.create({

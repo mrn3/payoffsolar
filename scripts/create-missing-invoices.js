@@ -48,13 +48,13 @@ async function createMissingInvoices() {
       const dueDate = new Date(orderDate);
       dueDate.setDate(dueDate.getDate() + 1);
 
-      // Determine status based on order status
-      let status = 'pending';
-      if (order.status.toLowerCase() === 'paid') {
-        status = 'paid';
-      } else if (order.status.toLowerCase() === 'completed') {
-        status = 'sent';
-      }
+	      // Determine invoice status based on order status
+	      // Treat both "Paid" and "Complete" orders as fully paid invoices
+	      const orderStatus = String(order.status || '').toLowerCase();
+	      let status = 'pending';
+	      if (orderStatus === 'paid' || orderStatus === 'complete' || orderStatus === 'completed') {
+	        status = 'paid';
+	      }
 
       // Generate UUID for invoice
       const [uuidResult] = await connection.execute('SELECT UUID() as id');

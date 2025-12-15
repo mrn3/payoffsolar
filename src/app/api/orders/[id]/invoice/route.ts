@@ -53,6 +53,7 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
   const invoiceDate = format(new Date(invoice.created_at), 'MMMM d, yyyy');
   const dueDate = format(new Date(invoice.due_date), 'MMMM d, yyyy');
   const contactName = order.contact_name;
+  const invoiceStatusLabel = String(invoice.status).toLowerCase() === 'paid' ? 'Paid In Full' : invoice.status;
 
   // Calculate total from line items instead of using stored invoice amount
   const calculatedTotal = order.items?.reduce((total: number, item: any) => {
@@ -215,7 +216,7 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
                 <p><strong>Invoice Number:</strong> ${invoice.invoice_number}</p>
                 <p><strong>Invoice Date:</strong> ${invoiceDate}</p>
                 <p><strong>Due Date:</strong> ${dueDate}</p>
-                <p><strong>Status:</strong> <span class="status-badge status-${invoice.status}">${invoice.status}</span></p>
+	                <p><strong>Status:</strong> <span class="status-badge status-${invoice.status}">${invoiceStatusLabel}</span></p>
             </div>
             <div>
                 <p><strong>Order ID:</strong> #${order.id.substring(0, 8)}</p>
