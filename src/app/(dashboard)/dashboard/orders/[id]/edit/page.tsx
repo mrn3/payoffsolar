@@ -597,7 +597,8 @@ export default function EditOrderPage() {
                   </label>
                   <input
                     type="number"
-                    step="0.01"
+	                    step="0.01"
+	                    min="-999999"
                     required
                     value={item.price}
 	                    onChange={(_e) => {
