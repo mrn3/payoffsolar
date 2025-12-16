@@ -597,11 +597,21 @@ export default function EditOrderPage() {
                   </label>
                   <input
                     type="number"
-                    min="0"
                     step="0.01"
                     required
                     value={item.price}
-                    onChange={(_e) => updateItem(_index, 'price', parseFloat(_e.target.value) || 0)}
+	                    onChange={(_e) => {
+	                      const value = _e.target.value;
+	                      // Allow empty string during editing
+	                      if (value === '') {
+	                        updateItem(_index, 'price', '');
+	                      } else {
+	                        const numValue = parseFloat(value);
+	                        if (!Number.isNaN(numValue)) {
+	                          updateItem(_index, 'price', numValue);
+	                        }
+	                      }
+	                    }}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
                   />
                 </div>

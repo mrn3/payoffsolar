@@ -120,21 +120,29 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate items and process bundles
-    for (const item of data.items) {
-      if (!item.product_id || !item.quantity || item.quantity <= 0 || !item.price || item.price < 0) {
-        return NextResponse.json({
-          error: 'Each item must have product_id, positive quantity, and non-negative price' }, { status: 400 });
-      }
+	    // Validate items and process bundles
+	    for (const item of data.items) {
+	      const quantity = Number(item.quantity);
+	      const price = Number(item.price);
 
-      // Validate product exists
-      const product = await ProductModel.getById(item.product_id);
-      if (!product) {
-        return NextResponse.json({
-          error: `Product with ID ${item.product_id} not found`
-        }, { status: 404 });
-      }
-    }
+	      if (!item.product_id || Number.isNaN(quantity) || quantity <= 0 || Number.isNaN(price)) {
+	        return NextResponse.json({
+	          error: 'Each item must have product_id, positive quantity, and a valid price'
+	        }, { status: 400 });
+	      }
+
+	      // Normalize numeric fields so downstream processing receives numbers
+	      item.quantity = quantity;
+	      item.price = price;
+
+	      // Validate product exists
+	      const product = await ProductModel.getById(item.product_id);
+	      if (!product) {
+	        return NextResponse.json({
+	          error: `Product with ID ${item.product_id} not found`
+	        }, { status: 404 });
+	      }
+	    }
 
     // Process order items (expand bundles if needed)
     const processedItems = await processOrderItems(data.items, {

@@ -209,18 +209,18 @@ export default function ImportOrdersModal({ isOpen, onClose, onImportComplete }:
             }
           }
 
-          // Validate price is a non-negative number
-          if (mapping.orderField === 'price' && value) {
-            const price = parseFloat(value);
-            if (isNaN(price) || price < 0) {
-              errors.push({
-                row: index + 1,
-                field: mapping.orderField,
-                message: 'Price must be a non-negative number',
-                value: value
-              });
-            }
-          }
+	          // Validate price is a valid number (can be positive or negative)
+	          if (mapping.orderField === 'price' && value) {
+	            const price = parseFloat(value);
+	            if (isNaN(price)) {
+	              errors.push({
+	                row: index + 1,
+	                field: mapping.orderField,
+	                message: 'Price must be a valid number',
+	                value: value
+	              });
+	            }
+	          }
 
           // Validate order_date format
           if (mapping.orderField === 'order_date' && value) {

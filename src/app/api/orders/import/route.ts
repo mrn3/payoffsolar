@@ -82,16 +82,16 @@ export async function POST(request: NextRequest) {
           throw new Error(`Row ${i + 1}: Quantity and price are required`);
         }
 
-        const quantity = parseInt(item.quantity.toString());
-        const price = parseFloat(item.price.toString());
-
-        if (isNaN(quantity) || quantity <= 0) {
-          throw new Error(`Row ${i + 1}: Quantity must be a positive number`);
-        }
-
-        if (isNaN(price) || price < 0) {
-          throw new Error(`Row ${i + 1}: Price must be a non-negative number`);
-        }
+	        const quantity = parseInt(item.quantity.toString());
+	        const price = parseFloat(item.price.toString());
+	
+	        if (isNaN(quantity) || quantity <= 0) {
+	          throw new Error(`Row ${i + 1}: Quantity must be a positive number`);
+	        }
+	
+	        if (isNaN(price)) {
+	          throw new Error(`Row ${i + 1}: Price must be a valid number`);
+	        }
 
         // Validate and process order_date
         let orderDate = item.order_date?.trim();

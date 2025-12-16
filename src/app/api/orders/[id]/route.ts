@@ -74,24 +74,32 @@ export async function PUT(
           error: 'Items must be an array' }, { status: 400 });
       }
 
-      // Calculate new total if items are being updated
-      let total = 0;
-      for (const item of data.items) {
-        if (!item.product_id || !item.quantity || item.quantity <= 0 || !item.price || item.price < 0) {
-          return NextResponse.json({
-            error: 'Each item must have product_id, positive quantity, and non-negative price' }, { status: 400 });
-        }
+	      // Calculate new total if items are being updated
+	      let total = 0;
+	      for (const item of data.items) {
+	        const quantity = Number(item.quantity);
+	        const price = Number(item.price);
 
-        // Validate product exists
-        const product = await ProductModel.getById(item.product_id);
-        if (!product) {
-          return NextResponse.json({
-            error: `Product with ID ${item.product_id} not found`
-          }, { status: 404 });
-        }
+	        if (!item.product_id || Number.isNaN(quantity) || quantity <= 0 || Number.isNaN(price)) {
+	          return NextResponse.json({
+	            error: 'Each item must have product_id, positive quantity, and a valid price'
+	          }, { status: 400 });
+	        }
 
-        total += parseFloat(item.price) * parseInt(item.quantity);
-      }
+	        // Validate product exists
+	        const product = await ProductModel.getById(item.product_id);
+	        if (!product) {
+	          return NextResponse.json({
+	            error: `Product with ID ${item.product_id} not found`
+	          }, { status: 404 });
+	        }
+
+	        // Normalize numeric fields for downstream usage
+	        item.quantity = quantity;
+	        item.price = price;
+
+	        total += price * quantity;
+	      }
 
       // Delete existing items and create new ones
       await OrderItemModel.deleteByOrderId(id);
