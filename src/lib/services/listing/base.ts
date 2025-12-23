@@ -102,7 +102,7 @@ export abstract class BasePlatformService {
   }
 
   protected validateImages(images: ProductImage[]): string[] {
-    const maxImages = this.platform.configuration?.max_images || 10;
+	    const maxImages = this.platform.configuration?.max_images || 30;
     const validImages = images
       .filter(img => img.image_url && this.isValidImageUrl(img.image_url))
       .slice(0, maxImages)

@@ -115,13 +115,13 @@ function SortableImageItem({ image, index, onRemove }: SortableImageItemProps) {
 }
 
 export default function DragDropImageUpload({
-  onImagesUploaded,
-  onImageRemoved,
-  onImageReordered,
-  existingImages = [],
-  maxImages = 10,
-  className = '',
-  productId
+	onImagesUploaded,
+	onImageRemoved,
+	onImageReordered,
+	existingImages = [],
+	maxImages = 30,
+	className = '',
+	productId
 }: DragDropImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);

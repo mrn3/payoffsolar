@@ -23,11 +23,11 @@ interface ImageUploadProps {
 
 
 export default function ImageUpload({
-  onImagesUploaded,
-  onImageRemoved,
-  existingImages = [],
-  maxImages = 10,
-  className = ''
+	onImagesUploaded,
+	onImageRemoved,
+	existingImages = [],
+	maxImages = 30,
+	className = ''
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);

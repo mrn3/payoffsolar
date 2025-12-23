@@ -746,7 +746,7 @@ export default function EditProductPage() {
                 onImageRemoved={handleImageRemoved}
                 onImageReordered={handleImageReordered}
                 existingImages={productImages}
-                maxImages={10}
+	                maxImages={30}
                 className="w-full"
                 productId={productId}
               />

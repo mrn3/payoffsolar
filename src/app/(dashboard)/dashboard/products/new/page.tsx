@@ -448,7 +448,7 @@ export default function NewProductPage() {
                 onImageRemoved={handleImageRemoved}
                 onImageReordered={handleImageReordered}
                 existingImages={uploadedImages}
-                maxImages={10}
+	                maxImages={30}
                 className="w-full"
               />
             </div>
