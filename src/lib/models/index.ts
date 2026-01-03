@@ -2481,20 +2481,50 @@ export const OrderModel = {
     );
   },
 
-  async getRevenueByYear(years = 5): Promise<Array<{ year: string; revenue: number; count: number }>> {
-    return executeQuery<{ year: string; revenue: number; count: number }>(
-      `SELECT
-         YEAR(order_date) as year,
-         SUM(CAST(total AS DECIMAL(10,2))) as revenue,
-         COUNT(*) as count
-       FROM orders
-       WHERE status = 'complete'
-         AND order_date >= DATE_SUB(CURDATE(), INTERVAL ? YEAR)
-       GROUP BY YEAR(order_date)
-       ORDER BY year ASC`,
-      [years]
-    );
-  },
+	  async getRevenueByYear(years = 5): Promise<Array<{ year: string; revenue: number; count: number }>> {
+	    return executeQuery<{ year: string; revenue: number; count: number }>(
+	      `SELECT
+	         YEAR(order_date) as year,
+	         SUM(CAST(total AS DECIMAL(10,2))) as revenue,
+	         COUNT(*) as count
+	       FROM orders
+	       WHERE status = 'complete'
+	         AND order_date >= DATE_SUB(CURDATE(), INTERVAL ? YEAR)
+	       GROUP BY YEAR(order_date)
+	       ORDER BY year ASC`,
+	      [years]
+	    );
+	  },
+
+	  async getRevenueByWeek(weeks = 20): Promise<Array<{ week: string; revenue: number; count: number }>> {
+	    return executeQuery<{ week: string; revenue: number; count: number }>(
+	      `SELECT
+	         CONCAT(YEAR(order_date), '-', LPAD(WEEK(order_date, 1), 2, '0')) as week,
+	         SUM(CAST(total AS DECIMAL(10,2))) as revenue,
+	         COUNT(*) as count
+	       FROM orders
+	       WHERE status = 'complete'
+	         AND order_date >= DATE_SUB(CURDATE(), INTERVAL ? WEEK)
+	       GROUP BY YEAR(order_date), WEEK(order_date, 1)
+	       ORDER BY week ASC`,
+	      [weeks]
+	    );
+	  },
+
+	  async getRevenueByDay(days = 31): Promise<Array<{ day: string; revenue: number; count: number }>> {
+	    return executeQuery<{ day: string; revenue: number; count: number }>(
+	      `SELECT
+	         DATE_FORMAT(order_date, '%Y-%m-%d') as day,
+	         SUM(CAST(total AS DECIMAL(10,2))) as revenue,
+	         COUNT(*) as count
+	       FROM orders
+	       WHERE status = 'complete'
+	         AND order_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+	       GROUP BY DATE_FORMAT(order_date, '%Y-%m-%d')
+	       ORDER BY day ASC`,
+	      [days]
+	    );
+	  },
 
   async getRevenueByMonthAndState(months = 12): Promise<Array<{ month: string; state: string; revenue: number; count: number }>> {
     return executeQuery<{ month: string; state: string; revenue: number; count: number }>(
@@ -2603,19 +2633,47 @@ export const OrderModel = {
     );
   },
 
-  async getOrderCountsByStatusAndYear(years = 5): Promise<Array<{ year: string; status: string; count: number }>> {
-    return executeQuery<{ year: string; status: string; count: number }>(
-      `SELECT
-         YEAR(order_date) as year,
-         status,
-         COUNT(*) as count
-       FROM orders
-       WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL ? YEAR)
-       GROUP BY YEAR(order_date), status
-       ORDER BY year ASC, status ASC`,
-      [years]
-    );
-  },
+	  async getOrderCountsByStatusAndYear(years = 5): Promise<Array<{ year: string; status: string; count: number }>> {
+	    return executeQuery<{ year: string; status: string; count: number }>(
+	      `SELECT
+	         YEAR(order_date) as year,
+	         status,
+	         COUNT(*) as count
+	       FROM orders
+	       WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL ? YEAR)
+	       GROUP BY YEAR(order_date), status
+	       ORDER BY year ASC, status ASC`,
+	      [years]
+	    );
+	  },
+
+	  async getOrderCountsByStatusAndWeek(weeks = 20): Promise<Array<{ week: string; status: string; count: number }>> {
+	    return executeQuery<{ week: string; status: string; count: number }>(
+	      `SELECT
+	         CONCAT(YEAR(order_date), '-', LPAD(WEEK(order_date, 1), 2, '0')) as week,
+	         status,
+	         COUNT(*) as count
+	       FROM orders
+	       WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL ? WEEK)
+	       GROUP BY YEAR(order_date), WEEK(order_date, 1), status
+	       ORDER BY week ASC, status ASC`,
+	      [weeks]
+	    );
+	  },
+
+	  async getOrderCountsByStatusAndDay(days = 31): Promise<Array<{ day: string; status: string; count: number }>> {
+	    return executeQuery<{ day: string; status: string; count: number }>(
+	      `SELECT
+	         DATE_FORMAT(order_date, '%Y-%m-%d') as day,
+	         status,
+	         COUNT(*) as count
+	       FROM orders
+	       WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+	       GROUP BY DATE_FORMAT(order_date, '%Y-%m-%d'), status
+	       ORDER BY day ASC, status ASC`,
+	      [days]
+	    );
+	  },
 
   async getCostBreakdownByMonth(months = 12, categoryId?: string | null): Promise<Array<{ month: string; category_name: string; total_amount: number }>> {
     const params = [months];

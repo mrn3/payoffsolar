@@ -533,17 +533,17 @@ export default async function DashboardPage() {
                     </div>
                   )}
                 </div>
-                <div className="mt-4">
-                  <RevenueChart data={revenueData} />
-                </div>
+	                <div className="mt-4">
+	                  <RevenueChart initialData={revenueData} />
+	                </div>
               </div>
             </div>
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">Order Count by Status</h3>
-                <div className="mt-4">
-                  <OrderCountsChart data={orderCountsData} />
-                </div>
+	                <div className="mt-4">
+	                  <OrderCountsChart initialData={orderCountsData} />
+	                </div>
               </div>
             </div>
           </div>
