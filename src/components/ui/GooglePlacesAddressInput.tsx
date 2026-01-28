@@ -83,8 +83,9 @@ export default function GooglePlacesAddressInput({
 	    	    return;
 	    	  }
 	    	
-	    	  autocomplete = new places.Autocomplete(inputRef.current, {
-	    	    types: ["address"],
+	    	autocomplete = new places.Autocomplete(inputRef.current, {
+	    	    // Allow broader location types (cities, states, etc.),
+	    	    // not just full street addresses.
 	    	    componentRestrictions: { country: "us" },
 	    	  });
 	    	
@@ -161,13 +162,13 @@ export default function GooglePlacesAddressInput({
     };
   }, []);
 
-  return (
-    <input
-      type="text"
-      ref={inputRef}
-      placeholder="Start typing an address..."
-      className={className}
-    />
-  );
+	  return (
+	    <input
+	      type="text"
+	      ref={inputRef}
+	      placeholder="Start typing an address, city, or state..."
+	      className={className}
+	    />
+	  );
 }
 
