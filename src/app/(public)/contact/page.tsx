@@ -7,6 +7,8 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isValidPhoneNumber } from '@/lib/utils/phone';
+import GooglePlacesAddressInput from '@/components/ui/GooglePlacesAddressInput';
+import { US_STATES } from '@/lib/utils/states';
 
 
 const contactFormSchema = z.object({
@@ -15,6 +17,10 @@ const contactFormSchema = z.object({
   phone: z.string().refine(isValidPhoneNumber, 'Phone number must be 10 digits or 11 digits with +1'),
   subject: z.string().min(5, 'Subject must be at least 5 characters'),
   message: z.string().min(10, 'Message must be at least 10 characters'),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip: z.string().optional(),
 });
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
@@ -89,7 +95,11 @@ Please provide me with a detailed quote and next steps for installation.`;
       email: '',
       phone: '',
       subject: systemType ? 'Solar System Quote Request' : packageName ? `${packageName} Quote Request` : source === 'pricing' ? 'Solar Package Inquiry' : '',
-      message: '',
+	      message: '',
+	      address: '',
+	      city: '',
+	      state: '',
+	      zip: '',
     },
   });
 
@@ -359,6 +369,75 @@ Please provide me with a detailed quote and next steps for installation.`;
                   )}
                 </div>
               </div>
+	              <div>
+	                <label className="block text-sm font-medium text-gray-700 mb-1">
+	                  Location search
+	                </label>
+	                <p className="mt-1 text-xs text-gray-500">
+	                  Use Google to look up an address and automatically fill the fields below.
+	                </p>
+	                <GooglePlacesAddressInput
+	                  onAddressSelect={({ address, city, state, zip }) => {
+	                    setValue('address', address || '');
+	                    setValue('city', city || '');
+	                    setValue('state', state || '');
+	                    setValue('zip', zip || '');
+	                  }}
+	                  className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+	                />
+	              </div>
+	              <div>
+	                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+	                  Address
+	                </label>
+	                <input
+	                  type="text"
+	                  id="address"
+	                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+	                  {...register('address')}
+	                />
+	              </div>
+	              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+	                <div>
+	                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+	                    City
+	                  </label>
+	                  <input
+	                    type="text"
+	                    id="city"
+	                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+	                    {...register('city')}
+	                  />
+	                </div>
+	                <div>
+	                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+	                    State
+	                  </label>
+	                  <select
+	                    id="state"
+	                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+	                    {...register('state')}
+	                  >
+	                    <option value="">Select a state...</option>
+	                    {US_STATES.map((state) => (
+	                      <option key={state.code} value={state.code}>
+	                        {state.name} ({state.code})
+	                      </option>
+	                    ))}
+	                  </select>
+	                </div>
+	                <div>
+	                  <label htmlFor="zip" className="block text-sm font-medium text-gray-700 mb-1">
+	                    ZIP Code
+	                  </label>
+	                  <input
+	                    type="text"
+	                    id="zip"
+	                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+	                    {...register('zip')}
+	                  />
+	                </div>
+	              </div>
               <div>
                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
                   Subject

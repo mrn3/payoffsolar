@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import GooglePlacesAddressInput from '@/components/ui/GooglePlacesAddressInput';
 
 interface WarehouseFormData {
   name: string;
@@ -127,6 +128,34 @@ export default function WarehouseForm({ initialData, warehouseId, onSubmit, onCa
         />
         {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
       </div>
+
+	      <div>
+	        <label className="block text-sm font-medium text-gray-700">
+	          Location search
+	        </label>
+	        <p className="mt-1 text-xs text-gray-500">
+	          Use Google to look up an address and automatically fill the fields below.
+	        </p>
+	        <GooglePlacesAddressInput
+	          onAddressSelect={({ address, city, state, zip }) => {
+	            setFormData(prev => ({
+	              ...prev,
+	              address: address || prev.address,
+	              city: city || prev.city,
+	              state: state || prev.state,
+	              zip: zip || prev.zip,
+	            }));
+	            setErrors(prev => ({
+	              ...prev,
+	              address: '',
+	              city: '',
+	              state: '',
+	              zip: '',
+	            }));
+	          }}
+	          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
+	        />
+	      </div>
 
       <div>
         <label htmlFor="address" className="block text-sm font-medium text-gray-700">

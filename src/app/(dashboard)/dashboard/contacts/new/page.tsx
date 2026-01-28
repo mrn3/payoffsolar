@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PhoneInput from '@/components/ui/PhoneInput';
 import StateSelect from '@/components/ui/StateSelect';
+import GooglePlacesAddressInput from '@/components/ui/GooglePlacesAddressInput';
 import { isValidPhoneNumber } from '@/lib/utils/phone';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 
@@ -160,6 +161,32 @@ export default function NewContactPage() {
               />
               {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
             </div>
+
+	            <div className="sm:col-span-2">
+	              <label className="block text-sm font-medium text-gray-700">Location search</label>
+	              <p className="mt-1 text-xs text-gray-500">
+	                Use Google to look up an address and automatically fill the fields below.
+	              </p>
+	              <GooglePlacesAddressInput
+	                onAddressSelect={({ address, city, state, zip }) => {
+	                  setFormData(prev => ({
+	                    ...prev,
+	                    address: address || prev.address,
+	                    city: city || prev.city,
+	                    state: state || prev.state,
+	                    zip: zip || prev.zip,
+	                  }));
+	                  setErrors(prev => ({
+	                    ...prev,
+	                    address: '',
+	                    city: '',
+	                    state: '',
+	                    zip: '',
+	                  }));
+	                }}
+	                className="mt-1 block w-full border rounded-md px-3 py-2 border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500"
+	              />
+	            </div>
 
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700">Address</label>

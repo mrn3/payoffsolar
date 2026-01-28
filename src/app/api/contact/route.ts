@@ -10,6 +10,10 @@ const contactSchema = z.object({
   phone: z.string().refine(isValidPhoneNumber, 'Phone number must be 10 digits or 11 digits with +1'),
   subject: z.string().min(5, 'Subject must be at least 5 characters'),
   message: z.string().min(10, 'Message must be at least 10 characters'),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip: z.string().optional(),
 });
 
 export async function POST(_request: NextRequest) {
@@ -19,17 +23,17 @@ export async function POST(_request: NextRequest) {
     // Validate the request body
     const validatedData = contactSchema.parse(body);
 
-    // Create a new contact record (always record the lead even if email fails)
-    await ContactModel.create({
-      name: validatedData.name,
-      email: validatedData.email,
-      phone: validatedData.phone,
-      notes: `Subject: ${validatedData.subject}\n\n${validatedData.message}`,
-      address: '',
-      city: '',
-      state: '',
-      zip: '',
-    });
+	    // Create a new contact record (always record the lead even if email fails)
+	    await ContactModel.create({
+	      name: validatedData.name,
+	      email: validatedData.email,
+	      phone: validatedData.phone,
+	      notes: `Subject: ${validatedData.subject}\n\n${validatedData.message}`,
+	      address: validatedData.address ?? '',
+	      city: validatedData.city ?? '',
+	      state: validatedData.state ?? '',
+	      zip: validatedData.zip ?? '',
+	    });
 
     // Notify Matt by email
     const notifyTo = process.env.CONTACT_NOTIFY_EMAIL || 'matt@payoffsolar.com';
