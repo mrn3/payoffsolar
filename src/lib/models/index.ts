@@ -2371,15 +2371,15 @@ export const OrderModel = {
     return getOne<Order>('SELECT * FROM orders WHERE id = ?', [_id]);
   },
 
-  async getByIdForUser(_id: string, _userId: string): Promise<OrderWithContact | null> {
-    return getOne<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone
-       FROM orders o
-       LEFT JOIN contacts c ON o.contact_id = c.id
-       WHERE o.id = ? AND c.user_id = ?`,
-      [_id, _userId]
-    );
-  },
+	  async getByIdForUser(_id: string, _userId: string): Promise<OrderWithContact | null> {
+	    return getOne<OrderWithContact>(
+	      `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone
+	       FROM orders o
+	       LEFT JOIN contacts c ON o.contact_id = c.id
+	       WHERE o.id = ? AND c.user_id = ?`,
+	      [_id, _userId]
+	    );
+	  },
 
   async getCount(): Promise<number> {
     const result = await getOne<{ count: number }>('SELECT COUNT(*) as count FROM orders');
@@ -2901,6 +2901,38 @@ export const OrderModel = {
     );
     return result?.count || 0;
   },
+
+	  async getWithItemsForUser(_id: string, _userId: string): Promise<OrderWithItems | null> {
+	    const order = await getOne<OrderWithContact>(
+	      `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone
+	       FROM orders o
+	       LEFT JOIN contacts c ON o.contact_id = c.id
+	       WHERE o.id = ? AND c.user_id = ?`,
+	      [_id, _userId]
+	    );
+
+	    if (!order) return null;
+
+	    const items = await executeQuery<OrderItemWithProduct>(
+	      `SELECT oi.*, p.name as product_name, p.sku as product_sku
+	       FROM order_items oi
+	       LEFT JOIN products p ON oi.product_id = p.id
+	       WHERE oi.order_id = ?
+	       ORDER BY oi.created_at ASC`,
+	      [_id]
+	    );
+
+	    const costItems = await executeQuery<CostItemWithCategory>(
+	      `SELECT ci.*, cc.name as category_name
+	       FROM cost_items ci
+	       LEFT JOIN cost_categories cc ON ci.category_id = cc.id
+	       WHERE ci.order_id = ?
+	       ORDER BY ci.created_at ASC`,
+	      [_id]
+	    );
+
+	    return { ...order, items, costItems };
+	  },
 
   async getWithItems(_id: string): Promise<OrderWithItems | null> {
     const order = await getOne<OrderWithContact>(

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     let order: any;
     if (isContact(profile.role)) {
-      order = await OrderModel.getByIdForUser(id, profile.id);
+	      order = await OrderModel.getWithItemsForUser(id, profile.id);
     } else {
       order = await OrderModel.getWithItems(id);
     }

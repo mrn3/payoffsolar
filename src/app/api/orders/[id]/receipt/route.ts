@@ -17,7 +17,7 @@ export async function GET(
     let order;
     if (isContact(profile.role)) {
       // Contact users can only download their own order receipts
-      order = await OrderModel.getByIdForUser(id, profile.id);
+	      order = await OrderModel.getWithItemsForUser(id, profile.id);
     } else {
       // Admin and other roles can download all order receipts
       order = await OrderModel.getWithItems(id);

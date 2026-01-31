@@ -24,7 +24,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
   try {
     if (isContact(profile.role)) {
       // Contact users only see their own orders
-      order = await OrderModel.getByIdForUser(id, profile.id);
+	      order = await OrderModel.getWithItemsForUser(id, profile.id);
     } else {
       // Admin and other roles see all orders
       order = await OrderModel.getWithItems(id);
