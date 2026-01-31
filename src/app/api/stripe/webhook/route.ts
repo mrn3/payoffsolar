@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import stripe from '@/lib/stripe';
-import { AffiliateCodeModel, OrderModel, OrderItemModel, ContactModel, ProductModel, ProductCostBreakdownModel, CostItemModel } from '@/lib/models';
+import { AffiliateCodeModel, OrderModel, OrderItemModel, ContactModel, ProductModel, ProductCostBreakdownModel, CostItemModel, Contact } from '@/lib/models';
 import { sendEmail } from '@/lib/email';
 import { trackOutboundEmail } from '@/lib/communication/tracking';
 
@@ -192,9 +192,14 @@ export async function POST(request: NextRequest) {
 
 async function createOrderFromPaymentIntent(paymentIntent: any) {
   // Extract customer info from metadata
-  const customerEmail = paymentIntent.metadata.customer_email;
-  const customerName = paymentIntent.metadata.customer_name;
-  const total = parseFloat(paymentIntent.metadata.total || '0');
+	  const customerEmail = paymentIntent.metadata.customer_email;
+	  const customerName = paymentIntent.metadata.customer_name;
+	  const customerPhone = paymentIntent.metadata.customer_phone || '';
+	  const customerAddress = paymentIntent.metadata.customer_address || '';
+	  const customerCity = paymentIntent.metadata.customer_city || '';
+	  const customerState = paymentIntent.metadata.customer_state || '';
+	  const customerZip = paymentIntent.metadata.customer_zip || '';
+	  const total = parseFloat(paymentIntent.metadata.total || '0');
 
   if (!customerEmail || !customerName) {
     throw new Error('Missing customer information in payment intent metadata');
@@ -208,11 +213,11 @@ async function createOrderFromPaymentIntent(paymentIntent: any) {
     const contactId = await ContactModel.create({
       name: customerName,
       email: customerEmail,
-      phone: '',
-      address: '',
-      city: '',
-      state: '',
-      zip: '',
+	      phone: customerPhone,
+	      address: customerAddress,
+	      city: customerCity,
+	      state: customerState,
+	      zip: customerZip,
       notes: 'Created from online order',
     });
 
@@ -222,6 +227,34 @@ async function createOrderFromPaymentIntent(paymentIntent: any) {
   if (!contact) {
     throw new Error('Failed to create or find contact');
   }
+
+	  // Optionally enrich existing contact with missing phone/address fields from metadata
+	  const contactUpdates: Partial<Contact> = {};
+	  if ((!contact.phone || !contact.phone.trim()) && customerPhone) {
+	    contactUpdates.phone = customerPhone;
+	  }
+	  if ((!contact.address || !contact.address.trim()) && customerAddress) {
+	    contactUpdates.address = customerAddress;
+	  }
+	  if ((!contact.city || !contact.city.trim()) && customerCity) {
+	    contactUpdates.city = customerCity;
+	  }
+	  if ((!contact.state || !contact.state.trim()) && customerState) {
+	    contactUpdates.state = customerState;
+	  }
+	  if ((!contact.zip || !contact.zip.trim()) && customerZip) {
+	    contactUpdates.zip = customerZip;
+	  }
+
+	  if (Object.keys(contactUpdates).length > 0) {
+	    try {
+	      await ContactModel.update(contact.id, contactUpdates);
+	      // Refresh contact so downstream logic sees latest data (non-fatal if this fails)
+	      contact = (await ContactModel.getById(contact.id)) || contact;
+	    } catch (err) {
+	      console.error('Error updating contact with Stripe metadata:', err);
+	    }
+	  }
 
   // Check if order already exists for this payment intent
   const existingOrders = await OrderModel.getAll(1000, 0);
