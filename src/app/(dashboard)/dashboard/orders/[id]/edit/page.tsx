@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {useParams, useRouter} from 'next/navigation';
 import { Order, OrderItem, Contact, Product, CostCategory, CostItem, Warehouse } from '@/lib/types';
+import { Payment } from '@/lib/models';
 import ContactAutocomplete from '@/components/ui/ContactAutocomplete';
 import ProductAutocomplete from '@/components/ui/ProductAutocomplete';
+import PaymentManagerWrapper from '@/components/orders/PaymentManagerWrapper';
 import {FaArrowLeft, FaPlus, FaTrash} from 'react-icons/fa';
 
 // Local interface for form state that allows quantity to be string during editing
@@ -37,6 +39,7 @@ export default function EditOrderPage() {
   const [error, setError] = useState('');
   const [itemWarehouseOptions, setItemWarehouseOptions] = useState<Record<number, (Warehouse & { available_quantity?: number })[]>>({});
 
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [formData, setFormData] = useState({
     contact_id: '',
     status: 'Proposed',
@@ -87,6 +90,7 @@ export default function EditOrderPage() {
           }
         }
 
+        setPayments(((_order as any).payments) || []);
         setFormData({
           contact_id: _order.contact_id || '',
           status: _order.status || 'Proposed',
@@ -659,6 +663,19 @@ export default function EditOrderPage() {
             </div>
           </div>
         </div>
+
+        <PaymentManagerWrapper
+          orderId={orderId}
+          payments={payments}
+          orderTotal={calculateTotal()}
+          onPaymentsChange={async () => {
+            const res = await fetch(`/api/payments?order_id=${orderId}`);
+            if (res.ok) {
+              const data = await res.json();
+              setPayments(Array.isArray(data) ? data : []);
+            }
+          }}
+        />
 
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex justify-between items-center mb-4">
