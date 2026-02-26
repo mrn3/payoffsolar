@@ -6,16 +6,16 @@
 echo "=== Payoff Solar - Add Payments Table Migration ==="
 echo ""
 
-# Check if we're on the server
-if [ ! -f "/home/manewman/payoffsolar/.env" ]; then
-    echo "Error: This script should be run on the production server"
-    echo "Please run: ssh payoffsolar"
-    echo "Then run: cd ~/payoffsolar && bash run-migration.sh"
+# Check if .env file exists in current directory
+if [ ! -f ".env" ]; then
+    echo "Error: .env file not found in current directory"
+    echo "Please make sure you're in the project directory"
+    echo "Current directory: $(pwd)"
     exit 1
 fi
 
 # Load environment variables
-source /home/manewman/payoffsolar/.env
+source .env
 
 echo "Creating backup before migration..."
 BACKUP_FILE="backup_$(date +%Y%m%d_%H%M%S).sql"
