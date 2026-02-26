@@ -268,11 +268,47 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
         </tbody>
     </table>
 
+    ${order.payments && order.payments.length > 0 ? `
+    <h3 style="margin-top: 30px;">Payment History</h3>
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Payment Type</th>
+                <th>Amount</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${order.payments.map((payment: any) => `
+                <tr>
+                    <td>${format(new Date(payment.payment_date), 'MMM d, yyyy')}</td>
+                    <td>${payment.payment_type}</td>
+                    <td class="price">$${Number(payment.amount).toFixed(2)}</td>
+                    <td>${payment.notes || '-'}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+    </table>
+    ` : ''}
+
     <div class="total-section">
         <div class="total-row">
             <div class="total-label">Invoice Total:</div>
             <div class="total-amount">$${calculatedTotal.toFixed(2)}</div>
         </div>
+        ${order.payments && order.payments.length > 0 ? `
+        <div class="total-row">
+            <div class="total-label">Total Paid:</div>
+            <div class="total-amount" style="color: #16a34a;">$${order.payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0).toFixed(2)}</div>
+        </div>
+        <div class="total-row" style="border-top: 2px solid #16a34a; padding-top: 10px; margin-top: 10px;">
+            <div class="total-label" style="font-size: 1.2em;">Balance Owed:</div>
+            <div class="total-amount" style="font-size: 1.2em; color: ${calculatedTotal - order.payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0) > 0 ? '#dc2626' : '#16a34a'};">
+                $${(calculatedTotal - order.payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0)).toFixed(2)}
+            </div>
+        </div>
+        ` : ''}
     </div>
 
     <div class="info-section" style="background-color: #ecfeff; border: 1px solid #a5f3fc; border-radius: 8px; padding: 16px; margin-bottom: 20px;">

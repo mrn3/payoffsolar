@@ -1491,6 +1491,9 @@ export interface OrderItemWithProduct extends OrderItem {
 export interface OrderWithItems extends OrderWithContact {
   items?: OrderItemWithProduct[];
   costItems?: CostItemWithCategory[];
+  payments?: Payment[];
+  total_paid?: number;
+  balance_owed?: number;
 }
 
 // Invoice model
@@ -1539,6 +1542,18 @@ export interface CostItem {
 
 export interface CostItemWithCategory extends CostItem {
   category_name?: string;
+}
+
+// Payment model
+export interface Payment {
+  id: string;
+  order_id: string;
+  payment_date: string;
+  payment_type: string;
+  amount: number | string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Listing Platform model
@@ -2931,7 +2946,15 @@ export const OrderModel = {
 	      [_id]
 	    );
 
-	    return { ...order, items, costItems };
+	    const payments = await executeQuery<Payment>(
+	      `SELECT * FROM payments WHERE order_id = ? ORDER BY payment_date DESC, created_at DESC`,
+	      [_id]
+	    );
+
+	    const total_paid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+	    const balance_owed = Number(order.total) - total_paid;
+
+	    return { ...order, items, costItems, payments, total_paid, balance_owed };
 	  },
 
   async getWithItems(_id: string): Promise<OrderWithItems | null> {
@@ -2963,7 +2986,15 @@ export const OrderModel = {
       [_id]
     );
 
-    return { ...order, items, costItems };
+    const payments = await executeQuery<Payment>(
+      `SELECT * FROM payments WHERE order_id = ? ORDER BY payment_date DESC, created_at DESC`,
+      [_id]
+    );
+
+    const total_paid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const balance_owed = Number(order.total) - total_paid;
+
+    return { ...order, items, costItems, payments, total_paid, balance_owed };
   },
 
   async create(data: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
@@ -3637,6 +3668,79 @@ export const CostItemModel = {
 
   async deleteByOrderId(orderId: string): Promise<void> {
     await executeSingle('DELETE FROM cost_items WHERE order_id = ?', [orderId]);
+  }
+};
+
+// Payment model
+export const PaymentModel = {
+  async getByOrderId(orderId: string): Promise<Payment[]> {
+    return executeQuery<Payment>(
+      `SELECT * FROM payments WHERE order_id = ? ORDER BY payment_date DESC, created_at DESC`,
+      [orderId]
+    );
+  },
+
+  async getById(id: string): Promise<Payment | null> {
+    return getOne<Payment>('SELECT * FROM payments WHERE id = ?', [id]);
+  },
+
+  async create(data: Omit<Payment, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO payments (order_id, payment_date, payment_type, amount, notes) VALUES (?, ?, ?, ?, ?)',
+      [data.order_id, data.payment_date, data.payment_type, data.amount, data.notes || null]
+    );
+
+    const payment = await getOne<{ id: string }>(
+      'SELECT id FROM payments WHERE order_id = ? AND payment_date = ? AND amount = ? ORDER BY created_at DESC LIMIT 1',
+      [data.order_id, data.payment_date, data.amount]
+    );
+    return payment!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<Payment, 'id' | 'order_id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields = [];
+    const values = [];
+
+    if (data.payment_date !== undefined) {
+      fields.push('payment_date = ?');
+      values.push(data.payment_date);
+    }
+    if (data.payment_type !== undefined) {
+      fields.push('payment_type = ?');
+      values.push(data.payment_type);
+    }
+    if (data.amount !== undefined) {
+      fields.push('amount = ?');
+      values.push(data.amount);
+    }
+    if (data.notes !== undefined) {
+      fields.push('notes = ?');
+      values.push(data.notes);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE payments SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM payments WHERE id = ?', [id]);
+  },
+
+  async deleteByOrderId(orderId: string): Promise<void> {
+    await executeSingle('DELETE FROM payments WHERE order_id = ?', [orderId]);
+  },
+
+  async getTotalByOrderId(orderId: string): Promise<number> {
+    const result = await getOne<{ total: number }>(
+      'SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id = ?',
+      [orderId]
+    );
+    return result?.total || 0;
   }
 };
 

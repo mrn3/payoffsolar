@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
 import { FaArrowLeft, FaEdit, FaUser, FaCalendarAlt, FaPhone, FaSms, FaEnvelope } from 'react-icons/fa';
 import DocumentActionsCard from '@/components/orders/DocumentActionsCard';
+import PaymentManagerWrapper from '@/components/orders/PaymentManagerWrapper';
 
 interface OrderPageProps {
   params: Promise<{ id: string }>;
@@ -267,6 +268,15 @@ export default async function OrderPage({ params }: OrderPageProps) {
                 </div>
               )}
             </div>
+          )}
+
+          {/* Payment Manager - Only visible to admin users */}
+          {!isContact(profile.role) && (
+            <PaymentManagerWrapper
+              orderId={order.id}
+              payments={order.payments || []}
+              orderTotal={Number(order.total)}
+            />
           )}
         </div>
 
