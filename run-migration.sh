@@ -17,6 +17,12 @@ fi
 # Load environment variables
 source .env
 
+# Support both MYSQL_* and DB_* env var conventions
+DB_HOST="${DB_HOST:-$MYSQL_HOST}"
+DB_USER="${DB_USER:-$MYSQL_USER}"
+DB_PASSWORD="${DB_PASSWORD:-$MYSQL_PASSWORD}"
+DB_NAME="${DB_NAME:-$MYSQL_DATABASE}"
+
 echo "Creating backup before migration..."
 BACKUP_FILE="backup_$(date +%Y%m%d_%H%M%S).sql"
 mysqldump -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" > "$BACKUP_FILE"
