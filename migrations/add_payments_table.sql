@@ -15,6 +15,3 @@ CREATE TABLE IF NOT EXISTS payments (
   FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
--- Verify table creation
-SELECT 'Payments table created successfully' AS status;
-
