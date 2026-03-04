@@ -13,16 +13,16 @@ interface PaymentManagerProps {
 }
 
 const PAYMENT_TYPES = [
-  'Stripe',
-  'Cash',
-  'Check',
-  'America First Credit Union Account Transfer',
-  'Wells Fargo Wire',
   'Venmo',
+  'Zelle',
+  'Stripe',
   'PayPal',
   'Cash App',
+  'Cash',
+  'Check',
+  'America First',
+  'Wells Fargo',
   'Apple Pay',
-  'Zelle'
 ];
 
 export default function PaymentManager({ orderId, payments, orderTotal, onPaymentsChange }: PaymentManagerProps) {
