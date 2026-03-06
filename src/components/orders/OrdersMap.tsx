@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
@@ -16,18 +16,8 @@ export interface OrderForMap {
   contact_city?: string;
   contact_state?: string;
   contact_address?: string;
-}
-
-const NOMINATIM_DELAY_MS = 1100; // Nominatim allows 1 req/sec
-const MAP_ORDER_LIMIT = 100;
-
-function buildAddressString(order: OrderForMap): string {
-  const parts = [
-    order.contact_address,
-    order.contact_city,
-    order.contact_state
-  ].filter(Boolean);
-  return parts.join(', ') || '';
+  contact_latitude?: number | null;
+  contact_longitude?: number | null;
 }
 
 function getStatusColor(status: string): string {
@@ -49,97 +39,28 @@ function getRadiusForTotal(total: number, minTotal: number, maxTotal: number): n
   return minRadius + ratio * (maxRadius - minRadius);
 }
 
-async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
-  if (!address.trim()) return null;
-  const url = `https://nominatim.openstreetmap.org/search?${new URLSearchParams({
-    q: address,
-    format: 'json',
-    limit: '1'
-  })}`;
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'PayoffSolar-OrdersMap/1.0' }
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  if (!Array.isArray(data) || data.length === 0) return null;
-  const lat = parseFloat(data[0].lat);
-  const lng = parseFloat(data[0].lon);
-  if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
-  return { lat, lng };
-}
-
 interface OrdersMapProps {
   orders: OrderForMap[];
-  onGeocodeProgress?: (current: number, total: number) => void;
 }
 
-export default function OrdersMap({ orders, onGeocodeProgress }: OrdersMapProps) {
-  const [points, setPoints] = useState<Array<{
-    order: OrderForMap;
-    lat: number;
-    lng: number;
-  }>>([]);
-  const [geocoding, setGeocoding] = useState(false);
-  const [geocodeProgress, setGeocodeProgress] = useState<{ current: number; total: number } | null>(null);
-
-  const ordersToShow = useMemo(() => orders.slice(0, MAP_ORDER_LIMIT), [orders]);
-  const uniqueAddresses = useMemo(() => {
-    const out: { address: string; orders: OrderForMap[] }[] = [];
-    for (const order of ordersToShow) {
-      const addr = buildAddressString(order);
-      if (!addr.trim()) continue;
-      const existing = out.find(x => x.address === addr);
-      if (existing) existing.orders.push(order);
-      else out.push({ address: addr, orders: [order] });
+export default function OrdersMap({ orders }: OrdersMapProps) {
+  const points = useMemo(() => {
+    const result: Array<{ order: OrderForMap; lat: number; lng: number }> = [];
+    const seen = new Map<string, number>();
+    for (const order of orders) {
+      const lat = order.contact_latitude != null ? Number(order.contact_latitude) : null;
+      const lng = order.contact_longitude != null ? Number(order.contact_longitude) : null;
+      if (lat == null || lng == null || Number.isNaN(lat) || Number.isNaN(lng)) continue;
+      const key = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+      const count = (seen.get(key) ?? 0);
+      seen.set(key, count + 1);
+      const offset = count > 0
+        ? { lat: (count % 3 - 1) * 0.002, lng: Math.floor(count / 3) * 0.002 }
+        : { lat: 0, lng: 0 };
+      result.push({ order, lat: lat + offset.lat, lng: lng + offset.lng });
     }
-    return out;
-  }, [ordersToShow]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const cache = new Map<string, { lat: number; lng: number }>();
-
-    (async () => {
-      setGeocoding(true);
-      const results: Array<{ order: OrderForMap; lat: number; lng: number }> = [];
-      const total = uniqueAddresses.length;
-      for (let i = 0; i < uniqueAddresses.length; i++) {
-        if (cancelled) break;
-        const { address, orders: group } = uniqueAddresses[i];
-        setGeocodeProgress({ current: i + 1, total });
-        onGeocodeProgress?.(i + 1, total);
-        let coords = cache.get(address);
-        if (!coords) {
-          try {
-            coords = await geocodeAddress(address);
-            if (coords) cache.set(address, coords);
-          } catch {
-            // skip failed
-          }
-          if (!cancelled && i < uniqueAddresses.length - 1) {
-            await new Promise(r => setTimeout(r, NOMINATIM_DELAY_MS));
-          }
-        }
-        if (coords) {
-          group.forEach((order, j) => {
-            const offset = group.length > 1
-              ? { lat: (j - (group.length - 1) / 2) * 0.003, lng: 0 }
-              : { lat: 0, lng: 0 };
-            results.push({
-              order,
-              lat: coords!.lat + offset.lat,
-              lng: coords!.lng + offset.lng
-            });
-          });
-        }
-      }
-      if (!cancelled) setPoints(results);
-      setGeocoding(false);
-      setGeocodeProgress(null);
-    })();
-
-    return () => { cancelled = true; };
-  }, [uniqueAddresses, onGeocodeProgress]);
+    return result;
+  }, [orders]);
 
   const totals = useMemo(() => {
     if (points.length === 0) return { min: 0, max: 0 };
@@ -154,20 +75,12 @@ export default function OrdersMap({ orders, onGeocodeProgress }: OrdersMapProps)
       ]
     : [39.8283, -98.5795];
 
-  const ordersWithAddress = useMemo(
-    () => ordersToShow.filter(o => buildAddressString(o).trim().length > 0),
-    [ordersToShow]
-  );
+  const ordersWithCoords = points.length;
+  const ordersWithoutCoords = orders.filter(
+    o => o.contact_latitude == null || o.contact_longitude == null
+  ).length;
 
-  if (!geocoding && orders.length > 0 && ordersWithAddress.length === 0) {
-    return (
-      <div className="rounded-lg border border-gray-200 overflow-hidden bg-white p-8 text-center text-gray-500">
-        No orders have contact address information to display on the map. Add address, city, and state to contacts.
-      </div>
-    );
-  }
-
-  if (!geocoding && orders.length === 0) {
+  if (orders.length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 overflow-hidden bg-white p-8 text-center text-gray-500">
         No orders to display on the map. Adjust filters or add orders.
@@ -175,13 +88,18 @@ export default function OrdersMap({ orders, onGeocodeProgress }: OrdersMapProps)
     );
   }
 
-  // Geocoding finished but no locations found (all failed or no addresses)
-  if (!geocoding && ordersWithAddress.length > 0 && points.length === 0) {
+  if (points.length === 0) {
     return (
-      <div className="rounded-lg border border-gray-200 overflow-hidden bg-white p-8 text-center">
-        <p className="text-gray-700 font-medium">No locations could be shown on the map.</p>
+      <div className="rounded-lg border border-gray-200 overflow-hidden bg-white p-8 text-center max-w-xl mx-auto">
+        <p className="text-gray-700 font-medium">No locations to show on the map.</p>
         <p className="text-gray-500 text-sm mt-2">
-          Geocoding could not find coordinates for the contact addresses. Make sure contacts have address, city, and state filled in.
+          Orders appear on the map only when their contact has latitude/longitude saved. For existing contacts, run the backfill script once from your project root (in a terminal). It geocodes each contact and may take a few minutes for hundreds of contacts:
+        </p>
+        <code className="mt-3 block text-left bg-gray-100 border border-gray-200 rounded px-3 py-2 text-sm text-gray-800 font-mono">
+          node scripts/backfill-contact-coordinates.js
+        </code>
+        <p className="text-gray-500 text-xs mt-3">
+          New or edited contacts are geocoded automatically when you save their address.
         </p>
       </div>
     );
@@ -189,22 +107,17 @@ export default function OrdersMap({ orders, onGeocodeProgress }: OrdersMapProps)
 
   return (
     <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
-      {geocoding && (
-        <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-sm text-amber-800 flex items-center gap-2">
-          <span className="animate-pulse">Geocoding addresses…</span>
-          {geocodeProgress && (
-            <span className="font-medium">{geocodeProgress.current}/{geocodeProgress.total}</span>
+      {ordersWithoutCoords > 0 && (
+        <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-sm text-amber-800">
+          {ordersWithCoords} order{ordersWithCoords !== 1 ? 's' : ''} on map.
+          {ordersWithoutCoords > 0 && (
+            <> {ordersWithoutCoords} order{ordersWithoutCoords !== 1 ? 's' : ''} have no contact coordinates (edit contact address to geocode).</>
           )}
-        </div>
-      )}
-      {orders.length > MAP_ORDER_LIMIT && (
-        <div className="px-4 py-2 bg-blue-50 border-b border-blue-200 text-sm text-blue-800">
-          Showing first {MAP_ORDER_LIMIT} orders on the map. Use filters to narrow results.
         </div>
       )}
       <div className="h-[500px] w-full relative z-0">
         <MapContainer
-          key={points.length > 0 ? 'with-points' : 'no-points'}
+          key="orders-map"
           center={center}
           zoom={points.length <= 1 ? 4 : 8}
           style={{ height: '100%', width: '100%' }}

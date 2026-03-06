@@ -13,6 +13,8 @@ export interface Contact {
 	city: string;
 	state: string;
 	zip: string;
+	latitude?: number | null;
+	longitude?: number | null;
 	notes?: string;
 	user_id?: string;
 	/**
@@ -132,10 +134,12 @@ export const ContactModel = {
       ? cleanPhoneNumber(contactData.phone)
       : null;
 
+    const lat = contactData.latitude ?? null;
+    const lng = contactData.longitude ?? null;
     if (created_at) {
       // Insert with custom created_at
       await executeSingle(
-        'INSERT INTO contacts (name, email, phone, phone_digits, address, city, state, zip, notes, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO contacts (name, email, phone, phone_digits, address, city, state, zip, latitude, longitude, notes, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           contactData.name,
           contactData.email || '',
@@ -145,6 +149,8 @@ export const ContactModel = {
           contactData.city || '',
           contactData.state || '',
           contactData.zip || '',
+          lat,
+          lng,
           contactData.notes || null,
           contactData.user_id || null,
           created_at,
@@ -153,7 +159,7 @@ export const ContactModel = {
     } else {
       // Insert with default created_at (current timestamp)
       await executeSingle(
-        'INSERT INTO contacts (name, email, phone, phone_digits, address, city, state, zip, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO contacts (name, email, phone, phone_digits, address, city, state, zip, latitude, longitude, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           contactData.name,
           contactData.email || '',
@@ -163,6 +169,8 @@ export const ContactModel = {
           contactData.city || '',
           contactData.state || '',
           contactData.zip || '',
+          lat,
+          lng,
           contactData.notes || null,
           contactData.user_id || null,
         ]
@@ -192,6 +200,8 @@ export const ContactModel = {
     if (_data.city !== undefined) { fields.push('city = ? '); values.push(_data.city); }
     if (_data.state !== undefined) { fields.push('state = ?'); values.push(_data.state); }
     if (_data.zip !== undefined) { fields.push('zip = ? '); values.push(_data.zip); }
+    if (_data.latitude !== undefined) { fields.push('latitude = ? '); values.push(_data.latitude); }
+    if (_data.longitude !== undefined) { fields.push('longitude = ? '); values.push(_data.longitude); }
     if (_data.notes !== undefined) { fields.push('notes = ? '); values.push(_data.notes); }
     if (_data.user_id !== undefined) { fields.push('user_id = ? '); values.push(_data.user_id); }
     if (_data.facebook_user_id !== undefined) { fields.push('facebook_user_id = ? '); values.push(_data.facebook_user_id); }
@@ -222,6 +232,8 @@ export const ContactModel = {
     if (_data.city !== undefined) { fields.push('city = ? '); values.push(_data.city); }
     if (_data.state !== undefined) { fields.push('state = ?'); values.push(_data.state); }
     if (_data.zip !== undefined) { fields.push('zip = ? '); values.push(_data.zip); }
+    if (_data.latitude !== undefined) { fields.push('latitude = ? '); values.push(_data.latitude); }
+    if (_data.longitude !== undefined) { fields.push('longitude = ? '); values.push(_data.longitude); }
     if (_data.notes !== undefined) { fields.push('notes = ? '); values.push(_data.notes); }
     if (_data.user_id !== undefined) { fields.push('user_id = ? '); values.push(_data.user_id); }
     if (_data.created_at !== undefined) { fields.push('created_at = ? '); values.push(_data.created_at); }
@@ -1468,6 +1480,8 @@ export interface OrderWithContact extends Order {
   contact_city?: string;
   contact_state?: string;
   contact_address?: string;
+  contact_latitude?: number | null;
+  contact_longitude?: number | null;
   total_internal_cost?: number;
   matt_profit_amount?: number;
 }
@@ -2138,12 +2152,12 @@ export const OrderModel = {
               c.name as contact_name,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               COALESCE(SUM(ci.amount), 0) as total_internal_cost
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        LEFT JOIN cost_items ci ON o.id = ci.order_id
-       GROUP BY o.id, c.name, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.city, c.state, c.address, c.latitude, c.longitude
        ${orderByClause} LIMIT ? OFFSET ?`,
       [limit, offset]
     );
@@ -2152,7 +2166,7 @@ export const OrderModel = {
   async search(query: string, limit = 50, offset = 0): Promise<OrderWithContact[]> {
     const searchTerm = `%${query}%`;
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE c.name LIKE ?
@@ -2258,13 +2272,13 @@ export const OrderModel = {
              c.name as contact_name,
              c.city as contact_city,
              c.state as contact_state,
-             c.address as contact_address,
+             c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
              COALESCE(SUM(ci.amount), 0) as total_internal_cost
       FROM orders o
       LEFT JOIN contacts c ON o.contact_id = c.id
       LEFT JOIN cost_items ci ON o.id = ci.order_id
       ${whereClause}
-      GROUP BY o.id, c.name, c.city, c.state, c.address
+      GROUP BY o.id, c.name, c.city, c.state, c.address, c.latitude, c.longitude
       ${orderByClause}
       LIMIT ? OFFSET ?
     `;
@@ -2370,13 +2384,13 @@ export const OrderModel = {
               c.name as contact_name,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               COALESCE(SUM(ci.amount), 0) as total_internal_cost
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        LEFT JOIN cost_items ci ON o.id = ci.order_id
        WHERE c.user_id = ?
-       GROUP BY o.id, c.name, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.city, c.state, c.address, c.latitude, c.longitude
        ${orderByClause} LIMIT ? OFFSET ?`,
       [_userId, limit, offset]
     );
@@ -2461,13 +2475,13 @@ export const OrderModel = {
               c.name as contact_name,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               COALESCE(SUM(ci.amount), 0) as total_internal_cost
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        LEFT JOIN cost_items ci ON o.id = ci.order_id
        WHERE o.contact_id = ?
-       GROUP BY o.id, c.name, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.city, c.state, c.address, c.latitude, c.longitude
        ORDER BY o.order_date DESC, o.created_at DESC LIMIT ? OFFSET ?`,
       [contactId, limit, offset]
     );
@@ -2623,7 +2637,7 @@ export const OrderModel = {
 
   async getOrdersByMonthAndState(month: string, state: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE o.status = 'complete'
@@ -2796,7 +2810,7 @@ export const OrderModel = {
 
   async getOrdersByMonthAndStatus(month: string, status: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+      `SELECT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE DATE_FORMAT(o.order_date, '%Y-%m') = ?
@@ -2808,7 +2822,7 @@ export const OrderModel = {
 
   async getOrdersByMonthAndCategory(month: string, categoryName: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+      `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        INNER JOIN cost_items ci ON o.id = ci.order_id
@@ -2823,7 +2837,7 @@ export const OrderModel = {
 
   async getOrdersByWeekAndCategory(week: string, categoryName: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+      `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        INNER JOIN cost_items ci ON o.id = ci.order_id
@@ -2838,7 +2852,7 @@ export const OrderModel = {
 
   async getOrdersByDayAndCategory(day: string, categoryName: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
-      `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address
+      `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        INNER JOIN cost_items ci ON o.id = ci.order_id
@@ -2858,13 +2872,13 @@ export const OrderModel = {
               c.name as contact_name,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               COALESCE(SUM(ci.amount), 0) as total_internal_cost
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        INNER JOIN cost_items ci ON o.id = ci.order_id
        WHERE ci.category_id = ?
-       GROUP BY o.id, c.name, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.city, c.state, c.address, c.latitude, c.longitude
        ${orderByClause} LIMIT ? OFFSET ?`,
       [categoryId, limit, offset]
     );
@@ -2894,14 +2908,14 @@ export const OrderModel = {
               c.name as contact_name,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               COALESCE(MAX(CASE WHEN cc.name = 'Matt Profit' THEN ci.amount END), 0) as matt_profit_amount
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        LEFT JOIN cost_items ci ON o.id = ci.order_id
        LEFT JOIN cost_categories cc ON ci.category_id = cc.id
        WHERE o.affiliate_code_id = ?
-       GROUP BY o.id, c.name, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.city, c.state, c.address, c.latitude, c.longitude
        ${orderByClause} LIMIT ? OFFSET ?`,
       [affiliateCodeId, limit, offset]
     );
@@ -3258,7 +3272,7 @@ export const OrderModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               SUM(oi.quantity) as units_sold
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
@@ -3268,7 +3282,7 @@ export const OrderModel = {
          AND COALESCE(c.state, 'Unknown') = ?
          AND o.status = 'complete'
          ${categoryFilter}
-       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address, c.latitude, c.longitude
        ORDER BY o.order_date DESC, o.created_at DESC`,
       params
     );
@@ -3293,7 +3307,7 @@ export const OrderModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               SUM(oi.quantity) as units_sold
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
@@ -3304,7 +3318,7 @@ export const OrderModel = {
          AND COALESCE(c.state, 'Unknown') = ?
          AND o.status = 'complete'
          ${categoryFilter}
-       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address, c.latitude, c.longitude
        ORDER BY o.order_date DESC, o.created_at DESC`,
       [year, weekNum, state, ...(categoryId ? [categoryId] : [])]
     );
@@ -3326,7 +3340,7 @@ export const OrderModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               SUM(oi.quantity) as units_sold
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
@@ -3336,7 +3350,7 @@ export const OrderModel = {
          AND COALESCE(c.state, 'Unknown') = ?
          AND o.status = 'complete'
          ${categoryFilter}
-       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address, c.latitude, c.longitude
        ORDER BY o.order_date DESC, o.created_at DESC`,
       params
     );
@@ -3358,7 +3372,7 @@ export const OrderModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               SUM(oi.quantity) as units_sold
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
@@ -3368,7 +3382,7 @@ export const OrderModel = {
          AND COALESCE(c.state, 'Unknown') = ?
          AND o.status = 'complete'
          ${categoryFilter}
-       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address, c.latitude, c.longitude
        ORDER BY o.order_date DESC, o.created_at DESC`,
       params
     );
@@ -3382,7 +3396,7 @@ export const OrderModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               SUM(oi.quantity) as units_sold
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
@@ -3392,7 +3406,7 @@ export const OrderModel = {
        WHERE DATE_FORMAT(o.order_date, '%Y-%m') = ?
          AND COALESCE(pc.name, 'Uncategorized') = ?
          AND o.status = 'complete'
-       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address, c.latitude, c.longitude
        ORDER BY o.order_date DESC, o.created_at DESC`,
       [month, category]
     );
@@ -3406,7 +3420,7 @@ export const OrderModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               SUM(oi.quantity) as units_sold
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
@@ -3416,7 +3430,7 @@ export const OrderModel = {
        WHERE YEAR(o.order_date) = ?
          AND COALESCE(pc.name, 'Uncategorized') = ?
          AND o.status = 'complete'
-       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address, c.latitude, c.longitude
        ORDER BY o.order_date DESC, o.created_at DESC`,
       [year, category]
     );
@@ -3433,7 +3447,7 @@ export const OrderModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               SUM(oi.quantity) as units_sold
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
@@ -3444,7 +3458,7 @@ export const OrderModel = {
          AND WEEK(o.order_date, 1) = ?
          AND COALESCE(pc.name, 'Uncategorized') = ?
          AND o.status = 'complete'
-       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address, c.latitude, c.longitude
        ORDER BY o.order_date DESC, o.created_at DESC`,
       [year, weekNum, category]
     );
@@ -3458,7 +3472,7 @@ export const OrderModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address,
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
               SUM(oi.quantity) as units_sold
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
@@ -3468,7 +3482,7 @@ export const OrderModel = {
        WHERE DATE_FORMAT(o.order_date, '%Y-%m-%d') = ?
          AND COALESCE(pc.name, 'Uncategorized') = ?
          AND o.status = 'complete'
-       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address
+       GROUP BY o.id, c.name, c.email, c.phone, c.city, c.state, c.address, c.latitude, c.longitude
        ORDER BY o.order_date DESC, o.created_at DESC`,
       [day, category]
     );
@@ -5405,7 +5419,7 @@ export const InvoiceModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM invoices i
        LEFT JOIN orders o ON i.order_id = o.id
        LEFT JOIN contacts c ON o.contact_id = c.id
@@ -5425,7 +5439,7 @@ export const InvoiceModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM invoices i
        LEFT JOIN orders o ON i.order_id = o.id
        LEFT JOIN contacts c ON o.contact_id = c.id
@@ -5445,7 +5459,7 @@ export const InvoiceModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM invoices i
        LEFT JOIN orders o ON i.order_id = o.id
        LEFT JOIN contacts c ON o.contact_id = c.id
@@ -5465,7 +5479,7 @@ export const InvoiceModel = {
               c.phone as contact_phone,
               c.city as contact_city,
               c.state as contact_state,
-              c.address as contact_address
+              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM invoices i
        LEFT JOIN orders o ON i.order_id = o.id
        LEFT JOIN contacts c ON o.contact_id = c.id

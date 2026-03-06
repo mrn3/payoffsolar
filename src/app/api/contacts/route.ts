@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ContactModel } from '@/lib/models';
 import { requireAuth , isAdmin} from '@/lib/auth';
 import { isValidPhoneNumber } from '@/lib/utils/phone';
+import { geocodeContactAddress } from '@/lib/geocode';
+import { handleApiError } from '@/lib/apiError';
 
 export async function GET(request: NextRequest) {
   try {
@@ -95,10 +97,28 @@ export async function POST(request: NextRequest) {
       user_id: data.user_id || null
     });
 
+    // Geocode and store lat/lng when we have address parts
+    const addressQuery = [data.address, data.city, data.state, data.zip].filter(Boolean).join(', ');
+    if (addressQuery.trim()) {
+      try {
+        const coords = await geocodeContactAddress({
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          zip: data.zip
+        });
+        if (coords) {
+          await ContactModel.update(contactId, { latitude: coords.lat, longitude: coords.lng });
+        }
+      } catch (_err) {
+        // Non-fatal: contact is created, map may show no point until backfill
+      }
+    }
+
     const contact = await ContactModel.getById(contactId);
     return NextResponse.json({ contact }, { status: 201 });
   } catch (error) {
-    console.error('Error creating contact:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const { status, body } = handleApiError(error, 'contacts POST');
+    return NextResponse.json(body, { status });
   }
 }

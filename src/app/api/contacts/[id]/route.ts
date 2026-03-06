@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ContactModel } from '@/lib/models';
 import {requireAuth, isAdmin} from '@/lib/auth';
 import { isValidPhoneNumber } from '@/lib/utils/phone';
+import { geocodeContactAddress } from '@/lib/geocode';
+import { handleApiError } from '@/lib/apiError';
 
 export async function GET(
   _request: NextRequest,
@@ -65,6 +67,9 @@ export async function PUT(
       return NextResponse.json({ error: 'Phone number must be 10 digits or 11 digits with +1' }, { status: 400 });
     }
 
+    const addressFields = ['address', 'city', 'state', 'zip'] as const;
+    const addressChanged = addressFields.some((f) => data[f] !== undefined && data[f] !== existingContact[f]);
+
     await ContactModel.update(id, {
       name: data.name,
       email: data.email,
@@ -77,11 +82,34 @@ export async function PUT(
       user_id: data.user_id
     });
 
+    // When address changes, geocode and update lat/lng
+    if (addressChanged) {
+      const address = data.address ?? existingContact.address;
+      const city = data.city ?? existingContact.city;
+      const state = data.state ?? existingContact.state;
+      const zip = data.zip ?? existingContact.zip;
+      const addressQuery = [address, city, state, zip].filter(Boolean).join(', ');
+      if (addressQuery.trim()) {
+        try {
+          const coords = await geocodeContactAddress({ address, city, state, zip });
+          if (coords) {
+            await ContactModel.update(id, { latitude: coords.lat, longitude: coords.lng });
+          } else {
+            await ContactModel.update(id, { latitude: null, longitude: null });
+          }
+        } catch (_err) {
+          // Non-fatal
+        }
+      } else {
+        await ContactModel.update(id, { latitude: null, longitude: null });
+      }
+    }
+
     const updatedContact = await ContactModel.getById(id);
     return NextResponse.json({ contact: updatedContact });
   } catch (_error) {
-    console.error('Error updating contact:', _error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const { status, body } = handleApiError(_error, 'contacts PUT');
+    return NextResponse.json(body, { status });
   }
 }
 

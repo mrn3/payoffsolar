@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {OrderModel, OrderItemModel, ContactModel, ProductModel, ProductCostBreakdownModel, CostItemModel} from '@/lib/models';
 import { requireAuth , isAdmin, isContact} from '@/lib/auth';
+import { handleApiError } from '@/lib/apiError';
 import { processOrderItems, validateInventoryForOrder, updateInventoryForOrder } from '@/lib/utils/orderProcessing';
 
 export async function GET(request: NextRequest) {
@@ -79,8 +80,8 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Error fetching orders:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const { status, body } = handleApiError(error, 'orders GET');
+    return NextResponse.json(body, { status });
   }
 }
 

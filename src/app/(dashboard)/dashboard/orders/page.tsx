@@ -38,6 +38,8 @@ interface Order {
   contact_city?: string;
   contact_state?: string;
   contact_address?: string;
+  contact_latitude?: number | null;
+  contact_longitude?: number | null;
   total_internal_cost?: number | string;
 }
 
@@ -189,7 +191,7 @@ export default function OrdersPage() {
   const fetchMapOrders = async () => {
     try {
       setMapOrdersLoading(true);
-      const params = buildOrdersParams(1, 500);
+      const params = buildOrdersParams(1, 50000);
       const ordersRes = await fetch(`/api/orders?${params}`);
       if (ordersRes.ok) {
         const ordersData: OrdersResponse = await ordersRes.json();
