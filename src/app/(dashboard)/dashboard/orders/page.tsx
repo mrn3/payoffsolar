@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import ImportOrdersModal from '@/components/orders/ImportOrdersModal';
@@ -9,11 +10,20 @@ import DuplicateOrdersModal from '@/components/orders/DuplicateOrdersModal';
 import BulkMergeOrdersModal from '@/components/orders/BulkMergeOrdersModal';
 import OrderFiltersComponent, { OrderFilters } from '@/components/orders/OrderFilters';
 import toast from 'react-hot-toast';
-import {FaDownload, FaEdit, FaEye, FaPlus, FaSearch, FaTrash, FaUpload, FaCopy, FaFileInvoice, FaSort, FaSortUp, FaSortDown} from 'react-icons/fa';
+import {FaDownload, FaEdit, FaEye, FaList, FaMapMarkerAlt, FaPlus, FaSearch, FaTrash, FaUpload, FaCopy, FaFileInvoice, FaSort, FaSortUp, FaSortDown} from 'react-icons/fa';
 
 import Pagination from '@/components/ui/Pagination';
 
 import { getGlobalPageSize, setGlobalPageSize } from '@/lib/paginationPrefs';
+
+const OrdersMap = dynamic(() => import('@/components/orders/OrdersMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[500px] rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
+      <p className="text-gray-500">Loading map...</p>
+    </div>
+  )
+});
 
 interface Order {
   id: string;
@@ -28,7 +38,10 @@ interface Order {
   contact_city?: string;
   contact_state?: string;
   contact_address?: string;
+  total_internal_cost?: number | string;
 }
+
+type OrdersViewTab = 'list' | 'map';
 
 interface UserProfile {
   id: string;
@@ -91,6 +104,11 @@ export default function OrdersPage() {
     direction: 'desc'
   });
 
+  // View tab: list vs map
+  const [activeView, setActiveView] = useState<OrdersViewTab>('list');
+  const [mapOrders, setMapOrders] = useState<Order[]>([]);
+  const [mapOrdersLoading, setMapOrdersLoading] = useState(false);
+
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -109,11 +127,37 @@ export default function OrdersPage() {
     return () => clearTimeout(timer);
   }, [searchQuery, filters, sortConfig]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
+  // When Map tab is active, fetch orders for map (same filters, higher limit)
+  useEffect(() => {
+    if (activeView !== 'map') return;
+    const timer = setTimeout(() => fetchMapOrders(), 300);
+    return () => clearTimeout(timer);
+  }, [activeView, searchQuery, filters, sortConfig]); // eslint-disable-next-line react-hooks/exhaustive-deps
+
+  const buildOrdersParams = (page: number, limitNum: number) => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limitNum.toString()
+    });
+    if (searchQuery) params.append('search', searchQuery);
+    if (filters.contactName) params.append('contactName', filters.contactName);
+    if (filters.productId) params.append('productId', filters.productId);
+    if (filters.city) params.append('city', filters.city);
+    if (filters.state) params.append('state', filters.state);
+    if (filters.status && filters.status.length > 0) params.append('status', filters.status.join(','));
+    if (filters.minTotal) params.append('minTotal', filters.minTotal);
+    if (filters.maxTotal) params.append('maxTotal', filters.maxTotal);
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+    params.append('sortField', sortConfig.field);
+    params.append('sortDirection', sortConfig.direction);
+    return params;
+  };
+
   const fetchOrders = async (page: number, limitNum: number = pageSize) => {
     try {
       setLoading(true);
 
-      // First get user profile
       const profileRes = await fetch('/api/auth/profile');
       if (!profileRes.ok) {
         window.location.href = '/login';
@@ -123,50 +167,7 @@ export default function OrdersPage() {
       const profileData = await profileRes.json();
       setProfile(profileData.profile);
 
-      // Then get orders with pagination and filter parameters
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limitNum.toString()
-      });
-
-      // Add legacy search parameter
-      if (searchQuery) {
-        params.append('search', searchQuery);
-      }
-
-      // Add filter parameters
-      if (filters.contactName) {
-        params.append('contactName', filters.contactName);
-      }
-      if (filters.productId) {
-        params.append('productId', filters.productId);
-      }
-      if (filters.city) {
-        params.append('city', filters.city);
-      }
-      if (filters.state) {
-        params.append('state', filters.state);
-      }
-      if (filters.status && filters.status.length > 0) {
-        params.append('status', filters.status.join(','));
-      }
-      if (filters.minTotal) {
-        params.append('minTotal', filters.minTotal);
-      }
-      if (filters.maxTotal) {
-        params.append('maxTotal', filters.maxTotal);
-      }
-      if (filters.startDate) {
-        params.append('startDate', filters.startDate);
-      }
-      if (filters.endDate) {
-        params.append('endDate', filters.endDate);
-      }
-
-      // Add sort parameters
-      params.append('sortField', sortConfig.field);
-      params.append('sortDirection', sortConfig.direction);
-
+      const params = buildOrdersParams(page, limitNum);
       const ordersRes = await fetch(`/api/orders?${params}`);
       if (ordersRes.ok) {
         const ordersData: OrdersResponse = await ordersRes.json();
@@ -182,6 +183,25 @@ export default function OrdersPage() {
       setError('Failed to load data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMapOrders = async () => {
+    try {
+      setMapOrdersLoading(true);
+      const params = buildOrdersParams(1, 500);
+      const ordersRes = await fetch(`/api/orders?${params}`);
+      if (ordersRes.ok) {
+        const ordersData: OrdersResponse = await ordersRes.json();
+        setMapOrders(ordersData.orders || []);
+      } else {
+        setMapOrders([]);
+      }
+    } catch (err) {
+      console.error('Error loading orders for map:', err);
+      setMapOrders([]);
+    } finally {
+      setMapOrdersLoading(false);
     }
   };
 
@@ -473,8 +493,38 @@ export default function OrdersPage() {
         </div>
       )}
 
+      {/* List / Map tabs */}
+      <div className="mt-6 border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8" aria-label="Orders view">
+          <button
+            type="button"
+            onClick={() => setActiveView('list')}
+            className={`inline-flex items-center gap-2 border-b-2 px-1 py-3 text-sm font-medium whitespace-nowrap ${
+              activeView === 'list'
+                ? 'border-green-500 text-green-600'
+                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+            }`}
+          >
+            <FaList className="h-4 w-4" />
+            List
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('map')}
+            className={`inline-flex items-center gap-2 border-b-2 px-1 py-3 text-sm font-medium whitespace-nowrap ${
+              activeView === 'map'
+                ? 'border-green-500 text-green-600'
+                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+            }`}
+          >
+            <FaMapMarkerAlt className="h-4 w-4" />
+            Map
+          </button>
+        </nav>
+      </div>
+
       {/* Bulk Actions Toolbar */}
-      {!isContact(profile.role) && selectedOrders.size > 0 && (
+      {!isContact(profile.role) && selectedOrders.size > 0 && activeView === 'list' && (
         <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -527,7 +577,9 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* Orders table */}
+      {/* List view: Orders table */}
+      {activeView === 'list' && (
+      <>
       <div className="mt-8 flex flex-col">
         <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
@@ -750,6 +802,21 @@ export default function OrdersPage() {
           onPageChange={(p) => fetchOrders(p)}
           onPageSizeChange={(size) => { setPageSize(size); setGlobalPageSize(size); fetchOrders(1, size); }}
         />
+      )}
+      </>
+      )}
+
+      {/* Map view */}
+      {activeView === 'map' && (
+        <div className="mt-8">
+          {mapOrdersLoading ? (
+            <div className="h-[500px] rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
+              <p className="text-gray-500">Loading orders for map...</p>
+            </div>
+          ) : (
+            <OrdersMap orders={mapOrders} />
+          )}
+        </div>
       )}
 
       {/* Import Modal */}
