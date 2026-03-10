@@ -30,7 +30,7 @@ export default function PaymentManager({ orderId, payments, orderTotal, onPaymen
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     payment_date: new Date().toISOString().split('T')[0],
-    payment_type: 'Stripe',
+    payment_type: 'Venmo',
     amount: '',
     notes: ''
   });
@@ -43,7 +43,7 @@ export default function PaymentManager({ orderId, payments, orderTotal, onPaymen
   const resetForm = () => {
     setFormData({
       payment_date: new Date().toISOString().split('T')[0],
-      payment_type: 'Stripe',
+      payment_type: 'Venmo',
       amount: '',
       notes: ''
     });
@@ -86,8 +86,12 @@ export default function PaymentManager({ orderId, payments, orderTotal, onPaymen
   };
 
   const handleEdit = (payment: Payment) => {
+    // Convert payment_date to YYYY-MM-DD format for date input
+    // Handle both ISO datetime strings and date-only strings
+    const dateStr = payment.payment_date.split('T')[0];
+
     setFormData({
-      payment_date: payment.payment_date,
+      payment_date: dateStr,
       payment_type: payment.payment_type,
       amount: payment.amount.toString(),
       notes: payment.notes || ''
