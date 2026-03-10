@@ -60,9 +60,9 @@ export async function PATCH(
 
     // Validate amount if provided
     if (body.amount !== undefined) {
-      if (isNaN(Number(body.amount)) || Number(body.amount) <= 0) {
+      if (isNaN(Number(body.amount))) {
         return NextResponse.json(
-          { error: 'Amount must be a positive number' },
+          { error: 'Amount must be a valid number' },
           { status: 400 }
         );
       }

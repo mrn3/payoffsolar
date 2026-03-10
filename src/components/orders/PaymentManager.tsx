@@ -188,7 +188,6 @@ export default function PaymentManager({ orderId, payments, orderTotal, onPaymen
               <input
                 type="number"
                 step="0.01"
-                min="0.01"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 required

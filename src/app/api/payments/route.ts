@@ -52,10 +52,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate amount is a positive number
-    if (isNaN(Number(amount)) || Number(amount) <= 0) {
+    // Validate amount is a number
+    if (isNaN(Number(amount))) {
       return NextResponse.json(
-        { error: 'Amount must be a positive number' },
+        { error: 'Amount must be a valid number' },
         { status: 400 }
       );
     }
