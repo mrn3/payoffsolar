@@ -18,6 +18,7 @@ const PAYMENT_TYPES = [
   'Stripe',
   'PayPal',
   'Cash App',
+  'eBay',
   'Cash',
   'Check',
   'America First',
