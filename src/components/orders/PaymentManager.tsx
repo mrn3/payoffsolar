@@ -87,8 +87,16 @@ export default function PaymentManager({ orderId, payments, orderTotal, onPaymen
 
   const handleEdit = (payment: Payment) => {
     // Convert payment_date to YYYY-MM-DD format for date input
-    // Handle both ISO datetime strings and date-only strings
-    const dateStr = payment.payment_date.split('T')[0];
+    // Handle both ISO datetime strings, date-only strings, and Date objects
+    let dateStr: string;
+    if (typeof payment.payment_date === 'string') {
+      dateStr = payment.payment_date.split('T')[0];
+    } else if (payment.payment_date instanceof Date) {
+      dateStr = payment.payment_date.toISOString().split('T')[0];
+    } else {
+      // Fallback to current date if format is unexpected
+      dateStr = new Date().toISOString().split('T')[0];
+    }
 
     setFormData({
       payment_date: dateStr,
