@@ -187,6 +187,15 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
+        .product-link {
+            color: #16a34a;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .product-link:hover {
+            text-decoration: underline;
+            color: #15803d;
+        }
         @media (max-width: 600px) {
             .invoice-info {
                 flex-direction: column;
@@ -256,15 +265,19 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
             </tr>
         </thead>
         <tbody>
-            ${order.items?.map((item: any) => `
+            ${order.items?.map((item: any) => {
+                const productName = item.product_name || 'Unknown Product';
+                const productUrl = item.product_slug ? `/product/${item.product_slug}` : `/products/${item.product_id}`;
+                return `
                 <tr>
-                    <td>${item.product_name || 'Unknown Product'}</td>
+                    <td><a href="${productUrl}" class="product-link" target="_blank">${productName}</a></td>
                     <td>${item.product_sku || 'N/A'}</td>
                     <td>${item.quantity}</td>
                     <td class="price">$${Number(item.price).toFixed(2)}</td>
                     <td class="price">$${(Number(item.price) * item.quantity).toFixed(2)}</td>
                 </tr>
-            `).join('') || '<tr><td colspan="5">No items found</td></tr>'}
+                `;
+            }).join('') || '<tr><td colspan="5">No items found</td></tr>'}
         </tbody>
     </table>
 

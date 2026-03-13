@@ -1500,6 +1500,7 @@ export interface OrderItem {
 export interface OrderItemWithProduct extends OrderItem {
   product_name?: string;
   product_sku?: string;
+  product_slug?: string;
 }
 
 export interface OrderWithItems extends OrderWithContact {
@@ -2943,7 +2944,7 @@ export const OrderModel = {
 	    if (!order) return null;
 
 	    const items = await executeQuery<OrderItemWithProduct>(
-	      `SELECT oi.*, p.name as product_name, p.sku as product_sku
+	      `SELECT oi.*, p.name as product_name, p.sku as product_sku, p.slug as product_slug
 	       FROM order_items oi
 	       LEFT JOIN products p ON oi.product_id = p.id
 	       WHERE oi.order_id = ?
@@ -2983,7 +2984,7 @@ export const OrderModel = {
     if (!order) return null;
 
     const items = await executeQuery<OrderItemWithProduct>(
-      `SELECT oi.*, p.name as product_name, p.sku as product_sku
+      `SELECT oi.*, p.name as product_name, p.sku as product_sku, p.slug as product_slug
        FROM order_items oi
        LEFT JOIN products p ON oi.product_id = p.id
        WHERE oi.order_id = ?

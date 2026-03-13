@@ -135,6 +135,7 @@ export interface OrderItem {
 export interface OrderItemWithProduct extends OrderItem {
   product_name?: string;
   product_sku?: string;
+  product_slug?: string;
 }
 
 export interface OrderWithContact extends Order {

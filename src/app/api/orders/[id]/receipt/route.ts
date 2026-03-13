@@ -163,6 +163,15 @@ export function generateOrderReceiptHTML(order: any, businessAddress: string, bu
         .status-complete { background-color: #d1fae5; color: #065f46; }
         .status-paid { background-color: #f3e8ff; color: #7c3aed; }
         .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+        .product-link {
+            color: #16a34a;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .product-link:hover {
+            text-decoration: underline;
+            color: #15803d;
+        }
         
         @media print {
             body { margin: 0; }
@@ -217,15 +226,19 @@ export function generateOrderReceiptHTML(order: any, businessAddress: string, bu
             </tr>
         </thead>
         <tbody>
-            ${order.items?.map((item: any) => `
+            ${order.items?.map((item: any) => {
+                const productName = item.product_name || 'Unknown Product';
+                const productUrl = item.product_slug ? `/product/${item.product_slug}` : `/products/${item.product_id}`;
+                return `
                 <tr>
-                    <td>${item.product_name || 'Unknown Product'}</td>
+                    <td><a href="${productUrl}" class="product-link" target="_blank">${productName}</a></td>
                     <td>${item.product_sku || 'N/A'}</td>
                     <td>${item.quantity}</td>
                     <td class="price">$${Number(item.price).toFixed(2)}</td>
                     <td class="price">$${(Number(item.price) * item.quantity).toFixed(2)}</td>
                 </tr>
-            `).join('') || '<tr><td colspan="5">No items found</td></tr>'}
+                `;
+            }).join('') || '<tr><td colspan="5">No items found</td></tr>'}
         </tbody>
     </table>
 
