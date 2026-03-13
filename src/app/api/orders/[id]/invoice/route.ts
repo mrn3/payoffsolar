@@ -60,6 +60,19 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
     return total + (Number(item.price) * item.quantity);
   }, 0) || 0;
 
+  // Format customer address
+  const formatCustomerAddress = () => {
+    const parts = [];
+    if (order.contact_address) parts.push(order.contact_address);
+
+    const cityStateZip = [order.contact_city, order.contact_state, order.contact_zip].filter(Boolean).join(', ');
+    if (cityStateZip) parts.push(cityStateZip);
+
+    return parts.length > 0 ? parts.join('<br>') : null;
+  };
+
+  const formattedAddress = formatCustomerAddress();
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -241,8 +254,7 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
             <p><strong>Name:</strong> ${contactName || 'N/A'}</p>
             ${order.contact_email ? `<p><strong>Email:</strong> ${order.contact_email}</p>` : ''}
             ${order.contact_phone ? `<p><strong>Phone:</strong> ${order.contact_phone}</p>` : ''}
-            ${order.contact_address ? `<p><strong>Address:</strong> ${order.contact_address}</p>` : ''}
-            ${order.contact_city && order.contact_state ? `<p><strong>City, State:</strong> ${order.contact_city}, ${order.contact_state}</p>` : ''}
+            ${formattedAddress ? `<p><strong>Address:</strong><br>${formattedAddress}</p>` : ''}
         </div>
     </div>
 
