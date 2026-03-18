@@ -1479,6 +1479,7 @@ export interface OrderWithContact extends Order {
   contact_phone?: string;
   contact_city?: string;
   contact_state?: string;
+  contact_zip?: string;
   contact_address?: string;
   contact_latitude?: number | null;
   contact_longitude?: number | null;
@@ -2934,7 +2935,8 @@ export const OrderModel = {
 
 	  async getWithItemsForUser(_id: string, _userId: string): Promise<OrderWithItems | null> {
 	    const order = await getOne<OrderWithContact>(
-	      `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone
+	      `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone,
+	              c.address as contact_address, c.city as contact_city, c.state as contact_state, c.zip as contact_zip
 	       FROM orders o
 	       LEFT JOIN contacts c ON o.contact_id = c.id
 	       WHERE o.id = ? AND c.user_id = ?`,
@@ -2974,7 +2976,8 @@ export const OrderModel = {
 
   async getWithItems(_id: string): Promise<OrderWithItems | null> {
     const order = await getOne<OrderWithContact>(
-      `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone
+      `SELECT o.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone,
+              c.address as contact_address, c.city as contact_city, c.state as contact_state, c.zip as contact_zip
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        WHERE o.id = ?`,
