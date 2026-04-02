@@ -186,7 +186,8 @@ export default function TripPlannerPage() {
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [tripStops, setTripStops] = useState<TripStopWithDistance[]>([]);
   const [totalDistance, setTotalDistance] = useState<number>(0);
-  const [directionsLink, setDirectionsLink] = useState<string>('');
+  const [appleMapsLink, setAppleMapsLink] = useState<string>('');
+  const [googleMapsLink, setGoogleMapsLink] = useState<string>('');
   const [summary, setSummary] = useState<TripSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -233,7 +234,8 @@ export default function TripPlannerPage() {
         const data = await response.json();
         setTripStops(data.stops);
         setTotalDistance(data.totalDistance);
-        setDirectionsLink(data.directionsLink);
+        setAppleMapsLink(data.appleMapsLink || '');
+        setGoogleMapsLink(data.googleMapsLink || '');
         setSummary(data.summary);
         setSelectedOrderIds(data.stops.map((s: TripStopWithDistance) => s.orderId));
       } else {
@@ -305,7 +307,8 @@ export default function TripPlannerPage() {
           setSelectedTrip(null);
           setTripStops([]);
           setTotalDistance(0);
-          setDirectionsLink('');
+          setAppleMapsLink('');
+          setGoogleMapsLink('');
           setSummary(null);
         }
       } else {
@@ -721,26 +724,30 @@ export default function TripPlannerPage() {
                   </div>
                 </div>
 
-                {directionsLink && (
-                  <div className="mt-4">
-                    <a
-                      href={directionsLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <FaExternalLinkAlt className="h-4 w-4" />
-                      Open Full Route In Apple Maps
-                    </a>
-                  </div>
-                )}
-
-                {summary && summary.stopsWithoutCoordinates > 0 && (
-                  <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                    <p className="text-sm text-orange-800">
-                      ⚠ {summary.stopsWithoutCoordinates} stop(s) don&apos;t have coordinates.
-                      Distances may be incomplete.
-                    </p>
+                {(googleMapsLink || appleMapsLink) && (
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    {googleMapsLink && (
+                      <a
+                        href={googleMapsLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <FaExternalLinkAlt className="h-4 w-4" />
+                        <span className="font-medium">Google Maps</span>
+                      </a>
+                    )}
+                    {appleMapsLink && (
+                      <a
+                        href={appleMapsLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 bg-gray-800 text-white px-4 py-3 rounded-lg hover:bg-gray-900 transition-colors"
+                      >
+                        <FaExternalLinkAlt className="h-4 w-4" />
+                        <span className="font-medium">Apple Maps</span>
+                      </a>
+                    )}
                   </div>
                 )}
               </div>
