@@ -68,18 +68,34 @@ export function generateGoogleMapsDirectionsLink(stops: TripStop[]): string {
 
   const origin = `${stops[0].address}, ${stops[0].city}, ${stops[0].state} ${stops[0].zip}`;
   const destination = `${stops[stops.length - 1].address}, ${stops[stops.length - 1].city}, ${stops[stops.length - 1].state} ${stops[stops.length - 1].zip}`;
-  
-  const waypoints = stops.slice(1, -1).map(stop => 
+
+  const waypoints = stops.slice(1, -1).map(stop =>
     `${stop.address}, ${stop.city}, ${stop.state} ${stop.zip}`
   );
 
   let url = `https://www.google.com/maps/dir/?api=1`;
   url += `&origin=${encodeURIComponent(origin)}`;
   url += `&destination=${encodeURIComponent(destination)}`;
-  
+
   if (waypoints.length > 0) {
     url += `&waypoints=${encodeURIComponent(waypoints.join('|'))}`;
   }
+
+  return url;
+}
+
+/**
+ * Generate an Apple Maps directions link for multiple waypoints
+ * First address is origin, last is destination, middle ones are waypoints
+ */
+export function generateAppleMapsDirectionsLink(stops: TripStop[]): string {
+  if (stops.length === 0) return '';
+
+  // Apple Maps URL scheme: maps://?saddr=start&daddr=destination
+  const origin = `${stops[0].address}, ${stops[0].city}, ${stops[0].state} ${stops[0].zip}`;
+  const destination = `${stops[stops.length - 1].address}, ${stops[stops.length - 1].city}, ${stops[stops.length - 1].state} ${stops[stops.length - 1].zip}`;
+
+  let url = `maps://?saddr=${encodeURIComponent(origin)}&daddr=${encodeURIComponent(destination)}`;
 
   return url;
 }

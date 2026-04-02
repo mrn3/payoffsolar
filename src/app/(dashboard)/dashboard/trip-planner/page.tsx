@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { FaRoute, FaMapMarkerAlt, FaExternalLinkAlt, FaGripVertical, FaTrash, FaClock, FaDollarSign, FaPlus } from 'react-icons/fa';
+import { FaRoute, FaMapMarkerAlt, FaExternalLinkAlt, FaGripVertical, FaTrash, FaDollarSign, FaPlus } from 'react-icons/fa';
 import {
   DndContext,
   closestCenter,
@@ -474,7 +474,6 @@ export default function TripPlannerPage() {
   };
 
   const filteredOrders = getFilteredOrders();
-  const estimatedDriveTime = Math.round((totalDistance / 45) * 60); // Assuming 45 mph average
 
   if (loading) {
     return (
@@ -703,27 +702,6 @@ export default function TripPlannerPage() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Route Summary</h2>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <div className="flex items-center gap-2 text-blue-700">
-                      <FaRoute className="h-5 w-5" />
-                      <span className="text-sm font-medium">Total Distance</span>
-                    </div>
-                    <p className="mt-1 text-2xl font-bold text-blue-900">{totalDistance.toFixed(1)} mi</p>
-                  </div>
-
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    <div className="flex items-center gap-2 text-green-700">
-                      <FaClock className="h-5 w-5" />
-                      <span className="text-sm font-medium">Est. Drive Time</span>
-                    </div>
-                    <p className="mt-1 text-2xl font-bold text-green-900">
-                      {estimatedDriveTime >= 60
-                        ? `${Math.floor(estimatedDriveTime / 60)}h ${estimatedDriveTime % 60}m`
-                        : `${estimatedDriveTime}m`
-                      }
-                    </p>
-                  </div>
-
                   <div className="bg-purple-50 p-3 rounded-lg">
                     <div className="flex items-center gap-2 text-purple-700">
                       <FaMapMarkerAlt className="h-5 w-5" />
@@ -752,7 +730,7 @@ export default function TripPlannerPage() {
                       className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       <FaExternalLinkAlt className="h-4 w-4" />
-                      Open Full Route in Google Maps
+                      Open Full Route In Apple Maps
                     </a>
                   </div>
                 )}

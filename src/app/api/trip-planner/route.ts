@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OrderModel } from '@/lib/models';
 import { requireAuth } from '@/lib/auth';
-import { calculateRouteDistances, calculateTotalDistance, generateGoogleMapsDirectionsLink, TripStop } from '@/lib/utils/tripPlanner';
+import { calculateRouteDistances, calculateTotalDistance, generateAppleMapsDirectionsLink, TripStop } from '@/lib/utils/tripPlanner';
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
     const stopsWithDistances = calculateRouteDistances(tripStops);
     const totalDistance = calculateTotalDistance(stopsWithDistances);
 
-    // Generate Google Maps directions link for the entire route
-    const directionsLink = generateGoogleMapsDirectionsLink(tripStops);
+    // Generate Apple Maps directions link for the entire route
+    const directionsLink = generateAppleMapsDirectionsLink(tripStops);
 
     return NextResponse.json({
       stops: stopsWithDistances,
