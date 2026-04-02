@@ -5591,3 +5591,195 @@ export const InvoiceModel = {
     });
   }
 };
+
+// Trip model
+export interface Trip {
+  id: string;
+  name: string;
+  description?: string;
+  trip_date?: string;
+  status: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TripWithDetails extends Trip {
+  order_count?: number;
+  total_distance?: number;
+  total_revenue?: number;
+  creator_name?: string;
+}
+
+export interface TripOrder {
+  id: string;
+  trip_id: string;
+  order_id: string;
+  sequence_order: number;
+  notes?: string;
+  created_at: string;
+}
+
+export interface TripOrderWithDetails extends TripOrder {
+  contact_name?: string;
+  contact_address?: string;
+  contact_city?: string;
+  contact_state?: string;
+  contact_zip?: string;
+  contact_latitude?: number | null;
+  contact_longitude?: number | null;
+  order_total?: number;
+  order_status?: string;
+  order_date?: string;
+}
+
+export const TripModel = {
+  async getAll(createdBy?: string, limit = 50, offset = 0): Promise<TripWithDetails[]> {
+    if (createdBy) {
+      return executeQuery<TripWithDetails>(
+        `SELECT t.*,
+                COUNT(DISTINCT to2.id) as order_count,
+                CONCAT(p.first_name, ' ', p.last_name) as creator_name
+         FROM trips t
+         LEFT JOIN trip_orders to2 ON t.id = to2.trip_id
+         LEFT JOIN profiles p ON t.created_by COLLATE utf8mb4_general_ci = p.id COLLATE utf8mb4_general_ci
+         WHERE t.created_by = ?
+         GROUP BY t.id
+         ORDER BY t.created_at DESC LIMIT ? OFFSET ?`,
+        [createdBy, limit, offset]
+      );
+    }
+    return executeQuery<TripWithDetails>(
+      `SELECT t.*,
+              COUNT(DISTINCT to2.id) as order_count,
+              CONCAT(p.first_name, ' ', p.last_name) as creator_name
+       FROM trips t
+       LEFT JOIN trip_orders to2 ON t.id = to2.trip_id
+       LEFT JOIN profiles p ON t.created_by COLLATE utf8mb4_general_ci = p.id COLLATE utf8mb4_general_ci
+       GROUP BY t.id
+       ORDER BY t.created_at DESC LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+  },
+
+  async getById(id: string): Promise<TripWithDetails | null> {
+    return getOne<TripWithDetails>(
+      `SELECT t.*,
+              COUNT(DISTINCT to2.id) as order_count,
+              CONCAT(p.first_name, ' ', p.last_name) as creator_name
+       FROM trips t
+       LEFT JOIN trip_orders to2 ON t.id = to2.trip_id
+       LEFT JOIN profiles p ON t.created_by COLLATE utf8mb4_general_ci = p.id COLLATE utf8mb4_general_ci
+       WHERE t.id = ?
+       GROUP BY t.id`,
+      [id]
+    );
+  },
+
+  async create(data: Omit<Trip, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    await executeSingle(
+      'INSERT INTO trips (name, description, trip_date, status, created_by) VALUES (?, ?, ?, ?, ?)',
+      [data.name, data.description || null, data.trip_date || null, data.status || 'planned', data.created_by || null]
+    );
+
+    const trip = await getOne<{ id: string }>(
+      'SELECT id FROM trips WHERE name = ? AND created_by = ? ORDER BY created_at DESC LIMIT 1',
+      [data.name, data.created_by || null]
+    );
+    return trip!.id;
+  },
+
+  async update(id: string, data: Partial<Omit<Trip, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const fields: string[] = [];
+    const values: unknown[] = [];
+
+    if (data.name !== undefined) {
+      fields.push('name = ?');
+      values.push(data.name);
+    }
+    if (data.description !== undefined) {
+      fields.push('description = ?');
+      values.push(data.description || null);
+    }
+    if (data.trip_date !== undefined) {
+      fields.push('trip_date = ?');
+      values.push(data.trip_date || null);
+    }
+    if (data.status !== undefined) {
+      fields.push('status = ?');
+      values.push(data.status);
+    }
+
+    if (fields.length === 0) return;
+
+    values.push(id);
+    await executeSingle(
+      `UPDATE trips SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      values
+    );
+  },
+
+  async delete(id: string): Promise<void> {
+    await executeSingle('DELETE FROM trips WHERE id = ?', [id]);
+  }
+};
+
+export const TripOrderModel = {
+  async getByTripId(tripId: string): Promise<TripOrderWithDetails[]> {
+    return executeQuery<TripOrderWithDetails>(
+      `SELECT to2.*,
+              c.name as contact_name,
+              c.address as contact_address,
+              c.city as contact_city,
+              c.state as contact_state,
+              c.zip as contact_zip,
+              c.latitude as contact_latitude,
+              c.longitude as contact_longitude,
+              o.total as order_total,
+              o.status as order_status,
+              o.order_date
+       FROM trip_orders to2
+       JOIN orders o ON to2.order_id = o.id
+       JOIN contacts c ON o.contact_id = c.id
+       WHERE to2.trip_id = ?
+       ORDER BY to2.sequence_order ASC`,
+      [tripId]
+    );
+  },
+
+  async addOrder(tripId: string, orderId: string, sequenceOrder: number, notes?: string): Promise<string> {
+    await executeSingle(
+      'INSERT INTO trip_orders (trip_id, order_id, sequence_order, notes) VALUES (?, ?, ?, ?)',
+      [tripId, orderId, sequenceOrder, notes || null]
+    );
+
+    const tripOrder = await getOne<{ id: string }>(
+      'SELECT id FROM trip_orders WHERE trip_id = ? AND order_id = ? ORDER BY created_at DESC LIMIT 1',
+      [tripId, orderId]
+    );
+    return tripOrder!.id;
+  },
+
+  async updateSequence(id: string, sequenceOrder: number): Promise<void> {
+    await executeSingle(
+      'UPDATE trip_orders SET sequence_order = ? WHERE id = ?',
+      [sequenceOrder, id]
+    );
+  },
+
+  async removeOrder(tripId: string, orderId: string): Promise<void> {
+    await executeSingle(
+      'DELETE FROM trip_orders WHERE trip_id = ? AND order_id = ?',
+      [tripId, orderId]
+    );
+  },
+
+  async updateAllSequences(tripId: string, orderSequences: { orderId: string; sequence: number }[]): Promise<void> {
+    for (const item of orderSequences) {
+      await executeSingle(
+        'UPDATE trip_orders SET sequence_order = ? WHERE trip_id = ? AND order_id = ?',
+        [item.sequence, tripId, item.orderId]
+      );
+    }
+  }
+};

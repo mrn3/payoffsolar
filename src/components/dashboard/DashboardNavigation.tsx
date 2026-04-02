@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { UserRole } from '@/lib/auth';
-import {FaTachometerAlt, FaShoppingCart, FaUsers, FaBoxes, FaWarehouse, FaBuilding, FaSun, FaUser, FaSignOutAlt, FaBars, FaTimes, FaEdit, FaTags, FaLayerGroup, FaTasks, FaGlobe, FaCog, FaTag, FaFacebookMessenger} from 'react-icons/fa';
+import {FaTachometerAlt, FaShoppingCart, FaUsers, FaBoxes, FaWarehouse, FaBuilding, FaSun, FaUser, FaSignOutAlt, FaBars, FaTimes, FaEdit, FaTags, FaLayerGroup, FaTasks, FaGlobe, FaCog, FaTag, FaFacebookMessenger, FaRoute} from 'react-icons/fa';
 
 interface NavigationProps {
   userProfile: {
@@ -70,6 +70,7 @@ export default function DashboardNavigation({ userProfile }: NavigationProps) {
       { href: '/dashboard/products', icon: <FaBoxes className="mr-3 h-5 w-5" />, label: 'Products' },
       { href: '/dashboard/product-categories', icon: <FaLayerGroup className="mr-3 h-5 w-5" />, label: 'Product Categories' },
       { href: '/dashboard/orders', icon: <FaShoppingCart className="mr-3 h-5 w-5" />, label: 'Orders' },
+      { href: '/dashboard/trip-planner', icon: <FaRoute className="mr-3 h-5 w-5" />, label: 'Trip Planner' },
       { href: '/dashboard/affiliate-codes', icon: <FaTag className="mr-3 h-5 w-5" />, label: 'Affiliate Codes' },
       { href: '/dashboard/listings', icon: <FaGlobe className="mr-3 h-5 w-5" />, label: 'Marketplace Listings' },
       { href: '/dashboard/inventory', icon: <FaWarehouse className="mr-3 h-5 w-5" />, label: 'Inventory' },
