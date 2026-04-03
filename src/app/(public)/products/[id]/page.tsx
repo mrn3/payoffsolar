@@ -12,7 +12,7 @@ import { trackViewItem, formatGAItem } from '@/components/GoogleAnalytics';
 import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaSpinner, FaFilePdf, FaDownload, FaTag, FaBox} from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { createTextPreview } from '@/lib/utils/text';
-import { isAndroid } from '@/lib/utils/deviceDetection';
+import { isAndroid, isInAppBrowser } from '@/lib/utils/deviceDetection';
 
 interface ProductWithDetails extends Product {
   category_name?: string;
@@ -33,6 +33,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [affiliateLoading, setAffiliateLoading] = useState(false);
   const [isAndroidDevice, setIsAndroidDevice] = useState(false);
+  const [isInAppBrowserDetected, setIsInAppBrowserDetected] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -41,9 +42,10 @@ export default function ProductDetailPage() {
     }
   }, [params.id]);
 
-  // Detect Android device
+  // Detect Android device and in-app browser
   useEffect(() => {
     setIsAndroidDevice(isAndroid());
+    setIsInAppBrowserDetected(isInAppBrowser());
   }, []);
 
   const checkIfCategorySlugAndRedirect = async (id: string) => {
@@ -380,8 +382,11 @@ export default function ProductDetailPage() {
                       </div>
                       <a
                         href={product.data_sheet_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        {...(!isInAppBrowserDetected && {
+                          target: "_blank",
+                          rel: "noopener noreferrer"
+                        })}
+                        download
                         className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                       >
                         <FaDownload className="mr-2 h-4 w-4" />
