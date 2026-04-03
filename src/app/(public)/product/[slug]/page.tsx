@@ -12,6 +12,7 @@ import { trackViewItem, formatGAItem } from '@/components/GoogleAnalytics';
 import {FaArrowLeft, FaImage, FaMinus, FaPlus, FaShoppingCart, FaSpinner, FaFilePdf, FaDownload, FaTag, FaBox} from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { createTextPreview } from '@/lib/utils/text';
+import { isAndroid } from '@/lib/utils/deviceDetection';
 
 
 
@@ -31,6 +32,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [isAndroidDevice, setIsAndroidDevice] = useState(false);
 
   useEffect(() => {
     if (params.slug) {
@@ -45,6 +47,11 @@ export default function ProductDetailPage() {
       handleAffiliateCode(affiliateCode);
     }
   }, [searchParams, state.affiliateCode]);
+
+  // Detect Android device
+  useEffect(() => {
+    setIsAndroidDevice(isAndroid());
+  }, []);
 
   const handleAffiliateCode = async (code: string) => {
     try {
@@ -349,14 +356,26 @@ export default function ProductDetailPage() {
                       </a>
                     </div>
 
-                    {/* PDF Viewer */}
-                    <div className="w-full h-96 border border-gray-300 rounded-md overflow-hidden">
-                      <iframe
-                        src={`${product.data_sheet_url}#toolbar=1&navpanes=0&scrollbar=1`}
-                        className="w-full h-full"
-                        title="Product Data Sheet"
-                      />
-                    </div>
+                    {/* PDF Viewer - Hidden on Android to prevent auto-download */}
+                    {!isAndroidDevice && (
+                      <div className="w-full h-96 border border-gray-300 rounded-md overflow-hidden">
+                        <iframe
+                          src={`${product.data_sheet_url}#toolbar=1&navpanes=0&scrollbar=1`}
+                          className="w-full h-full"
+                          title="Product Data Sheet"
+                        />
+                      </div>
+                    )}
+
+                    {/* Android user message */}
+                    {isAndroidDevice && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-md p-4 text-center">
+                        <FaFilePdf className="mx-auto h-12 w-12 text-blue-500 mb-2" />
+                        <p className="text-sm text-gray-700">
+                          Click the Download button above to view the product data sheet
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
