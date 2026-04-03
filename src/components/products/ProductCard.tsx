@@ -37,7 +37,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <Link href={productUrl} className="block">
-        <div className="aspect-w-16 aspect-h-9 bg-gray-200 relative">
+        <div className="bg-gray-200 relative">
           {product.first_image_url ? (
             <img
               src={product.first_image_url}
