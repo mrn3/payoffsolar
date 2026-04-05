@@ -1,0 +1,225 @@
+Year,Month,Category,Account Type,Amount
+2024,9,SanTan Materials,COGS - Materials,2000.00
+2024,10,SanTan Materials,COGS - Materials,3380.00
+2024,10,Joseph Yokshas,COGS - Materials,2880.00
+2024,11,Joseph Yokshas,COGS - Materials,7040.00
+2024,11,Clear Energy Partners Materials,COGS - Materials,4330.00
+2024,11,SanTan Materials,COGS - Materials,3151.00
+2024,11,American Warehouse,Operating Expense - Warehousing,60.00
+2024,12,Clear Energy Partners Materials,COGS - Materials,16296.00
+2024,12,SanTan Materials,COGS - Materials,630.00
+2024,12,Joseph Yokshas,COGS - Materials,160.00
+2025,1,Clear Energy Partners Materials,COGS - Materials,10293.00
+2025,1,SanTan Materials,COGS - Materials,221.00
+2025,1,Joseph Yokshas,COGS - Materials,160.00
+2025,1,American Warehouse,Operating Expense - Warehousing,25.00
+2025,2,Clear Energy Partners Materials,COGS - Materials,22412.00
+2025,2,JD Commission,Operating Expense - Commissions,900.00
+2025,2,SanTan Materials,COGS - Materials,270.00
+2025,2,Amazon Materials,COGS - Materials,252.00
+2025,2,American Warehouse,Operating Expense - Warehousing,234.00
+2025,3,Clear Energy Partners Materials,COGS - Materials,17654.00
+2025,3,JD Commission,Operating Expense - Commissions,5075.00
+2025,3,American Warehouse,Operating Expense - Warehousing,500.00
+2025,3,SanTan Materials,COGS - Materials,360.00
+2025,3,Royal Wholesale Electric,COGS - Materials,330.00
+2025,3,Referral Payout,Operating Expense - Commissions,50.00
+2025,4,Clear Energy Partners Materials,COGS - Materials,35192.00
+2025,4,JD Commission,Operating Expense - Commissions,10950.00
+2025,4,SanTan Materials,COGS - Materials,2077.00
+2025,4,American Warehouse,Operating Expense - Warehousing,1375.00
+2025,4,Royal Wholesale Electric,COGS - Materials,286.00
+2025,4,Amazon Materials,COGS - Materials,33.60
+2025,5,Buy Cheap Solar Materials,COGS - Materials,58107.00
+2025,5,Clear Energy Partners Materials,COGS - Materials,24125.00
+2025,5,JD Commission,Operating Expense - Commissions,8300.00
+2025,5,Kevin Delivery,Operating Expense - Delivery,3626.00
+2025,5,American Warehouse,Operating Expense - Warehousing,2420.00
+2025,5,Hunter Delivery,Operating Expense - Delivery,1800.00
+2025,5,Brua Materials,COGS - Materials,760.00
+2025,5,Shipping,COGS - Shipping,610.00
+2025,5,Royal Wholesale Electric,COGS - Materials,264.00
+2025,5,Amazon Materials,COGS - Materials,136.50
+2025,5,Dominique Delivery,Operating Expense - Delivery,130.00
+2025,6,Israel Materials,COGS - Materials,12455.00
+2025,6,JD Commission,Operating Expense - Commissions,9560.00
+2025,6,Clear Energy Partners Materials,COGS - Materials,4900.00
+2025,6,Buy Cheap Solar Materials,COGS - Materials,3294.00
+2025,6,American Warehouse,Operating Expense - Warehousing,1960.00
+2025,6,Kevin Delivery,Operating Expense - Delivery,1128.50
+2025,6,Royal Wholesale Electric,COGS - Materials,110.00
+2025,6,Amazon Materials,COGS - Materials,71.40
+2025,6,Isaac Warehouse,Operating Expense - Warehousing,10.00
+2025,7,Clear Energy Partners Materials,COGS - Materials,24388.00
+2025,7,Israel Materials,COGS - Materials,14370.00
+2025,7,Signature Solar Materials,COGS - Materials,13995.00
+2025,7,JD Commission,Operating Expense - Commissions,8292.00
+2025,7,Buy Cheap Solar Materials,COGS - Materials,5616.00
+2025,7,Shipping,COGS - Shipping,5494.00
+2025,7,American Warehouse,Operating Expense - Warehousing,3780.00
+2025,7,Kip Commission,Operating Expense - Commissions,3744.00
+2025,7,Kevin Delivery,Operating Expense - Delivery,1924.00
+2025,7,Dominique Delivery,Operating Expense - Delivery,900.00
+2025,7,Royal Wholesale Electric,COGS - Materials,242.00
+2025,7,Stripe Fee,Operating Expense - Payment Processing,65.00
+2025,7,Amazon Materials,COGS - Materials,63.00
+2025,7,Charlie Commission,Operating Expense - Commissions,40.00
+2025,7,Jeffrey Commission,Operating Expense - Commissions,10.00
+2025,8,Clear Energy Partners Materials,COGS - Materials,90553.00
+2025,8,Israel Materials,COGS - Materials,9997.00
+2025,8,JD Commission,Operating Expense - Commissions,5919.00
+2025,8,Buy Cheap Solar Materials,COGS - Materials,4644.00
+2025,8,Shipping,COGS - Shipping,2668.00
+2025,8,Signature Solar Materials,COGS - Materials,2650.00
+2025,8,Kip Commission,Operating Expense - Commissions,2610.00
+2025,8,American Warehouse,Operating Expense - Warehousing,2305.00
+2025,8,Kevin Delivery,Operating Expense - Delivery,1590.50
+2025,8,Charlie Commission,Operating Expense - Commissions,860.00
+2025,8,Referral Payout,Operating Expense - Commissions,300.00
+2025,8,Angel Materials,COGS - Materials,266.00
+2025,9,Clear Energy Partners Materials,COGS - Materials,77184.00
+2025,9,Signature Solar Materials,COGS - Materials,55012.00
+2025,9,JD Commission,Operating Expense - Commissions,10905.00
+2025,9,Buy Cheap Solar Materials,COGS - Materials,6318.00
+2025,9,Israel Materials,COGS - Materials,5954.00
+2025,9,Kevin Delivery,Operating Expense - Delivery,2164.50
+2025,9,American Warehouse,Operating Expense - Warehousing,2070.00
+2025,9,Greentech Renewables,COGS - Materials,1664.00
+2025,9,Shipping,COGS - Shipping,1650.00
+2025,9,Paul Commission,Operating Expense - Commissions,1420.00
+2025,9,Kip Commission,Operating Expense - Commissions,956.00
+2025,9,Charlie Commission,Operating Expense - Commissions,900.00
+2025,9,Dominique Delivery,Operating Expense - Delivery,230.00
+2025,9,Royal Wholesale Electric,COGS - Materials,218.00
+2025,9,Amazon Materials,COGS - Materials,127.80
+2025,9,Referral Payout,Operating Expense - Commissions,120.00
+2025,10,Clear Energy Partners Materials,COGS - Materials,70892.25
+2025,10,Signature Solar Materials,COGS - Materials,32119.00
+2025,10,Shipping,COGS - Shipping,14675.00
+2025,10,Greentech Renewables,COGS - Materials,10433.00
+2025,10,Buy Cheap Solar Materials,COGS - Materials,9882.00
+2025,10,JD Commission,Operating Expense - Commissions,9026.00
+2025,10,American Warehouse,Operating Expense - Warehousing,6545.00
+2025,10,Kip Commission,Operating Expense - Commissions,3888.00
+2025,10,Kevin Delivery,Operating Expense - Delivery,3385.00
+2025,10,Brua Materials,COGS - Materials,1386.00
+2025,10,Charlie Commission,Operating Expense - Commissions,1282.00
+2025,10,Israel Materials,COGS - Materials,1255.00
+2025,10,Paul Commission,Operating Expense - Commissions,600.00
+2025,10,Dominique Delivery,Operating Expense - Delivery,550.00
+2025,10,Royal Wholesale Electric,COGS - Materials,308.00
+2025,10,Amazon Materials,COGS - Materials,277.20
+2025,10,Angel Materials,COGS - Materials,266.00
+2025,10,Referral Payout,Operating Expense - Commissions,200.00
+2025,10,Stripe Fee,Operating Expense - Payment Processing,176.00
+2025,10,Sophie Commission,Operating Expense - Commissions,105.00
+2025,11,Clear Energy Partners Materials,COGS - Materials,58838.00
+2025,11,Signature Solar Materials,COGS - Materials,43551.00
+2025,11,Greentech Renewables,COGS - Materials,6056.00
+2025,11,Buy Cheap Solar Materials,COGS - Materials,5670.00
+2025,11,JD Commission,Operating Expense - Commissions,5247.00
+2025,11,American Warehouse,Operating Expense - Warehousing,4465.00
+2025,11,Shipping,COGS - Shipping,4020.00
+2025,11,Kip Commission,Operating Expense - Commissions,3725.00
+2025,11,Paul Commission,Operating Expense - Commissions,2260.00
+2025,11,Kevin Delivery,Operating Expense - Delivery,1942.50
+2025,11,Jeffrey Commission,Operating Expense - Commissions,1320.00
+2025,11,Referral Payout,Operating Expense - Commissions,1125.00
+2025,11,Royal Wholesale Electric,COGS - Materials,500.00
+2025,11,Stripe Fee,Operating Expense - Payment Processing,334.00
+2025,11,Amazon Materials,COGS - Materials,294.00
+2025,11,Charlie Commission,Operating Expense - Commissions,230.00
+2025,11,Brua Materials,COGS - Materials,189.00
+2025,11,Sophie Commission,Operating Expense - Commissions,20.00
+2025,12,Signature Solar Materials,COGS - Materials,94258.00
+2025,12,Clear Energy Partners Materials,COGS - Materials,91318.50
+2025,12,Brua Materials,COGS - Materials,52730.98
+2025,12,Greentech Renewables,COGS - Materials,42609.00
+2025,12,American Warehouse,Operating Expense - Warehousing,10662.70
+2025,12,Shipping,COGS - Shipping,10506.00
+2025,12,Paul Commission,Operating Expense - Commissions,3098.00
+2025,12,Kip Commission,Operating Expense - Commissions,2695.00
+2025,12,Referral Payout,Operating Expense - Commissions,2260.00
+2025,12,Stripe Fee,Operating Expense - Payment Processing,1612.00
+2025,12,Jeffrey Commission,Operating Expense - Commissions,1466.00
+2025,12,Angel Materials,COGS - Materials,1396.00
+2025,12,Joseph Yokshas,COGS - Materials,880.00
+2025,12,JD Commission,Operating Expense - Commissions,810.00
+2025,12,Royal Wholesale Electric,COGS - Materials,479.00
+2025,12,Charlie Commission,Operating Expense - Commissions,290.00
+2025,12,StellaVolta,Operating Expense - Website/Platform,227.00
+2025,12,Sophie Commission,Operating Expense - Commissions,180.00
+2025,12,Amazon Materials,COGS - Materials,161.80
+2026,1,Clear Energy Partners Materials,COGS - Materials,51340.90
+2026,1,Angel Materials,COGS - Materials,17352.00
+2026,1,Signature Solar Materials,COGS - Materials,16700.00
+2026,1,Israel Installation,Operating Expense - Installation,5500.00
+2026,1,American Warehouse,Operating Expense - Warehousing,5119.90
+2026,1,Kip Commission,Operating Expense - Commissions,3570.00
+2026,1,Shipping,COGS - Shipping,3395.00
+2026,1,Brua Materials,COGS - Materials,2331.00
+2026,1,Buy Cheap Solar Materials,COGS - Materials,1410.00
+2026,1,Greentech Renewables,COGS - Materials,1272.00
+2026,1,Royal Wholesale Electric,COGS - Materials,1083.00
+2026,1,James Commission,Operating Expense - Commissions,1000.00
+2026,1,JD Commission,Operating Expense - Commissions,610.00
+2026,1,Ben Commission,Operating Expense - Commissions,500.00
+2026,1,Amazon Materials,COGS - Materials,458.80
+2026,1,Stripe Fee,Operating Expense - Payment Processing,437.00
+2026,1,Charlie Commission,Operating Expense - Commissions,200.00
+2026,1,Paul Commission,Operating Expense - Commissions,150.00
+2026,1,Sophie Commission,Operating Expense - Commissions,40.00
+2026,2,Clear Energy Partners Materials,COGS - Materials,98740.10
+2026,2,Buy Cheap Solar Materials,COGS - Materials,18019.00
+2026,2,BigBattery Materials,COGS - Materials,5098.00
+2026,2,American Warehouse,Operating Expense - Warehousing,1765.00
+2026,2,Shipping,COGS - Shipping,1332.00
+2026,2,Kip Commission,Operating Expense - Commissions,955.00
+2026,2,James Commission,Operating Expense - Commissions,875.00
+2026,2,Israel Materials,COGS - Materials,580.00
+2026,2,Greentech Renewables,COGS - Materials,565.00
+2026,2,Ben Commission,Operating Expense - Commissions,400.00
+2026,2,Stripe Fee,Operating Expense - Payment Processing,267.00
+2026,2,Brua Materials,COGS - Materials,260.00
+2026,2,Royal Wholesale Electric,COGS - Materials,228.00
+2026,2,Todd Materials,COGS - Materials,207.00
+2026,2,Charlie Commission,Operating Expense - Commissions,190.00
+2026,2,Amazon Materials,COGS - Materials,138.20
+2026,2,Wade Commission,Operating Expense - Commissions,60.00
+2026,2,JD Commission,Operating Expense - Commissions,12.00
+2026,3,Clear Energy Partners Materials,COGS - Materials,63481.85
+2026,3,Todd Materials,COGS - Materials,35328.00
+2026,3,Buy Cheap Solar Materials,COGS - Materials,19723.00
+2026,3,Greentech Renewables,COGS - Materials,19217.00
+2026,3,Brua Materials,COGS - Materials,17202.00
+2026,3,Shipping,COGS - Shipping,12476.00
+2026,3,BigBattery Materials,COGS - Materials,12074.00
+2026,3,JD Commission,Operating Expense - Commissions,9263.00
+2026,3,Signature Solar Materials,COGS - Materials,7069.00
+2026,3,American Warehouse,Operating Expense - Warehousing,5210.00
+2026,3,Kip Commission,Operating Expense - Commissions,2980.00
+2026,3,Angel Materials,COGS - Materials,2188.00
+2026,3,Stripe Fee,Operating Expense - Payment Processing,1764.00
+2026,3,Royal Wholesale Electric,COGS - Materials,906.00
+2026,3,Solar Wholesale,Operating Expense - Labor,349.00
+2026,3,Amazon Materials,COGS - Materials,235.00
+2026,3,Sophie Commission,Operating Expense - Commissions,200.00
+2026,3,Jade Commission,Operating Expense - Commissions,177.00
+2026,3,Charlie Commission,Operating Expense - Commissions,120.00
+2026,3,StellaVolta,Operating Expense - Website/Platform,36.00
+2026,4,Brua Materials,COGS - Materials,11505.00
+2026,4,Signature Solar Materials,COGS - Materials,3254.00
+2026,4,Todd Materials,COGS - Materials,2346.00
+2026,4,Kip Commission,Operating Expense - Commissions,2325.00
+2026,4,Clear Energy Partners Materials,COGS - Materials,2091.00
+2026,4,JD Commission,Operating Expense - Commissions,2004.00
+2026,4,Shipping,COGS - Shipping,1667.00
+2026,4,Buy Cheap Solar Materials,COGS - Materials,795.00
+2026,4,Angel Materials,COGS - Materials,595.00
+2026,4,American Warehouse,Operating Expense - Warehousing,300.00
+2026,4,Jade Commission,Operating Expense - Commissions,180.00
+2026,4,Royal Wholesale Electric,COGS - Materials,160.00
+2026,4,Solar Wholesale,Operating Expense - Labor,102.00
+2026,4,Charlie Commission,Operating Expense - Commissions,60.00
+2026,4,Stripe Fee,Operating Expense - Payment Processing,55.00
+2026,4,Amazon Materials,COGS - Materials,46.20

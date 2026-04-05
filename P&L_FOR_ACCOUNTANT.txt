@@ -1,0 +1,148 @@
+================================================================================
+PROFIT & LOSS STATEMENT
+Solar Business - All Years Summary
+Generated: April 2026
+================================================================================
+
+QUICK SUMMARY
+--------------------------------------------------------------------------------
+This document provides a comprehensive P&L breakdown for the solar business
+with expenses categorized into Cost of Goods Sold (COGS) and Operating Expenses.
+
+Total Revenue (2024-2026):    $2,111,113.06
+Total COGS:                   $1,545,134.08
+Gross Profit:                 $565,978.98 (26.81% margin)
+Total Operating Expenses:     $215,710.60
+NET INCOME:                   $350,268.38 (16.59% margin)
+
+================================================================================
+EXPENSE BREAKDOWN BY CATEGORY
+================================================================================
+
+COST OF GOODS SOLD (COGS) - $1,545,134.08
+--------------------------------------------------------------------------------
+
+Materials Purchased from Suppliers:
+  • Clear Energy Partners Materials     $764,029.60  (Primary supplier)
+  • Signature Solar Materials            $268,608.00
+  • Buy Cheap Solar Materials            $133,478.00
+  • Brua Materials (China supplier)      $86,363.98
+  • Greentech Renewables                 $81,816.00
+  • Israel Materials                     $44,611.00
+  • Todd Materials                       $37,881.00
+  • Angel Materials                      $22,063.00
+  • BigBattery Materials                 $17,172.00
+  • SanTan Materials                     $12,089.00
+  • Joseph Yokshas (Original Sunmac)     $11,120.00
+  • Royal Wholesale Electric             $5,114.00
+  • Amazon Materials                     $2,295.50
+  
+Shipping Costs (to customers):
+  • Shipping/Freight                     $58,493.00
+
+TOTAL COGS:                              $1,545,134.08
+
+--------------------------------------------------------------------------------
+
+OPERATING EXPENSES - $215,710.60
+--------------------------------------------------------------------------------
+
+Delivery & Installation Labor:          $19,371.00
+  • Kevin Delivery                       $15,761.00
+  • Dominique Delivery                   $1,810.00
+  • Hunter Delivery                      $1,800.00
+
+Commissions & Sales Expenses:            $136,609.00
+  • JD Commission                        $86,873.00
+  • Kip Commission                       $27,448.00
+  • Paul Commission                      $7,528.00
+  • Charlie Commission                   $4,172.00
+  • Referral Payout                      $4,055.00
+  • Jeffrey Commission                   $2,796.00
+  • James Commission                     $1,875.00
+  • Ben Commission                       $900.00
+  • Sophie Commission                    $545.00
+  • Jade Commission                      $357.00
+  • Wade Commission                      $60.00
+
+Warehousing:                             $48,806.60
+  • American Warehouse                   $48,796.60
+  • Isaac Warehouse                      $10.00
+
+Installation Services:                   $5,500.00
+  • Israel Installation                  $5,500.00
+
+Payment Processing:                      $4,710.00
+  • Stripe Fees                          $4,710.00
+
+Labor Costs:                             $451.00
+  • Solar Wholesale                      $451.00
+
+Website/Platform Fees:                   $263.00
+  • StellaVolta                          $263.00
+
+TOTAL OPERATING EXPENSES:                $215,710.60
+
+================================================================================
+YEAR-BY-YEAR BREAKDOWN
+================================================================================
+
+2024 (101 completed orders):
+  Revenue:              $50,607.89
+  COGS:                 $39,867.00
+  Gross Profit:         $10,740.89 (21.22% margin)
+  Operating Expenses:   $60.00
+  Net Income:           $10,680.89 (21.11% margin)
+
+2025 (1,191 completed orders):
+  Revenue:              $1,501,246.82
+  COGS:                 $1,072,398.03
+  Gross Profit:         $428,848.79 (28.57% margin)
+  Operating Expenses:   $168,874.70
+  Net Income:           $259,974.09 (17.32% margin)
+
+2026 (321 completed orders to date):
+  Revenue:              $559,258.35
+  COGS:                 $432,869.05
+  Gross Profit:         $126,389.30 (22.60% margin)
+  Operating Expenses:   $46,775.90
+  Net Income:           $79,613.40 (14.24% margin)
+
+================================================================================
+NOTES FOR ACCOUNTANT
+================================================================================
+
+1. All figures are based on COMPLETED orders only (status = 'complete')
+   - Does not include proposed, pending, or cancelled orders
+
+2. Revenue is total invoice amount collected from customers
+
+3. COGS includes:
+   - Direct material costs from all suppliers
+   - Freight/shipping costs to deliver products to customers
+   
+4. Operating Expenses include:
+   - Commissions paid to sales team and affiliates
+   - Warehousing and storage costs
+   - Delivery/installation labor costs
+   - Payment processing fees (Stripe)
+   - Website/platform fees
+
+5. "Matt Profit" category has been EXCLUDED from expenses
+   This represents the actual business profit, not an operating expense
+   Total "Matt Profit" tracked in system: $349,600.90
+   (This is NOT included in the Net Income calculation as it IS the net income)
+
+6. The business has healthy profit margins:
+   - Gross Margin: 26.81%
+   - Net Margin: 16.59%
+
+7. Data exported to CSV files:
+   - pl-summary.csv: Year-by-year summary totals
+   - pl-detail.csv: Monthly breakdown by expense category
+
+================================================================================
+
+For questions or clarifications, please contact:
+Matt Newman
+matt@payoffsolar.com
