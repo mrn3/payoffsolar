@@ -41,6 +41,8 @@ interface Order {
   contact_latitude?: number | null;
   contact_longitude?: number | null;
   total_internal_cost?: number | string;
+  total_paid?: number | string;
+  balance_owed?: number | string;
 }
 
 type OrdersViewTab = 'list' | 'map';
@@ -648,6 +650,15 @@ export default function OrdersPage() {
                         {getSortIcon('total')}
                       </button>
                     </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      <button
+                        className="flex items-center hover:text-gray-600"
+                        onClick={() => handleSort('balance_owed')}
+                      >
+                        Balance Owed
+                        {getSortIcon('balance_owed')}
+                      </button>
+                    </th>
                     {!isContact(profile.role) && (
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                         <button
@@ -722,6 +733,9 @@ export default function OrdersPage() {
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           ${Number(_order.total).toFixed(2)}
                         </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                          ${Number(_order.balance_owed || 0).toFixed(2)}
+                        </td>
                         {!isContact(profile.role) && (
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             ${Number(_order.total_internal_cost || 0).toFixed(2)}
@@ -777,7 +791,7 @@ export default function OrdersPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={isContact(profile.role) ? 5 : 7} className="px-6 py-4 text-center text-sm text-gray-500">
+                      <td colSpan={isContact(profile.role) ? 6 : 10} className="px-6 py-4 text-center text-sm text-gray-500">
                         {isContact(profile.role)
                           ? 'You have no orders yet.'
                           : searchQuery

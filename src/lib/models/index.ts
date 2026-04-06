@@ -1485,6 +1485,8 @@ export interface OrderWithContact extends Order {
   contact_longitude?: number | null;
   total_internal_cost?: number;
   matt_profit_amount?: number;
+  total_paid?: number;
+  balance_owed?: number;
 }
 
 // Order Item model
@@ -2155,7 +2157,9 @@ export const OrderModel = {
               c.city as contact_city,
               c.state as contact_state,
               c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
-              COALESCE(SUM(ci.amount), 0) as total_internal_cost
+              COALESCE(SUM(ci.amount), 0) as total_internal_cost,
+              COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.order_id = o.id), 0) as total_paid,
+              (o.total - COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.order_id = o.id), 0)) as balance_owed
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        LEFT JOIN cost_items ci ON o.id = ci.order_id
@@ -2275,7 +2279,9 @@ export const OrderModel = {
              c.city as contact_city,
              c.state as contact_state,
              c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
-             COALESCE(SUM(ci.amount), 0) as total_internal_cost
+             COALESCE(SUM(ci.amount), 0) as total_internal_cost,
+             COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.order_id = o.id), 0) as total_paid,
+             (o.total - COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.order_id = o.id), 0)) as balance_owed
       FROM orders o
       LEFT JOIN contacts c ON o.contact_id = c.id
       LEFT JOIN cost_items ci ON o.id = ci.order_id
@@ -2387,7 +2393,9 @@ export const OrderModel = {
               c.city as contact_city,
               c.state as contact_state,
               c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude,
-              COALESCE(SUM(ci.amount), 0) as total_internal_cost
+              COALESCE(SUM(ci.amount), 0) as total_internal_cost,
+              COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.order_id = o.id), 0) as total_paid,
+              (o.total - COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.order_id = o.id), 0)) as balance_owed
        FROM orders o
        LEFT JOIN contacts c ON o.contact_id = c.id
        LEFT JOIN cost_items ci ON o.id = ci.order_id
