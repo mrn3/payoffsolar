@@ -45,7 +45,7 @@ export default function PaymentManager({ orderId, payments, orderTotal, onPaymen
     setFormData({
       payment_date: new Date().toISOString().split('T')[0],
       payment_type: 'Venmo',
-      amount: '',
+      amount: balanceOwed > 0 ? balanceOwed.toFixed(2) : '',
       notes: ''
     });
     setIsAdding(false);
