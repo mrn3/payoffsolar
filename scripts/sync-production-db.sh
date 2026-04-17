@@ -75,6 +75,7 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
+
 source .env
 
 PROD_DB_HOST="\${MYSQL_HOST:-localhost}"

@@ -1,0 +1,89 @@
+[dotenv@17.0.1] injecting env (24) from .env – [tip] encrypt with dotenvx: https://dotenvx.com
+Connected to database
+
+================================================================================
+PROFIT & LOSS STATEMENT - 2025
+Solar Business
+Generated: April 2026
+================================================================================
+
+REVENUE:
+  Sales Revenue (1191 completed orders)  $1,501,246.82
+  -------------------------------------------------------------------------
+  Total Revenue:  $1,501,246.82
+
+COST OF GOODS SOLD (COGS):
+  Clear Energy Partners Materials                     $527,749.75
+  Signature Solar Materials                           $241,585.00
+  Buy Cheap Solar Materials                           $93,531.00
+  Greentech Renewables                                $60,762.00
+  Brua Materials                                      $55,065.98
+  Israel Materials                                    $44,031.00
+  Shipping                                            $39,623.00
+  SanTan Materials                                    $2,928.00
+  Royal Wholesale Electric                            $2,737.00
+  Angel Materials                                     $1,928.00
+  Amazon Materials                                    $1,417.30
+  Joseph Yokshas                                      $1,040.00
+  -------------------------------------------------------------------------
+  Total COGS:  $1,072,398.03
+
+GROSS PROFIT:  $428,848.79 (28.57%)
+
+OPERATING EXPENSES:
+
+  Delivery & Installation Labor:
+    Kevin Delivery                                    $15,761.00
+    Dominique Delivery                                $1,810.00
+    Hunter Delivery                                   $1,800.00
+    Subtotal Delivery & Installation                  $19,371.00
+
+  Commissions & Sales Expenses:
+    JD Commission                                     $74,984.00
+    Kip Commission                                    $17,618.00
+    Paul Commission                                   $7,378.00
+    Referral Payout                                   $4,055.00
+    Charlie Commission                                $3,602.00
+    Jeffrey Commission                                $2,796.00
+    Sophie Commission                                 $305.00
+    Subtotal Commissions                              $110,738.00
+
+  Installation Services:
+
+  Other Operating Expenses:
+    American Warehouse                                $36,341.70
+    Stripe Fee                                        $2,187.00
+    StellaVolta                                       $227.00
+    Isaac Warehouse                                   $10.00
+    Subtotal Other Operating Expenses                 $38,765.70
+
+  -------------------------------------------------------------------------
+  Total Operating Expenses:  $168,874.70
+
+================================================================================
+NET INCOME:  $259,974.09 (17.32%)
+================================================================================
+
+NOTES:
+--------------------------------------------------------------------------------
+1. All figures are based on COMPLETED orders only (status = "complete")
+   - Does not include proposed, pending, or cancelled orders
+
+2. Revenue is total invoice amount collected from customers
+
+3. COGS includes:
+   - Direct material costs from all suppliers
+   - Freight/shipping costs to deliver products to customers
+
+4. Operating Expenses include:
+   - Commissions paid to sales team and affiliates
+   - Warehousing and storage costs
+   - Delivery/installation labor costs
+   - Installation services
+   - Payment processing fees (Stripe)
+   - Website/platform fees
+
+5. "Matt Profit" category has been EXCLUDED from expenses
+   This represents the actual business profit, not an operating expense
+
+================================================================================
