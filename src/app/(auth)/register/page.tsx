@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import PhoneInput from '@/components/ui/PhoneInput';
 import { isValidPhoneNumber } from '@/lib/utils/phone';
+import LegalDocumentModal from '@/components/ui/LegalDocumentModal';
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -39,6 +40,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [modalType, setModalType] = useState<'terms' | 'privacy' | null>(null);
 
   const {
     register,
@@ -303,13 +305,27 @@ export default function RegisterPage() {
               />
               <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
                 I agree to the{' '}
-                <a href="#" className="font-medium text-green-600 hover:text-green-500">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setModalType('terms');
+                  }}
+                  className="font-medium text-green-600 hover:text-green-500"
+                >
                   Terms of Service
-                </a>{' '}
+                </button>{' '}
                 and{' '}
-                <a href="#" className="font-medium text-green-600 hover:text-green-500">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setModalType('privacy');
+                  }}
+                  className="font-medium text-green-600 hover:text-green-500"
+                >
                   Privacy Policy
-                </a>
+                </button>
               </label>
             </div>
             {errors.terms && (
@@ -328,6 +344,13 @@ export default function RegisterPage() {
           </form>
         </div>
       </div>
+
+      {/* Legal Document Modal */}
+      <LegalDocumentModal
+        isOpen={modalType !== null}
+        onClose={() => setModalType(null)}
+        type={modalType || 'terms'}
+      />
     </div>
   );
 }
