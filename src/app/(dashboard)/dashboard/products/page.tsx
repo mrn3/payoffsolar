@@ -485,7 +485,7 @@ export default function ProductsPage() {
                     {formatPrice(product.price)}
                   </span>
                   <div className="flex items-center space-x-2">
-                    {product.is_bundle && (
+                    {!!product.is_bundle && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         <FaBox className="h-3 w-3 mr-1" />
                         Bundle

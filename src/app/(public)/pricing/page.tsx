@@ -180,7 +180,7 @@ export default function PricingPage() {
                   pkg.popular ? 'ring-2 ring-green-500 transform scale-105' : ''
                 }`}
               >
-                {pkg.popular && (
+                {!!pkg.popular && (
                   <div className="absolute top-0 left-0 right-0 bg-green-500 text-white text-center py-2 text-sm font-semibold">
                     Most Popular
                   </div>
