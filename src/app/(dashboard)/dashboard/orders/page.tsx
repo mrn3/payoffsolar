@@ -98,6 +98,8 @@ export default function OrdersPage() {
     status: [],
     minTotal: '',
     maxTotal: '',
+    minBalanceOwed: '',
+    maxBalanceOwed: '',
     startDate: '',
     endDate: ''
   });
@@ -151,6 +153,8 @@ export default function OrdersPage() {
     if (filters.status && filters.status.length > 0) params.append('status', filters.status.join(','));
     if (filters.minTotal) params.append('minTotal', filters.minTotal);
     if (filters.maxTotal) params.append('maxTotal', filters.maxTotal);
+    if (filters.minBalanceOwed) params.append('minBalanceOwed', filters.minBalanceOwed);
+    if (filters.maxBalanceOwed) params.append('maxBalanceOwed', filters.maxBalanceOwed);
     if (filters.startDate) params.append('startDate', filters.startDate);
     if (filters.endDate) params.append('endDate', filters.endDate);
     params.append('sortField', sortConfig.field);
@@ -228,6 +232,8 @@ export default function OrdersPage() {
       status: [],
       minTotal: '',
       maxTotal: '',
+      minBalanceOwed: '',
+      maxBalanceOwed: '',
       startDate: '',
       endDate: ''
     });

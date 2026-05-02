@@ -22,6 +22,8 @@ export async function GET(request: NextRequest) {
     const status = statusParam ? statusParam.split(',').map(s => s.trim()).filter(s => s) : [];
     const minTotal = searchParams.get('minTotal') ? parseFloat(searchParams.get('minTotal')!) : null;
     const maxTotal = searchParams.get('maxTotal') ? parseFloat(searchParams.get('maxTotal')!) : null;
+    const minBalanceOwed = searchParams.get('minBalanceOwed') ? parseFloat(searchParams.get('minBalanceOwed')!) : null;
+    const maxBalanceOwed = searchParams.get('maxBalanceOwed') ? parseFloat(searchParams.get('maxBalanceOwed')!) : null;
     const startDate = searchParams.get('startDate') || '';
     const endDate = searchParams.get('endDate') || '';
     const sortField = searchParams.get('sortField') || 'order_date';
@@ -38,6 +40,8 @@ export async function GET(request: NextRequest) {
       status,
       minTotal,
       maxTotal,
+      minBalanceOwed,
+      maxBalanceOwed,
       startDate,
       endDate
     };

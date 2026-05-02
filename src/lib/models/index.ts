@@ -2202,6 +2202,8 @@ export const OrderModel = {
     status?: string | string[];
     minTotal?: number | null;
     maxTotal?: number | null;
+    minBalanceOwed?: number | null;
+    maxBalanceOwed?: number | null;
     startDate?: string;
     endDate?: string;
   }, limit = 50, offset = 0, sortField = 'order_date', sortDirection = 'desc'): Promise<OrderWithContact[]> {
@@ -2270,6 +2272,16 @@ export const OrderModel = {
       params.push(filters.endDate);
     }
 
+    // Balance owed range filter (computed as total minus payments)
+    if (filters.minBalanceOwed !== null && filters.minBalanceOwed !== undefined) {
+      conditions.push('(o.total - COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.order_id = o.id), 0)) >= ?');
+      params.push(filters.minBalanceOwed);
+    }
+    if (filters.maxBalanceOwed !== null && filters.maxBalanceOwed !== undefined) {
+      conditions.push('(o.total - COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.order_id = o.id), 0)) <= ?');
+      params.push(filters.maxBalanceOwed);
+    }
+
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     const orderByClause = buildOrderByClause(sortField, sortDirection);
 
@@ -2304,6 +2316,8 @@ export const OrderModel = {
     status?: string | string[];
     minTotal?: number | null;
     maxTotal?: number | null;
+    minBalanceOwed?: number | null;
+    maxBalanceOwed?: number | null;
     startDate?: string;
     endDate?: string;
   }): Promise<number> {
@@ -2370,6 +2384,16 @@ export const OrderModel = {
     if (filters.endDate) {
       conditions.push('o.order_date <= ?');
       params.push(filters.endDate);
+    }
+
+    // Balance owed range filter (computed as total minus payments)
+    if (filters.minBalanceOwed !== null && filters.minBalanceOwed !== undefined) {
+      conditions.push('(o.total - COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.order_id = o.id), 0)) >= ?');
+      params.push(filters.minBalanceOwed);
+    }
+    if (filters.maxBalanceOwed !== null && filters.maxBalanceOwed !== undefined) {
+      conditions.push('(o.total - COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.order_id = o.id), 0)) <= ?');
+      params.push(filters.maxBalanceOwed);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

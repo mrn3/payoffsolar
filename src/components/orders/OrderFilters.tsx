@@ -13,6 +13,8 @@ export interface OrderFilters {
   status: string[];
   minTotal: string;
   maxTotal: string;
+  minBalanceOwed: string;
+  maxBalanceOwed: string;
   startDate: string;
   endDate: string;
 }
@@ -216,7 +218,41 @@ export default function OrderFiltersComponent({
             </div>
           </div>
 
-          {/* Row 3: Date Range */}
+          {/* Row 3: Balance Owed Range */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="minBalanceOwed" className="block text-sm font-medium text-gray-700 mb-1">
+                Min Balance Owed ($)
+              </label>
+              <input
+                type="number"
+                id="minBalanceOwed"
+                value={filters.minBalanceOwed}
+                onChange={(e) => handleFilterChange('minBalanceOwed', e.target.value)}
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="maxBalanceOwed" className="block text-sm font-medium text-gray-700 mb-1">
+                Max Balance Owed ($)
+              </label>
+              <input
+                type="number"
+                id="maxBalanceOwed"
+                value={filters.maxBalanceOwed}
+                onChange={(e) => handleFilterChange('maxBalanceOwed', e.target.value)}
+                placeholder="999999.99"
+                min="0"
+                step="0.01"
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Row 4: Date Range */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
