@@ -30,6 +30,7 @@ interface CostBreakdownData {
   month?: string;
   week?: string;
   day?: string;
+  month_num?: number;
   category_name: string;
   total_amount: number;
 }
@@ -39,7 +40,10 @@ interface CostCategory {
   name: string;
 }
 
-type TimePeriod = 'year' | 'month' | 'week' | 'day';
+type TimePeriod = 'year' | 'month' | 'week' | 'day' | 'yoy';
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const YOY_YEAR_COLORS = ['#9CA3AF', '#3B82F6', '#10B981'];
 
 interface CostBreakdownChartProps {
   initialData: CostBreakdownData[];
@@ -276,6 +280,10 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
           endpoint = '/api/orders/cost-breakdown-by-day';
           params.append('days', '31');
           break;
+        case 'yoy':
+          endpoint = '/api/orders/cost-breakdown-yoy';
+          params.append('years', '3');
+          break;
       }
 
       const response = await fetch(`${endpoint}?${params.toString()}`);
@@ -330,14 +338,35 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
   }
 
   // Get unique periods and categories from filtered data
-  const periods = [...new Set(filteredData.map(item => {
-    if (timePeriod === 'year') return String(item.year);
-    if (timePeriod === 'month') return String(item.month);
-    if (timePeriod === 'week') return String(item.week);
-    return String(item.day);
-  }))].filter(Boolean).sort();
+  const periods = timePeriod === 'yoy'
+    ? []
+    : [...new Set(filteredData.map(item => {
+        if (timePeriod === 'year') return String(item.year);
+        if (timePeriod === 'month') return String(item.month);
+        if (timePeriod === 'week') return String(item.week);
+        return String(item.day);
+      }))].filter(Boolean).sort();
 
   const categoryNames = [...new Set(filteredData.map(item => item.category_name))].sort();
+
+  // Year-over-year aggregation: total amount per (year, month), summed across categories
+  const yoyYears = timePeriod === 'yoy'
+    ? [...new Set(filteredData.map((d) => String(d.year || '')))].filter((y) => y).sort()
+    : [];
+
+  const yoyTotals: Record<string, number[]> = {};
+  if (timePeriod === 'yoy') {
+    for (const year of yoyYears) {
+      yoyTotals[year] = Array(12).fill(0);
+    }
+    for (const item of filteredData) {
+      const y = String(item.year || '');
+      const m = Number(item.month_num || 0);
+      if (y && m >= 1 && m <= 12 && yoyTotals[y]) {
+        yoyTotals[y][m - 1] += Number(item.total_amount) || 0;
+      }
+    }
+  }
 
   // Format period labels
   const formatPeriodLabel = (period: string | number) => {
@@ -355,24 +384,35 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
   };
 
   // Prepare chart data
-  const chartData = {
-    labels: periods.map(formatPeriodLabel),
-    datasets: categoryNames.map((category, index) => ({
-      label: category,
-      data: periods.map(period => {
-        const item = filteredData.find(d => {
-          const itemPeriod = timePeriod === 'year' ? String(d.year) :
-                           timePeriod === 'month' ? d.month :
-                           timePeriod === 'week' ? d.week : d.day;
-          return itemPeriod === period && d.category_name === category;
-        });
-        return item ? Number(item.total_amount) : 0;
-      }),
-      backgroundColor: categoryColors[index % categoryColors.length],
-      borderColor: categoryColors[index % categoryColors.length],
-      borderWidth: 1,
-    })),
-  };
+  const chartData = timePeriod === 'yoy'
+    ? {
+        labels: MONTH_LABELS,
+        datasets: yoyYears.map((year, index) => ({
+          label: year,
+          data: yoyTotals[year] || Array(12).fill(0),
+          backgroundColor: YOY_YEAR_COLORS[index % YOY_YEAR_COLORS.length],
+          borderColor: YOY_YEAR_COLORS[index % YOY_YEAR_COLORS.length],
+          borderWidth: 1,
+        })),
+      }
+    : {
+        labels: periods.map(formatPeriodLabel),
+        datasets: categoryNames.map((category, index) => ({
+          label: category,
+          data: periods.map(period => {
+            const item = filteredData.find(d => {
+              const itemPeriod = timePeriod === 'year' ? String(d.year) :
+                               timePeriod === 'month' ? d.month :
+                               timePeriod === 'week' ? d.week : d.day;
+              return itemPeriod === period && d.category_name === category;
+            });
+            return item ? Number(item.total_amount) : 0;
+          }),
+          backgroundColor: categoryColors[index % categoryColors.length],
+          borderColor: categoryColors[index % categoryColors.length],
+          borderWidth: 1,
+        })),
+      };
 
   const options = {
     responsive: true,
@@ -395,6 +435,7 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
             return `${context.dataset.label}: ${value}`;
           },
           footer: function(tooltipItems: any[]) {
+            if (timePeriod === 'yoy') return '';
             const total = tooltipItems.reduce((sum, item) => sum + item.parsed.y, 0);
             return `Total: ${formatCurrency(total)}`;
           },
@@ -403,13 +444,13 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
     },
     scales: {
       x: {
-        stacked: true,
+        stacked: timePeriod !== 'yoy',
         grid: {
           display: false,
         },
       },
       y: {
-        stacked: true,
+        stacked: timePeriod !== 'yoy',
         beginAtZero: true,
         ticks: {
           callback: function(value: any) {
@@ -419,10 +460,13 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
       },
     },
     interaction: {
-      mode: 'index' as const,
+      mode: timePeriod === 'yoy' ? ('nearest' as const) : ('index' as const),
       intersect: false,
     },
     onClick: async (event: ChartEvent, elements: ActiveElement[]) => {
+      // Drill-down is not supported in the year-over-year aggregated view
+      if (timePeriod === 'yoy') return;
+
       if (elements.length > 0) {
         const elementIndex = elements[0].index;
         const datasetIndex = elements[0].datasetIndex;
@@ -496,6 +540,7 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
             <option value="month">By Month (Last 12 months)</option>
             <option value="week">By Week (Last 20 weeks)</option>
             <option value="day">By Day (Last 31 days)</option>
+            <option value="yoy">Year over Year (Last 3 years)</option>
           </select>
         </div>
 

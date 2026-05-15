@@ -25,13 +25,21 @@ ChartJS.register(
   Legend
 );
 
-type TimePeriod = 'year' | 'month' | 'week' | 'day';
+type TimePeriod = 'year' | 'month' | 'week' | 'day' | 'yoy';
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const YOY_YEAR_COLORS = [
+	{ bg: 'rgba(156, 163, 175, 0.8)', border: 'rgba(156, 163, 175, 1)' },
+	{ bg: 'rgba(59, 130, 246, 0.8)', border: 'rgba(59, 130, 246, 1)' },
+	{ bg: 'rgba(34, 197, 94, 0.8)', border: 'rgba(34, 197, 94, 1)' },
+];
 
 interface RevenueData {
 	year?: string;
 	month?: string;
 	week?: string;
 	day?: string;
+	month_num?: number;
 	revenue: number;
 	count: number;
 }
@@ -185,6 +193,9 @@ function OrdersModal({ isOpen, onClose, month, orders, loading }: OrdersModalPro
 				case 'day':
 					params.append('days', '31');
 					break;
+				case 'yoy':
+					params.append('years', '3');
+					break;
 			}
 
 			const response = await fetch(`/api/dashboard/revenue?${params.toString()}`);
@@ -241,9 +252,9 @@ function OrdersModal({ isOpen, onClose, month, orders, loading }: OrdersModalPro
 	const getItemPeriod = (item: RevenueData) =>
 		String(item.year || item.month || item.week || item.day || '');
 
-	const periods = [...new Set(data.map(getItemPeriod))]
-		.filter((p) => p)
-		.sort();
+	const periods = timePeriod === 'yoy'
+		? []
+		: [...new Set(data.map(getItemPeriod))].filter((p) => p).sort();
 
 	const periodMetrics = periods.reduce((acc, period) => {
 		const metrics = data
@@ -260,33 +271,78 @@ function OrdersModal({ isOpen, onClose, month, orders, loading }: OrdersModalPro
 		return acc;
 	}, {} as Record<string, { revenue: number; count: number }>);
 
-	const chartData = {
-		labels: periods.map((p) => formatPeriodLabel(p)),
-		datasets: [
-			{
-				label: 'Revenue',
-				data: periods.map((p) => periodMetrics[p]?.revenue ?? 0),
-				backgroundColor: 'rgba(34, 197, 94, 0.8)',
-				borderColor: 'rgba(34, 197, 94, 1)',
-				borderWidth: 1,
-				borderRadius: 4,
-			},
-		],
-	};
+	// Year-over-year aggregation: build [year][month] totals
+	const yoyYears = timePeriod === 'yoy'
+		? [...new Set(data.map((d) => String(d.year || '')))].filter((y) => y).sort()
+		: [];
+
+	const yoyMetrics: Record<string, Record<number, { revenue: number; count: number }>> = {};
+	if (timePeriod === 'yoy') {
+		for (const year of yoyYears) {
+			yoyMetrics[year] = {};
+			for (let m = 1; m <= 12; m++) {
+				yoyMetrics[year][m] = { revenue: 0, count: 0 };
+			}
+		}
+		for (const item of data) {
+			const y = String(item.year || '');
+			const m = Number(item.month_num || 0);
+			if (y && m >= 1 && m <= 12 && yoyMetrics[y]) {
+				yoyMetrics[y][m].revenue += Number(item.revenue) || 0;
+				yoyMetrics[y][m].count += Number(item.count) || 0;
+			}
+		}
+	}
+
+	const chartData = timePeriod === 'yoy'
+		? {
+			labels: MONTH_LABELS,
+			datasets: yoyYears.map((year, index) => {
+				const color = YOY_YEAR_COLORS[index % YOY_YEAR_COLORS.length];
+				return {
+					label: year,
+					data: MONTH_LABELS.map((_, i) => yoyMetrics[year]?.[i + 1]?.revenue ?? 0),
+					backgroundColor: color.bg,
+					borderColor: color.border,
+					borderWidth: 1,
+					borderRadius: 4,
+				};
+			}),
+		}
+		: {
+			labels: periods.map((p) => formatPeriodLabel(p)),
+			datasets: [
+				{
+					label: 'Revenue',
+					data: periods.map((p) => periodMetrics[p]?.revenue ?? 0),
+					backgroundColor: 'rgba(34, 197, 94, 0.8)',
+					borderColor: 'rgba(34, 197, 94, 1)',
+					borderWidth: 1,
+					borderRadius: 4,
+				},
+			],
+		};
 
   const options = {
     responsive: true,
     maintainAspectRatio: false,
 	plugins: {
       legend: {
-        display: false,
+        display: timePeriod === 'yoy',
+        position: 'top' as const,
       },
       tooltip: {
         callbacks: {
 			label: function (context: any) {
+				const revenue = formatCurrency(context.parsed.y);
+				if (timePeriod === 'yoy') {
+					const year = yoyYears[context.datasetIndex];
+					const monthNum = context.dataIndex + 1;
+					const count = yoyMetrics[year]?.[monthNum]?.count || 0;
+					return `${year}: ${revenue} (${count} orders)`;
+				}
 				const dataIndex = context.dataIndex;
 				const period = periods[dataIndex];
-				const revenue = formatCurrency(context.parsed.y);
 				const count = periodMetrics[period]?.count || 0;
 				return `Revenue: ${revenue} (${count} orders)`;
 			},
@@ -306,32 +362,51 @@ function OrdersModal({ isOpen, onClose, month, orders, loading }: OrdersModalPro
 	onClick: async (event: ChartEvent, elements: ActiveElement[]) => {
 		if (elements.length === 0) return;
 
-		const elementIndex = elements[0].index;
-		const period = periods[elementIndex];
-
-		// Drill-down is only supported for monthly view
-		if (!period || timePeriod !== 'month') {
+		// Drill-down for the standard monthly view
+		if (timePeriod === 'month') {
+			const period = periods[elements[0].index];
+			if (!period) return;
+			setSelectedMonth(period);
+			setModalLoading(true);
+			try {
+				const response = await fetch(`/api/orders/by-month?month=${period}`);
+				if (response.ok) {
+					setModalOrders(await response.json());
+				} else {
+					console.error('Failed to fetch orders for month:', period);
+					setModalOrders([]);
+				}
+			} catch (error) {
+				console.error('Error fetching orders:', error);
+				setModalOrders([]);
+			} finally {
+				setModalLoading(false);
+			}
 			return;
 		}
 
-		const month = period;
-		setSelectedMonth(month);
-		setModalLoading(true);
-
-		try {
-			const response = await fetch(`/api/orders/by-month?month=${month}`);
-			if (response.ok) {
-				const orders = await response.json();
-				setModalOrders(orders);
-			} else {
-				console.error('Failed to fetch orders for month:', month);
+		// Drill-down for year-over-year view: open the specific year+month
+		if (timePeriod === 'yoy') {
+			const year = yoyYears[elements[0].datasetIndex];
+			const monthNum = elements[0].index + 1;
+			if (!year) return;
+			const month = `${year}-${String(monthNum).padStart(2, '0')}`;
+			setSelectedMonth(month);
+			setModalLoading(true);
+			try {
+				const response = await fetch(`/api/orders/by-month?month=${month}`);
+				if (response.ok) {
+					setModalOrders(await response.json());
+				} else {
+					console.error('Failed to fetch orders for month:', month);
+					setModalOrders([]);
+				}
+			} catch (error) {
+				console.error('Error fetching orders:', error);
 				setModalOrders([]);
+			} finally {
+				setModalLoading(false);
 			}
-		} catch (error) {
-			console.error('Error fetching orders:', error);
-			setModalOrders([]);
-		} finally {
-			setModalLoading(false);
 		}
 	},
   };
@@ -358,6 +433,7 @@ function OrdersModal({ isOpen, onClose, month, orders, loading }: OrdersModalPro
 	          <option value="month">By Month (Last 12 months)</option>
 	          <option value="week">By Week (Last 20 weeks)</option>
 	          <option value="day">By Day (Last 31 days)</option>
+	          <option value="yoy">Year over Year (Last 3 years)</option>
 	        </select>
 	      </div>
 

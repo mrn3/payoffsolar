@@ -2544,6 +2544,22 @@ export const OrderModel = {
     );
   },
 
+  async getRevenueByMonthYoY(years = 3): Promise<Array<{ year: string; month_num: number; revenue: number; count: number }>> {
+    return executeQuery<{ year: string; month_num: number; revenue: number; count: number }>(
+      `SELECT
+         YEAR(order_date) as year,
+         MONTH(order_date) as month_num,
+         SUM(CAST(total AS DECIMAL(10,2))) as revenue,
+         COUNT(*) as count
+       FROM orders
+       WHERE status = 'complete'
+         AND order_date >= MAKEDATE(YEAR(CURDATE()) - ? + 1, 1)
+       GROUP BY YEAR(order_date), MONTH(order_date)
+       ORDER BY year ASC, month_num ASC`,
+      [years]
+    );
+  },
+
 	  async getRevenueByYear(years = 5): Promise<Array<{ year: string; revenue: number; count: number }>> {
 	    return executeQuery<{ year: string; revenue: number; count: number }>(
 	      `SELECT
@@ -2603,6 +2619,24 @@ export const OrderModel = {
        GROUP BY DATE_FORMAT(o.order_date, '%Y-%m'), COALESCE(c.state, 'Unknown')
        ORDER BY month ASC, state ASC`,
       [months]
+    );
+  },
+
+  async getRevenueByMonthAndStateYoY(years = 3): Promise<Array<{ year: string; month_num: number; state: string; revenue: number; count: number }>> {
+    return executeQuery<{ year: string; month_num: number; state: string; revenue: number; count: number }>(
+      `SELECT
+         YEAR(o.order_date) as year,
+         MONTH(o.order_date) as month_num,
+         COALESCE(c.state, 'Unknown') as state,
+         SUM(CAST(o.total AS DECIMAL(10,2))) as revenue,
+         COUNT(*) as count
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= MAKEDATE(YEAR(CURDATE()) - ? + 1, 1)
+       GROUP BY YEAR(o.order_date), MONTH(o.order_date), COALESCE(c.state, 'Unknown')
+       ORDER BY year ASC, month_num ASC, state ASC`,
+      [years]
     );
   },
 
@@ -2696,6 +2730,21 @@ export const OrderModel = {
     );
   },
 
+  async getOrderCountsByStatusAndMonthYoY(years = 3): Promise<Array<{ year: string; month_num: number; status: string; count: number }>> {
+    return executeQuery<{ year: string; month_num: number; status: string; count: number }>(
+      `SELECT
+         YEAR(order_date) as year,
+         MONTH(order_date) as month_num,
+         status,
+         COUNT(*) as count
+       FROM orders
+       WHERE order_date >= MAKEDATE(YEAR(CURDATE()) - ? + 1, 1)
+       GROUP BY YEAR(order_date), MONTH(order_date), status
+       ORDER BY year ASC, month_num ASC, status ASC`,
+      [years]
+    );
+  },
+
 	  async getOrderCountsByStatusAndYear(years = 5): Promise<Array<{ year: string; status: string; count: number }>> {
 	    return executeQuery<{ year: string; status: string; count: number }>(
 	      `SELECT
@@ -2760,6 +2809,33 @@ export const OrderModel = {
          ${categoryFilter}
        GROUP BY DATE_FORMAT(o.order_date, '%Y-%m'), cc.id, cc.name
        ORDER BY month ASC, cc.name ASC`,
+      params
+    );
+  },
+
+  async getCostBreakdownByMonthYoY(years = 3, categoryId?: string | null): Promise<Array<{ year: string; month_num: number; category_name: string; total_amount: number }>> {
+    const params: Array<number | string> = [years];
+    let categoryFilter = '';
+
+    if (categoryId) {
+      categoryFilter = 'AND cc.id = ?';
+      params.push(categoryId);
+    }
+
+    return executeQuery<{ year: string; month_num: number; category_name: string; total_amount: number }>(
+      `SELECT
+         YEAR(o.order_date) as year,
+         MONTH(o.order_date) as month_num,
+         cc.name as category_name,
+         SUM(ci.amount) as total_amount
+       FROM orders o
+       INNER JOIN cost_items ci ON o.id = ci.order_id
+       INNER JOIN cost_categories cc ON ci.category_id = cc.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= MAKEDATE(YEAR(CURDATE()) - ? + 1, 1)
+         ${categoryFilter}
+       GROUP BY YEAR(o.order_date), MONTH(o.order_date), cc.id, cc.name
+       ORDER BY year ASC, month_num ASC, cc.name ASC`,
       params
     );
   },
@@ -3147,6 +3223,26 @@ export const OrderModel = {
        GROUP BY DATE_FORMAT(o.order_date, '%Y-%m'), COALESCE(pc.name, 'Uncategorized')
        ORDER BY month ASC, category ASC`,
       [months]
+    );
+  },
+
+  async getUnitsSoldByMonthAndCategoryYoY(years = 3): Promise<Array<{ year: string; month_num: number; category: string; units_sold: number; order_count: number }>> {
+    return executeQuery<{ year: string; month_num: number; category: string; units_sold: number; order_count: number }>(
+      `SELECT
+         YEAR(o.order_date) as year,
+         MONTH(o.order_date) as month_num,
+         COALESCE(pc.name, 'Uncategorized') as category,
+         SUM(oi.quantity) as units_sold,
+         COUNT(DISTINCT o.id) as order_count
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN products p ON oi.product_id = p.id
+       LEFT JOIN product_categories pc ON p.category_id = pc.id
+       WHERE o.status = 'complete'
+         AND o.order_date >= MAKEDATE(YEAR(CURDATE()) - ? + 1, 1)
+       GROUP BY YEAR(o.order_date), MONTH(o.order_date), COALESCE(pc.name, 'Uncategorized')
+       ORDER BY year ASC, month_num ASC, category ASC`,
+      [years]
     );
   },
 

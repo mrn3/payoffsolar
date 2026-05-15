@@ -41,8 +41,16 @@ export async function GET(request: NextRequest) {
         revenueData = await OrderModel.getRevenueByDayAndState(days);
         break;
 
+      case 'yoy':
+        const yoyYears = parseInt(searchParams.get('years') || '3');
+        if (yoyYears < 1 || yoyYears > 10) {
+          return NextResponse.json({ error: 'Years must be between 1 and 10' }, { status: 400 });
+        }
+        revenueData = await OrderModel.getRevenueByMonthAndStateYoY(yoyYears);
+        break;
+
       default:
-        return NextResponse.json({ error: 'Invalid timePeriod. Must be year, month, week, or day' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid timePeriod. Must be year, month, week, day, or yoy' }, { status: 400 });
     }
 
     return NextResponse.json(revenueData);

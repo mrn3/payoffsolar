@@ -45,8 +45,17 @@ export async function GET(request: NextRequest) {
 	      break;
 	    }
 
+	    case 'yoy': {
+	      const years = parseInt(searchParams.get('years') || '3');
+	      if (isNaN(years) || years < 1 || years > 10) {
+	        return NextResponse.json({ error: 'Years must be between 1 and 10' }, { status: 400 });
+	      }
+	      orderCounts = await OrderModel.getOrderCountsByStatusAndMonthYoY(years);
+	      break;
+	    }
+
 	    default:
-	      return NextResponse.json({ error: 'Invalid timePeriod. Must be year, month, week, or day' }, { status: 400 });
+	      return NextResponse.json({ error: 'Invalid timePeriod. Must be year, month, week, day, or yoy' }, { status: 400 });
 	  }
 
 	  return NextResponse.json(orderCounts);

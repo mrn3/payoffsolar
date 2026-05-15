@@ -25,13 +25,17 @@ ChartJS.register(
   Legend
 );
 
-type TimePeriod = 'year' | 'month' | 'week' | 'day';
+type TimePeriod = 'year' | 'month' | 'week' | 'day' | 'yoy';
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const YOY_YEAR_COLORS = ['rgba(156, 163, 175, 0.8)', 'rgba(59, 130, 246, 0.8)', 'rgba(34, 197, 94, 0.8)'];
 
 interface RevenueByStateData {
   year?: string;
   month?: string;
   week?: string;
   day?: string;
+  month_num?: number;
   state: string;
   revenue: number;
   count: number;
@@ -203,6 +207,9 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
         case 'day':
           params.append('days', '31');
           break;
+        case 'yoy':
+          params.append('years', '3');
+          break;
       }
 
       const response = await fetch(`${endpoint}?${params.toString()}`);
@@ -257,9 +264,31 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
   };
 
   // Get unique periods and calculate state totals
-  const periods = [...new Set(data.map(item =>
-    String(item.year || item.month || item.week || item.day || '')
-  ))].sort();
+  const periods = timePeriod === 'yoy'
+    ? []
+    : [...new Set(data.map(item =>
+        String(item.year || item.month || item.week || item.day || '')
+      ))].sort();
+
+  // Year-over-year aggregation: total revenue per (year, month), summed across states
+  const yoyYears = timePeriod === 'yoy'
+    ? [...new Set(data.map((d) => String(d.year || '')))].filter((y) => y).sort()
+    : [];
+
+  const yoyTotals: Record<string, Array<{ revenue: number; count: number }>> = {};
+  if (timePeriod === 'yoy') {
+    for (const year of yoyYears) {
+      yoyTotals[year] = Array.from({ length: 12 }, () => ({ revenue: 0, count: 0 }));
+    }
+    for (const item of data) {
+      const y = String(item.year || '');
+      const m = Number(item.month_num || 0);
+      if (y && m >= 1 && m <= 12 && yoyTotals[y]) {
+        yoyTotals[y][m - 1].revenue += Number(item.revenue) || 0;
+        yoyTotals[y][m - 1].count += Number(item.count) || 0;
+      }
+    }
+  }
 
   // Calculate total revenue by state to determine top 4
   const stateTotals = data.reduce((acc, item) => {
@@ -328,21 +357,32 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
   ];
 
   // Prepare chart data
-  const chartData = {
-    labels: periods.map(formatPeriodLabel),
-    datasets: displayStates.map((state, index) => ({
-      label: state,
-      data: periods.map(period => {
-        const item = processedData.find(d =>
-          (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.state === state
-        );
-        return item ? item.revenue : 0;
-      }),
-      backgroundColor: stateColors[index % stateColors.length],
-      borderColor: stateColors[index % stateColors.length],
-      borderWidth: 1,
-    })),
-  };
+  const chartData = timePeriod === 'yoy'
+    ? {
+        labels: MONTH_LABELS,
+        datasets: yoyYears.map((year, index) => ({
+          label: year,
+          data: (yoyTotals[year] || []).map((m) => m.revenue),
+          backgroundColor: YOY_YEAR_COLORS[index % YOY_YEAR_COLORS.length],
+          borderColor: YOY_YEAR_COLORS[index % YOY_YEAR_COLORS.length],
+          borderWidth: 1,
+        })),
+      }
+    : {
+        labels: periods.map(formatPeriodLabel),
+        datasets: displayStates.map((state, index) => ({
+          label: state,
+          data: periods.map(period => {
+            const item = processedData.find(d =>
+              (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.state === state
+            );
+            return item ? item.revenue : 0;
+          }),
+          backgroundColor: stateColors[index % stateColors.length],
+          borderColor: stateColors[index % stateColors.length],
+          borderWidth: 1,
+        })),
+      };
 
   const options = {
     responsive: true,
@@ -363,12 +403,17 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
           label: function(context: any) {
             const datasetIndex = context.datasetIndex;
             const periodIndex = context.dataIndex;
+            const revenue = formatCurrency(context.parsed.y);
+            if (timePeriod === 'yoy') {
+              const year = yoyYears[datasetIndex];
+              const count = yoyTotals[year]?.[periodIndex]?.count || 0;
+              return `${year}: ${revenue} (${count} orders)`;
+            }
             const state = displayStates[datasetIndex];
             const period = periods[periodIndex];
             const item = processedData.find(d =>
               (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.state === state
             );
-            const revenue = formatCurrency(context.parsed.y);
             const count = item?.count || 0;
             return `${state}: ${revenue} (${count} orders)`;
           },
@@ -377,10 +422,10 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
     },
     scales: {
       x: {
-        stacked: true,
+        stacked: timePeriod !== 'yoy',
       },
       y: {
-        stacked: true,
+        stacked: timePeriod !== 'yoy',
         beginAtZero: true,
         ticks: {
           callback: function(value: any) {
@@ -390,6 +435,9 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
       },
     },
     onClick: async (event: ChartEvent, elements: ActiveElement[]) => {
+      // Drill-down is not supported in the year-over-year aggregated view
+      if (timePeriod === 'yoy') return;
+
       if (elements.length > 0) {
         const elementIndex = elements[0].index;
         const datasetIndex = elements[0].datasetIndex;
@@ -466,6 +514,7 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
           <option value="month">By Month (Last 12 months)</option>
           <option value="week">By Week (Last 20 weeks)</option>
           <option value="day">By Day (Last 31 days)</option>
+          <option value="yoy">Year over Year (Last 3 years)</option>
         </select>
       </div>
 

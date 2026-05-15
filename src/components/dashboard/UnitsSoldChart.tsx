@@ -25,13 +25,17 @@ ChartJS.register(
   Legend
 );
 
-type TimePeriod = 'year' | 'month' | 'week' | 'day';
+type TimePeriod = 'year' | 'month' | 'week' | 'day' | 'yoy';
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const YOY_YEAR_COLORS = ['#9CA3AF', '#3B82F6', '#10B981'];
 
 interface UnitsSoldData {
   year?: string;
   month?: string;
   week?: string;
   day?: string;
+  month_num?: number;
   category: string;
   units_sold: number;
   order_count: number;
@@ -192,6 +196,9 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
         case 'day':
           params.append('days', '31');
           break;
+        case 'yoy':
+          params.append('years', '3');
+          break;
       }
 
       const response = await fetch(`${endpoint}?${params.toString()}`);
@@ -223,9 +230,31 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
   ];
 
   // Get unique periods and calculate category totals
-  const periods = [...new Set(data.map(item =>
-    String(item.year || item.month || item.week || item.day || '')
-  ))].sort();
+  const periods = timePeriod === 'yoy'
+    ? []
+    : [...new Set(data.map(item =>
+        String(item.year || item.month || item.week || item.day || '')
+      ))].sort();
+
+  // Year-over-year aggregation: total units per (year, month), summed across categories
+  const yoyYears = timePeriod === 'yoy'
+    ? [...new Set(data.map((d) => String(d.year || '')))].filter((y) => y).sort()
+    : [];
+
+  const yoyTotals: Record<string, Array<{ units_sold: number; order_count: number }>> = {};
+  if (timePeriod === 'yoy') {
+    for (const year of yoyYears) {
+      yoyTotals[year] = Array.from({ length: 12 }, () => ({ units_sold: 0, order_count: 0 }));
+    }
+    for (const item of data) {
+      const y = String(item.year || '');
+      const m = Number(item.month_num || 0);
+      if (y && m >= 1 && m <= 12 && yoyTotals[y]) {
+        yoyTotals[y][m - 1].units_sold += Number(item.units_sold) || 0;
+        yoyTotals[y][m - 1].order_count += Number(item.order_count) || 0;
+      }
+    }
+  }
 
   // Calculate total units sold by category to determine top 4
   const categoryTotals = data.reduce((acc, item) => {
@@ -301,21 +330,32 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
   };
 
   // Prepare chart data
-  const chartData = {
-    labels: periods.map(formatPeriodLabel),
-    datasets: displayCategories.map((category, index) => ({
-      label: category,
-      data: periods.map(period => {
-        const item = processedData.find(d =>
-          (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.category === category
-        );
-        return item ? item.units_sold : 0;
-      }),
-      backgroundColor: categoryColors[index % categoryColors.length],
-      borderColor: categoryColors[index % categoryColors.length],
-      borderWidth: 1,
-    })),
-  };
+  const chartData = timePeriod === 'yoy'
+    ? {
+        labels: MONTH_LABELS,
+        datasets: yoyYears.map((year, index) => ({
+          label: year,
+          data: (yoyTotals[year] || []).map((m) => m.units_sold),
+          backgroundColor: YOY_YEAR_COLORS[index % YOY_YEAR_COLORS.length],
+          borderColor: YOY_YEAR_COLORS[index % YOY_YEAR_COLORS.length],
+          borderWidth: 1,
+        })),
+      }
+    : {
+        labels: periods.map(formatPeriodLabel),
+        datasets: displayCategories.map((category, index) => ({
+          label: category,
+          data: periods.map(period => {
+            const item = processedData.find(d =>
+              (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.category === category
+            );
+            return item ? item.units_sold : 0;
+          }),
+          backgroundColor: categoryColors[index % categoryColors.length],
+          borderColor: categoryColors[index % categoryColors.length],
+          borderWidth: 1,
+        })),
+      };
 
   const options = {
     responsive: true,
@@ -336,12 +376,17 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
           label: function(context: any) {
             const datasetIndex = context.datasetIndex;
             const periodIndex = context.dataIndex;
+            const units = context.parsed.y;
+            if (timePeriod === 'yoy') {
+              const year = yoyYears[datasetIndex];
+              const orderCount = yoyTotals[year]?.[periodIndex]?.order_count || 0;
+              return `${year}: ${units} units (${orderCount} orders)`;
+            }
             const category = displayCategories[datasetIndex];
             const period = periods[periodIndex];
             const item = processedData.find(d =>
               (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.category === category
             );
-            const units = context.parsed.y;
             const orderCount = item?.order_count || 0;
             return `${category}: ${units} units (${orderCount} orders)`;
           },
@@ -350,10 +395,10 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
     },
     scales: {
       x: {
-        stacked: true,
+        stacked: timePeriod !== 'yoy',
       },
       y: {
-        stacked: true,
+        stacked: timePeriod !== 'yoy',
         beginAtZero: true,
         ticks: {
           stepSize: 1,
@@ -361,6 +406,9 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
       },
     },
     onClick: async (event: ChartEvent, elements: ActiveElement[]) => {
+      // Drill-down is not supported in the year-over-year aggregated view
+      if (timePeriod === 'yoy') return;
+
       if (elements.length > 0) {
         const elementIndex = elements[0].index;
         const datasetIndex = elements[0].datasetIndex;
@@ -437,6 +485,7 @@ export default function UnitsSoldChart({ categories = [] }: UnitsSoldChartProps)
           <option value="month">By Month (Last 12 months)</option>
           <option value="week">By Week (Last 20 weeks)</option>
           <option value="day">By Day (Last 31 days)</option>
+          <option value="yoy">Year over Year (Last 3 years)</option>
         </select>
       </div>
 

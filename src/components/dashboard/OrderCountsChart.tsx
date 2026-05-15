@@ -25,13 +25,17 @@ ChartJS.register(
   Legend
 );
 
-type TimePeriod = 'year' | 'month' | 'week' | 'day';
+type TimePeriod = 'year' | 'month' | 'week' | 'day' | 'yoy';
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const YOY_YEAR_COLORS = ['#9CA3AF', '#3B82F6', '#10B981'];
 
 interface OrderCountData {
 	year?: string;
 	month?: string;
 	week?: string;
 	day?: string;
+	month_num?: number;
 	status: string;
 	count: number;
 }
@@ -175,6 +179,9 @@ export default function OrderCountsChart({ initialData }: OrderCountsChartProps)
 				case 'day':
 					params.append('days', '31');
 					break;
+				case 'yoy':
+					params.append('years', '3');
+					break;
 			}
 
 			const response = await fetch(`/api/dashboard/order-counts?${params.toString()}`);
@@ -223,9 +230,9 @@ export default function OrderCountsChart({ initialData }: OrderCountsChartProps)
 		String(item.year || item.month || item.week || item.day || '');
 
 	// Get unique periods and statuses
-	const periods = [...new Set(data.map(getItemPeriod))]
-		.filter((p) => p)
-		.sort();
+	const periods = timePeriod === 'yoy'
+		? []
+		: [...new Set(data.map(getItemPeriod))].filter((p) => p).sort();
 	const statuses = [...new Set(data.map((item) => item.status))].sort();
 
 	const getCountFor = (period: string, status: string) => {
@@ -234,17 +241,47 @@ export default function OrderCountsChart({ initialData }: OrderCountsChartProps)
 			.reduce((sum, item) => sum + item.count, 0);
 	};
 
+	// Year-over-year aggregation: total order count per (year, month), summed across statuses
+	const yoyYears = timePeriod === 'yoy'
+		? [...new Set(data.map((d) => String(d.year || '')))].filter((y) => y).sort()
+		: [];
+
+	const yoyCounts: Record<string, number[]> = {};
+	if (timePeriod === 'yoy') {
+		for (const year of yoyYears) {
+			yoyCounts[year] = Array(12).fill(0);
+		}
+		for (const item of data) {
+			const y = String(item.year || '');
+			const m = Number(item.month_num || 0);
+			if (y && m >= 1 && m <= 12 && yoyCounts[y]) {
+				yoyCounts[y][m - 1] += Number(item.count) || 0;
+			}
+		}
+	}
+
 	// Prepare chart data
-	const chartData = {
-		labels: periods.map((p) => formatPeriodLabel(p)),
-		datasets: statuses.map((status) => ({
-			label: status,
-			data: periods.map((period) => getCountFor(period, status)),
-			backgroundColor: statusColors[status] || '#6B7280',
-			borderColor: statusColors[status] || '#6B7280',
-			borderWidth: 1,
-		})),
-	};
+	const chartData = timePeriod === 'yoy'
+		? {
+			labels: MONTH_LABELS,
+			datasets: yoyYears.map((year, index) => ({
+				label: year,
+				data: yoyCounts[year] || [],
+				backgroundColor: YOY_YEAR_COLORS[index % YOY_YEAR_COLORS.length],
+				borderColor: YOY_YEAR_COLORS[index % YOY_YEAR_COLORS.length],
+				borderWidth: 1,
+			})),
+		}
+		: {
+			labels: periods.map((p) => formatPeriodLabel(p)),
+			datasets: statuses.map((status) => ({
+				label: status,
+				data: periods.map((period) => getCountFor(period, status)),
+				backgroundColor: statusColors[status] || '#6B7280',
+				borderColor: statusColors[status] || '#6B7280',
+				borderWidth: 1,
+			})),
+		};
 
   const options = {
     responsive: true,
@@ -263,10 +300,10 @@ export default function OrderCountsChart({ initialData }: OrderCountsChartProps)
     },
     scales: {
       x: {
-        stacked: true,
+        stacked: timePeriod !== 'yoy',
       },
       y: {
-        stacked: true,
+        stacked: timePeriod !== 'yoy',
         beginAtZero: true,
         ticks: {
           stepSize: 1,
@@ -276,37 +313,31 @@ export default function OrderCountsChart({ initialData }: OrderCountsChartProps)
 	onClick: async (event: ChartEvent, elements: ActiveElement[]) => {
 		if (elements.length === 0) return;
 
-		const elementIndex = elements[0].index;
-		const datasetIndex = elements[0].datasetIndex;
-		const period = periods[elementIndex];
-		const status = statuses[datasetIndex];
+		// Standard monthly drill-down by status
+		if (timePeriod === 'month') {
+			const period = periods[elements[0].index];
+			const status = statuses[elements[0].datasetIndex];
+			if (!period || !status) return;
 
-		// Drill-down is only supported for monthly view
-		if (!period || !status || timePeriod !== 'month') {
-			return;
-		}
-
-		const month = period;
-		setSelectedMonth(month);
-		setSelectedStatus(status);
-		setModalLoading(true);
-
-		try {
-			const response = await fetch(
-				`/api/orders/by-month-status?month=${month}&status=${encodeURIComponent(status)}`
-			);
-			if (response.ok) {
-				const orders = await response.json();
-				setModalOrders(orders);
-			} else {
-				console.error('Failed to fetch orders for month and status:', month, status);
+			setSelectedMonth(period);
+			setSelectedStatus(status);
+			setModalLoading(true);
+			try {
+				const response = await fetch(
+					`/api/orders/by-month-status?month=${period}&status=${encodeURIComponent(status)}`
+				);
+				if (response.ok) {
+					setModalOrders(await response.json());
+				} else {
+					console.error('Failed to fetch orders for month and status:', period, status);
+					setModalOrders([]);
+				}
+			} catch (error) {
+				console.error('Error fetching orders:', error);
 				setModalOrders([]);
+			} finally {
+				setModalLoading(false);
 			}
-		} catch (error) {
-			console.error('Error fetching orders:', error);
-			setModalOrders([]);
-		} finally {
-			setModalLoading(false);
 		}
 	},
   };
@@ -334,6 +365,7 @@ export default function OrderCountsChart({ initialData }: OrderCountsChartProps)
 	          <option value="month">By Month (Last 12 months)</option>
 	          <option value="week">By Week (Last 20 weeks)</option>
 	          <option value="day">By Day (Last 31 days)</option>
+	          <option value="yoy">Year over Year (Last 3 years)</option>
 	        </select>
 	      </div>
 
