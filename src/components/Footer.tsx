@@ -90,7 +90,7 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Contact</h3>
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Support</h3>
             <ul className="mt-4 space-y-2">
               <li className="text-sm text-gray-700">
                 11483 S Wexford Way, South Jordan, UT 84009
@@ -107,6 +107,21 @@ export default function Footer() {
                   className="text-sm font-medium text-green-600 hover:text-green-500"
                 >
                   Contact Us →
+                </Link>
+              </li>
+              <li>
+                <Link href="/shipping" className="text-sm text-gray-700 hover:text-green-500">
+                  Shipping & Returns
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="text-sm text-gray-700 hover:text-green-500">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="text-sm text-gray-700 hover:text-green-500">
+                  Terms of Service
                 </Link>
               </li>
             </ul>
