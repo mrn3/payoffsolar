@@ -1416,7 +1416,7 @@ export const ProductBundleItemModel = {
         expandedItems.push({
           product_id: item.component_product_id,
           quantity: item.quantity * bundleQuantity,
-          price: parseFloat(item.component_product_price) || 0
+          price: Number(item.component_product_price) || 0
         });
       }
     }
@@ -2788,7 +2788,7 @@ export const OrderModel = {
 	  },
 
   async getCostBreakdownByMonth(months = 12, categoryId?: string | null): Promise<Array<{ month: string; category_name: string; total_amount: number }>> {
-    const params = [months];
+    const params: Array<number | string> = [months];
     let categoryFilter = '';
 
     if (categoryId) {
@@ -2841,7 +2841,7 @@ export const OrderModel = {
   },
 
   async getCostBreakdownByYear(years = 5, categoryId?: string | null): Promise<Array<{ year: string; category_name: string; total_amount: number }>> {
-    const params = [years];
+    const params: Array<number | string> = [years];
     let categoryFilter = '';
 
     if (categoryId) {
@@ -2867,7 +2867,7 @@ export const OrderModel = {
   },
 
   async getCostBreakdownByWeek(weeks = 20, categoryId?: string | null): Promise<Array<{ week: string; category_name: string; total_amount: number }>> {
-    const params = [weeks];
+    const params: Array<number | string> = [weeks];
     let categoryFilter = '';
 
     if (categoryId) {
@@ -2893,7 +2893,7 @@ export const OrderModel = {
   },
 
   async getCostBreakdownByDay(days = 31, categoryId?: string | null): Promise<Array<{ day: string; category_name: string; total_amount: number }>> {
-    const params = [days];
+    const params: Array<number | string> = [days];
     let categoryFilter = '';
 
     if (categoryId) {
@@ -3304,7 +3304,7 @@ export const OrderModel = {
   },
 
   async getUnitsSoldByMonthAndState(months = 12, categoryId?: string | null): Promise<Array<{ month: string; state: string; units_sold: number; order_count: number }>> {
-    const params = [months];
+    const params: Array<number | string> = [months];
     let categoryFilter = '';
 
     if (categoryId) {
@@ -3332,7 +3332,7 @@ export const OrderModel = {
   },
 
   async getUnitsSoldByWeekAndState(weeks = 20, categoryId?: string | null): Promise<Array<{ week: string; state: string; units_sold: number; order_count: number }>> {
-    const params = [weeks];
+    const params: Array<number | string> = [weeks];
     let categoryFilter = '';
 
     if (categoryId) {
@@ -3360,7 +3360,7 @@ export const OrderModel = {
   },
 
   async getUnitsSoldByDayAndState(days = 31, categoryId?: string | null): Promise<Array<{ day: string; state: string; units_sold: number; order_count: number }>> {
-    const params = [days];
+    const params: Array<number | string> = [days];
     let categoryFilter = '';
 
     if (categoryId) {

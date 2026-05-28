@@ -128,7 +128,7 @@ function OrdersModal({ isOpen, onClose, month, orders, loading }: OrdersModalPro
                   {orders.map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(order.order_date)}
+                        {order.order_date ? formatDate(order.order_date) : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {order.contact_name || 'Unknown Contact'}

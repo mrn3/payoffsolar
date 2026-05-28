@@ -186,25 +186,25 @@ function OrdersModal({ isOpen, onClose, period, periodType, category, orders, lo
                     return (
                       <tr key={order.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatDate(order.order_date)}
+                          {order.order_date ? formatDate(order.order_date) : '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {order.contact_name || 'Unknown Contact'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            order.status === 'Complete' ? 'bg-green-100 text-green-800' :
-                            order.status === 'Paid' ? 'bg-purple-100 text-purple-800' :
-                            order.status === 'Proposed' ? 'bg-blue-100 text-blue-800' :
-                            order.status === 'Scheduled' ? 'bg-yellow-100 text-yellow-800' :
-                            order.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                            order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            order.status === 'paid' ? 'bg-purple-100 text-purple-800' :
+                            order.status === 'proposed' ? 'bg-blue-100 text-blue-800' :
+                            order.status === 'confirmed' || order.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                            order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
                             {order.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatCurrency(parseFloat(order.total))}
+                          {formatCurrency(order.total)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {formatCurrency(categoryAmount)}

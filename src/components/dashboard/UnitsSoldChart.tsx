@@ -134,7 +134,7 @@ function OrdersModal({ isOpen, onClose, period, category, timePeriod, orders, lo
                     {orders.map((order) => (
                       <tr key={order.id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(order.order_date).toLocaleDateString()}
+                          {order.order_date ? new Date(order.order_date).toLocaleDateString() : '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {order.contact_name || 'Unknown'}
@@ -147,7 +147,7 @@ function OrdersModal({ isOpen, onClose, period, category, timePeriod, orders, lo
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            order.status === 'complete' ? 'bg-green-100 text-green-800' :
+                            order.status === 'completed' ? 'bg-green-100 text-green-800' :
                             order.status === 'paid' ? 'bg-purple-100 text-purple-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
