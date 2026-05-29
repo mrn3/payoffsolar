@@ -191,9 +191,16 @@ function stringSimilarity(str1: string, str2: string): number {
 }
 
 // Normalize phone number for comparison
+// Strips all non-digit characters, then removes a leading country code "1"
+// so that "+1 (555) 123-4567" and "(555) 123-4567" both normalize to "5551234567".
 function normalizePhone(phone: string): string {
   if (!phone) return '';
-  return phone.replace(/\D/g, '');
+  const digits = phone.replace(/\D/g, '');
+  // Remove leading country code: if 11 digits and starts with "1", strip the "1"
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return digits.slice(1);
+  }
+  return digits;
 }
 
 // Calculate similarity between two contacts
