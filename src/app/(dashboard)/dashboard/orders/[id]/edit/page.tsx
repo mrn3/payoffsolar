@@ -174,7 +174,8 @@ export default function EditOrderPage() {
         router.push(`/dashboard/orders/${orderId}`);
       } else {
         const errorData = await _response.json();
-        setError(errorData.error || 'Failed to update order');
+        const details = Array.isArray(errorData.details) ? errorData.details.join(' ') : '';
+        setError([errorData.error || 'Failed to update order', details].filter(Boolean).join(': '));
       }
     } catch (err) {
       console.error('Error updating order:', err);

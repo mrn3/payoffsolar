@@ -96,7 +96,8 @@ export default function NewOrderPage() {
         router.push(`/dashboard/orders/${_data.order.id}`);
       } else {
         const errorData = await _response.json();
-        setError(errorData.error || 'Failed to create order');
+        const details = Array.isArray(errorData.details) ? errorData.details.join(' ') : '';
+        setError([errorData.error || 'Failed to create order', details].filter(Boolean).join(': '));
       }
     } catch (err) {
       console.error('Error creating order:', err);

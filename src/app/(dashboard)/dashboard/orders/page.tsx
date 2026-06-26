@@ -339,7 +339,10 @@ export default function OrdersPage() {
         fetchOrders(currentPage); // Refresh the orders list
       } else {
         const errorData = await _response.json();
-        toast.error(errorData.error || 'Failed to update orders');
+        const details = errorData.details && typeof errorData.details === 'object'
+          ? (Object.values(errorData.details) as string[][]).flat().join(' ')
+          : '';
+        toast.error([errorData.error || 'Failed to update orders', details].filter(Boolean).join(': '));
       }
     } catch (err) {
       console.error('Error updating orders:', err);
