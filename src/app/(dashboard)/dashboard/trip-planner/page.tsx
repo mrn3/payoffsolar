@@ -51,6 +51,8 @@ interface TripStopWithDistance {
   status: string;
   distanceFromPrevious?: number;
   googleMapsLink: string;
+  panels?: number;
+  inverters?: number;
 }
 
 interface TripSummary {
@@ -127,13 +129,32 @@ function SortableStop({ stop, index, onRemove }: SortableStopProps) {
             </span>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
               stop.status === 'complete' ? 'bg-green-100 text-green-800' :
+              stop.status === 'paid' ? 'bg-purple-100 text-purple-800' :
               stop.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
               stop.status === 'proposed' ? 'bg-yellow-100 text-yellow-800' :
+              stop.status === 'cancelled' ? 'bg-red-100 text-red-800' :
               'bg-gray-100 text-gray-800'
             }`}>
               {stop.status}
             </span>
           </div>
+
+          {((stop.panels ?? 0) > 0 || (stop.inverters ?? 0) > 0) && (
+            <div className="mt-2 flex items-center gap-4 text-sm">
+              {(stop.panels ?? 0) > 0 && (
+                <span className="flex items-center gap-1 text-orange-700">
+                  <FaSolarPanel className="h-3.5 w-3.5" />
+                  <span>{stop.panels} panel{stop.panels === 1 ? '' : 's'}</span>
+                </span>
+              )}
+              {(stop.inverters ?? 0) > 0 && (
+                <span className="flex items-center gap-1 text-blue-700">
+                  <FaBolt className="h-3.5 w-3.5" />
+                  <span>{stop.inverters} inverter{stop.inverters === 1 ? '' : 's'}</span>
+                </span>
+              )}
+            </div>
+          )}
 
           {stop.distanceFromPrevious !== undefined && (
             <div className="mt-2 text-sm text-blue-600 font-medium">

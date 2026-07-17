@@ -13,6 +13,8 @@ export interface TripStop {
   longitude: number | null;
   total: number;
   status: string;
+  panels?: number;
+  inverters?: number;
 }
 
 export interface TripStopWithDistance extends TripStop {

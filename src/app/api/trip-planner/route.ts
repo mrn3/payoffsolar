@@ -59,36 +59,46 @@ export async function POST(request: NextRequest) {
     // Generate Apple Maps directions link for the entire route
     const directionsLink = generateAppleMapsDirectionsLink(tripStops);
 
-    // Count solar panels and inverters across all orders
-    let totalPanels = 0;
-    let totalInverters = 0;
+    // Fetch per-order solar panel and inverter counts
+    const stopProductMap = new Map<string, { panels: number; inverters: number }>();
     if (orderIds.length > 0) {
       const placeholders = orderIds.map(() => '?').join(', ');
-      const productCounts = await executeQuery<{ totalPanels: number; totalInverters: number }>(
+      const perOrderCounts = await executeQuery<{ order_id: string; panels: number; inverters: number }>(
         `SELECT
-          COALESCE(SUM(CASE WHEN pc.slug = 'solar-panels' THEN oi.quantity ELSE 0 END), 0) as totalPanels,
-          COALESCE(SUM(CASE WHEN pc.slug = 'inverters' THEN oi.quantity ELSE 0 END), 0) as totalInverters
+          oi.order_id,
+          COALESCE(SUM(CASE WHEN pc.slug = 'solar-panels' THEN oi.quantity ELSE 0 END), 0) as panels,
+          COALESCE(SUM(CASE WHEN pc.slug = 'inverters' THEN oi.quantity ELSE 0 END), 0) as inverters
          FROM order_items oi
          JOIN products p ON oi.product_id = p.id
          JOIN product_categories pc ON p.category_id = pc.id
-         WHERE oi.order_id IN (${placeholders})`,
+         WHERE oi.order_id IN (${placeholders})
+         GROUP BY oi.order_id`,
         orderIds
       );
-      if (productCounts.length > 0) {
-        totalPanels = Number(productCounts[0].totalPanels);
-        totalInverters = Number(productCounts[0].totalInverters);
+      for (const row of perOrderCounts) {
+        stopProductMap.set(row.order_id, { panels: Number(row.panels), inverters: Number(row.inverters) });
       }
     }
 
+    // Enrich each stop with its panel/inverter counts
+    const enrichedStops = stopsWithDistances.map(stop => ({
+      ...stop,
+      panels: stopProductMap.get(stop.orderId)?.panels ?? 0,
+      inverters: stopProductMap.get(stop.orderId)?.inverters ?? 0,
+    }));
+
+    const totalPanels = enrichedStops.reduce((sum, s) => sum + s.panels, 0);
+    const totalInverters = enrichedStops.reduce((sum, s) => sum + s.inverters, 0);
+
     return NextResponse.json({
-      stops: stopsWithDistances,
+      stops: enrichedStops,
       totalDistance,
       directionsLink,
       summary: {
-        totalStops: stopsWithDistances.length,
-        stopsWithCoordinates: stopsWithDistances.filter(s => s.latitude !== null && s.longitude !== null).length,
-        stopsWithoutCoordinates: stopsWithDistances.filter(s => s.latitude === null || s.longitude === null).length,
-        totalRevenue: stopsWithDistances.reduce((sum, stop) => sum + stop.total, 0),
+        totalStops: enrichedStops.length,
+        stopsWithCoordinates: enrichedStops.filter(s => s.latitude !== null && s.longitude !== null).length,
+        stopsWithoutCoordinates: enrichedStops.filter(s => s.latitude === null || s.longitude === null).length,
+        totalRevenue: enrichedStops.reduce((sum, stop) => sum + stop.total, 0),
         totalPanels,
         totalInverters,
       }
