@@ -51,7 +51,7 @@ interface TripStopWithDistance {
   status: string;
   distanceFromPrevious?: number;
   googleMapsLink: string;
-  panels?: number;
+  panelsByType?: { name: string; quantity: number }[];
   inverters?: number;
 }
 
@@ -139,19 +139,26 @@ function SortableStop({ stop, index, onRemove }: SortableStopProps) {
             </span>
           </div>
 
-          {((stop.panels ?? 0) > 0 || (stop.inverters ?? 0) > 0) && (
-            <div className="mt-2 flex items-center gap-4 text-sm">
-              {(stop.panels ?? 0) > 0 && (
-                <span className="flex items-center gap-1 text-orange-700">
-                  <FaSolarPanel className="h-3.5 w-3.5" />
-                  <span>{stop.panels} panel{stop.panels === 1 ? '' : 's'}</span>
-                </span>
+          {((stop.panelsByType?.length ?? 0) > 0 || (stop.inverters ?? 0) > 0) && (
+            <div className="mt-2 text-sm space-y-1">
+              {stop.panelsByType && stop.panelsByType.length > 0 && (
+                <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
+                  <span className="flex items-center gap-1 text-orange-700 font-medium shrink-0">
+                    <FaSolarPanel className="h-3.5 w-3.5" />
+                    <span>Panels:</span>
+                  </span>
+                  {stop.panelsByType.map((pt) => (
+                    <span key={pt.name} className="text-orange-800 bg-orange-50 px-2 py-0.5 rounded text-xs">
+                      {pt.quantity}× {pt.name}
+                    </span>
+                  ))}
+                </div>
               )}
               {(stop.inverters ?? 0) > 0 && (
-                <span className="flex items-center gap-1 text-blue-700">
+                <div className="flex items-center gap-1 text-blue-700">
                   <FaBolt className="h-3.5 w-3.5" />
                   <span>{stop.inverters} inverter{stop.inverters === 1 ? '' : 's'}</span>
-                </span>
+                </div>
               )}
             </div>
           )}

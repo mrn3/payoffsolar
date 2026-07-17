@@ -44,36 +44,53 @@ export async function GET(
     const appleMapsLink = generateAppleMapsDirectionsLink(tripStops);
     const googleMapsLink = generateGoogleMapsDirectionsLink(tripStops);
 
-    // Fetch per-order solar panel and inverter counts
+    // Fetch per-order panel breakdown by product type and inverter counts
     const orderIds = tripOrders.map(o => o.order_id);
-    const stopProductMap = new Map<string, { panels: number; inverters: number }>();
+    const panelsByTypeMap = new Map<string, { name: string; quantity: number }[]>();
+    const inverterCountMap = new Map<string, number>();
     if (orderIds.length > 0) {
       const placeholders = orderIds.map(() => '?').join(', ');
-      const perOrderCounts = await executeQuery<{ order_id: string; panels: number; inverters: number }>(
-        `SELECT
-          oi.order_id,
-          COALESCE(SUM(CASE WHEN pc.slug = 'solar-panels' THEN oi.quantity ELSE 0 END), 0) as panels,
-          COALESCE(SUM(CASE WHEN pc.slug = 'inverters' THEN oi.quantity ELSE 0 END), 0) as inverters
+
+      const panelRows = await executeQuery<{ order_id: string; product_name: string; quantity: number }>(
+        `SELECT oi.order_id, p.name as product_name, SUM(oi.quantity) as quantity
          FROM order_items oi
          JOIN products p ON oi.product_id = p.id
          JOIN product_categories pc ON p.category_id = pc.id
-         WHERE oi.order_id IN (${placeholders})
+         WHERE pc.slug = 'solar-panels' AND oi.order_id IN (${placeholders})
+         GROUP BY oi.order_id, p.id, p.name
+         ORDER BY p.name`,
+        orderIds
+      );
+      for (const row of panelRows) {
+        const existing = panelsByTypeMap.get(row.order_id) ?? [];
+        existing.push({ name: row.product_name, quantity: Number(row.quantity) });
+        panelsByTypeMap.set(row.order_id, existing);
+      }
+
+      const inverterRows = await executeQuery<{ order_id: string; inverters: number }>(
+        `SELECT oi.order_id, COALESCE(SUM(oi.quantity), 0) as inverters
+         FROM order_items oi
+         JOIN products p ON oi.product_id = p.id
+         JOIN product_categories pc ON p.category_id = pc.id
+         WHERE pc.slug = 'inverters' AND oi.order_id IN (${placeholders})
          GROUP BY oi.order_id`,
         orderIds
       );
-      for (const row of perOrderCounts) {
-        stopProductMap.set(row.order_id, { panels: Number(row.panels), inverters: Number(row.inverters) });
+      for (const row of inverterRows) {
+        inverterCountMap.set(row.order_id, Number(row.inverters));
       }
     }
 
-    // Enrich each stop with its panel/inverter counts
+    // Enrich each stop with panel breakdown and inverter count
     const enrichedStops = stopsWithDistances.map(stop => ({
       ...stop,
-      panels: stopProductMap.get(stop.orderId)?.panels ?? 0,
-      inverters: stopProductMap.get(stop.orderId)?.inverters ?? 0,
+      panelsByType: panelsByTypeMap.get(stop.orderId) ?? [],
+      inverters: inverterCountMap.get(stop.orderId) ?? 0,
     }));
 
-    const totalPanels = enrichedStops.reduce((sum, s) => sum + s.panels, 0);
+    const totalPanels = enrichedStops.reduce(
+      (sum, s) => sum + s.panelsByType.reduce((t, p) => t + p.quantity, 0), 0
+    );
     const totalInverters = enrichedStops.reduce((sum, s) => sum + s.inverters, 0);
 
     return NextResponse.json({

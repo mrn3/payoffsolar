@@ -13,7 +13,7 @@ export interface TripStop {
   longitude: number | null;
   total: number;
   status: string;
-  panels?: number;
+  panelsByType?: { name: string; quantity: number }[];
   inverters?: number;
 }
 
