@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { FaRoute, FaMapMarkerAlt, FaExternalLinkAlt, FaGripVertical, FaTrash, FaDollarSign, FaPlus } from 'react-icons/fa';
+import { FaRoute, FaMapMarkerAlt, FaExternalLinkAlt, FaGripVertical, FaTrash, FaDollarSign, FaPlus, FaSolarPanel, FaBolt } from 'react-icons/fa';
 import {
   DndContext,
   closestCenter,
@@ -58,6 +58,8 @@ interface TripSummary {
   stopsWithCoordinates: number;
   stopsWithoutCoordinates: number;
   totalRevenue: number;
+  totalPanels: number;
+  totalInverters: number;
 }
 
 interface SortableStopProps {
@@ -721,6 +723,22 @@ export default function TripPlannerPage() {
                     <p className="mt-1 text-2xl font-bold text-yellow-900">
                       ${summary?.totalRevenue.toFixed(2) || '0.00'}
                     </p>
+                  </div>
+
+                  <div className="bg-orange-50 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 text-orange-700">
+                      <FaSolarPanel className="h-5 w-5" />
+                      <span className="text-sm font-medium">Solar Panels</span>
+                    </div>
+                    <p className="mt-1 text-2xl font-bold text-orange-900">{summary?.totalPanels || 0}</p>
+                  </div>
+
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-700">
+                      <FaBolt className="h-5 w-5" />
+                      <span className="text-sm font-medium">Inverters</span>
+                    </div>
+                    <p className="mt-1 text-2xl font-bold text-blue-900">{summary?.totalInverters || 0}</p>
                   </div>
                 </div>
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TripModel, TripOrderModel } from '@/lib/models';
 import { requireAuth } from '@/lib/auth';
 import { calculateRouteDistances, calculateTotalDistance, generateAppleMapsDirectionsLink, generateGoogleMapsDirectionsLink, TripStop } from '@/lib/utils/tripPlanner';
+import { executeQuery } from '@/lib/mysql/connection';
 
 export async function GET(
   request: NextRequest,
@@ -43,6 +44,28 @@ export async function GET(
     const appleMapsLink = generateAppleMapsDirectionsLink(tripStops);
     const googleMapsLink = generateGoogleMapsDirectionsLink(tripStops);
 
+    // Count solar panels and inverters across all orders in the trip
+    const orderIds = tripOrders.map(o => o.order_id);
+    let totalPanels = 0;
+    let totalInverters = 0;
+    if (orderIds.length > 0) {
+      const placeholders = orderIds.map(() => '?').join(', ');
+      const productCounts = await executeQuery<{ totalPanels: number; totalInverters: number }>(
+        `SELECT
+          COALESCE(SUM(CASE WHEN pc.slug = 'solar-panels' THEN oi.quantity ELSE 0 END), 0) as totalPanels,
+          COALESCE(SUM(CASE WHEN pc.slug = 'inverters' THEN oi.quantity ELSE 0 END), 0) as totalInverters
+         FROM order_items oi
+         JOIN products p ON oi.product_id = p.id
+         JOIN product_categories pc ON p.category_id = pc.id
+         WHERE oi.order_id IN (${placeholders})`,
+        orderIds
+      );
+      if (productCounts.length > 0) {
+        totalPanels = Number(productCounts[0].totalPanels);
+        totalInverters = Number(productCounts[0].totalInverters);
+      }
+    }
+
     return NextResponse.json({
       trip,
       stops: stopsWithDistances,
@@ -54,6 +77,8 @@ export async function GET(
         stopsWithCoordinates: stopsWithDistances.filter(s => s.latitude !== null && s.longitude !== null).length,
         stopsWithoutCoordinates: stopsWithDistances.filter(s => s.latitude === null || s.longitude === null).length,
         totalRevenue: stopsWithDistances.reduce((sum, stop) => sum + stop.total, 0),
+        totalPanels,
+        totalInverters,
       }
     });
   } catch (error) {
