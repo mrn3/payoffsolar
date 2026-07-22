@@ -5749,7 +5749,9 @@ export interface TripOrder {
 }
 
 export interface TripOrderWithDetails extends TripOrder {
+  contact_id?: string;
   contact_name?: string;
+  contact_phone?: string;
   contact_address?: string;
   contact_city?: string;
   contact_state?: string;
@@ -5856,7 +5858,9 @@ export const TripOrderModel = {
   async getByTripId(tripId: string): Promise<TripOrderWithDetails[]> {
     return executeQuery<TripOrderWithDetails>(
       `SELECT to2.*,
+              c.id as contact_id,
               c.name as contact_name,
+              c.phone as contact_phone,
               c.address as contact_address,
               c.city as contact_city,
               c.state as contact_state,

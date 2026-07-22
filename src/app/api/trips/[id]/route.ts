@@ -28,7 +28,9 @@ export async function GET(
     // Convert to trip stops and calculate distances
     const tripStops: TripStop[] = tripOrders.map(order => ({
       orderId: order.order_id,
+      contactId: order.contact_id,
       contactName: order.contact_name || 'Unknown',
+      contactPhone: order.contact_phone || undefined,
       address: order.contact_address || '',
       city: order.contact_city || '',
       state: order.contact_state || '',

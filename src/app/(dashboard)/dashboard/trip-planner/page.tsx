@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { FaRoute, FaMapMarkerAlt, FaExternalLinkAlt, FaGripVertical, FaTrash, FaDollarSign, FaPlus, FaSolarPanel, FaBolt } from 'react-icons/fa';
+import { FaRoute, FaMapMarkerAlt, FaExternalLinkAlt, FaGripVertical, FaTrash, FaDollarSign, FaPlus, FaSolarPanel, FaBolt, FaSms } from 'react-icons/fa';
 import {
   DndContext,
   closestCenter,
@@ -40,7 +40,9 @@ interface Order {
 
 interface TripStopWithDistance {
   orderId: string;
+  contactId?: string;
   contactName: string;
+  contactPhone?: string;
   address: string;
   city: string;
   state: string;
@@ -105,7 +107,18 @@ function SortableStop({ stop, index, onRemove }: SortableStopProps) {
               <span className="flex items-center justify-center w-8 h-8 bg-green-100 text-green-700 rounded-full font-semibold text-sm">
                 {index + 1}
               </span>
-              <h3 className="font-semibold text-gray-900">{stop.contactName}</h3>
+              <h3 className="font-semibold text-gray-900">
+                {stop.contactId ? (
+                  <Link
+                    href={`/dashboard/contacts/${stop.contactId}`}
+                    className="hover:text-green-700 hover:underline"
+                  >
+                    {stop.contactName}
+                  </Link>
+                ) : (
+                  stop.contactName
+                )}
+              </h3>
             </div>
             <button
               onClick={() => onRemove(stop.orderId)}
@@ -121,6 +134,18 @@ function SortableStop({ stop, index, onRemove }: SortableStopProps) {
               <FaMapMarkerAlt className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <span>{stop.address}, {stop.city}, {stop.state} {stop.zip}</span>
             </div>
+            {stop.contactPhone && (
+              <div className="mt-1 flex items-center gap-1">
+                <FaSms className="h-4 w-4 flex-shrink-0" />
+                <a
+                  href={`sms:${stop.contactPhone}`}
+                  className="text-blue-600 hover:text-blue-800"
+                  title="Text"
+                >
+                  {stop.contactPhone}
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="mt-2 flex items-center gap-4 text-sm">
@@ -140,7 +165,11 @@ function SortableStop({ stop, index, onRemove }: SortableStopProps) {
           </div>
 
           {((stop.panelsByType?.length ?? 0) > 0 || (stop.inverters ?? 0) > 0) && (
-            <div className="mt-2 text-sm space-y-1">
+            <Link
+              href={`/dashboard/orders/${stop.orderId}`}
+              className="mt-2 block text-sm space-y-1 hover:opacity-80"
+              title="View order"
+            >
               {stop.panelsByType && stop.panelsByType.length > 0 && (
                 <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
                   <span className="flex items-center gap-1 text-orange-700 font-medium shrink-0">
@@ -160,7 +189,7 @@ function SortableStop({ stop, index, onRemove }: SortableStopProps) {
                   <span>{stop.inverters} inverter{stop.inverters === 1 ? '' : 's'}</span>
                 </div>
               )}
-            </div>
+            </Link>
           )}
 
           {stop.distanceFromPrevious !== undefined && (

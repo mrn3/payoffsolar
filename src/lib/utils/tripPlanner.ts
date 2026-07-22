@@ -4,7 +4,9 @@
 
 export interface TripStop {
   orderId: string;
+  contactId?: string;
   contactName: string;
+  contactPhone?: string;
   address: string;
   city: string;
   state: string;
