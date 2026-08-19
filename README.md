@@ -134,22 +134,22 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ### Automated Deployment (Recommended)
 
-For production server deployment, use the automated deploy script:
+Run the deployment from the project root on your local machine:
 
-```bash
-cd /opt/bitnami/projects/payoffsolar
-./deploy.sh
-```
+`./deploy-remote.sh`
 
 The deploy script will:
-- Check prerequisites and dependencies
-- Create a backup of the current build
-- Pull latest changes from git
-- Install/update dependencies
-- Run database setup if needed
-- Build the application
-- Restart the PM2 process
-- Verify the deployment
+- Verify that the working tree is clean and the current commit is pushed
+- Install dependencies and build the application locally
+- Upload the `.next` artifact to the server
+- Pull the matching commit and install production dependencies on the server
+- Run database/upload setup without rebuilding on the server
+- Atomically activate the build, restart PM2, and run a health check
+- Restore the previous build if the health check fails
+
+The local environment is used at build time, so its `NEXT_PUBLIC_*` values must
+match production. Override the SSH alias or server directory with `DEPLOY_HOST`
+and `DEPLOY_DIR` if needed.
 
 ### Local Development Deployment
 

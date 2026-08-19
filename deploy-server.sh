@@ -1,9 +1,41 @@
 #!/bin/bash
 
-# Server Deployment Script for Database Configuration Fix
-# Run this script on your production server
+# Production server deployment. Accepts a locally built Next.js artifact from
+# deploy-remote.sh, while retaining a server-build fallback for manual use.
 
-set -e  # Exit on any error
+set -Eeuo pipefail
+
+ARTIFACT_PATH=""
+EXPECTED_COMMIT=""
+STAGING_DIR=""
+ACTIVATED_ARTIFACT=false
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --artifact)
+            ARTIFACT_PATH="${2:-}"
+            shift 2
+            ;;
+        --commit)
+            EXPECTED_COMMIT="${2:-}"
+            shift 2
+            ;;
+        *)
+            echo "❌ Unknown argument: $1"
+            exit 1
+            ;;
+    esac
+done
+
+cleanup() {
+    if [ -n "$STAGING_DIR" ] && [ -d "$STAGING_DIR" ]; then
+        rm -rf "$STAGING_DIR"
+    fi
+    if [ -n "$ARTIFACT_PATH" ] && [ -f "$ARTIFACT_PATH" ]; then
+        rm -f "$ARTIFACT_PATH"
+    fi
+}
+trap cleanup EXIT
 
 echo "🚀 Starting Payoff Solar server deployment..."
 
@@ -40,11 +72,20 @@ fi
 
 # Pull latest changes
 echo "📥 Pulling latest changes from git..."
-git pull
+git pull --ff-only
+
+if [ -n "$EXPECTED_COMMIT" ] && [ "$(git rev-parse HEAD)" != "$EXPECTED_COMMIT" ]; then
+    echo "❌ Server checkout does not match the commit used for the local build."
+    exit 1
+fi
 
 # Install dependencies
 echo "📦 Installing dependencies..."
-yarn install
+if [ -n "$ARTIFACT_PATH" ]; then
+    yarn install --frozen-lockfile --production=true
+else
+    yarn install --frozen-lockfile
+fi
 
 # Test database connection
 echo "🔍 Testing database connection..."
@@ -63,17 +104,67 @@ else
     echo "⚠️  Upload directories setup had issues, but continuing..."
 fi
 
-# Build the application
-echo "🏗️  Building application..."
-yarn build
+# Activate a local build artifact, or retain the manual server-build fallback.
+if [ -n "$ARTIFACT_PATH" ]; then
+    echo "📦 Activating locally built application..."
+    if [ ! -f "$ARTIFACT_PATH" ]; then
+        echo "❌ Build artifact not found: $ARTIFACT_PATH"
+        exit 1
+    fi
+
+    STAGING_DIR="$(mktemp -d ./.deploy-next.XXXXXX)"
+    tar -xzf "$ARTIFACT_PATH" -C "$STAGING_DIR"
+    if [ ! -f "$STAGING_DIR/.next/BUILD_ID" ]; then
+        echo "❌ Invalid build artifact: .next/BUILD_ID is missing."
+        exit 1
+    fi
+
+    rm -rf .next.previous
+    if [ -d .next ]; then
+        mv .next .next.previous
+    fi
+    mv "$STAGING_DIR/.next" .next
+    rmdir "$STAGING_DIR"
+    STAGING_DIR=""
+    ACTIVATED_ARTIFACT=true
+else
+    echo "🏗️  No artifact supplied; building application on the server..."
+    yarn build
+fi
 
 # Restart PM2
 echo "🔄 Restarting PM2 process..."
-if pm2 list | grep -q "payoffsolar"; then
-    pm2 restart payoffsolar
+if pm2 describe payoffsolar >/dev/null 2>&1; then
+    pm2 restart payoffsolar --update-env
 else
     echo "⚠️  PM2 process 'payoffsolar' not found. Starting new process..."
     pm2 start "yarn start" --name "payoffsolar"
+fi
+
+# Verify the new process and restore the previous build if it cannot serve HTTP.
+echo "🩺 Checking application health..."
+HEALTHY=false
+for attempt in $(seq 1 12); do
+    if curl --fail --silent --show-error --max-time 5 http://127.0.0.1:3000/ >/dev/null 2>&1; then
+        HEALTHY=true
+        break
+    fi
+    sleep 2
+done
+
+if [ "$HEALTHY" != true ]; then
+    echo "❌ Application health check failed."
+    if [ "$ACTIVATED_ARTIFACT" = true ] && [ -d .next.previous ]; then
+        echo "↩️  Restoring previous build..."
+        rm -rf .next
+        mv .next.previous .next
+        pm2 restart payoffsolar --update-env
+    fi
+    exit 1
+fi
+
+if [ "$ACTIVATED_ARTIFACT" = true ]; then
+    rm -rf .next.previous
 fi
 
 # Check PM2 status
