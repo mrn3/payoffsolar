@@ -50,7 +50,7 @@ if [ ! -f .next/BUILD_ID ]; then
 fi
 
 echo "📦 Packaging build artifact..."
-tar --exclude='.next/cache' -czf "$LOCAL_ARTIFACT" .next
+COPYFILE_DISABLE=1 tar --exclude='.next/cache' -czf "$LOCAL_ARTIFACT" .next
 
 echo "📤 Uploading build artifact to $REMOTE_HOST..."
 scp "$LOCAL_ARTIFACT" "${REMOTE_HOST}:${REMOTE_ARTIFACT}"

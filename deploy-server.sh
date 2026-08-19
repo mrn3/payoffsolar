@@ -124,7 +124,7 @@ if [ -n "$ARTIFACT_PATH" ]; then
         mv .next .next.previous
     fi
     mv "$STAGING_DIR/.next" .next
-    rmdir "$STAGING_DIR"
+    rm -rf "$STAGING_DIR"
     STAGING_DIR=""
     ACTIVATED_ARTIFACT=true
 else
