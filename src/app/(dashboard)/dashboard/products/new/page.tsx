@@ -84,9 +84,9 @@ export default function NewProductPage() {
     if (!formData.sku.trim()) {
       newErrors.sku = 'SKU is required';
     } else {
-      const skuRegex = /^[A-Za-z0-9_*\-+./\s]+$/;
+      const skuRegex = /^[A-Za-z0-9_*\-+./()\s]+$/;
       if (!skuRegex.test(formData.sku)) {
-        newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, asterisks, periods, plus signs, forward slashes, and spaces';
+        newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, asterisks, periods, plus signs, forward slashes, parentheses, and spaces';
       }
     }
 
@@ -149,9 +149,9 @@ export default function NewProductPage() {
       if (!formData.sku.trim()) {
         newErrors.sku = 'SKU is required';
       } else {
-        const skuRegex = /^[A-Za-z0-9_*\-+./\s]+$/;
+        const skuRegex = /^[A-Za-z0-9_*\-+./()\s]+$/;
         if (!skuRegex.test(formData.sku)) {
-          newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, asterisks, periods, plus signs, forward slashes, and spaces';
+          newErrors.sku = 'SKU can only contain letters, numbers, hyphens, underscores, asterisks, periods, plus signs, forward slashes, parentheses, and spaces';
         } else {
           delete newErrors.sku;
         }
