@@ -112,6 +112,28 @@ describe('Dashboard charts in Year-over-Year mode', () => {
     });
   });
 
+  it('RevenueByStateChart ranks states numerically when revenue values are strings', async () => {
+    mockFetchOnce([
+      { month: '2026-01', state: 'UT', revenue: '1', count: '1' },
+      { month: '2026-02', state: 'UT', revenue: '999', count: '1' },
+      { month: '2026-01', state: 'AK', revenue: '500', count: '1' },
+      { month: '2026-02', state: 'AK', revenue: '400', count: '1' },
+      { month: '2026-01', state: 'AZ', revenue: '400', count: '1' },
+      { month: '2026-02', state: 'AZ', revenue: '400', count: '1' },
+      { month: '2026-01', state: 'CA', revenue: '300', count: '1' },
+      { month: '2026-02', state: 'CA', revenue: '300', count: '1' },
+      { month: '2026-01', state: 'FL', revenue: '200', count: '1' },
+      { month: '2026-02', state: 'FL', revenue: '200', count: '1' },
+    ]);
+    render(<RevenueByStateChart initialData={[]} />);
+
+    await waitFor(() => {
+      const last = barProps.at(-1)!;
+      expect(last.data.datasets.map((d: any) => d.label)).toEqual(['UT', 'AK', 'AZ', 'CA', 'Others']);
+      expect(last.data.datasets[0].data).toEqual([1, 999]);
+    });
+  });
+
   it('UnitsSoldChart aggregates categories per (year, month)', async () => {
     mockFetchOnce([
       { year: '2023', month_num: 9, category: 'Panels', units_sold: 10, order_count: 2 },

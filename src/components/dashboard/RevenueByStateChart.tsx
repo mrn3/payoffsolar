@@ -292,7 +292,9 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
 
   // Calculate total revenue by state to determine top 4
   const stateTotals = data.reduce((acc, item) => {
-    acc[item.state] = (acc[item.state] || 0) + item.revenue;
+    // mysql2 may deserialize DECIMAL/SUM values as strings. Always aggregate
+    // numerically so a state is ranked by its actual revenue total.
+    acc[item.state] = (acc[item.state] || 0) + (Number(item.revenue) || 0);
     return acc;
   }, {} as Record<string, number>);
 
@@ -315,14 +317,14 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
         const item = data.find(d =>
           (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.state === state
         );
-        return sum + (item ? item.revenue : 0);
+        return sum + (item ? (Number(item.revenue) || 0) : 0);
       }, 0);
 
       const othersCount = otherStates.reduce((sum, state) => {
         const item = data.find(d =>
           (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.state === state
         );
-        return sum + (item ? item.count : 0);
+        return sum + (item ? (Number(item.count) || 0) : 0);
       }, 0);
 
       if (othersRevenue > 0) {
@@ -376,7 +378,7 @@ export default function RevenueByStateChart({ initialData }: RevenueByStateChart
             const item = processedData.find(d =>
               (String(d.year) === period || d.month === period || d.week === period || d.day === period) && d.state === state
             );
-            return item ? item.revenue : 0;
+            return item ? (Number(item.revenue) || 0) : 0;
           }),
           backgroundColor: stateColors[index % stateColors.length],
           borderColor: stateColors[index % stateColors.length],
