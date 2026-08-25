@@ -9,6 +9,7 @@ import RevenueByStateChart from '@/components/dashboard/RevenueByStateChart';
 import OrderCountsChart from '@/components/dashboard/OrderCountsChart';
 import CostBreakdownChart from '@/components/dashboard/CostBreakdownChart';
 import UnitsSoldChart from '@/components/dashboard/UnitsSoldChart';
+import ProductUnitsByStatusChart from '@/components/dashboard/ProductUnitsByStatusChart';
 
 async function getStats(userId?: string, userRole?: string) {
   try {
@@ -222,10 +223,21 @@ async function getProductCategories(userRole?: string) {
   }
 }
 
+async function getDashboardProducts(userRole?: string) {
+  if (userRole === 'contact') return [];
+
+  try {
+    return await ProductModel.getDashboardOptionsIncludingInactive();
+  } catch (error) {
+    console.error('Error getting products for dashboard chart:', error);
+    return [];
+  }
+}
+
 export default async function DashboardPage() {
   console.log('🏠 Loading dashboard page...');
 
-  let profile, stats, activity, revenueData, revenueByStateData, orderCountsData, costBreakdownData, costCategories, productCategories;
+  let profile, stats, activity, revenueData, revenueByStateData, orderCountsData, costBreakdownData, costCategories, productCategories, dashboardProducts;
 
   try {
     profile = await getUserProfile();
@@ -239,6 +251,7 @@ export default async function DashboardPage() {
     costBreakdownData = await getCostBreakdownData(profile?.role || undefined);
     costCategories = await getCostCategories(profile?.role || undefined);
     productCategories = await getProductCategories(profile?.role || undefined);
+    dashboardProducts = await getDashboardProducts(profile?.role || undefined);
 
     console.log('✅ Dashboard data loaded successfully');
   } catch (error) {
@@ -263,6 +276,7 @@ export default async function DashboardPage() {
   costBreakdownData = costBreakdownData || [];
   costCategories = costCategories || [];
   productCategories = productCategories || [];
+  dashboardProducts = dashboardProducts || [];
 
   // Combine recent activities and sort by date
   const allActivities = [
@@ -579,6 +593,18 @@ export default async function DashboardPage() {
                 <h3 className="text-lg leading-6 font-medium text-gray-900">Units Sold Over Time by Product Category (Complete Orders)</h3>
                 <div className="mt-4">
                   <UnitsSoldChart />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Units by Order Status Chart */}
+          <div className="mt-5">
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Number of Units Over Time by Product</h3>
+                <div className="mt-4">
+                  <ProductUnitsByStatusChart products={dashboardProducts} />
                 </div>
               </div>
             </div>

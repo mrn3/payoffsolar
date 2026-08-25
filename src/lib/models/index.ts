@@ -820,6 +820,14 @@ export const ProductModel = {
     );
   },
 
+  async getDashboardOptionsIncludingInactive(): Promise<Array<Pick<Product, 'id' | 'name' | 'sku' | 'is_active'>>> {
+    return executeQuery<Array<Pick<Product, 'id' | 'name' | 'sku' | 'is_active'>>[number]>(
+      `SELECT id, name, sku, is_active
+       FROM products
+       ORDER BY name ASC, sku ASC`
+    );
+  },
+
   async search(query: string, limit = 50, offset = 0, sort = ''): Promise<ProductWithFirstImage[]> {
     const searchTerm = `%${query}%`;
     let orderBy = 'p.created_at DESC'; // default sort
@@ -2148,6 +2156,51 @@ const buildOrderByClause = (sortField: string, sortDirection: string): string =>
   return `ORDER BY ${field} ${direction}, o.created_at DESC`;
 };
 
+export type DashboardTimePeriod = 'year' | 'month' | 'week' | 'day' | 'yoy';
+
+export interface ProductUnitsByStatusRow {
+  year?: string;
+  month?: string;
+  week?: string;
+  day?: string;
+  month_num?: number;
+  status: string;
+  units: number;
+}
+
+const productUnitsPeriodSql: Record<DashboardTimePeriod, { select: string; groupBy: string; dateFilter: string; orderBy: string }> = {
+  year: {
+    select: 'YEAR(o.order_date) as year',
+    groupBy: 'YEAR(o.order_date)',
+    dateFilter: 'o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? YEAR)',
+    orderBy: 'year ASC, status ASC',
+  },
+  month: {
+    select: "DATE_FORMAT(o.order_date, '%Y-%m') as month",
+    groupBy: "DATE_FORMAT(o.order_date, '%Y-%m')",
+    dateFilter: 'o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)',
+    orderBy: 'month ASC, status ASC',
+  },
+  week: {
+    select: "CONCAT(YEAR(o.order_date), '-', LPAD(WEEK(o.order_date, 1), 2, '0')) as week",
+    groupBy: 'YEAR(o.order_date), WEEK(o.order_date, 1)',
+    dateFilter: 'o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? WEEK)',
+    orderBy: 'week ASC, status ASC',
+  },
+  day: {
+    select: "DATE_FORMAT(o.order_date, '%Y-%m-%d') as day",
+    groupBy: "DATE_FORMAT(o.order_date, '%Y-%m-%d')",
+    dateFilter: 'o.order_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)',
+    orderBy: 'day ASC, status ASC',
+  },
+  yoy: {
+    select: 'YEAR(o.order_date) as year, MONTH(o.order_date) as month_num',
+    groupBy: 'YEAR(o.order_date), MONTH(o.order_date)',
+    dateFilter: 'o.order_date >= MAKEDATE(YEAR(CURDATE()) - ? + 1, 1)',
+    orderBy: 'year ASC, month_num ASC, status ASC',
+  },
+};
+
 export const OrderModel = {
   async getAll(limit = 50, offset = 0, sortField = 'order_date', sortDirection = 'desc'): Promise<OrderWithContact[]> {
     const orderByClause = buildOrderByClause(sortField, sortDirection);
@@ -2166,6 +2219,31 @@ export const OrderModel = {
        GROUP BY o.id, c.name, c.city, c.state, c.address, c.latitude, c.longitude
        ${orderByClause} LIMIT ? OFFSET ?`,
       [limit, offset]
+    );
+  },
+
+  async getProductUnitsByStatus(
+    timePeriod: DashboardTimePeriod,
+    periodCount: number,
+    productId?: string | null
+  ): Promise<ProductUnitsByStatusRow[]> {
+    const periodSql = productUnitsPeriodSql[timePeriod];
+    const productFilter = productId ? 'AND oi.product_id = ?' : '';
+    const params: Array<number | string> = productId ? [periodCount, productId] : [periodCount];
+
+    return executeQuery<ProductUnitsByStatusRow>(
+      `SELECT
+         ${periodSql.select},
+         o.status as status,
+         SUM(oi.quantity) as units
+       FROM orders o
+       INNER JOIN order_items oi ON o.id = oi.order_id
+       INNER JOIN products p ON oi.product_id = p.id
+       WHERE ${periodSql.dateFilter}
+         ${productFilter}
+       GROUP BY ${periodSql.groupBy}, o.status
+       ORDER BY ${periodSql.orderBy}`,
+      params
     );
   },
 
