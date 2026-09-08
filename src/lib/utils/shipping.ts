@@ -1,5 +1,6 @@
 import { ShippingMethod, Warehouse } from '@/lib/types';
 import { WarehouseModel } from '@/lib/models';
+import { geocodeAddress } from '@/lib/geocode';
 
 export interface ShippingCalculationRequest {
   productId: string;
@@ -16,7 +17,9 @@ export interface ShippingCalculationRequest {
 
 export interface ShippingCalculationResult {
   method: ShippingMethod;
-  cost: number;
+  cost: number; // Per-product portion (scales with quantity)
+  orderCost?: number; // Charged once per order regardless of how many products use this method
+  distanceMiles?: number;
   estimatedDays?: number;
   error?: string;
   warehouses?: Warehouse[]; // For local pickup methods
@@ -81,36 +84,71 @@ function toRadians(degrees: number): number {
   return degrees * (Math.PI / 180);
 }
 
+// Freight origin when no warehouse is configured: South Jordan, Utah
+export const DEFAULT_FREIGHT_ORIGIN = { lat: 40.5622, lon: -111.9297 };
+
+// Straight-line distance is multiplied by this to approximate road miles
+export const ROAD_DISTANCE_FACTOR = 1.2;
+
+export const DEFAULT_FREIGHT_RATES = {
+  base_cost: 100,
+  per_unit_cost: 25,
+  per_mile_cost: 0.5
+};
+
+const GEOCODE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const geocodeCache = new Map<string, { coords: { lat: number; lon: number } | null; expires: number }>();
+
 /**
- * Get coordinates for an address using a geocoding service
+ * Get coordinates for an address. Results are cached in memory so repeated
+ * checkout recalculations don't hit the geocoder for the same address.
  */
 export async function getCoordinates(address: string): Promise<{ lat: number; lon: number } | null> {
+  const key = address.trim().toLowerCase().replace(/\s+/g, ' ');
+  if (!key) return null;
+
+  const cached = geocodeCache.get(key);
+  if (cached && cached.expires > Date.now()) {
+    return cached.coords;
+  }
+
+  let coords: { lat: number; lon: number } | null = null;
   try {
-    // This is a placeholder - in production you'd use a real geocoding service
-    // like Google Maps Geocoding API, MapBox, or similar
-    const response = await fetch(
-      `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(address)}&key=${process.env.OPENCAGE_API_KEY}`
-    );
-    
-    if (!response.ok) {
-      throw new Error('Geocoding service unavailable');
+    const result = await geocodeAddress(address);
+    if (result) {
+      coords = { lat: result.lat, lon: result.lng };
     }
-    
-    const data = await response.json();
-    
-    if (data.results && data.results.length > 0) {
-      const result = data.results[0];
-      return {
-        lat: result.geometry.lat,
-        lon: result.geometry.lng
-      };
-    }
-    
-    return null;
   } catch (error) {
     console.error('Error getting coordinates:', error);
-    return null;
   }
+
+  if (coords) {
+    geocodeCache.set(key, { coords, expires: Date.now() + GEOCODE_CACHE_TTL_MS });
+  }
+  return coords;
+}
+
+/**
+ * Geocode a customer address, falling back to city/state/zip and then zip only
+ * when the full street address can't be resolved.
+ */
+export async function getShippingAddressCoordinates(address: {
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+}): Promise<{ lat: number; lon: number } | null> {
+  const candidates = [
+    `${address.address}, ${address.city}, ${address.state} ${address.zip}`,
+    `${address.city}, ${address.state} ${address.zip}`,
+    `${address.zip}, USA`
+  ];
+
+  for (const candidate of candidates) {
+    const coords = await getCoordinates(candidate);
+    if (coords) return coords;
+  }
+  return null;
 }
 
 /**
@@ -122,6 +160,51 @@ export function calculateDistanceBasedShipping(
   perMileRate = 0.50
 ): number {
   return Math.max(baseRate, baseRate + (distanceMiles * perMileRate));
+}
+
+/**
+ * Estimate LTL freight: a flat per-order charge plus a per-mile charge (both
+ * charged once per order) and a per-unit charge that scales with quantity.
+ */
+export function calculateFreightShipping(
+  method: Pick<ShippingMethod, 'base_cost' | 'per_unit_cost' | 'per_mile_cost'>,
+  distanceMiles: number,
+  quantity: number
+): { orderCost: number; productCost: number; total: number } {
+  const baseCost = method.base_cost ?? DEFAULT_FREIGHT_RATES.base_cost;
+  const perUnitCost = method.per_unit_cost ?? DEFAULT_FREIGHT_RATES.per_unit_cost;
+  const perMileCost = method.per_mile_cost ?? DEFAULT_FREIGHT_RATES.per_mile_cost;
+
+  const miles = Math.max(0, distanceMiles);
+  const units = Math.max(0, quantity);
+
+  const orderCost = Math.round((baseCost + miles * perMileCost) * 100) / 100;
+  const productCost = Math.round(perUnitCost * units * 100) / 100;
+
+  return { orderCost, productCost, total: Math.round((orderCost + productCost) * 100) / 100 };
+}
+
+/**
+ * Road-mile estimate between an origin and the customer's shipping address
+ */
+export async function estimateRoadMiles(
+  origin: { lat: number; lon: number },
+  shippingAddress: ShippingCalculationRequest['shippingAddress']
+): Promise<number | null> {
+  const customerCoords = await getShippingAddressCoordinates(shippingAddress);
+  if (!customerCoords) return null;
+
+  const straightLine = calculateDistance(origin.lat, origin.lon, customerCoords.lat, customerCoords.lon);
+  return Math.round(straightLine * ROAD_DISTANCE_FACTOR);
+}
+
+async function getFreightOrigin(warehouse?: Warehouse): Promise<{ lat: number; lon: number }> {
+  if (warehouse && (warehouse.address || warehouse.city || warehouse.zip)) {
+    const query = [warehouse.address, warehouse.city, warehouse.state, warehouse.zip].filter(Boolean).join(', ');
+    const coords = await getCoordinates(query);
+    if (coords) return coords;
+  }
+  return DEFAULT_FREIGHT_ORIGIN;
 }
 
 /**
@@ -176,6 +259,27 @@ export async function calculateShippingForMethod(
         result.cost = calculateDistanceBasedShipping(distance) * request.quantity;
         result.estimatedDays = distance < 100 ? 2 : distance < 500 ? 4 : 7;
         break;
+
+      case 'freight': {
+        let originWarehouse = warehouse;
+        if (!originWarehouse && method.warehouse_id) {
+          originWarehouse = (await WarehouseModel.getById(method.warehouse_id)) || undefined;
+        }
+        const origin = await getFreightOrigin(originWarehouse);
+        const miles = await estimateRoadMiles(origin, request.shippingAddress);
+
+        if (miles === null) {
+          result.error = 'Unable to estimate freight - could not locate shipping address';
+          break;
+        }
+
+        const freight = calculateFreightShipping(method, miles, request.quantity);
+        result.cost = freight.productCost;
+        result.orderCost = freight.orderCost;
+        result.distanceMiles = miles;
+        result.estimatedDays = miles < 300 ? 3 : miles < 1000 ? 5 : 7;
+        break;
+      }
 
       case 'api_calculated':
         // Placeholder for third-party shipping API integration
@@ -274,11 +378,12 @@ export async function getShippingQuote(
     }
   }
 
-  // Sort by cost (ascending)
-  methods.sort((a, b) => a.cost - b.cost);
+  // Sort by total cost (ascending)
+  const fullCost = (m: ShippingCalculationResult) => m.cost + (m.orderCost || 0);
+  methods.sort((a, b) => fullCost(a) - fullCost(b));
 
-  const defaultMethod = methods.find(m => m.cost === 0) || methods[0];
-  const totalCost = defaultMethod?.cost || 0;
+  const defaultMethod = methods.find(m => fullCost(m) === 0) || methods[0];
+  const totalCost = defaultMethod ? fullCost(defaultMethod) : 0;
 
   return {
     methods,
@@ -307,6 +412,12 @@ export function validateShippingMethod(method: ShippingMethod): string[] {
     case 'calculated_distance':
       if (!method.warehouse_id) {
         errors.push('Distance-based shipping requires a warehouse selection');
+      }
+      break;
+
+    case 'freight':
+      if ([method.base_cost, method.per_unit_cost, method.per_mile_cost].some(v => v !== undefined && v < 0)) {
+        errors.push('Freight rates cannot be negative');
       }
       break;
 

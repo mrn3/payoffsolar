@@ -38,8 +38,8 @@ export class ShippingService {
 
     // Get warehouse if needed for distance-based shipping
     let warehouse: Warehouse | undefined;
-    if (product.shipping_methods?.some(method => method.type === 'calculated_distance')) {
-      const distanceMethod = product.shipping_methods.find(method => method.type === 'calculated_distance');
+    if (product.shipping_methods?.some(method => method.type === 'calculated_distance' || method.type === 'freight')) {
+      const distanceMethod = product.shipping_methods.find(method => method.type === 'calculated_distance' || method.type === 'freight');
       if (distanceMethod?.warehouse_id) {
         const warehouseData = await WarehouseModel.getById(distanceMethod.warehouse_id);
         if (warehouseData) {
@@ -80,8 +80,9 @@ export class ShippingService {
       quote: ShippingQuote;
     }>;
   }> {
+    type MethodData = { cost: number; orderCost?: number; estimatedDays?: number; warehouses?: any[] };
     const breakdown = [];
-    const productMethodsMap = new Map<string, Map<string, { cost: number; estimatedDays?: number; warehouses?: any[] }>>();
+    const productMethodsMap = new Map<string, Map<string, MethodData>>();
 
     // Calculate shipping for each product
     for (const item of items) {
@@ -156,11 +157,12 @@ export class ShippingService {
       });
 
       // Track which shipping methods this product supports
-      const productMethods = new Map<string, { cost: number; estimatedDays?: number; warehouses?: any[] }>();
+      const productMethods = new Map<string, MethodData>();
       for (const method of quote.methods) {
         const key = method.method.name;
         productMethods.set(key, {
           cost: method.cost,
+          orderCost: method.orderCost,
           estimatedDays: method.estimatedDays,
           warehouses: method.warehouses
         });
@@ -179,6 +181,8 @@ export class ShippingService {
           // Check if ALL other products also support this method
           let allProductsSupport = true;
           let totalCost = methodData.cost;
+          // Order-level charges (e.g. freight base + mileage) are applied once per order
+          let orderCost = methodData.orderCost || 0;
           let maxEstimatedDays = methodData.estimatedDays;
           let combinedWarehouses = methodData.warehouses;
 
@@ -191,6 +195,7 @@ export class ShippingService {
 
             const otherMethodData = productMethods.get(methodName)!;
             totalCost += otherMethodData.cost;
+            orderCost = Math.max(orderCost, otherMethodData.orderCost || 0);
 
             if (otherMethodData.estimatedDays && maxEstimatedDays) {
               maxEstimatedDays = Math.max(maxEstimatedDays, otherMethodData.estimatedDays);
@@ -207,7 +212,7 @@ export class ShippingService {
 
           if (allProductsSupport) {
             commonMethods.set(methodName, {
-              cost: totalCost,
+              cost: Math.round((totalCost + orderCost) * 100) / 100,
               estimatedDays: maxEstimatedDays,
               warehouses: combinedWarehouses
             });
@@ -261,7 +266,7 @@ export class ShippingService {
       type: method.type,
       name: method.name,
       description: method.description,
-      requiresCalculation: method.type === 'calculated_distance' || method.type === 'api_calculated'
+      requiresCalculation: method.type === 'calculated_distance' || method.type === 'freight' || method.type === 'api_calculated'
     }));
 
     return {
@@ -337,7 +342,7 @@ export class ShippingService {
 
     const hasFreeShipping = productShippingMethods.some(method => method.type === 'free');
     const hasVariableCost = productShippingMethods.some(
-      method => method.type === 'calculated_distance' || method.type === 'api_calculated'
+      method => method.type === 'calculated_distance' || method.type === 'freight' || method.type === 'api_calculated'
     );
 
     const minFixedCost = fixedCosts.length > 0 ? Math.min(...fixedCosts) : Infinity;

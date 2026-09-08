@@ -674,13 +674,16 @@ export const ProductCategoryModel = {
 
 // Shipping method types
 export interface ShippingMethod {
-  type: 'free' | 'fixed' | 'calculated_distance' | 'api_calculated' | 'local_pickup';
+  type: 'free' | 'fixed' | 'calculated_distance' | 'freight' | 'api_calculated' | 'local_pickup';
   name: string;
   description?: string;
   cost?: number; // For fixed amount
-  warehouse_id?: string; // For distance calculation
+  warehouse_id?: string; // For distance/freight calculation (origin); freight defaults to South Jordan, UT
   pickup_location?: string; // For local pickup (legacy - use warehouse_ids instead)
   warehouse_ids?: string[]; // For local pickup - multiple warehouses
+  base_cost?: number; // For freight - flat charge per order
+  per_unit_cost?: number; // For freight - charge per unit (e.g. per panel)
+  per_mile_cost?: number; // For freight - charge per mile from origin, per order
   api_config?: {
     provider: string;
     settings: Record<string, any>;

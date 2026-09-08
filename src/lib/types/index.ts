@@ -40,10 +40,20 @@ export interface ProductCategory {
 }
 
 export interface ShippingMethod {
-  type: 'free' | 'fixed' | 'calculated' | 'pickup';
-  amount?: number;
-  warehouses?: string[];
+  type: 'free' | 'fixed' | 'calculated_distance' | 'freight' | 'api_calculated' | 'local_pickup';
+  name: string;
   description?: string;
+  cost?: number;
+  warehouse_id?: string;
+  pickup_location?: string;
+  warehouse_ids?: string[];
+  base_cost?: number;
+  per_unit_cost?: number;
+  per_mile_cost?: number;
+  api_config?: {
+    provider: string;
+    settings: Record<string, any>;
+  };
 }
 
 export interface Product {

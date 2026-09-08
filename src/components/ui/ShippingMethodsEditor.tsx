@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ShippingMethod, Warehouse } from '@/lib/types';
-import { validateShippingMethod, DEFAULT_SHIPPING_METHODS } from '@/lib/utils/shipping-client';
+import { validateShippingMethod, DEFAULT_SHIPPING_METHODS, DEFAULT_FREIGHT_RATES } from '@/lib/utils/shipping-client';
 import { FaPlus, FaTrash, FaInfoCircle } from 'react-icons/fa';
 
 interface ShippingMethodsEditorProps {
@@ -126,6 +126,12 @@ export default function ShippingMethodsEditor({ value, onChange, warehouses = []
     
     // Clear related fields when type changes
     if (field === 'type') {
+      const clearFreightFields = () => {
+        delete updatedMethods[index].base_cost;
+        delete updatedMethods[index].per_unit_cost;
+        delete updatedMethods[index].per_mile_cost;
+      };
+
       switch (fieldValue) {
         case 'free':
           delete updatedMethods[index].cost;
@@ -133,30 +139,44 @@ export default function ShippingMethodsEditor({ value, onChange, warehouses = []
           delete updatedMethods[index].pickup_location;
           delete updatedMethods[index].warehouse_ids;
           delete updatedMethods[index].api_config;
+          clearFreightFields();
           break;
         case 'fixed':
           delete updatedMethods[index].warehouse_id;
           delete updatedMethods[index].pickup_location;
           delete updatedMethods[index].warehouse_ids;
           delete updatedMethods[index].api_config;
+          clearFreightFields();
           break;
         case 'calculated_distance':
           delete updatedMethods[index].cost;
           delete updatedMethods[index].pickup_location;
           delete updatedMethods[index].warehouse_ids;
           delete updatedMethods[index].api_config;
+          clearFreightFields();
+          break;
+        case 'freight':
+          delete updatedMethods[index].cost;
+          delete updatedMethods[index].pickup_location;
+          delete updatedMethods[index].warehouse_ids;
+          delete updatedMethods[index].api_config;
+          updatedMethods[index].base_cost = updatedMethods[index].base_cost ?? DEFAULT_FREIGHT_RATES.base_cost;
+          updatedMethods[index].per_unit_cost = updatedMethods[index].per_unit_cost ?? DEFAULT_FREIGHT_RATES.per_unit_cost;
+          updatedMethods[index].per_mile_cost = updatedMethods[index].per_mile_cost ?? DEFAULT_FREIGHT_RATES.per_mile_cost;
           break;
         case 'api_calculated':
           delete updatedMethods[index].cost;
           delete updatedMethods[index].warehouse_id;
           delete updatedMethods[index].pickup_location;
           delete updatedMethods[index].warehouse_ids;
+          clearFreightFields();
           break;
         case 'local_pickup':
           delete updatedMethods[index].cost;
           delete updatedMethods[index].warehouse_id;
           delete updatedMethods[index].pickup_location;
           delete updatedMethods[index].api_config;
+          clearFreightFields();
           // Initialize warehouse_ids if not present
           if (!updatedMethods[index].warehouse_ids) {
             updatedMethods[index].warehouse_ids = [];
@@ -334,6 +354,7 @@ export default function ShippingMethodsEditor({ value, onChange, warehouses = []
                         <option value="free">Free Shipping</option>
                         <option value="fixed">Fixed Amount</option>
                         <option value="calculated_distance">Calculated by Distance</option>
+                        <option value="freight">Freight (LTL estimate)</option>
                         <option value="api_calculated">API Calculated</option>
                       </>
                     )}
@@ -443,6 +464,68 @@ export default function ShippingMethodsEditor({ value, onChange, warehouses = []
                       No warehouses configured. Add warehouses in the admin panel.
                     </p>
                   )}
+                </div>
+              )}
+
+              {method.type === 'freight' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Base per order ($)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={method.base_cost ?? ''}
+                        onChange={(e) => handleMethodChange(index, 'base_cost', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        placeholder={String(DEFAULT_FREIGHT_RATES.base_cost)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Per unit ($)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={method.per_unit_cost ?? ''}
+                        onChange={(e) => handleMethodChange(index, 'per_unit_cost', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        placeholder={String(DEFAULT_FREIGHT_RATES.per_unit_cost)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Per mile ($)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={method.per_mile_cost ?? ''}
+                        onChange={(e) => handleMethodChange(index, 'per_mile_cost', e.target.value === '' ? undefined : parseFloat(e.target.value) || 0)}
+                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        placeholder={String(DEFAULT_FREIGHT_RATES.per_mile_cost)}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Ship-from Warehouse</label>
+                    <select
+                      value={method.warehouse_id || ''}
+                      onChange={(e) => handleMethodChange(index, 'warehouse_id', e.target.value || undefined)}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                    >
+                      <option value="">Default (South Jordan, UT)</option>
+                      {availableWarehouses.map((warehouse) => (
+                        <option key={warehouse.id} value={warehouse.id}>
+                          {warehouse.name} - {warehouse.city}, {warehouse.state}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="text-sm text-gray-500 flex items-center">
+                    <FaInfoCircle className="mr-1" />
+                    Cost = base + (per mile × estimated road miles) once per order, plus per unit × quantity.
+                  </p>
                 </div>
               )}
 
