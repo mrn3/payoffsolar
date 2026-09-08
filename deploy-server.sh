@@ -80,11 +80,19 @@ if [ -n "$EXPECTED_COMMIT" ] && [ "$(git rev-parse HEAD)" != "$EXPECTED_COMMIT" 
 fi
 
 # Install dependencies
+#
+# The server environment may have a corporate/internal npm registry
+# (e.g. an Adobe Artifactory URL) configured via env vars or a global
+# ~/.npmrc, which requires auth this server doesn't have and causes
+# "401 Unauthorized" errors. Yarn's env vars take precedence over the
+# project's .yarnrc, so explicitly unset them and force the public
+# registry for this install.
 echo "📦 Installing dependencies..."
+unset NPM_CONFIG_REGISTRY YARN_REGISTRY npm_config_registry
 if [ -n "$ARTIFACT_PATH" ]; then
-    yarn install --frozen-lockfile --production=true
+    yarn install --frozen-lockfile --production=true --registry https://registry.npmjs.org
 else
-    yarn install --frozen-lockfile
+    yarn install --frozen-lockfile --registry https://registry.npmjs.org
 fi
 
 # Test database connection
