@@ -75,23 +75,30 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
 	  };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white shadow-sm">
+      <div className="bg-[#075b42] text-xs text-white/90">
+        <div className="container mx-auto flex justify-between px-4 py-2">
+          <span>South Jordan, Utah</span>
+          <span className="hidden sm:block">Clean Energy. Stronger Communities. A Brighter Utah.</span>
+          <a href="tel:8014486396">(801) 448-6396</a>
+        </div>
+      </div>
+      <div className="mx-auto flex h-[4.5rem] max-w-[1280px] items-center justify-between gap-6 px-6 md:px-10">
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2">
-            <FaSun className="h-6 w-6 text-green-500" />
-            <span className="text-xl font-bold text-gray-900">Payoff Solar</span>
+          <Link href="/" className="flex shrink-0 items-center gap-2 whitespace-nowrap">
+            <FaSun className="h-7 w-7 text-green-500" />
+            <span className="text-xl font-extrabold tracking-tight text-[#0b2330]">Payoff Solar</span>
           </Link>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex gap-6">
+        <nav className="hidden items-center gap-5 lg:gap-7 md:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`text-sm font-medium transition-colors ${
-                isActive(item.href) ? 'text-green-500' : 'text-gray-700 hover:text-green-500'
+                className={`whitespace-nowrap border-b-2 border-transparent py-5 text-sm font-semibold transition-colors ${
+                  isActive(item.href) ? 'border-green-500 text-green-600' : 'text-gray-600 hover:border-green-300 hover:text-green-600'
               }`}
             >
               {item.label}
