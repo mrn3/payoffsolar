@@ -78,8 +78,8 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white shadow-sm">
       <div className="bg-[#075b42] text-xs text-white/90">
         <div className="container mx-auto flex justify-between px-4 py-2">
-          <span>South Jordan, Utah</span>
-          <span className="hidden sm:block">Clean Energy. Stronger Communities. A Brighter Utah.</span>
+          <span>Serving homeowners nationwide</span>
+          <span className="hidden sm:block">Clean Energy. Stronger Communities. A Brighter Future.</span>
           <a href="tel:8014486396">(801) 448-6396</a>
         </div>
       </div>

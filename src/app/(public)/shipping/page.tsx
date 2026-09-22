@@ -28,7 +28,7 @@ export default function ShippingReturnsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div className="bg-green-50 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Local Pickup</h3>
-                <p className="text-gray-700 text-sm mb-3">Pick up your order directly from our warehouse. No freight costs — ideal for Utah customers.</p>
+                <p className="text-gray-700 text-sm mb-3">Pick up your order directly from our warehouse. No freight costs — ideal for local customers.</p>
                 <div className="text-sm text-gray-600">
                   <p className="font-medium">Warehouse Location:</p>
                   <p>8224 S Industry Way, Suite 300</p>

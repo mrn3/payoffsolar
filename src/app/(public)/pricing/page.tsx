@@ -10,7 +10,7 @@ export default function PricingPage() {
       price: '$1,800',
       originalPrice: '$3,600',
       priceWithTaxCredit: '$1,260',
-      description: 'Perfect way to get started. In Utah, complies with House Bill 340 so no need for permits.',
+      description: 'A flexible way to get started with solar equipment and installation support.',
       power: '1.2 kW',
       panels: '3 panels',
       coverage: '500 sq ft',
@@ -153,7 +153,7 @@ export default function PricingPage() {
             <p className="text-xl mb-8">
               Choose the perfect solar solution for your home or business. All packages include professional installation, warranties, and ongoing support.  
               <br /><br />
-              We primarily serve the Utah, Nevada, and Alaska areas, but we are expanding to other states, so please contact us if you are in another state.
+              We serve customers nationwide. Contact us to confirm availability and installation support in your area.
             </p>
           </div>
         </div>
