@@ -233,19 +233,14 @@ export default function SolarCalculator() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <FaCalculator className="h-8 w-8 text-green-600" />
-          <h2 className="text-3xl font-bold text-gray-900">30-Second Solar Energy System Calculator</h2>
+    <div className="mx-auto max-w-5xl rounded-lg bg-white p-5 shadow-lg md:p-7">
+      <div className="mb-7 text-center">
+        <div className="mb-3 flex items-center justify-center gap-3">
+          <FaCalculator className="h-7 w-7 text-green-600" />
+          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">Build your solar system</h2>
         </div>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Design your perfect solar system based on your needs, and get instant estimates for costs, and recommended solutions.
-          Each solar panel you purchase will save you approximately $5/month. 
-          Our goal is to help you find a solution that pays for itself in 5 years or less, since most solutions today are closer to 10-20 years. 
-          <br /><br />
-          We provide everything for $1.50 per watt, which is less than half of the $3-4 per watt that most installers charge.  
-          You can choose to do some of the work yourself (and save money), or we can provide all the services you need.
+        <p className="mx-auto max-w-2xl text-sm leading-relaxed text-gray-600 md:text-base">
+          Choose your system, monthly savings goal, and services to get an instant cost and payback estimate. Build it yourself or let our team handle the work.
         </p>
       </div>
 
