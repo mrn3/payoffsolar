@@ -233,7 +233,7 @@ export default function SolarCalculator() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl rounded-lg bg-white p-5 shadow-lg md:p-7">
+    <div className="w-full rounded-lg bg-white p-5 shadow-lg md:p-7">
       <div className="mb-7 text-center">
         <div className="mb-3 flex items-center justify-center gap-3">
           <FaCalculator className="h-7 w-7 text-green-600" />
