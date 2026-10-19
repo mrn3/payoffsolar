@@ -3,6 +3,9 @@ const nextConfig = {
 
   // Disable source maps in production to save memory
   productionBrowserSourceMaps: false,
+  experimental: {
+    inlineCss: true,
+  },
   typescript: {
     // Warning: This allows production builds to successfully complete even if
     // your project has type errors.
