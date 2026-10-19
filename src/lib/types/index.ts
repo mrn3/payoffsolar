@@ -170,6 +170,7 @@ export interface CartItem {
   product_sku: string;
   product_price: number;
   product_image_url?: string;
+  product_tax_percentage: number;
   quantity: number;
   affiliate_code?: string;
   affiliate_discount?: number;

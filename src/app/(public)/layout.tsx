@@ -5,6 +5,7 @@ import PublicHeader from '@/components/PublicHeader';
 import { CartProvider } from '@/contexts/CartContext';
 import CartSidebar from '@/components/cart/CartSidebar';
 import { FaFacebook, FaInstagram, FaLinkedin, FaSun, FaTwitter } from 'react-icons/fa';
+import { jsonLd, SITE_URL } from '@/lib/seo';
 
 // Force dynamic rendering for public pages that use cookies
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,16 @@ export default async function PublicLayout({
 
   return (
     <CartProvider>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        '@id': `${SITE_URL}/#organization`,
+        name: 'Payoff Solar',
+        url: SITE_URL,
+        logo: `${SITE_URL}/app-icon-1024.png`,
+        email: 'matt@payoffsolar.com',
+        telephone: '+1-801-448-6396',
+      }) }} />
       <div className="flex min-h-screen flex-col">
         <PublicHeader userProfile={userProfile} />
 

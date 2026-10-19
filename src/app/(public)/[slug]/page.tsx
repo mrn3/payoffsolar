@@ -1,61 +1,23 @@
-import React from 'react';
+import React, { cache } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import { BlockRenderer } from '@/components/content-blocks';
 import { FaArrowLeft, FaCalendar, FaUser } from 'react-icons/fa';
+import { ContentModel, ContentBlockModel } from '@/lib/models';
+import { pageMetadata } from '@/lib/seo';
+import { createTextPreview } from '@/lib/utils/text';
 
 interface ContentPageProps {
   params: Promise<{ slug: string }>;
 }
 
-interface ContentData {
-  _id: string;
-  title: string;
-  slug: string;
-  content?: string;
-  content_mode?: 'rich_text' | 'blocks';
-  type_name?: string;
-  author_name?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-async function getContent(slug: string): Promise<{ content: ContentData; blocks?: any[] } | null> {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/public/content/${slug}`, {
-      cache: 'no-store' // Ensure fresh data
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    const content = data.content;
-
-    // If content uses blocks mode, fetch the blocks
-    let blocks = [];
-    if (content.content_mode === 'blocks') {
-      try {
-        const blocksResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/public/content-blocks/${content.id}`, {
-          cache: 'no-store'
-        });
-        if (blocksResponse.ok) {
-          const blocksData = await blocksResponse.json();
-          blocks = blocksData.blocks;
-        }
-      } catch (error) {
-        console.error('Error fetching content blocks:', error);
-      }
-    }
-
-    return { content, blocks };
-  } catch (error) {
-    console.error('Error fetching content:', error);
-    return null;
-  }
-}
+const getContent = cache(async (slug: string) => {
+  const content = await ContentModel.getBySlug(slug);
+  if (!content || !content.published) return null;
+  const blocks = content.content_mode === 'blocks' ? await ContentBlockModel.getByContentId(content.id) : [];
+  return { content, blocks };
+});
 
 export default async function ContentPage({ params }: ContentPageProps) {
   const { slug } = await params;
@@ -231,10 +193,9 @@ export async function generateMetadata({ params }: ContentPageProps) {
     };
   }
 
-  return {
-    title: content.title || 'Untitled',
-    description: content.content && typeof content.content === 'string'
-      ? content.content.replace(/<[^>]*>/g, '').substring(0, 160) + '...'
-      : `Read ${content.title || 'this content'} on Payoff Solar`,
-  };
+  return pageMetadata(
+    `${content.title} | Payoff Solar`,
+    content.content ? createTextPreview(content.content, 157) : `Read ${content.title} on Payoff Solar`,
+    `/${encodeURIComponent(content.slug)}`,
+  );
 }

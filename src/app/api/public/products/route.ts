@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ProductModel } from '@/lib/models';
+import { getCatalog } from '@/lib/catalog';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,36 +9,10 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const sort = searchParams.get('sort') || '';
     const categoryId = searchParams.get('category') || '';
-    const offset = (page - 1) * limit;
-
-    let products;
-    let total;
-
-    if (search && categoryId) {
-      products = await ProductModel.searchByCategory(search, categoryId, limit, offset, sort);
-      total = await ProductModel.getSearchByCategoryCount(search, categoryId);
-    } else if (search) {
-      products = await ProductModel.search(search, limit, offset, sort);
-      total = await ProductModel.getSearchCount(search);
-    } else if (categoryId) {
-      products = await ProductModel.getByCategory(categoryId, limit, offset, sort);
-      total = await ProductModel.getCategoryCount(categoryId);
-    } else {
-      products = await ProductModel.getAll(limit, offset, sort);
-      total = await ProductModel.getCount();
+    if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(limit) || limit < 1) {
+      return NextResponse.json({ error: 'Page and limit must be positive integers' }, { status: 400 });
     }
-
-    const totalPages = Math.ceil(total / limit);
-
-    return NextResponse.json({
-      products,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages
-      }
-    });
+    return NextResponse.json(await getCatalog({ page, limit, search, sort, category: categoryId }));
   } catch (error) {
     console.error('Error fetching public products:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

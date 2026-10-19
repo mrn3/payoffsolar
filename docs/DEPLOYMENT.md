@@ -1,5 +1,49 @@
 # PayoffSolar Deployment Guide
 
+## Runtime and SEO rollout
+
+- Use Node.js **20.9 or newer** (prefer a currently supported LTS release) and Yarn 1.x.
+  Next.js is pinned to 16.4.2 and React/React DOM to 19.3.1. Install with
+  `yarn install --frozen-lockfile`; rebuild and restart the application to activate patches.
+- Build and development commands explicitly use webpack to preserve the existing
+  low-memory webpack configuration. `yarn lint` now uses ESLint directly.
+  The pre-existing build-time TypeScript bypass remains; run `yarn tsc --noEmit`
+  separately when validating types.
+- Canonical URLs intentionally use `https://payoffsolar.com`, not the incoming
+  host or `NEXT_PUBLIC_BASE_URL`. Configure the web server/CDN to redirect HTTP
+  and `www` to that origin.
+- Verify `/robots.txt` and `/sitemap.xml` after deployment. The sitemap queries
+  MySQL at request time and includes core pages, categories, active products,
+  and published CMS content. A database error must fail rather than publish an
+  empty or partial sitemap. Submit the sitemap in Google Search Console and Bing
+  Webmaster Tools.
+- Catalog/category pages and product details now include product content in
+  server-rendered HTML. Search, sorting, pagination, cart, affiliate codes, and
+  analytics remain interactive. Pagination has crawlable links.
+- Missing/inactive products return 404; out-of-stock active products remain
+  available. Legacy product-ID URLs permanently redirect to the slug URL when
+  available, preserving query parameters (including affiliate referrals).
+  Legacy category shortcuts also permanently redirect.
+- Titles, descriptions, canonicals, social metadata, Organization JSON-LD,
+  and Product/Offer JSON-LD are emitted from server-side data. No review scores
+  or unverified ratings are included in structured data.
+
+### Actions outside this repository
+
+1. Check ownership and availability of the former `utahsolarforall.com` domain
+   with your registrar. The report's availability claim has not been verified.
+   If you recover it, enable renewal and configure HTTPS plus permanent redirects
+   to the matching current pages. Do not redirect every retired product to the
+   homepage; use a genuine replacement where one exists, otherwise keep a 404.
+2. Investigate the backlink report in Search Console. Do not automatically disavow
+   links solely because a third-party tool labels them spam; evaluate Google's
+   guidance and evidence of a manual action or manipulative link building first.
+3. Confirm the deployed Node.js version, framework version, HTTP status codes,
+   raw HTML product links, canonical URLs, and structured data using production
+   checks and Google's Rich Results Test. Re-crawl after the deployment.
+4. Review the remainder of the external report; only the findings visible in the
+   supplied screenshot were in scope for this rollout.
+
 ## Memory Requirements & Optimizations
 
 This application has been optimized to build on servers with limited memory. Here are the available build options:
@@ -109,7 +153,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '18'
+          node-version: '24'
       - run: yarn install
       - run: yarn build-1gb
       - name: Deploy to server

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from 'react-hot-toast';
 import AnalyticsProvider from '@/components/AnalyticsProvider';
+import { SITE_URL } from '@/lib/seo';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,6 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Payoff Solar - Solar Supply and Installation",
   description: "Comprehensive solar supply and installation services for residential and commercial customers",
   manifest: "/manifest.json",
