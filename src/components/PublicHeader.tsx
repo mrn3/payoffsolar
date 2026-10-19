@@ -80,7 +80,7 @@ export default function PublicHeader({ userProfile }: PublicHeaderProps) {
         <div className="container mx-auto flex justify-between px-4 py-2">
           <span>Serving homeowners nationwide</span>
           <span className="hidden sm:block">Clean Energy. Stronger Communities. A Brighter Future.</span>
-          <a href="tel:8014486396">(801) 448-6396</a>
+          <a href="tel:+18014486396">(801) 448-6396</a>
         </div>
       </div>
       <div className="mx-auto flex h-[4.5rem] max-w-[1280px] items-center justify-between gap-6 px-6 md:px-10">

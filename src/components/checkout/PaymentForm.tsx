@@ -162,7 +162,7 @@ export default function PaymentForm({ customerInfo, shippingMethod, shippingCost
             category_name: 'Product'
           }, item.quantity));
 
-          trackPurchase(paymentIntent.id, 'USD', calculateTotal().toString(), items);
+          trackPurchase(paymentIntent.id, calculateTotal(), 'USD', items);
         } catch (error) {
           console.error('Error tracking purchase:', error);
         }

@@ -27,8 +27,23 @@ export default async function PublicLayout({
     <CartProvider>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd({
         '@context': 'https://schema.org',
-        '@type': 'Organization',
+        '@type': ['Organization', 'LocalBusiness'],
         '@id': `${SITE_URL}/#organization`,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: '11483 S Wexford Way',
+          addressLocality: 'South Jordan',
+          addressRegion: 'UT',
+          postalCode: '84009',
+          addressCountry: 'US',
+        },
+        areaServed: { '@type': 'Country', name: 'United States' },
+        openingHoursSpecification: [
+          { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Friday'], opens: '11:00', closes: '22:00' },
+          { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Tuesday', opens: '17:30', closes: '21:00' },
+          { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Wednesday', 'Thursday'], opens: '17:30', closes: '22:00' },
+          { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Saturday', opens: '08:00', closes: '17:30' },
+        ],
         name: 'Payoff Solar',
         url: SITE_URL,
         logo: `${SITE_URL}/app-icon-1024.png`,
@@ -138,7 +153,7 @@ export default async function PublicLayout({
                   matt@payoffsolar.com
                 </li>
                 <li className="text-sm text-gray-700">
-                  (801) 448-6396
+                  <a href="tel:+18014486396" className="hover:text-green-600">(801) 448-6396</a>
                 </li>
                 <li className="mt-4">
                   <Link

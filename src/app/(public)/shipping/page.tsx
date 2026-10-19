@@ -74,7 +74,7 @@ export default function ShippingReturnsPage() {
                 <li><strong>Inspect the pallet before signing.</strong> Check for visible damage to boxes, broken straps, or a tipped pallet.</li>
                 <li><strong>Note any damage on the delivery receipt</strong> before the driver leaves — write "subject to inspection" or describe specific damage.</li>
                 <li><strong>Take photos immediately</strong> — photograph the pallet, all packaging, and any damaged panels before moving anything.</li>
-                <li><strong>Contact us within 48 hours</strong> of delivery if you discover damage: <a href="mailto:matt@payoffsolar.com" className="text-green-600 hover:text-green-500">matt@payoffsolar.com</a> or <a href="tel:8014486396" className="text-green-600 hover:text-green-500">(801) 448-6396</a>.</li>
+                <li><strong>Contact us within 48 hours</strong> of delivery if you discover damage: <a href="mailto:matt@payoffsolar.com" className="text-green-600 hover:text-green-500">matt@payoffsolar.com</a> or <a href="tel:+18014486396" className="text-green-600 hover:text-green-500">(801) 448-6396</a>.</li>
               </ol>
               <p className="text-sm text-gray-500">Damage claims submitted more than 48 hours after delivery, or without photos, may not be eligible for carrier reimbursement.</p>
             </div>
@@ -122,7 +122,7 @@ export default function ShippingReturnsPage() {
               <p className="text-gray-700 mb-2"><strong>Payoff Solar</strong></p>
               <p className="text-gray-700 mb-2">8224 S Industry Way, Suite 300, West Jordan, UT 84088</p>
               <p className="text-gray-700 mb-2">Email: <a href="mailto:matt@payoffsolar.com" className="text-green-600 hover:text-green-500">matt@payoffsolar.com</a></p>
-              <p className="text-gray-700">Phone: <a href="tel:8014486396" className="text-green-600 hover:text-green-500">(801) 448-6396</a></p>
+              <p className="text-gray-700">Phone: <a href="tel:+18014486396" className="text-green-600 hover:text-green-500">(801) 448-6396</a></p>
             </div>
           </div>
 

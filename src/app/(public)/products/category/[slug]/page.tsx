@@ -21,8 +21,8 @@ export async function generateMetadata({ params, searchParams }: Props) {
   const { category } = await getCategory(slug);
   const { page } = catalogFilters(await searchParams);
   return pageMetadata(
-    `${category.name}${page > 1 ? ` - Page ${page}` : ''} | Payoff Solar`,
-    createTextPreview(category.description || `Shop ${category.name} at Payoff Solar. Browse solar equipment for your home or business.`, 157),
+    `Shop ${category.name} Online - Ships Nationwide${page > 1 ? ` - Page ${page}` : ''} | Payoff Solar`,
+    createTextPreview(category.description || `Shop ${category.name} at Payoff Solar. Affordable solar equipment for your home or business, shipped to all 50 states with expert support.`, 157),
     `/products/category/${encodeURIComponent(slug)}${page > 1 ? `?page=${page}` : ''}`,
   );
 }

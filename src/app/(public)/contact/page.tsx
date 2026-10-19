@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FaEnvelope, FaMapMarkerAlt, FaPhone, FaSms, FaBuilding } from 'react-icons/fa';
 import { useForm } from 'react-hook-form';
+import { trackGenerateLead } from '@/components/GoogleAnalytics';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isValidPhoneNumber } from '@/lib/utils/phone';
@@ -139,6 +140,7 @@ Please provide me with a detailed quote and next steps for installation.`;
         throw new Error(errorData.error || errorData._error || 'Failed to submit form');
       }
 
+      trackGenerateLead('contact_form');
       setSubmitSuccess(true);
       reset();
 

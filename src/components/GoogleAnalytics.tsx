@@ -64,12 +64,28 @@ export const trackEvent = (action: string, category: string, label?: string, val
 };
 
 export const trackPurchase = (transactionId: string, value: number, currency: string = 'USD', items: any[] = []) => {
+  if (typeof window === 'undefined' || !window.gtag) return;
+  // Skip empty carts and never report the same transaction twice
+  if (!items.length || !(value > 0)) return;
+  const key = `ga_purchase_${transactionId}`;
+  try {
+    if (window.sessionStorage.getItem(key)) return;
+    window.sessionStorage.setItem(key, '1');
+  } catch {}
+  window.gtag('event', 'purchase', {
+    transaction_id: transactionId,
+    value: value,
+    currency: currency,
+    items: items,
+  });
+};
+
+export const trackGenerateLead = (method: string, value?: number) => {
   if (typeof window !== 'undefined' && window.gtag) {
-    window.gtag('event', 'purchase', {
-      transaction_id: transactionId,
-      value: value,
-      currency: currency,
-      items: items,
+    window.gtag('event', 'generate_lead', {
+      method,
+      currency: 'USD',
+      ...(value ? { value } : {}),
     });
   }
 };

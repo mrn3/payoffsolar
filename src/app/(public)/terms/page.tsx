@@ -130,7 +130,7 @@ export default function TermsOfServicePage() {
                 <p className="text-gray-700 mb-2"><strong>Payoff Solar</strong></p>
                 <p className="text-gray-700 mb-2">11483 S Wexford Way, South Jordan, UT 84009</p>
                 <p className="text-gray-700 mb-2">Email: matt@payoffsolar.com</p>
-                <p className="text-gray-700">Phone: (801) 448-6396</p>
+                <p className="text-gray-700">Phone: <a href="tel:+18014486396" className="text-green-600 hover:text-green-500">(801) 448-6396</a></p>
               </div>
             </section>
           </div>

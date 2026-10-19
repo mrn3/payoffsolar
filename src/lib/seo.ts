@@ -57,8 +57,8 @@ export function jsonLd(data: object) {
 }
 
 export const corePages = [
-  { path: '/', title: 'Payoff Solar - Solar Equipment, DIY Kits & Installation', description: 'Shop affordable solar panels, batteries, inverters, and DIY solar kits. Get expert equipment guidance and solar installation from Payoff Solar.' },
-  { path: '/products', title: 'Solar Panels, Batteries & DIY Solar Kits | Payoff Solar', description: 'Browse solar panels, batteries, inverters, mounting systems, and solar kits. Compare equipment and shop solar supplies at Payoff Solar.' },
+  { path: '/', title: 'Payoff Solar - Solar Equipment, DIY Kits & Installation', description: 'Shop affordable solar panels, batteries, inverters, and DIY solar kits shipped nationwide, plus expert solar installation in Utah from Payoff Solar.' },
+  { path: '/products', title: 'Solar Panels, Batteries & DIY Solar Kits | Payoff Solar', description: 'Browse solar panels, batteries, inverters, mounting systems, and solar kits. Compare equipment and shop solar supplies that ship to all 50 states.' },
   { path: '/about', title: 'About Our Solar Team | Payoff Solar', description: 'Meet the Payoff Solar team and learn how we help homeowners and businesses choose affordable solar equipment and installation.' },
   { path: '/contact', title: 'Contact Us for Solar Equipment & Installation | Payoff Solar', description: 'Contact Payoff Solar for solar equipment advice, DIY system support, or an installation quote. Tell us about your solar project.' },
   { path: '/pricing', title: 'Solar Installation Packages & Pricing | Payoff Solar', description: 'Explore Payoff Solar installation packages and find a solar system that fits your home, energy needs, and budget.' },

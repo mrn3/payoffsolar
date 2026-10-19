@@ -99,7 +99,7 @@ export default function Footer() {
                 matt@payoffsolar.com
               </li>
               <li className="text-sm text-gray-700">
-                (801) 448-6396
+                <a href="tel:+18014486396" className="hover:text-green-600">(801) 448-6396</a>
               </li>
               <li className="mt-4">
                 <Link
