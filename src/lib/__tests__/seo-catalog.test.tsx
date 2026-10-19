@@ -18,7 +18,7 @@ import ProductDetail from '@/components/products/ProductDetail';
 
 vi.mock('@/lib/models', () => ({
   ProductModel: {
-    getBySlug: vi.fn(), getById: vi.fn(), getAll: vi.fn(), getCount: vi.fn(),
+    getBySlug: vi.fn(), getBySlugIncludingInactive: vi.fn(), getById: vi.fn(), getAll: vi.fn(), getCount: vi.fn(),
     search: vi.fn(), getSearchCount: vi.fn(),
     getByCategory: vi.fn(), getCategoryCount: vi.fn(),
     searchByCategory: vi.fn(), getSearchByCategoryCount: vi.fn(),
@@ -92,16 +92,17 @@ describe('public catalog data', () => {
   });
 
   it('sends inactive products to their category and leaves unknown ones as 404', async () => {
-    vi.mocked(ProductModel.getBySlug).mockResolvedValue({ ...product, is_active: false, category_id: category.id });
+    vi.mocked(ProductModel.getBySlug).mockResolvedValue(null);
+    vi.mocked(ProductModel.getBySlugIncludingInactive).mockResolvedValue({ ...product, is_active: false, category_id: category.id });
     vi.mocked(ProductCategoryModel.getById).mockResolvedValue(category);
     await expect(ProductPage({ params: Promise.resolve({ slug: 'retired-panel' }) }))
       .rejects.toThrow(`NEXT_TEMP_REDIRECT:/products/category/${category.slug}`);
 
-    vi.mocked(ProductModel.getBySlug).mockResolvedValue({ ...product, is_active: false, category_id: null });
+    vi.mocked(ProductModel.getBySlugIncludingInactive).mockResolvedValue({ ...product, is_active: false, category_id: null });
     await expect(ProductPage({ params: Promise.resolve({ slug: 'retired-panel' }) }))
       .rejects.toThrow('NEXT_TEMP_REDIRECT:/products');
 
-    vi.mocked(ProductModel.getBySlug).mockResolvedValue(null);
+    vi.mocked(ProductModel.getBySlugIncludingInactive).mockResolvedValue(null);
     await expect(ProductPage({ params: Promise.resolve({ slug: 'never-existed' }) })).rejects.toThrow('NEXT_NOT_FOUND');
   });
 

@@ -924,6 +924,11 @@ export const ProductModel = {
     return product ? parseShippingMethods(product) : null;
   },
 
+  async getBySlugIncludingInactive(slug: string): Promise<Product | null> {
+    const product = await getOne<Product>('SELECT * FROM products WHERE slug = ?', [slug]);
+    return product ? parseShippingMethods(product) : null;
+  },
+
   async create(data: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
     // Generate slug if not provided
     const slug = data.slug || generateProductSlug(data.name, data.sku);
