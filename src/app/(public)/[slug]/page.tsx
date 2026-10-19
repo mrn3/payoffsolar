@@ -1,11 +1,12 @@
 import React, { cache } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import { BlockRenderer } from '@/components/content-blocks';
 import { FaArrowLeft, FaCalendar, FaUser } from 'react-icons/fa';
 import { ContentModel, ContentBlockModel } from '@/lib/models';
-import { pageMetadata } from '@/lib/seo';
+import { pageMetadata, jsonLd, SITE_URL } from '@/lib/seo';
+import { retiredContentRedirects, isPlaceholderHtml } from '@/lib/content-redirects';
 import { createTextPreview } from '@/lib/utils/text';
 
 interface ContentPageProps {
@@ -13,11 +14,27 @@ interface ContentPageProps {
 }
 
 const getContent = cache(async (slug: string) => {
+  const retiredTarget = retiredContentRedirects[slug];
+  if (retiredTarget) permanentRedirect(retiredTarget);
+
   const content = await ContentModel.getBySlug(slug);
   if (!content || !content.published) return null;
-  const blocks = content.content_mode === 'blocks' ? await ContentBlockModel.getByContentId(content.id) : [];
+  const allBlocks = content.content_mode === 'blocks' ? await ContentBlockModel.getByContentId(content.id) : [];
+  // Drop editor placeholder text that was never replaced
+  const blocks = allBlocks.filter(block => !(block.block_type_name === 'text_block' && isPlaceholderHtml(block.configuration?.content)));
   return { content, blocks };
 });
+
+function youtubeId(url: string | undefined) {
+  return url?.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/)?.[1];
+}
+
+function blockText(blocks: Array<{ block_type_name?: string; configuration?: { content?: string } }>) {
+  return blocks
+    .filter(block => block.block_type_name === 'text_block')
+    .map(block => block.configuration?.content || '')
+    .join(' ');
+}
 
 export default async function ContentPage({ params }: ContentPageProps) {
   const { slug } = await params;
@@ -28,6 +45,22 @@ export default async function ContentPage({ params }: ContentPageProps) {
   }
 
   const { content, blocks } = result;
+
+  const videoSchemas = blocks.flatMap(block => {
+    if (block.block_type_name !== 'video_block') return [];
+    const id = youtubeId(block.configuration?.url);
+    if (!id) return [];
+    return [{
+      '@context': 'https://schema.org',
+      '@type': 'VideoObject',
+      name: block.configuration?.title || content.title,
+      description: block.configuration?.description || content.title,
+      thumbnailUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+      embedUrl: `https://www.youtube.com/embed/${id}`,
+      uploadDate: new Date(content.published_date || content.created_at).toISOString(),
+      url: `${SITE_URL}/${encodeURIComponent(content.slug)}`,
+    }];
+  });
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -60,6 +93,9 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {videoSchemas.map(schema => (
+        <script key={schema.embedUrl} type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(schema) }} />
+      ))}
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <Breadcrumb items={getBreadcrumbItems()} className="mb-6" />
@@ -185,7 +221,7 @@ export async function generateMetadata({ params }: ContentPageProps) {
     };
   }
 
-  const { content } = result;
+  const { content, blocks } = result;
 
   if (!content) {
     return {
@@ -193,9 +229,10 @@ export async function generateMetadata({ params }: ContentPageProps) {
     };
   }
 
+  const bodyHtml = content.content_mode === 'blocks' ? blockText(blocks) : content.content;
   return pageMetadata(
     `${content.title} | Payoff Solar`,
-    content.content ? createTextPreview(content.content, 157) : `Read ${content.title} on Payoff Solar`,
+    bodyHtml ? createTextPreview(bodyHtml, 157) : `Read ${content.title} on Payoff Solar`,
     `/${encodeURIComponent(content.slug)}`,
   );
 }

@@ -9,6 +9,8 @@ import {
 import { catalogFilters, getCatalog, getProduct, type ProductDetails } from '@/lib/catalog';
 import { corePageMetadata, jsonLd, productMetadata, productStructuredData, SITE_URL } from '@/lib/seo';
 import robots from '@/app/robots';
+import ContentPage from '@/app/(public)/[slug]/page';
+import { isPlaceholderHtml, retiredContentRedirects } from '@/lib/content-redirects';
 import sitemap from '@/app/sitemap';
 import ProductPage from '@/app/(public)/product/[slug]/page';
 import LegacyProductPage from '@/app/(public)/products/[id]/page';
@@ -27,7 +29,8 @@ vi.mock('@/lib/models', () => ({
   ProductImageModel: { getByProductId: vi.fn() },
   InventoryModel: { getTotalQuantityByProductId: vi.fn() },
   ProductBundleItemModel: { getByBundleId: vi.fn() },
-  ContentModel: { getPublished: vi.fn() },
+  ContentModel: { getPublished: vi.fn(), getBySlug: vi.fn() },
+  ContentBlockModel: { getByContentId: vi.fn() },
 }));
 
 const cart = vi.hoisted(() => ({
@@ -278,5 +281,18 @@ describe('server pages and shopping behavior', () => {
     expect(errorLog).toHaveBeenCalled();
     fetchMock.mockRestore();
     errorLog.mockRestore();
+  });
+});
+
+describe('retired content', () => {
+  it.each(Object.entries(retiredContentRedirects))('redirects /%s permanently to %s', async (slug, target) => {
+    await expect(ContentPage({ params: Promise.resolve({ slug }) })).rejects.toThrow(`NEXT_REDIRECT:${target}`);
+  });
+
+  it('recognises untouched editor placeholder text only', () => {
+    expect(isPlaceholderHtml('<p>Enter your text here...</p>')).toBe(true);
+    expect(isPlaceholderHtml('<p>Enter your text here</p>')).toBe(true);
+    expect(isPlaceholderHtml('<p>Enter your text here and then some real words</p>')).toBe(false);
+    expect(isPlaceholderHtml(undefined)).toBe(false);
   });
 });
