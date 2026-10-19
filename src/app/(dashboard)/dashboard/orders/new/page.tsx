@@ -161,6 +161,9 @@ export default function NewOrderPage() {
     // Fetch warehouses with available stock for this product
     try {
       const wres = await fetch(`/api/products/${productId}/warehouses`, { credentials: 'include' });
+      if (!wres.ok) {
+        throw new Error(`Failed to load warehouses for product ${productId} (${wres.status})`);
+      }
       if (wres.ok) {
         const wdata = await wres.json();
         const options = (wdata.warehouses || []) as (Warehouse & { available_quantity?: number })[];
@@ -173,6 +176,7 @@ export default function NewOrderPage() {
       }
     } catch (e) {
       console.error('Failed to fetch warehouses for product', e);
+      setError('Failed to load warehouse options. Please select the product again to retry.');
       setItemWarehouseOptions(prev => ({ ...prev, [__index]: [] }));
       updateItem(__index, 'warehouse_id', '');
     }

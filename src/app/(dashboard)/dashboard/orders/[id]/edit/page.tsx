@@ -118,13 +118,16 @@ export default function EditOrderPage() {
             if (it && it.product_id) {
               try {
                 const wres = await fetch(`/api/products/${it.product_id}/warehouses`, { credentials: 'include' });
+                if (!wres.ok) {
+                  throw new Error(`Failed to load warehouses for product ${it.product_id} (${wres.status})`);
+                }
                 if (wres.ok) {
                   const wdata = await wres.json();
                   optionsByIndex[idx] = (wdata.warehouses || []) as (Warehouse & { available_quantity?: number })[];
-                } else {
-                  optionsByIndex[idx] = [];
                 }
-              } catch {
+              } catch (error) {
+                console.error('Failed to preload warehouse options', error);
+                setError('Failed to load warehouse options. Please reload the page to try again.');
                 optionsByIndex[idx] = [];
               }
             }
@@ -250,6 +253,9 @@ export default function EditOrderPage() {
     // Fetch warehouses with available stock for this product
     try {
       const wres = await fetch(`/api/products/${productId}/warehouses`, { credentials: 'include' });
+      if (!wres.ok) {
+        throw new Error(`Failed to load warehouses for product ${productId} (${wres.status})`);
+      }
       if (wres.ok) {
         const wdata = await wres.json();
         const options = (wdata.warehouses || []) as (Warehouse & { available_quantity?: number })[];
@@ -262,6 +268,7 @@ export default function EditOrderPage() {
       }
     } catch (e) {
       console.error('Failed to fetch warehouses for product', e);
+      setError('Failed to load warehouse options. Please select the product again to retry.');
       setItemWarehouseOptions(prev => ({ ...prev, [__index]: [] }));
       updateItem(__index, 'warehouse_id', '');
     }

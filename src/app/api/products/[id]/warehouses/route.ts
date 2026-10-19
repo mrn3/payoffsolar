@@ -3,22 +3,22 @@ import { requireAuth } from '@/lib/auth';
 import { InventoryModel, WarehouseModel } from '@/lib/models';
 
 // Returns warehouses with available inventory (> 0) for the given product id
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Require authentication (dashboard usage); tighten to admin if needed later
     await requireAuth();
 
-    const productId = params.id;
+    const { id: productId } = await params;
     if (!productId) {
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
     }
 
     const inventories = await InventoryModel.getByProductId(productId);
-    const filtered = inventories.filter((inv: any) => (inv.quantity || 0) > 0);
+    const filtered = inventories.filter((inv) => (inv.quantity || 0) > 0);
 
     // Attach warehouse names
     const warehouses = await Promise.all(
-      filtered.map(async (inv: any) => {
+      filtered.map(async (inv) => {
         const w = await WarehouseModel.getById(inv.warehouse_id);
         return {
           id: inv.warehouse_id,
@@ -42,4 +42,3 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
