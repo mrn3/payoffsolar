@@ -182,9 +182,15 @@ Please provide me with a detailed quote and next steps for installation.`;
               <h3 className="text-xl font-bold mb-2">Phone</h3>
               <div className="text-gray-600">
                 <p className="mb-2">(801) 448-6396</p>
-                <p className="text-gray-600 mt-1">
-                  Monday - Saturday: 9am - 7pm
-                </p>
+                <div className="text-gray-600 mt-1 text-sm">
+                  <p>Monday: 11am - 10pm</p>
+                  <p>Tuesday: 5:30pm - 9pm</p>
+                  <p>Wednesday: 5:30pm - 10pm</p>
+                  <p>Thursday: 5:30pm - 10pm</p>
+                  <p>Friday: 11am - 10pm</p>
+                  <p>Saturday: 8am - 5:30pm</p>
+                  <p>Sunday: Closed</p>
+                </div>
                 <div className="mt-2 flex items-center justify-center gap-3">
                   <a
                     href="tel:+18014486396"
@@ -239,9 +245,15 @@ Please provide me with a detailed quote and next steps for installation.`;
               <p className="text-gray-600 mt-1">
                 South Jordan, UT 84009
               </p>
-              <p className="text-gray-600 mt-1">
-                Monday - Saturday: 8am - 9pm
-              </p>
+              <div className="text-gray-600 mt-1 text-sm">
+                <p>Monday: 11am - 10pm</p>
+                <p>Tuesday: 5:30pm - 9pm</p>
+                <p>Wednesday: 5:30pm - 10pm</p>
+                <p>Thursday: 5:30pm - 10pm</p>
+                <p>Friday: 11am - 10pm</p>
+                <p>Saturday: 8am - 5:30pm</p>
+                <p>Sunday: Closed</p>
+              </div>
               <div className="mt-2 flex items-center justify-center gap-3">
                 <a
                   href="https://www.google.com/maps/search/?api=1&query=11483%20S%20Wexford%20Way%2C%20South%20Jordan%2C%20UT%2084009"
@@ -271,7 +283,7 @@ Please provide me with a detailed quote and next steps for installation.`;
                 West Jordan, UT 84088
               </p>
               <p className="text-gray-600 mt-1">
-                Monday - Friday: 8am - 4pm (requires appointment)
+                Monday - Friday: 8am - 2:45pm (requires appointment)
               </p>
               <div className="mt-2 flex items-center justify-center gap-3">
                 <a

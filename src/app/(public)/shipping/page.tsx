@@ -33,7 +33,7 @@ export default function ShippingReturnsPage() {
                   <p className="font-medium">Warehouse Location:</p>
                   <p>8224 S Industry Way, Suite 300</p>
                   <p>West Jordan, UT 84088</p>
-                  <p className="mt-2">Monday – Friday: 8am – 4pm</p>
+                  <p className="mt-2">Monday – Friday: 8am – 2:45pm</p>
                   <p className="text-xs text-gray-500 mt-1">(Appointment required)</p>
                 </div>
               </div>

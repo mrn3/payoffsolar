@@ -9,7 +9,6 @@ export default function PricingPage() {
       icon: <FaLeaf className="h-8 w-8" />,
       price: '$1,800',
       originalPrice: '$3,600',
-      priceWithTaxCredit: '$1,260',
       description: 'A flexible way to get started with solar equipment and installation support.',
       power: '1.2 kW',
       panels: '3 panels',
@@ -32,7 +31,6 @@ export default function PricingPage() {
       icon: <FaHome className="h-8 w-8" />,
       price: '$7,200',
       originalPrice: '$12,000',
-      priceWithTaxCredit: '$5,040',
       description: 'Perfect for small homes and apartments, and can even be installed on balconies.',
       power: '4 kW',
       panels: '10 panels',
@@ -57,7 +55,6 @@ export default function PricingPage() {
       icon: <FaSolarPanel className="h-8 w-8" />,
       price: '$14,400',
       originalPrice: '$24,000',
-      priceWithTaxCredit: '$10,080',
       description: 'Ideal for average-sized homes.  This is our most popular package.',
       power: '8 kW',
       panels: '20 panels',
@@ -84,7 +81,6 @@ export default function PricingPage() {
       icon: <FaBolt className="h-8 w-8" />,
       price: '$21,600',
       originalPrice: '$36,000',
-      priceWithTaxCredit: '$15,120',
       description: 'Great for large homes and high energy users with electric vehicles.',
       power: '12 kW',
       panels: '30 panels',
@@ -113,7 +109,6 @@ export default function PricingPage() {
       icon: <FaIndustry className="h-8 w-8" />,
       price: '$28,800',
       originalPrice: '$48,000',
-      priceWithTaxCredit: '$20,160',
       description: 'Perfect for large properties and commercial use that have large energy needs.',
       power: '16 kW',
       panels: '40 panels',
@@ -166,8 +161,6 @@ export default function PricingPage() {
             <h2 className="text-3xl font-bold mb-4 text-gray-900">Choose Your Solar Package</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Our solar installation packages are designed to meet different energy needs and budgets. Each package includes everything you need to start saving on your energy bills.
-              <br /><br />
-              Note that you can also get a 30% federal tax credit for solar installations (off of the prices shown below), which can further reduce your out-of-pocket costs.  This tax credit is only available for installations completed before the end of 2025.
             </p>
           </div>
 
@@ -199,7 +192,6 @@ export default function PricingPage() {
                       <span className="text-3xl font-bold text-gray-900">{pkg.price}</span>
                       <span className="text-lg text-gray-500 line-through">{pkg.originalPrice}</span>
                     </div>
-                    <p className="text-green-600 font-semibold">With 30% tax credit: {pkg.priceWithTaxCredit}</p>
                   </div>
 
                   <div className="space-y-2 mb-6">
