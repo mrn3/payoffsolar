@@ -8,6 +8,17 @@ const nextConfig = {
     // your project has type errors.
     ignoreBuildErrors: true,
   },
+  async headers() {
+    return [
+      {
+        // Public HTML only: revalidate every time but stay eligible for back/forward cache
+        source: '/((?!api/|_next/|uploads/|dashboard)[^.]*)',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-cache, max-age=0, must-revalidate' },
+        ],
+      },
+    ];
+  },
   webpack: (config, { isServer }) => {
     // Reduce memory usage during compilation
     config.parallelism = 1;
