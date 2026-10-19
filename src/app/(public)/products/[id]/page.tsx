@@ -1,6 +1,6 @@
-import { notFound, permanentRedirect } from 'next/navigation';
+import { notFound, permanentRedirect, redirect } from 'next/navigation';
 import ProductDetail from '@/components/products/ProductDetail';
-import { getCategories, getProduct } from '@/lib/catalog';
+import { getCategories, getInactiveProductRedirect, getProduct } from '@/lib/catalog';
 import { jsonLd, productMetadata, productPath, productStructuredData } from '@/lib/seo';
 
 type Props = {
@@ -13,6 +13,8 @@ async function resolveProduct(id: string) {
   if (product) return product;
   const category = (await getCategories()).find(category => category.slug === id);
   if (category) return category;
+  const target = await getInactiveProductRedirect(id, 'id');
+  if (target) redirect(target);
   notFound();
 }
 

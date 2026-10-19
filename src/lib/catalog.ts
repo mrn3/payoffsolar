@@ -33,6 +33,14 @@ export const getProduct = cache(async (value: string, by: 'slug' | 'id' = 'slug'
   };
 });
 
+// Where to send visitors of a product that exists but is inactive; null when it never existed or is active
+export async function getInactiveProductRedirect(value: string, by: 'slug' | 'id' = 'slug'): Promise<string | null> {
+  const product = await (by === 'slug' ? ProductModel.getBySlug(value) : ProductModel.getById(value));
+  if (!product || product.is_active) return null;
+  const category = product.category_id ? await ProductCategoryModel.getById(product.category_id) : null;
+  return category?.slug ? `/products/category/${encodeURIComponent(category.slug)}` : '/products';
+}
+
 export interface CatalogFilters {
   page?: number;
   limit?: number;

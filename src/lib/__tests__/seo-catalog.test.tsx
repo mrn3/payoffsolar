@@ -46,6 +46,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   notFound: () => { throw new Error('NEXT_NOT_FOUND'); },
   permanentRedirect: (path: string) => { throw new Error(`NEXT_REDIRECT:${path}`); },
+  redirect: (path: string) => { throw new Error(`NEXT_TEMP_REDIRECT:${path}`); },
 }));
 
 const product: ProductDetails = {
@@ -88,6 +89,27 @@ describe('public catalog data', () => {
     vi.mocked(ProductModel.getBySlug).mockResolvedValue(value);
     expect(await getProduct('retired-product')).toBeNull();
     expect(ProductImageModel.getByProductId).not.toHaveBeenCalled();
+  });
+
+  it('sends inactive products to their category and leaves unknown ones as 404', async () => {
+    vi.mocked(ProductModel.getBySlug).mockResolvedValue({ ...product, is_active: false, category_id: category.id });
+    vi.mocked(ProductCategoryModel.getById).mockResolvedValue(category);
+    await expect(ProductPage({ params: Promise.resolve({ slug: 'retired-panel' }) }))
+      .rejects.toThrow(`NEXT_TEMP_REDIRECT:/products/category/${category.slug}`);
+
+    vi.mocked(ProductModel.getBySlug).mockResolvedValue({ ...product, is_active: false, category_id: null });
+    await expect(ProductPage({ params: Promise.resolve({ slug: 'retired-panel' }) }))
+      .rejects.toThrow('NEXT_TEMP_REDIRECT:/products');
+
+    vi.mocked(ProductModel.getBySlug).mockResolvedValue(null);
+    await expect(ProductPage({ params: Promise.resolve({ slug: 'never-existed' }) })).rejects.toThrow('NEXT_NOT_FOUND');
+  });
+
+  it('redirects inactive legacy id URLs too', async () => {
+    vi.mocked(ProductModel.getById).mockResolvedValue({ ...product, is_active: false, category_id: category.id });
+    vi.mocked(ProductCategoryModel.getById).mockResolvedValue(category);
+    await expect(LegacyProductPage({ params: Promise.resolve({ id: product.id }), searchParams: Promise.resolve({}) }))
+      .rejects.toThrow(`NEXT_TEMP_REDIRECT:/products/category/${category.slug}`);
   });
 
   it('does not turn a database failure into a missing product', async () => {
