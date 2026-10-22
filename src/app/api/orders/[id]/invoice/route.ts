@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OrderModel, InvoiceModel, SiteSettingsModel } from '@/lib/models';
+import type { OrderWithItems, Invoice } from '@/lib/models';
 import { format } from 'date-fns';
 
 export async function GET(
@@ -48,17 +49,23 @@ export async function GET(
   }
 }
 
-export function generateInvoiceHTML(order: any, invoice: any, businessAddress: string, businessPhone: string): string {
+export function generateInvoiceHTML(order: OrderWithItems, invoice: Invoice, businessAddress: string, businessPhone: string): string {
   const orderDate = format(new Date(order.order_date), 'MMMM d, yyyy');
   const invoiceDate = format(new Date(invoice.created_at), 'MMMM d, yyyy');
   const dueDate = format(new Date(invoice.due_date), 'MMMM d, yyyy');
   const contactName = order.contact_name;
-  const invoiceStatusLabel = String(invoice.status).toLowerCase() === 'paid' ? 'Paid In Full' : invoice.status;
-
   // Calculate total from line items instead of using stored invoice amount
-  const calculatedTotal = order.items?.reduce((total: number, item: any) => {
+  const calculatedTotal = order.items?.reduce((total, item) => {
     return total + (Number(item.price) * item.quantity);
   }, 0) || 0;
+  const totalPaid = order.payments?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
+  const balanceOwed = Number((calculatedTotal - totalPaid).toFixed(2));
+  const invoiceStatus = invoice.status.toLowerCase() === 'paid' && balanceOwed > 0
+    ? (totalPaid > 0 ? 'partial' : 'pending')
+    : invoice.status;
+  const invoiceStatusLabel = invoiceStatus.toLowerCase() === 'paid'
+    ? 'Paid In Full'
+    : invoiceStatus === 'partial' ? 'Partially Paid' : invoiceStatus;
 
   // Format customer address
   const formatCustomerAddress = () => {
@@ -173,6 +180,7 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
             text-transform: capitalize;
         }
         .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-partial { background-color: #fef3c7; color: #92400e; }
         .status-sent { background-color: #dbeafe; color: #1e40af; }
         .status-paid { background-color: #d1fae5; color: #065f46; }
         .status-overdue { background-color: #fee2e2; color: #991b1b; }
@@ -238,7 +246,7 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
                 <p><strong>Invoice Number:</strong> ${invoice.invoice_number}</p>
                 <p><strong>Invoice Date:</strong> ${invoiceDate}</p>
                 <p><strong>Due Date:</strong> ${dueDate}</p>
-	                <p><strong>Status:</strong> <span class="status-badge status-${invoice.status}">${invoiceStatusLabel}</span></p>
+	                <p><strong>Status:</strong> <span class="status-badge status-${invoiceStatus}">${invoiceStatusLabel}</span></p>
             </div>
             <div>
                 <p><strong>Order ID:</strong> #${order.id.substring(0, 8)}</p>
@@ -277,7 +285,7 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
             </tr>
         </thead>
         <tbody>
-            ${order.items?.map((item: any) => {
+            ${order.items?.map((item) => {
                 const productName = item.product_name || 'Unknown Product';
                 const productUrl = item.product_slug ? `/product/${item.product_slug}` : `/products/${item.product_id}`;
                 return `
@@ -305,7 +313,7 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
             </tr>
         </thead>
         <tbody>
-            ${order.payments.map((payment: any) => `
+            ${order.payments.map((payment) => `
                 <tr>
                     <td>${format(new Date(payment.payment_date), 'MMM d, yyyy')}</td>
                     <td>${payment.payment_type}</td>
@@ -325,12 +333,12 @@ export function generateInvoiceHTML(order: any, invoice: any, businessAddress: s
         ${order.payments && order.payments.length > 0 ? `
         <div class="total-row">
             <div class="total-label">Total Paid:</div>
-            <div class="total-amount" style="color: #16a34a;">$${order.payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0).toFixed(2)}</div>
+            <div class="total-amount" style="color: #16a34a;">$${totalPaid.toFixed(2)}</div>
         </div>
         <div class="total-row" style="border-top: 2px solid #16a34a; padding-top: 10px; margin-top: 10px;">
             <div class="total-label" style="font-size: 1.2em;">Balance Owed:</div>
-            <div class="total-amount" style="font-size: 1.2em; color: ${calculatedTotal - order.payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0) > 0 ? '#dc2626' : '#16a34a'};">
-                $${(calculatedTotal - order.payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0)).toFixed(2)}
+            <div class="total-amount" style="font-size: 1.2em; color: ${balanceOwed > 0 ? '#dc2626' : '#16a34a'};">
+                $${balanceOwed.toFixed(2)}
             </div>
         </div>
         ` : ''}

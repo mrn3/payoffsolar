@@ -293,6 +293,7 @@ Billing and payment tracking
 - Invoice numbering system
 - Due date tracking
 - Status workflow: pending → sent → paid
+- Viewed invoices and emailed PDFs check the line-item total against recorded payments before displaying "Paid In Full". Saved paid invoices with a remaining balance display "Partially Paid" (or "Pending" if no payment has been made), without changing the stored workflow status.
 
 ### Services
 
