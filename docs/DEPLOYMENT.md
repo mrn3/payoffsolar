@@ -44,6 +44,115 @@
 4. Review the remainder of the external report; only the findings visible in the
    supplied screenshot were in scope for this rollout.
 
+## Browser and API hardening
+
+- Next.js is already pinned to **16.4.2**, satisfying the 16.4.x target. Rebuild
+  after any dependency change; changing the package version alone does not update
+  a running process. Confirm `node -p "require('next/package.json').version"` and
+  the deployed `.next/BUILD_ID`. Where exposed, `window.next?.version` in the
+  browser console can provide an additional runtime check.
+- `next.config.js` disables the image optimizer with `images.unoptimized: true`
+  and explicitly keeps `dangerouslyAllowSVG: false`. Existing `next/image`
+  components serve their original files; product uploads continue to use
+  `/uploads/`. After rebuilding, direct `/_next/image` requests must return 404.
+- All Next.js responses receive HSTS (`max-age=31536000; includeSubDomains`),
+  `nosniff`, `SAMEORIGIN`, `strict-origin-when-cross-origin`, Permissions-Policy,
+  and Content-Security-Policy headers. `X-Powered-By` is disabled. Ensure every
+  subdomain supports HTTPS before enabling the HSTS policy in production.
+- The CSP preserves Google Analytics/Tag Manager, Google Places, Stripe checkout,
+  YouTube/Vimeo embeds, external HTTPS images, and map tiles. Inline scripts and
+  styles remain allowed for existing Next.js hydration, CMS content, and editor
+  styling. This is a compatibility baseline, not a nonce-based strict CSP.
+  `unsafe-eval` and local WebSocket connections are development-only. Review the
+  browser console when adding integrations rather than weakening the policy to
+  allow arbitrary external scripts.
+- Protected users, orders, content, and settings handlers return JSON **401**
+  before business queries when no valid session exists; existing role checks
+  return **403**. Order analytics require an administrator. Customer order
+  history continues to be scoped to that customer's account.
+- Checkout order creation (`POST /api/orders/public`), customer invoice HTML/PDF
+  links, and explicitly public settings remain public. Public settings use
+  `/api/settings?public=true`; an individual setting now requires
+  `/api/settings/<key>?public=true`. That lookup queries only public settings and
+  returns 404 for private or missing keys. Without the flag, single-key reads
+  require an administrator before querying the setting.
+
+### Apache HTTPS redirects and HTTP/2
+
+Apache terminates TLS and may serve uploads without proxying them through
+Next.js. Its configuration is outside the repository. Back up the active virtual
+host files before editing; preserve existing certificate, proxy, upload, and ACME
+challenge directives.
+
+In the existing port-80 virtual host, replace its temporary HTTPS redirect with
+this permanent canonical redirect, after any ACME challenge exclusions:
+
+```apache
+ServerName payoffsolar.com
+ServerAlias www.payoffsolar.com
+RewriteEngine On
+RewriteRule ^ https://payoffsolar.com%{REQUEST_URI} [R=301,L,NE]
+```
+
+Do not add a second redirect alongside an existing `Redirect` or rewrite rule.
+The original path and query string must be preserved. Apply any existing
+HTTPS-`www` canonical redirect with status 301 as well.
+
+In the existing port-443 virtual host, enable HTTP/2 if not already active:
+
+```apache
+Protocols h2 http/1.1
+```
+
+The `http2`, `ssl`, `rewrite`, and `headers` modules must be loaded. HTTP/2 also
+needs a compatible MPM; do not replace a PHP-dependent prefork MPM blindly.
+For Bitnami, inspect and validate the active configuration before gracefully
+reloading Apache:
+
+```bash
+sudo /opt/bitnami/apache/bin/apachectl -M
+sudo /opt/bitnami/apache/bin/apachectl -S
+sudo /opt/bitnami/apache/bin/apachectl -t
+sudo /opt/bitnami/apache/bin/apachectl -k graceful
+```
+
+If Apache serves `/uploads/` directly, apply the following headers in the TLS
+virtual host too. Unsetting the normal response table first prevents duplicates
+on proxied Next.js responses:
+
+```apache
+Header onsuccess unset Strict-Transport-Security
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+Header onsuccess unset X-Content-Type-Options
+Header always set X-Content-Type-Options "nosniff"
+Header onsuccess unset X-Frame-Options
+Header always set X-Frame-Options "SAMEORIGIN"
+Header onsuccess unset Referrer-Policy
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header onsuccess unset X-Powered-By
+Header always unset X-Powered-By
+```
+
+Verify after deployment without submitting orders or payments:
+
+```bash
+curl -sI 'http://payoffsolar.com/products?search=panel'
+# Expect 301 and Location: https://payoffsolar.com/products?search=panel
+curl --http2 -sI https://payoffsolar.com/
+# Expect HTTP/2 and the security headers above, with no X-Powered-By
+curl -si https://payoffsolar.com/api/users
+curl -si https://payoffsolar.com/api/orders
+curl -si https://payoffsolar.com/api/content
+curl -si https://payoffsolar.com/api/settings
+# Expect JSON 401, not a login redirect or 500
+curl -si 'https://payoffsolar.com/_next/image?url=%2Flogo-sun.svg&w=64&q=75'
+# Expect 404
+```
+
+In a browser, check hydration and navigation, uploaded images, the checkout card
+field, Places address suggestions, video embeds, and authenticated order editing.
+Do not perform a live charge as part of a smoke test.
+
 ## Memory Requirements & Optimizations
 
 This application has been optimized to build on servers with limited memory. Here are the available build options:

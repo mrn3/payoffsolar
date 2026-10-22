@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {requireAuth, isAdmin} from '@/lib/auth';
+import {getSession, isAdmin} from '@/lib/auth';
 import {OrderModel, OrderItemModel, ContactModel, ProductModel} from '@/lib/models';
 
 interface ImportOrderItem {
@@ -33,11 +33,8 @@ export async function POST(request: NextRequest) {
     console.log('Starting order import process...');
 
     // Require admin access
-    let session;
-    try {
-      session = await requireAuth();
-    } catch (error) {
-      console.error('Authentication error in order import:', error);
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json({
         error: 'Authentication required. Please log in as an admin user.'
       }, { status: 401 });

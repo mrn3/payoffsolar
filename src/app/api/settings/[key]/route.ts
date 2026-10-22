@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SiteSettingsModel } from '@/lib/models';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import { getSession, isAdmin } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
@@ -8,18 +8,28 @@ export async function GET(
 ) {
   try {
     const { key } = await params;
+    const publicOnly = request.nextUrl.searchParams.get('public') === 'true';
+    if (publicOnly) {
+      const settings = await SiteSettingsModel.getPublic();
+      const setting = settings.find((candidate) => candidate.setting_key === key);
+      if (!setting) {
+        return NextResponse.json({ error: 'Setting not found' }, { status: 404 });
+      }
+      return NextResponse.json({ setting });
+    }
+
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!isAdmin(session.profile.role)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
     const setting = await SiteSettingsModel.getByKey(key);
 
     if (!setting) {
       return NextResponse.json({ error: 'Setting not found' }, { status: 404 });
-    }
-
-    // Check if setting is public or user has admin access
-    if (!setting.is_public) {
-      const session = await requireAuth();
-      if (!isAdmin(session.profile.role)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-      }
     }
 
     return NextResponse.json({ setting });
@@ -34,7 +44,10 @@ export async function PATCH(
   { params }: { params: Promise<{ key: string }> }
 ) {
   try {
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
@@ -72,7 +85,10 @@ export async function DELETE(
   { params }: { params: Promise<{ key: string }> }
 ) {
   try {
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }

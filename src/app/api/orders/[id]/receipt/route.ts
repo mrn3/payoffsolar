@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, isContact } from '@/lib/auth';
+import { getSession, isContact } from '@/lib/auth';
 import { OrderModel, SiteSettingsModel } from '@/lib/models';
 import { format } from 'date-fns';
 
@@ -9,7 +9,10 @@ export async function GET(
 ) {
   try {
     // Require authentication
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const profile = session.profile;
 
     const { id } = await params;

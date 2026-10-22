@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import puppeteer from 'puppeteer';
-import { requireAuth, isContact } from '@/lib/auth';
+import { getSession, isContact } from '@/lib/auth';
 import { OrderModel, SiteSettingsModel } from '@/lib/models';
 import { format } from 'date-fns';
 
@@ -23,7 +23,10 @@ import { generateOrderReceiptHTML } from '../route';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const profile = session.profile;
     const { id } = await params;
 

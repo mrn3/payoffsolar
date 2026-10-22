@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OrderModel, AffiliateCodeModel } from '@/lib/models';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import { getSession, isAdmin } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }

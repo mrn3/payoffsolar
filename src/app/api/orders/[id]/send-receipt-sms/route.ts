@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAuth, isContact } from '@/lib/auth';
+import { getSession, isContact } from '@/lib/auth';
 import { OrderModel } from '@/lib/models';
 import { trackOutboundSMS } from '@/lib/communication/tracking';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
@@ -34,7 +34,10 @@ function toE164(input: string): string | null {
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (isContact(session.profile.role)) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }

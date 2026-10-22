@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import puppeteer from 'puppeteer';
-import { requireAuth, isContact } from '@/lib/auth';
+import { getSession, isContact } from '@/lib/auth';
 import { OrderModel, SiteSettingsModel } from '@/lib/models';
 import { sendEmail, sendEmailWithAttachment } from '@/lib/email';
 import { format } from 'date-fns';
@@ -40,7 +40,10 @@ import { generateOrderReceiptHTML } from '../receipt/route';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (isContact(session.profile.role)) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }

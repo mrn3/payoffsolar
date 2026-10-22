@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SiteSettingsModel } from '@/lib/models';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import { getSession, isAdmin } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ settings });
     } else {
       // All settings require admin access
-      const session = await requireAuth();
+      const session = await getSession();
+      if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
       if (!isAdmin(session.profile.role)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
@@ -30,7 +33,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Require admin access
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }

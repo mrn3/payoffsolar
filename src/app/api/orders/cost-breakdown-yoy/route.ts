@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OrderModel } from '@/lib/models';
+import { getSession, isAdmin } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!isAdmin(session.profile.role)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const years = parseInt(searchParams.get('years') || '3');
     const categoryId = searchParams.get('categoryId');

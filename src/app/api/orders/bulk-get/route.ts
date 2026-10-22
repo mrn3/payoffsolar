@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OrderModel } from '@/lib/models';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import { getSession, isAdmin } from '@/lib/auth';
 
 interface BulkGetRequest {
   orderIds: string[];
@@ -9,7 +9,10 @@ interface BulkGetRequest {
 export async function POST(request: NextRequest) {
   try {
     // Require admin access
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }

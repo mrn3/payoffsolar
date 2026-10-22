@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {OrderModel, OrderItemModel, ContactModel, ProductModel, CostItemModel, CostCategoryModel, ProductCostBreakdownModel} from '@/lib/models';
-import {requireAuth, isAdmin} from '@/lib/auth';
+import {getSession, isAdmin} from '@/lib/auth';
 import { updateInventoryForOrder, validateInventoryForOrder, restoreInventoryForOrder } from '@/lib/utils/orderProcessing';
 
 
@@ -10,7 +10,10 @@ export async function GET(
 ) {
   try {
     // Require admin access
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
@@ -35,7 +38,10 @@ export async function PUT(
 ) {
   try {
     // Require admin access
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
@@ -257,7 +263,10 @@ export async function DELETE(
 ) {
   try {
     // Require admin access
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }

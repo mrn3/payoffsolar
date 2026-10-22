@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OrderModel, OrderItemModel } from '@/lib/models';
-import { requireAuth, isAdmin } from '@/lib/auth';
+import { getSession, isAdmin } from '@/lib/auth';
 import { executeSingle } from '@/lib/mysql/connection';
 import { smartMergeOrders } from '@/lib/utils/duplicates';
 import { updateInventoryForOrder, validateInventoryForOrder, restoreInventoryForOrder } from '@/lib/utils/orderProcessing';
@@ -23,7 +23,10 @@ interface MergeRequest {
 export async function POST(request: NextRequest) {
   try {
     // Require admin access
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }

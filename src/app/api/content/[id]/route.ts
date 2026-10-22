@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ContentModel, ContentTypeModel } from '@/lib/models';
-import {requireAuth, isAdmin} from '@/lib/auth';
+import {getSession, isAdmin} from '@/lib/auth';
 
 export async function GET(
   _request: NextRequest,
@@ -8,7 +8,10 @@ export async function GET(
 ) {
   try {
     // Require admin access
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
@@ -33,7 +36,10 @@ export async function PUT(
 ) {
   try {
     // Require admin access
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
@@ -102,7 +108,10 @@ export async function DELETE(
 ) {
   try {
     // Require admin access
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ _error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }

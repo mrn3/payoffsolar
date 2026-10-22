@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {OrderModel, OrderItemModel, ContactModel, ProductModel, ProductCostBreakdownModel, CostItemModel} from '@/lib/models';
-import { requireAuth , isAdmin, isContact} from '@/lib/auth';
+import { getSession , isAdmin, isContact} from '@/lib/auth';
 import { handleApiError } from '@/lib/apiError';
 import { processOrderItems, validateInventoryForOrder, updateInventoryForOrder } from '@/lib/utils/orderProcessing';
 
 export async function GET(request: NextRequest) {
   try {
     // Require authentication (admin or contact)
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const profile = session.profile;
 
     const { searchParams } = new URL(request.url);
@@ -92,7 +95,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Require admin access
-    const session = await requireAuth();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!isAdmin(session.profile.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
