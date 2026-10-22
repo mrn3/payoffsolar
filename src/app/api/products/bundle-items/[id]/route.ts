@@ -4,7 +4,7 @@ import { requireAuth, isAdmin } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
@@ -13,6 +13,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    const { id } = await params;
     const data = await request.json();
 
     // Validate quantity if provided
@@ -24,7 +25,7 @@ export async function PUT(
       }
     }
 
-    await ProductBundleItemModel.update(params.id, {
+    await ProductBundleItemModel.update(id, {
       quantity: data.quantity !== undefined ? parseInt(data.quantity) : undefined,
       sort_order: data.sort_order !== undefined ? parseInt(data.sort_order) : undefined
     });
@@ -38,7 +39,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
@@ -47,7 +48,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    await ProductBundleItemModel.delete(params.id);
+    const { id } = await params;
+    await ProductBundleItemModel.delete(id);
     return NextResponse.json({ message: 'Bundle item deleted successfully' });
   } catch (error) {
     console.error('Error deleting bundle item:', error);

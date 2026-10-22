@@ -20,6 +20,18 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Bundle Component Regression Tests
+
+Run the bundle component API tests with:
+
+```bash
+npm test -- 'src/app/api/products/[id]/bundle-items/route.test.ts'
+```
+
+These cover listing, adding, updating, and removing components, including admin
+permissions and validation. Dynamic route parameters must be awaited in Next.js
+16 before passing bundle or component IDs to the models.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

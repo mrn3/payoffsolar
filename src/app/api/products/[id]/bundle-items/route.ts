@@ -4,10 +4,11 @@ import { requireAuth, isAdmin } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const bundleItems = await ProductBundleItemModel.getByBundleId(params.id);
+    const { id } = await params;
+    const bundleItems = await ProductBundleItemModel.getByBundleId(id);
     return NextResponse.json({ bundleItems });
   } catch (error) {
     console.error('Error fetching bundle items:', error);
@@ -17,7 +18,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
@@ -26,6 +27,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    const { id } = await params;
     const data = await request.json();
 
     // Validate required fields
@@ -43,7 +45,7 @@ export async function POST(
     }
 
     // Check if bundle product exists and is a bundle
-    const bundleProduct = await ProductModel.getById(params.id);
+    const bundleProduct = await ProductModel.getById(id);
     if (!bundleProduct) {
       return NextResponse.json({ error: 'Bundle product not found' }, { status: 404 });
     }
@@ -61,7 +63,7 @@ export async function POST(
     }
 
     // Prevent adding a bundle as a component of itself
-    if (params.id === data.component_product_id) {
+    if (id === data.component_product_id) {
       return NextResponse.json({
         error: 'Cannot add a bundle as a component of itself'
       }, { status: 400 });
@@ -71,7 +73,7 @@ export async function POST(
     if (componentProduct.is_bundle) {
       const componentBundleItems = await ProductBundleItemModel.getByBundleId(data.component_product_id);
       const hasCircularDependency = componentBundleItems.some(
-        item => item.component_product_id === params.id
+        item => item.component_product_id === id
       );
       
       if (hasCircularDependency) {
@@ -81,14 +83,14 @@ export async function POST(
       }
     }
 
-    const bundleItemId = await ProductBundleItemModel.create({
-      bundle_product_id: params.id,
+    await ProductBundleItemModel.create({
+      bundle_product_id: id,
       component_product_id: data.component_product_id,
       quantity: parseInt(data.quantity),
       sort_order: data.sort_order || 0
     });
 
-    const newBundleItem = await ProductBundleItemModel.getByBundleId(params.id);
+    const newBundleItem = await ProductBundleItemModel.getByBundleId(id);
     return NextResponse.json({ bundleItems: newBundleItem }, { status: 201 });
   } catch (error) {
     console.error('Error creating bundle item:', error);
@@ -103,7 +105,7 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin access
@@ -112,7 +114,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    await ProductBundleItemModel.deleteByBundleId(params.id);
+    const { id } = await params;
+    await ProductBundleItemModel.deleteByBundleId(id);
     return NextResponse.json({ message: 'All bundle items deleted successfully' });
   } catch (error) {
     console.error('Error deleting bundle items:', error);
