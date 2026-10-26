@@ -32,6 +32,38 @@ These cover listing, adding, updating, and removing components, including admin
 permissions and validation. Dynamic route parameters must be awaited in Next.js
 16 before passing bundle or component IDs to the models.
 
+## Search Console indexing checks
+
+The public catalog and category routes return not-found for pagination beyond the
+last results page, while retaining usable empty first pages. Missing or
+unpublished CMS pages signal not-found in both rendering and metadata. The
+sitemap excludes reserved routes and the retired CMS slugs defined in
+`src/lib/content-redirects.ts`.
+
+Run the indexing regression tests with:
+
+```bash
+npm test -- src/lib/__tests__/seo-catalog.test.tsx
+```
+
+After deploying indexing changes:
+
+1. Inspect representative affected URLs in Search Console using **Test live URL**.
+   Check the rendered content, indexing permission, and canonical URL.
+2. Confirm `/sitemap.xml` lists only intended canonical pages, then submit it in
+   Search Console's Sitemaps report.
+3. Start **Validate fix** for the relevant issue groups after checking affected
+   examples. Request indexing for a few important corrected pages.
+4. Allow Google to recrawl; deployment does not immediately update the report or
+   guarantee indexing.
+
+The Coverage overview export contains counts, not affected URLs. Export the
+examples from each issue's detail report to investigate individual soft 404s,
+duplicates, and non-indexed pages. Redirects, correctly canonicalized alternates,
+intentionally blocked private pages, and genuinely deleted URLs are expected
+exclusions. Avoid redirecting unrelated deleted pages to the catalog just to hide
+404s: Google can treat irrelevant redirects as soft 404s.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

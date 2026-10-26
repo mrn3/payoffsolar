@@ -216,18 +216,10 @@ export async function generateMetadata({ params }: ContentPageProps) {
   const result = await getContent(slug);
 
   if (!result) {
-    return {
-      title: 'Content Not Found',
-    };
+    notFound();
   }
 
   const { content, blocks } = result;
-
-  if (!content) {
-    return {
-      title: 'Content Not Found',
-    };
-  }
 
   const bodyHtml = content.content_mode === 'blocks' ? blockText(blocks) : content.content;
   return pageMetadata(

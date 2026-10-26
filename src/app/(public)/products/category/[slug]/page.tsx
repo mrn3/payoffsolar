@@ -32,5 +32,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const { category, categories } = await getCategory(slug);
   const filters = { ...catalogFilters(await searchParams), category: category.id };
   const catalog = await getCatalog(filters);
+  if (filters.page > 1 && filters.page > catalog.pagination.totalPages) notFound();
   return <ProductCatalog key={`${slug}:${JSON.stringify(filters)}`} initialCatalog={catalog} categories={categories} filters={filters} category={category} />;
 }

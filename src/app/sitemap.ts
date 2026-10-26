@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { ContentModel, ProductModel, ProductCategoryModel } from '@/lib/models';
 import { corePages, productPath, SITE_URL } from '@/lib/seo';
+import { retiredContentRedirects } from '@/lib/content-redirects';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
   for (let offset = 0; ; offset += batchSize) {
     const content = await ContentModel.getPublished(batchSize, offset);
-    entries.push(...content.filter(page => !reserved.has(page.slug.split('/')[0])).map(page => ({
+    entries.push(...content.filter(page =>
+      !reserved.has(page.slug.split('/')[0]) && !Object.hasOwn(retiredContentRedirects, page.slug)
+    ).map(page => ({
       url: `${SITE_URL}/${encodeURIComponent(page.slug)}`,
       lastModified: page.updated_at,
     })));

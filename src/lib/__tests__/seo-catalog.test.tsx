@@ -9,12 +9,13 @@ import {
 import { catalogFilters, getCatalog, getProduct, type ProductDetails } from '@/lib/catalog';
 import { corePageMetadata, jsonLd, productMetadata, productStructuredData, SITE_URL } from '@/lib/seo';
 import robots from '@/app/robots';
-import ContentPage from '@/app/(public)/[slug]/page';
+import ContentPage, { generateMetadata as contentMetadata } from '@/app/(public)/[slug]/page';
 import { isPlaceholderHtml, retiredContentRedirects } from '@/lib/content-redirects';
 import sitemap from '@/app/sitemap';
 import ProductPage from '@/app/(public)/product/[slug]/page';
 import LegacyProductPage from '@/app/(public)/products/[id]/page';
 import CategoryPage from '@/app/(public)/products/category/[slug]/page';
+import ProductsPage from '@/app/(public)/products/page';
 import ProductCatalog from '@/components/products/ProductCatalog';
 import ProductDetail from '@/components/products/ProductDetail';
 
@@ -208,9 +209,50 @@ describe('SEO output', () => {
     vi.mocked(ProductModel.getAll).mockRejectedValue(new Error('database unavailable'));
     await expect(sitemap()).rejects.toThrow('database unavailable');
   });
+
+  it('excludes retired redirects and reserved routes from the sitemap', async () => {
+    const slugs = [...Object.keys(retiredContentRedirects), 'checkout', 'products', 'solar-update'];
+    vi.mocked(ContentModel.getPublished).mockResolvedValue(slugs.map(slug => ({
+      id: slug, title: slug, slug, content_mode: 'rich_text', type_id: 'news', published: true,
+      created_at: '2026-01-01', updated_at: '2026-10-18',
+    })));
+    const urls = (await sitemap()).map(entry => entry.url);
+    for (const slug of Object.keys(retiredContentRedirects)) {
+      expect(urls).not.toContain(`${SITE_URL}/${slug}`);
+    }
+    expect(urls).not.toContain(`${SITE_URL}/checkout`);
+    expect(urls.filter(url => url === `${SITE_URL}/products`)).toHaveLength(1);
+    expect(urls).toContain(`${SITE_URL}/solar-update`);
+  });
 });
 
 describe('server pages and shopping behavior', () => {
+  it.each([ProductsPage, (props: Parameters<typeof ProductsPage>[0]) => CategoryPage({
+    ...props, params: Promise.resolve({ slug: category.slug }),
+  })])('rejects out-of-range pages without breaking valid or empty first pages', async page => {
+    vi.mocked(ProductModel.getByCategory).mockResolvedValue([]);
+    vi.mocked(ProductModel.getCategoryCount).mockResolvedValue(25);
+    await expect(page({ searchParams: Promise.resolve({ page: '9999' }) })).rejects.toThrow('NEXT_NOT_FOUND');
+    await expect(page({ searchParams: Promise.resolve({ page: '3' }) })).resolves.toBeDefined();
+    vi.mocked(ProductModel.getAll).mockResolvedValue([]);
+    vi.mocked(ProductModel.getCount).mockResolvedValue(0);
+    vi.mocked(ProductModel.getCategoryCount).mockResolvedValue(0);
+    await expect(page({ searchParams: Promise.resolve({ page: '2' }) })).rejects.toThrow('NEXT_NOT_FOUND');
+    await expect(page({ searchParams: Promise.resolve({}) })).resolves.toBeDefined();
+  });
+
+  it('signals not-found in both the page and metadata for missing or unpublished CMS content', async () => {
+    for (const content of [null, {
+      id: 'draft', title: 'Draft', slug: 'draft', content_mode: 'rich_text' as const,
+      type_id: 'news', published: false, created_at: '2026-01-01', updated_at: '2026-10-18',
+    }]) {
+      vi.mocked(ContentModel.getBySlug).mockResolvedValue(content);
+      const props = { params: Promise.resolve({ slug: 'draft' }) };
+      await expect(ContentPage(props)).rejects.toThrow('NEXT_NOT_FOUND');
+      await expect(contentMetadata(props)).rejects.toThrow('NEXT_NOT_FOUND');
+    }
+  });
+
   it('returns the not-found signal for missing slug and ID product pages', async () => {
     vi.mocked(ProductModel.getBySlug).mockResolvedValue(null);
     vi.mocked(ProductModel.getById).mockResolvedValue(null);
