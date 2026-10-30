@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid week format. Use YYYY-WW' }, { status: 400 });
     }
 
-    const orders = await OrderModel.getOrdersByWeekAndCategory(week, category);
+    const orders = await OrderModel.getOrdersByWeekAndCostCategory(week, category);
 
     // Add cost breakdown details for each order
     const ordersWithCostBreakdown = await Promise.all(

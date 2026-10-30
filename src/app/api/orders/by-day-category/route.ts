@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid day format. Use YYYY-MM-DD' }, { status: 400 });
     }
 
-    const orders = await OrderModel.getOrdersByDayAndCategory(day, category);
+    const orders = await OrderModel.getOrdersByDayAndCostCategory(day, category);
 
     // Add cost breakdown details for each order
     const ordersWithCostBreakdown = await Promise.all(

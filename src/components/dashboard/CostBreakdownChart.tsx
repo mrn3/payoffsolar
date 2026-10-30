@@ -62,6 +62,7 @@ interface OrdersModalProps {
   category: string;
   orders: OrderWithCostBreakdown[];
   loading: boolean;
+  error: string | null;
 }
 
 // Color palette for different cost categories
@@ -80,7 +81,7 @@ const categoryColors = [
   '#6B7280', // gray-500
 ];
 
-function OrdersModal({ isOpen, onClose, period, periodType, category, orders, loading }: OrdersModalProps) {
+function OrdersModal({ isOpen, onClose, period, periodType, category, orders, loading, error }: OrdersModalProps) {
   if (!isOpen) return null;
 
   const formatPeriod = (periodStr: string, type: TimePeriod) => {
@@ -150,9 +151,13 @@ function OrdersModal({ isOpen, onClose, period, periodType, category, orders, lo
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <span className="ml-2 text-gray-600">Loading orders...</span>
             </div>
+          ) : error ? (
+            <div role="alert" className="text-center py-8 text-red-600">
+              {error}
+            </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              No orders found for this month and category.
+              No orders found for this period and category.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -179,9 +184,10 @@ function OrdersModal({ isOpen, onClose, period, periodType, category, orders, lo
                 <tbody className="bg-white divide-y divide-gray-200">
                   {orders.map((order) => {
                     // Find the cost item for the selected category
-                    const categoryAmount = order.costItems?.find(
-                      item => item.category_name === category
-                    )?.amount || 0;
+                    const categoryAmount = order.costItems?.reduce(
+                      (sum, item) => item.category_name === category ? sum + Number(item.amount) : sum,
+                      0
+                    ) || 0;
 
                     return (
                       <tr key={order.id} className="hover:bg-gray-50">
@@ -250,6 +256,7 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [modalOrders, setModalOrders] = useState<OrderWithCostBreakdown[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
 
   // Fetch data based on time period
@@ -477,12 +484,18 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
           setSelectedPeriod(period);
           setSelectedCategory(category);
           setModalLoading(true);
+          setModalError(null);
+          setModalOrders([]);
 
           try {
             let endpoint = '';
             let paramName = '';
 
             switch (timePeriod) {
+              case 'year':
+                endpoint = '/api/orders/by-year-category';
+                paramName = 'year';
+                break;
               case 'month':
                 endpoint = '/api/orders/by-month-category';
                 paramName = 'month';
@@ -502,12 +515,11 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
               const orders = await response.json();
               setModalOrders(orders);
             } else {
-              console.error(`Failed to fetch orders for ${timePeriod} and category:`, period, category);
-              setModalOrders([]);
+              throw new Error(`Failed to fetch orders for ${timePeriod} and category (${response.status}): ${period}, ${category}`);
             }
           } catch (error) {
             console.error('Error fetching orders:', error);
-            setModalOrders([]);
+            setModalError('Unable to load orders. Please close this window and try again.');
           } finally {
             setModalLoading(false);
           }
@@ -577,6 +589,7 @@ export default function CostBreakdownChart({ initialData, categories }: CostBrea
         category={selectedCategory || ''}
         orders={modalOrders}
         loading={modalLoading}
+        error={modalError}
       />
     </div>
   );

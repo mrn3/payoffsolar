@@ -3016,7 +3016,22 @@ export const OrderModel = {
     );
   },
 
-  async getOrdersByMonthAndCategory(month: string, categoryName: string): Promise<OrderWithContact[]> {
+  async getOrdersByYearAndCostCategory(year: string, categoryName: string): Promise<OrderWithContact[]> {
+    return executeQuery<OrderWithContact>(
+      `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
+       FROM orders o
+       LEFT JOIN contacts c ON o.contact_id = c.id
+       INNER JOIN cost_items ci ON o.id = ci.order_id
+       INNER JOIN cost_categories cc ON ci.category_id = cc.id
+       WHERE o.status = 'complete'
+         AND YEAR(o.order_date) = ?
+         AND cc.name = ?
+       ORDER BY o.order_date DESC, o.created_at DESC`,
+      [year, categoryName]
+    );
+  },
+
+  async getOrdersByMonthAndCostCategory(month: string, categoryName: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM orders o
@@ -3031,7 +3046,7 @@ export const OrderModel = {
     );
   },
 
-  async getOrdersByWeekAndCategory(week: string, categoryName: string): Promise<OrderWithContact[]> {
+  async getOrdersByWeekAndCostCategory(week: string, categoryName: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM orders o
@@ -3046,7 +3061,7 @@ export const OrderModel = {
     );
   },
 
-  async getOrdersByDayAndCategory(day: string, categoryName: string): Promise<OrderWithContact[]> {
+  async getOrdersByDayAndCostCategory(day: string, categoryName: string): Promise<OrderWithContact[]> {
     return executeQuery<OrderWithContact>(
       `SELECT DISTINCT o.*, c.name as contact_name, c.city as contact_city, c.state as contact_state, c.address as contact_address, c.latitude as contact_latitude, c.longitude as contact_longitude
        FROM orders o

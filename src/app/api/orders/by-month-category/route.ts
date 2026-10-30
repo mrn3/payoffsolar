@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid month format. Use YYYY-MM' }, { status: 400 });
     }
 
-    const orders = await OrderModel.getOrdersByMonthAndCategory(month, category);
+    const orders = await OrderModel.getOrdersByMonthAndCostCategory(month, category);
 
     // Add cost breakdown details for each order
     const ordersWithCostBreakdown = await Promise.all(

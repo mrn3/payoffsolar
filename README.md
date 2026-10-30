@@ -32,6 +32,13 @@ These cover listing, adding, updating, and removing components, including admin
 permissions and validation. Dynamic route parameters must be awaited in Next.js
 16 before passing bundle or component IDs to the models.
 
+## Dashboard cost drill-downs
+
+Cost Breakdown bars open complete orders for the selected cost category and
+year, month, week, or day. These lookups use cost items, independently of the
+product-category lookups used by Units Sold. Year-over-year cost bars remain
+aggregate-only. Order detail request failures display an error, not an empty list.
+
 ## Search Console indexing checks
 
 The public catalog and category routes return not-found for pagination beyond the
